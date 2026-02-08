@@ -369,7 +369,7 @@ ${body}
     files.push(`.cursor/rules/module-${mod.id}.mdc`)
   }
 
-  // 4. ALL skills as description-triggered rules
+  // 4. ALL skills as description-triggered rules + their resources
   for (const skill of content.skills) {
     const { data, body } = parseFrontmatter(skill.skillMd)
     const skillMdc = `---
@@ -380,6 +380,20 @@ ${body}
 `
     await writeFile(join(rulesDir, `skill-${skill.id}.mdc`), skillMdc)
     files.push(`.cursor/rules/skill-${skill.id}.mdc`)
+
+    // Write skill resources as separate .mdc files so Cursor can find them
+    for (const res of skill.resources) {
+      const resName = res.name.replace('.md', '')
+      const resBody = stripFrontmatter(res.content)
+      const resMdc = `---
+description: ${skill.id} skill resource - ${resName} (detailed reference, examples, and troubleshooting)
+---
+
+${resBody}
+`
+      await writeFile(join(rulesDir, `skill-${skill.id}-${resName}.mdc`), resMdc)
+      files.push(`.cursor/rules/skill-${skill.id}-${resName}.mdc`)
+    }
   }
 
   // 5. P2P patterns (glob-scoped)

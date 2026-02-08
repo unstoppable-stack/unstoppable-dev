@@ -168,7 +168,7 @@ export default function Home() {
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] mb-6">
-              Vibe-Code{" "}
+              Build{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-tether">
                 Unstoppable
               </span>{" "}
