@@ -1,0 +1,103 @@
+---
+description: Workflow to capture battle-tested code patterns from app builds and bring them back as reusable components
+globs: ["packages/agent-pack/src/components/**"]
+---
+
+# Capture Component
+
+## When to Use
+After an agent builds an app and produces working code that solves a common problem. Invoke by saying: "capture component: [description of what the code does]".
+
+## The Loop
+
+```
+Agent builds app → hits issue → fixes it → working code
+    ↓
+User: "capture component: this swarm-manager handles reconnection properly"
+    ↓
+Researcher:
+  1. Extracts the working pattern
+  2. Generalizes it (removes app-specific logic)
+  3. Saves to packages/agent-pack/src/components/
+  4. Updates relevant skill to reference it
+  5. Syncs → next scaffold includes it
+```
+
+## Steps
+
+### 1. Identify the Pattern
+
+From the user's description or code, identify:
+- **What problem it solves** — connection handling, context overflow, schema setup, etc.
+- **Which module category** — p2p/, data/, ai/, wallet/
+- **Is it new or an update?** — Does an existing component cover this?
+
+### 2. Extract and Generalize
+
+Take the working code and:
+- Remove app-specific logic (hardcoded values, specific business logic)
+- Keep the pattern that solves the common problem
+- Add `CUSTOMIZE:` comments showing where developers should adapt
+- Add JSDoc explaining what it handles and why
+- Add proper TypeScript types
+
+### 3. Write the Component
+
+Save to: `packages/agent-pack/src/components/<category>/<name>.ts`
+
+Component file conventions:
+- Top-of-file JSDoc block explaining purpose and what it handles
+- `CUSTOMIZE:` comments for parts developers should change
+- Exported class or functions (not default exports)
+- Error handling for common failure modes
+- Graceful cleanup in a `destroy()` method
+
+### 4. Update the Relevant Skill
+
+Edit the skill in `packages/agent-pack/src/skills/<skill>/SKILL.md`:
+- Add an "Included Components" section listing the files
+- Change "Steps" from "create this code" to "use the included component"
+- Show how to import and customize the component
+
+### 5. Update the Module Map (if new category)
+
+If the component introduces a new category, update the `COMPONENT_MODULE_MAP` in `packages/cli/src/scaffold.ts` to map it to the right modules.
+
+### 6. Sync and Test
+
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+cd packages/cli && npx tsup src/index.ts --format esm --dts
+node dist/index.js /tmp/test-app -a cursor -m "hyperdb,qvac" --no-install
+# Verify components appear in /tmp/test-app/src/
+rm -rf /tmp/test-app
+```
+
+## Existing Components
+
+```
+packages/agent-pack/src/components/
+├── p2p/
+│   ├── swarm-manager.ts      # Hyperswarm lifecycle, errors, shutdown
+│   └── replication.ts        # Core/store replication with findingPeers
+├── data/
+│   ├── corestore-manager.ts  # Named Hypercore management
+│   └── db-setup.ts           # HyperDB local + P2P engine setup
+├── ai/
+│   ├── model-manager.ts      # Load/unload with progress, context config
+│   ├── chat-session.ts       # Streaming chat, kv-cache, <think> filtering
+│   └── tool-runner.ts        # Tool-calling loop with Zod
+└── wallet/
+    └── wallet-setup.ts       # WDK init, chain registration
+```
+
+## Quality Checklist
+
+Before saving a component:
+- [ ] Based on code that actually worked in a real app build
+- [ ] App-specific logic removed
+- [ ] CUSTOMIZE comments added
+- [ ] Error handling for common failures
+- [ ] destroy()/cleanup method included
+- [ ] TypeScript types (not `any` for public API)
+- [ ] JSDoc on exports

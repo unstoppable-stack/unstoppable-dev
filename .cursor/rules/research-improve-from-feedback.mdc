@@ -1,0 +1,46 @@
+---
+description: Workflow to fix agent pack documentation gaps or errors based on user-reported issues while building Unstoppable Stack apps
+globs: ["packages/agent-pack/src/**/*.md", "packages/agent-pack/src/skills/**"]
+---
+
+# Improve Agent Pack From Feedback
+
+## When to Use
+When a user reports an error, unexpected behavior, or missing information while building with the Unstoppable Stack agent pack. Invoke by describing the error, e.g.: "fix docs for: HyperDB throws 'collection not found'".
+
+## Steps
+
+### 1. Parse the Error
+- **Module(s) involved** — hyperdb, qvac, hyperswarm, etc.
+- **What the user was doing** — the task or pattern
+- **What went wrong** — error message or unexpected behavior
+- **Which AI tool** — Claude, Cursor, or OpenCode?
+
+### 2. Find Relevant Documentation
+- `packages/agent-pack/src/modules/<module>.md` — module docs
+- `packages/agent-pack/src/recipes/<recipe>.md` — recipe docs
+- `packages/agent-pack/src/skills/<skill>/SKILL.md` — skill instructions
+- `packages/agent-pack/src/skills/<skill>/resources/` — deep content
+
+### 3. Identify the Gap
+Common types: wrong API, missing gotcha, missing pattern, outdated version, missing troubleshooting, incomplete example (missing imports).
+
+### 4. Fix the Documentation
+- Edit files directly in `packages/agent-pack/src/`
+- Add gotchas to **Pitfalls & Gotchas** sections
+- Add troubleshooting with **Symptoms** + **Solution** format
+- Verify against reference apps in `research/`
+
+### 5. Sync to CLI
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+```
+
+### 6. Report
+```markdown
+## Feedback Fix Report
+**Issue**: [summary]
+**Root cause**: [what was wrong/missing]
+**Files updated**: [list]
+**Verification**: Synced to CLI
+```

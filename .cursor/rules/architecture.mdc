@@ -1,0 +1,61 @@
+---
+description: Repository structure, tech decisions, and monorepo conventions
+alwaysApply: true
+---
+
+# Repository Architecture
+
+## Structure
+
+```
+unstoppable-stack/
+├── CLAUDE.md                    # Project context (also used by Claude Code)
+├── .cursor/rules/               # Cursor rules (this directory)
+├── packages/
+│   ├── website/                 # unstoppable.dev - Next.js site
+│   ├── cli/                     # create-unstoppable-app CLI
+│   ├── templates/               # Project scaffolds
+│   │   ├── starter/             # Basic Pear + Bare starter
+│   │   ├── p2p-sync/            # P2P data sync template
+│   │   ├── ai-local/            # QVAC inference template
+│   │   └── expo-mobile/         # Expo Bare mobile template
+│   └── agent-pack/              # AI assistant configurations
+│       ├── claude/              # Claude Code/API instructions
+│       ├── cursor/              # Cursor rules and commands
+│       └── opencode/            # OpenCode skills
+├── docs/                        # Extended documentation
+│   ├── modules/                 # Per-module documentation
+│   └── recipes/                 # Common patterns and recipes
+├── research/                    # Reference material (battle-tested apps, libraries)
+└── project-planning/            # Planning documents
+```
+
+## Tech Stack
+
+### Monorepo
+- **Package Manager**: pnpm with workspaces
+- **Build Tool**: Turborepo for task orchestration
+- **Node Version**: 20+ LTS
+
+### Website (packages/website)
+- **Framework**: Next.js 14+ (App Router)
+- **Styling**: Tailwind CSS
+- **Components**: shadcn/ui
+- **Deployment**: Vercel or static export
+
+### CLI (packages/cli)
+- **Language**: TypeScript
+- **Framework**: Commander.js + Inquirer (prompts)
+- **Package Name**: `create-unstoppable-app`
+- **Distribution**: npm
+- **Build**: tsup (ESM output)
+
+### Templates (packages/templates)
+- Structure follows scaffolded app conventions
+- Each template includes its own README and agent instructions
+- Templates are copied and processed by CLI
+
+### Agent Pack (packages/agent-pack)
+- Portable format that generates tool-specific configs
+- Core content in markdown (rules, recipes, architecture)
+- Build step generates Claude/Cursor/OpenCode formats

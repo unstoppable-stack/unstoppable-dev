@@ -1,0 +1,66 @@
+---
+description: Guidelines for developing the create-unstoppable-app CLI package
+globs: ["packages/cli/**/*.ts"]
+---
+
+# CLI Development
+
+## Overview
+
+The CLI (`create-unstoppable-app`) scaffolds new projects with the Unstoppable Stack. It prompts users for project name, template, AI assistant, and modules, then generates the project with tool-specific agent configurations.
+
+## Key Files
+
+- `packages/cli/src/index.ts` — CLI entry point, Commander.js setup, interactive prompts
+- `packages/cli/src/constants.ts` — Templates, modules, assistants definitions
+- `packages/cli/src/scaffold.ts` — Project scaffolding logic (copy templates, process package.json, install deps)
+- `packages/cli/src/agent-pack/index.ts` — Agent pack builder (generates Claude/Cursor/OpenCode configs)
+- `packages/cli/templates/` — Template directories (blank, p2p-sync, qvac-ai)
+- `packages/cli/agent-pack-src/` — Content bundled with CLI (synced from agent-pack via sync script)
+
+## Build & Test
+
+```bash
+cd packages/cli
+npx tsup src/index.ts --format esm --dts   # Build
+node dist/index.js                           # Run locally
+```
+
+## Agent Pack Builder (v2)
+
+The `buildAgentPack()` function in `src/agent-pack/index.ts` loads content from `agent-pack-src/` and generates tool-specific configs:
+
+### Content Loading
+- `core/` — Always included
+- `modules/` — Only modules selected by user
+- `recipes/` — All recipes
+- `skills/` — Thin SKILL.md + resources/ (progressive disclosure)
+- `hooks/` — skill-rules.json for auto-activation
+
+### Claude Code Output
+- Slim `CLAUDE.md` (≤8KB) — overview + available skills list
+- `.claude/rules/` — core docs + path-scoped module docs
+- `.claude/skills/*/SKILL.md` + `resources/` — full progressive disclosure
+- `.claude/settings.json` — permissions + PostToolUse formatting hook
+
+### Cursor Output
+- `project.mdc` (alwaysApply) — slim project overview
+- `core-*.mdc` — agent-choice via description
+- `module-*.mdc` — glob-scoped to relevant file patterns
+- `skill-*.mdc` — description-triggered skill docs
+- `p2p-patterns.mdc` / `qvac-patterns.mdc` — glob-scoped pattern rules
+
+### OpenCode Output
+- Slim `instructions.md` — overview + available skills/agents
+- `opencode.json` — skill gating (only relevant skills enabled)
+- `.opencode/agents/` — specialized agents (planner, p2p-expert, ai-expert)
+- `.opencode/skills/*/SKILL.md` + `resources/` — full progressive disclosure
+
+## Adding New Skills
+
+1. Create `packages/agent-pack/src/skills/<skill-name>/SKILL.md` (≤4KB)
+2. Create `packages/agent-pack/src/skills/<skill-name>/resources/` with deep content
+3. Add skill → module mapping in `skillModuleMap` in `src/agent-pack/index.ts`
+4. Update `skill-rules.json` with keywords for auto-activation
+5. Sync to CLI: `cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/`
+6. Rebuild: `cd packages/cli && npx tsup src/index.ts --format esm --dts`

@@ -1,0 +1,81 @@
+---
+description: Workflow to audit agent pack quality, completeness, and accuracy across all module and recipe documentation
+globs: ["packages/agent-pack/src/**/*.md"]
+---
+
+# Verify Agent Pack Quality
+
+## When to Use
+When you need to audit the agent pack for quality, completeness, and accuracy. Invoke by asking: "verify agent pack quality" or "audit agent pack docs".
+
+## Expected File Structure
+
+```
+packages/agent-pack/src/
+├── core/
+│   ├── architecture.md          # Required (HIGH)
+│   ├── cheatsheet.md            # Required (HIGH)
+│   ├── patterns.md              # Required
+│   └── principles.md            # Required
+├── modules/
+│   ├── pear.md                  # Required (HIGH)
+│   ├── bare.md                  # Required (HIGH)
+│   ├── hypercore.md             # Required (HIGH)
+│   ├── hyperdb.md               # Required (HIGH)
+│   ├── hyperdrive.md            # Required (HIGH)
+│   ├── hyperswarm.md            # Required (HIGH)
+│   ├── qvac.md                  # Required (HIGH)
+│   ├── wdk.md                   # Required (MEDIUM)
+│   └── expo-bare.md             # Required (MEDIUM)
+├── recipes/
+│   ├── p2p-data-sync.md         # Required
+│   ├── local-inference.md       # Required
+│   ├── offline-first-app.md     # Required
+│   ├── file-sharing.md          # Required
+│   ├── p2p-rpc.md               # Required
+│   ├── qvac-tool-calling.md     # Required
+│   ├── qvac-kv-cache.md         # Required
+│   └── ...
+├── skills/                      # Each with SKILL.md + resources/
+└── components/                  # Reusable TypeScript components
+```
+
+## Module Doc Checklist
+
+For each module file, verify:
+- [ ] **Overview** — specific, not generic filler
+- [ ] **Version Notes** — actual version number + date
+- [ ] **Installation** — correct package name
+- [ ] **Quick Start** — 10-20 lines of verified working code
+- [ ] **Core Concepts** — at least 3 items
+- [ ] **API Reference** — key methods with TypeScript signatures from `.d.ts`
+- [ ] **Integration** — explains stack relationships
+- [ ] **Common Patterns** — 2+ code examples
+- [ ] **Pitfalls & Gotchas** — real issues, not generic
+- [ ] **Resources** — valid links
+
+## Recipe Doc Checklist
+
+For each recipe file, verify:
+- [ ] **Problem** — clearly stated (1-2 sentences)
+- [ ] **Prerequisites** — actual module requirements
+- [ ] **Solution** — step-by-step code
+- [ ] **Full Example** — complete, copy-pasteable with imports
+- [ ] **Variations** — at least 1 alternative
+- [ ] **Troubleshooting** — real issues with symptoms + solutions
+
+## Red Flags
+- Generic descriptions, missing versions, placeholder URLs
+- Code referencing undefined variables or missing imports
+- Missing `await` on async operations
+- Inconsistent API names vs actual package exports
+- Wrong bare-rpc API (no `register()`, no `request(string)`, no `destroy()`)
+- Missing `tools: true` in QVAC `loadModel()` for tool-calling models
+
+## Steps
+
+1. List all files in `packages/agent-pack/src/` — compare against expected structure
+2. Check each module against checklist
+3. Check each recipe against checklist
+4. Cross-reference code examples with actual APIs and reference apps in `research/`
+5. Generate verification report

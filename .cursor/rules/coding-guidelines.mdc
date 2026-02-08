@@ -1,0 +1,56 @@
+---
+description: Coding standards, P2P patterns, and conventions for the project
+alwaysApply: true
+---
+
+# Coding Guidelines
+
+## General
+- TypeScript everywhere
+- ESLint + Prettier for formatting
+- Vitest for testing
+- Conventional commits
+
+## P2P Patterns
+- Always handle peer disconnection gracefully
+- Use Hyperswarm topics for discoverability
+- Replicate Hypercores before reading
+- Always await `db.ready()` before operations
+- Don't store large blobs in HyperDB (use Hyperdrive instead)
+- Don't hardcode discovery keys
+- Don't forget to close connections on cleanup
+
+## File Structure (Scaffolded Apps)
+```
+my-app/
+├── src/
+│   ├── index.ts          # Entry point
+│   ├── app/              # Application logic
+│   ├── p2p/              # P2P networking
+│   ├── data/             # Database/storage
+│   └── ui/               # UI components (if applicable)
+├── package.json
+├── tsconfig.json
+└── [agent config]        # CLAUDE.md / .cursor/rules / opencode.json
+```
+
+## Notes for AI Assistants
+
+When working on this codebase:
+
+1. **Understand the P2P model** - Apps don't have traditional servers. Data lives on user devices and syncs peer-to-peer.
+2. **Local-first mindset** - Everything should work offline. Network is a nice-to-have for sync.
+3. **Module boundaries** - Each Holepunch module (Hypercore, HyperDB, Hyperdrive) is independent but composable.
+4. **Template awareness** - When helping users build, know which template they started from and which modules are included.
+5. **Recipes over raw docs** - Prefer showing working patterns over explaining APIs in the abstract.
+
+## Key Resources
+
+### Holepunch
+- Docs: https://docs.holepunch.to/
+- Pear: https://docs.pear.holepunch.to/
+- GitHub: https://github.com/holepunchto
+
+### Tether/QVAC
+- QVAC: https://github.com/nicosoftware/qvac
+- WDK: (documentation needed)

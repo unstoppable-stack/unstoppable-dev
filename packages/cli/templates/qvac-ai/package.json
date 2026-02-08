@@ -1,0 +1,21 @@
+{
+  "name": "unstoppable-app",
+  "version": "0.1.0",
+  "type": "module",
+  "pear": {
+    "name": "Unstoppable App",
+    "type": "desktop"
+  },
+  "scripts": {
+    "dev": "pear dev",
+    "build": "pear stage",
+    "release": "pear release",
+    "test": "echo \"No tests specified\""
+  },
+  "dependencies": {
+    "bare-path": "^2.0.0"
+  },
+  "devDependencies": {
+    "brittle": "^3.0.0"
+  }
+}

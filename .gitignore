@@ -1,0 +1,6 @@
+**/dist/
+**/node_modules/
+**/build/
+research/qvac-app-workbench-desktop-main
+research/qvac-app-workbench-mobile-main
+research/

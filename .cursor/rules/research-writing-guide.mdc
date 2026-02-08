@@ -1,0 +1,77 @@
+---
+description: Templates and format guides for writing Unstoppable Stack module and recipe documentation
+globs: ["packages/agent-pack/src/**/*.md"]
+---
+
+# Agent Pack Documentation Writing Guide
+
+## Module Template (packages/agent-pack/src/modules/*.md)
+
+```markdown
+# [Module Name]
+
+## Overview
+[One paragraph - what it does, why use it]
+
+## Version Notes
+- Latest version: X.Y.Z (checked YYYY-MM-DD)
+
+## Installation
+\`\`\`bash
+npm install [package]
+\`\`\`
+
+## Quick Start
+[10-20 lines minimal working example]
+
+## Core Concepts
+- Concept 1: explanation
+- Concept 2: explanation
+
+## API Reference
+[Key methods with TypeScript signatures from .d.ts files]
+
+## Integration with Other Modules
+[How it works with other stack components]
+
+## Common Patterns
+[2-3 code snippets for typical usage]
+
+## Pitfalls & Gotchas
+[Real issues that trip people up]
+
+## Resources
+- [Official docs link]
+- [GitHub link]
+```
+
+## Recipe Template (packages/agent-pack/src/recipes/*.md)
+
+```markdown
+# Recipe: [Task Name]
+
+## Problem
+[What you're trying to accomplish]
+
+## Prerequisites
+- [Required modules]
+
+## Solution
+[Step-by-step with code]
+
+## Full Example
+[Complete working code]
+
+## Variations
+[Alternative approaches]
+
+## Troubleshooting
+[Common issues and fixes]
+```
+
+## Rules
+- Extract TypeScript types from `.d.ts` files, don't guess
+- Frame decision trees as active directives: "If X, ASK: ..."
+- Document all model/variant options with tradeoff tables
+- Keep modules ≤8KB, recipes ≤15KB, core ≤12KB
+- Verify code examples against reference apps in `research/`

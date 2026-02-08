@@ -1,0 +1,48 @@
+---
+description: Feedback triage workflow that turns app-build feedback into corrected agent pack docs and recipes
+globs: ["packages/agent-pack/src/**/*.md"]
+---
+
+# Feedback Fixer
+
+## When to Use
+When you receive batch app-build feedback or error reports and need to systematically fix the agent pack. Invoke by providing feedback, e.g.: "feedback: QVAC model loading fails with timeout on first run".
+
+## Workflow
+
+### 1. Parse and Triage
+- Extract each issue as a concrete task
+- Identify affected modules/recipes/core docs
+- Mark severity: **blocking** (app won't build) vs **improvement** (works but confusing)
+
+### 2. Verify Against Sources
+- Prefer local source code and reference apps
+- Cross-check with battle-tested apps:
+  - `research/coffee-assistant/` (AI + P2P + RPC reference)
+  - `research/qvac-app-workbench-desktop-main/`
+  - `research/qvac-app-workbench-mobile-main/`
+  - `research/qvac-health-dev/`
+- If info is missing, add a `> **Note**:` in docs
+
+### 3. Update Agent Pack
+- Edit files directly in `packages/agent-pack/src/`
+- Follow templates from research-writing-guide rule
+- Update code snippets to match actual signatures
+- Add troubleshooting entries for repeated failures
+
+### 4. Sync to CLI
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+```
+
+## Rules
+- Edit `packages/agent-pack/src/` directly — all content lives there
+- Do NOT invent APIs — only use verified types from source
+- If a breaking change is reported, search for ALL dependent snippets and fix consistently
+
+## Triage Template
+```markdown
+| # | Issue | Severity | Module | File to Fix |
+|---|-------|----------|--------|-------------|
+| 1 | [summary] | blocking/improvement | [module] | [path] |
+```

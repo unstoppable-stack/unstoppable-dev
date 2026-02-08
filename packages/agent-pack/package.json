@@ -1,0 +1,19 @@
+{
+  "name": "@unstoppable/agent-pack",
+  "version": "0.1.0",
+  "description": "AI agent configurations for the Unstoppable Stack",
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-research.js",
+    "sync:dry": "node scripts/sync-research.js --dry-run"
+  },
+  "keywords": [
+    "unstoppable-stack",
+    "ai",
+    "agent",
+    "claude",
+    "cursor",
+    "opencode"
+  ],
+  "license": "MIT"
+}

@@ -1,0 +1,53 @@
+{
+  "description": "Maps keywords and file patterns to relevant skills for auto-activation",
+  "rules": [
+    {
+      "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
+      "files": ["src/p2p/**", "src/data/**"],
+      "skill": "add-p2p-sync",
+      "message": "This looks like a P2P data sync task. Consider using /add-p2p-sync for Hypercore replication patterns."
+    },
+    {
+      "keywords": ["inference", "llm", "model", "ai", "chat", "completion", "qvac"],
+      "files": ["src/ai/**", "src/inference/**"],
+      "skill": "local-inference",
+      "message": "This involves local AI inference. Consider using /local-inference for QVAC SDK patterns."
+    },
+    {
+      "keywords": ["tool calling", "function calling", "tools", "agent with tools", "structured output"],
+      "files": ["src/ai/**", "src/tools/**"],
+      "skill": "qvac-tool-calling",
+      "message": "This involves tool/function calling. Consider using /qvac-tool-calling for QVAC tool patterns."
+    },
+    {
+      "keywords": ["file", "share", "upload", "download", "drive", "mirror"],
+      "files": ["src/files/**", "src/storage/**"],
+      "skill": "file-sharing",
+      "message": "This involves file sharing. Consider using /file-sharing for Hyperdrive patterns."
+    },
+    {
+      "keywords": ["offline", "local-first", "works without", "no internet", "persist"],
+      "files": ["src/data/**", "src/store/**"],
+      "skill": "offline-first-app",
+      "message": "This is an offline-first pattern. Consider using /offline-first-app for Hyperbee storage + sync."
+    },
+    {
+      "keywords": ["rpc", "remote procedure", "request response", "api between peers"],
+      "files": ["src/p2p/**", "src/rpc/**"],
+      "skill": "p2p-rpc",
+      "message": "This involves P2P RPC. Consider using /p2p-rpc for Protomux request/response patterns."
+    },
+    {
+      "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream"],
+      "files": ["src/p2p/**", "src/messaging/**"],
+      "skill": "secure-communication",
+      "message": "This involves secure messaging. Consider using /secure-communication for encrypted Protomux channels."
+    },
+    {
+      "keywords": ["wallet", "payment", "bitcoin", "ethereum", "token", "crypto", "transaction"],
+      "files": ["src/wallet/**", "src/payments/**"],
+      "skill": "wallet-integration",
+      "message": "This involves payments/wallet. Consider using /wallet-integration for WDK patterns."
+    }
+  ]
+}

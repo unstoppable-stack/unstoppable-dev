@@ -1,0 +1,52 @@
+---
+description: Workflow to verify generated agent pack configurations are valid and within size budgets after research changes
+globs: ["packages/cli/src/agent-pack/**", "packages/agent-pack/**", "packages/cli/agent-pack-src/**"]
+---
+
+# Test Agent Pack Output
+
+## When to Use
+After updating agent pack content, skills, hooks, or the CLI builder. Invoke by asking: "test agent pack" or "verify agent pack output".
+
+## Steps
+
+### 1. Build the CLI
+```bash
+cd packages/cli && npx tsup src/index.ts --format esm --dts
+```
+
+### 2. Scaffold Test Projects
+```bash
+cd /tmp
+node <project-root>/packages/cli/dist/index.js test-claude-app -a claude -m "hyperdb,qvac" --no-install
+node <project-root>/packages/cli/dist/index.js test-cursor-app -a cursor -m "hyperdb,qvac" --no-install
+node <project-root>/packages/cli/dist/index.js test-opencode-app -a opencode -m "hyperdb,qvac" --no-install
+```
+
+### 3. Verify Claude Output
+- [ ] `CLAUDE.md` exists and ≤8KB
+- [ ] `.claude/settings.json` valid JSON with hooks + permissions
+- [ ] `.claude/skills/` has SKILL.md files with valid frontmatter
+- [ ] Skills with `resources/` have those files present
+
+### 4. Verify Cursor Output
+- [ ] `.cursor/rules/project.mdc` has `alwaysApply: true`
+- [ ] `.cursorignore` exists
+- [ ] All `.mdc` files have valid `---` frontmatter
+- [ ] Glob-scoped rules have valid `globs` arrays
+
+### 5. Verify OpenCode Output
+- [ ] `opencode.json` valid JSON
+- [ ] `.opencode/instructions.md` exists and ≤8KB
+- [ ] `.opencode/skills/` has SKILL.md files
+- [ ] Skill gating has `"*": false` default
+
+### 6. Sync to CLI
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+```
+
+### 7. Clean Up
+```bash
+rm -rf /tmp/test-claude-app /tmp/test-cursor-app /tmp/test-opencode-app
+```

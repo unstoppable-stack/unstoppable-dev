@@ -1,0 +1,64 @@
+---
+description: Rules for working with the agent pack content
+globs: ["packages/agent-pack/**", "packages/cli/agent-pack-src/**", "packages/cli/src/agent-pack/**"]
+---
+
+# Agent Pack Workflow
+
+## Pipeline Overview
+
+```
+packages/agent-pack/src/          → packages/cli/agent-pack-src/
+(source of truth — edit directly)    (bundled with CLI — copy to sync)
+```
+
+## Sync to CLI
+
+After editing agent pack content, sync to the CLI bundle:
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+```
+
+## Critical Rules
+
+- **ALL content** in `packages/agent-pack/src/` is edited directly (core, modules, recipes, skills, hooks, components)
+- **Always sync** changes to `packages/cli/agent-pack-src/` after editing
+- The `research/` folder contains reference material (battle-tested apps, libraries) — not synced automatically
+
+## Architecture
+
+```
+packages/agent-pack/src/
+├── core/           # Always included (principles, patterns, cheatsheet)
+├── modules/        # Per-module knowledge (hyperswarm, qvac, etc.)
+├── recipes/        # Full implementation guides (p2p-rpc, kv-cache, etc.)
+├── skills/         # Thin SKILL.md + resources/ per skill
+│   └── <name>/
+│       ├── SKILL.md        # ≤100 lines, invokable command
+│       └── resources/      # Deep content, loaded on demand
+├── hooks/          # Automation
+│   ├── skill-rules.json    # Keyword → skill mapping
+│   └── auto-format.sh      # PostToolUse formatting
+├── components/     # Reusable TypeScript components
+│   ├── ai/         # Model manager, chat session, tool runner
+│   ├── p2p/        # Swarm manager, replication
+│   └── data/       # Corestore, DB setup
+└── templates/      # Template-specific context
+```
+
+## Size Budgets
+
+| File Type | Budget | Purpose |
+|-----------|--------|---------|
+| SKILL.md | ≤4KB | Thin invocation wrapper |
+| core/*.md | ≤12KB | Architecture & patterns |
+| modules/*.md | ≤8KB | Module overview + quick start |
+| recipes/*.md | ≤15KB | Full implementation guides |
+
+## CLI Builder Output
+
+The `buildAgentPack()` function generates tool-specific configs:
+
+- **Claude Code**: Slim CLAUDE.md + `.claude/rules/` (path-scoped) + `.claude/skills/` (with resources) + hooks in settings.json
+- **Cursor**: `.cursor/rules/*.mdc` with descriptions + globs for auto-triggering + skill .mdc files
+- **OpenCode**: Slim instructions.md + `.opencode/skills/` (with resources) + skill gating in config + custom agents

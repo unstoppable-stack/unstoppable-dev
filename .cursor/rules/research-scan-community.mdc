@@ -1,0 +1,32 @@
+---
+description: Workflow to scan community repos for new agent configuration patterns and best practices to adopt in the Unstoppable Stack
+---
+
+# Scan Community Patterns
+
+## When to Use
+Periodically (monthly) to find new patterns from the AI coding assistant community. Invoke by asking: "scan community for new patterns".
+
+## Key Repositories to Check
+
+**Claude Code**: awesome-claude-code, ChrisWiles/claude-code-showcase, diet103/claude-code-infrastructure-showcase
+**OpenCode**: awesome-opencode, zenobi-us/opencode-skillful, malhashemi/opencode-skills
+**Cursor**: community rule collections, cursor forum best practices
+**General**: neurofoo/agent-skills (marketplace patterns)
+
+## What to Look For
+- Hook patterns (auto-activation, validation, secret protection)
+- Skill architecture (progressive disclosure, resource management)
+- Distribution (install flows, marketplace, updates)
+- Memory/context (token management, compression, caching)
+- Multi-agent (orchestration, switching, specialized agents)
+- Cursor-specific (glob patterns, description optimization, rule composition)
+
+## Evaluation Criteria
+- Do we have this already? Better or worse?
+- Would it reduce user errors during app building?
+- Would it improve token efficiency?
+- Effort to implement? (low/medium/high)
+
+## Output
+Write findings to `packages/agent-pack/src/core/community-scan-YYYY-MM.md` with: sources checked, patterns found, recommendations, action items.

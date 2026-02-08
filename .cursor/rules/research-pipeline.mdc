@@ -1,0 +1,66 @@
+---
+description: Agent pack content pipeline - editing workflow, size budgets, and content routing
+globs: ["packages/agent-pack/**", "packages/cli/agent-pack-src/**"]
+---
+
+# Agent Pack Pipeline
+
+## Content Flow
+
+```
+packages/agent-pack/src/          → packages/cli/agent-pack-src/
+(source of truth — edit directly)    (bundled with CLI — copy to sync)
+```
+
+## Sync to CLI
+
+After editing agent pack content, sync to the CLI bundle:
+```bash
+cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
+```
+
+## What Goes Where
+
+| Content | Location | Edit Where |
+|---------|----------|------------|
+| Core docs | `packages/agent-pack/src/core/` | Edit directly |
+| Module docs | `packages/agent-pack/src/modules/` | Edit directly |
+| Recipes | `packages/agent-pack/src/recipes/` | Edit directly |
+| Skills | `packages/agent-pack/src/skills/` | Edit directly |
+| Hooks | `packages/agent-pack/src/hooks/` | Edit directly |
+| Components | `packages/agent-pack/src/components/` | Edit directly |
+
+**Rule**: All agent pack content is edited directly in `packages/agent-pack/src/`. Always sync changes to `packages/cli/agent-pack-src/`.
+
+## Research Folder
+
+The `research/` folder contains **reference material** — battle-tested apps, mini-apps, and libraries. These are NOT synced to the agent pack. They serve as ground truth when writing or updating documentation.
+
+```
+research/
+├── coffee-assistant/              # Battle-tested AI + P2P + RPC app
+├── qvac-app-workbench-desktop-main/
+├── qvac-app-workbench-mobile-main/
+├── qvac-docs/
+├── qvac-examples/
+└── qvac-health-dev/
+```
+
+## Size Budgets
+
+| File Type | Budget | Notes |
+|-----------|--------|-------|
+| SKILL.md | ≤4KB (~100 lines) | Thin invocation wrapper |
+| core/*.md | ≤12KB (~300 lines) | Architecture & patterns |
+| modules/*.md | ≤8KB (~150 lines) | Module overview + quick start |
+| recipes/*.md | ≤15KB | Full implementation guides |
+
+## CLI Builder Output
+
+The CLI (`packages/cli/src/agent-pack/index.ts`) reads content and generates:
+
+| Tool | Main File | Rules | Skills | Auto-activation |
+|------|-----------|-------|--------|-----------------|
+| Claude | `CLAUDE.md` (slim) | `.claude/rules/*.md` | `.claude/skills/` | `skill-rules.json` hook |
+| Cursor | `.cursor/rules/project.mdc` | `.cursor/rules/*.mdc` | Embedded in rules | `globs` frontmatter |
+| OpenCode | `.opencode/instructions.md` | N/A | `.opencode/skills/` | Agent descriptions |

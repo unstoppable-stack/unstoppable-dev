@@ -1,0 +1,84 @@
+---
+description: The Unstoppable Stack - main project context. P2P apps with local AI and crypto payments.
+alwaysApply: true
+---
+
+# The Unstoppable Stack
+
+## Project Overview
+
+A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, templates, and AI agent packs that work across Claude, Cursor, and OpenCode.
+
+## Vision
+
+Build truly unstoppable applications - apps that run locally, communicate peer-to-peer, can run AI inference offline, and process payments without centralized intermediaries.
+
+## Core Modules
+
+### P2P & Runtime
+| Module | Purpose | Source |
+|--------|---------|--------|
+| **Pear** | Desktop runtime for P2P apps | Holepunch |
+| **Bare** | Minimal JS runtime | Holepunch |
+| **Hyperswarm** | P2P networking / DHT | Holepunch |
+| **RPC** | Remote procedure calls over P2P | Holepunch |
+
+### Data
+| Module | Purpose | Source |
+|--------|---------|--------|
+| **HyperDB** | P2P key-value database | Holepunch |
+| **Hyperdrive** | P2P file storage | Holepunch |
+| **Hypercore** | Append-only log (foundation) | Holepunch |
+
+### AI & Payments
+| Module | Purpose | Source |
+|--------|---------|--------|
+| **QVAC SDK** | Local AI model inference | Tether |
+| **WDK Wallet** | Crypto wallet & payments | Tether |
+
+### Mobile
+| Module | Purpose | Source |
+|--------|---------|--------|
+| **Expo Bare** | React Native with Bare runtime | Holepunch |
+
+## Commands
+
+```bash
+# Development
+pnpm install              # Install all dependencies
+pnpm dev                  # Run all packages in dev mode
+pnpm build                # Build all packages
+pnpm test                 # Run tests
+
+# CLI development
+pnpm --filter cli dev     # Run CLI in watch mode
+pnpm --filter cli build   # Build CLI
+
+# Website development
+pnpm --filter website dev # Run website locally
+```
+
+## Development Phases
+
+### Phase 0: Foundation (Current)
+- [x] Define planning documents
+- [ ] Research tech stack libraries deeply
+- [ ] Initialize monorepo structure
+
+### Phase 1: POC
+- [ ] CLI skeleton (init command, prompts, scaffolding)
+- [ ] One working template (Starter)
+- [ ] Agent pack v0 (rules + 3-5 recipes)
+- [ ] Website v0 (landing + getting started)
+
+### Phase 2: Templates & Docs
+- [ ] Additional templates (P2P sync, AI local, mobile)
+- [ ] Per-module documentation
+- [ ] More recipes and patterns
+
+### Phase 3: Unstoppable Auth
+- [ ] Local-first identity model
+- [ ] Device linking and recovery
+
+### Phase 4: Cloud Services (Monetization)
+- [ ] Inference hosting, backup services, billing dashboard
