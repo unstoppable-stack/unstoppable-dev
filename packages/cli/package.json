@@ -1,0 +1,46 @@
+{
+  "name": "create-unstoppable-app",
+  "version": "0.1.0",
+  "description": "Scaffold apps with the Unstoppable Stack - P2P, local AI, and crypto payments",
+  "type": "module",
+  "bin": {
+    "create-unstoppable-app": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "templates",
+    "agent-pack-src"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "inquirer": "^9.2.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "unstoppable",
+    "p2p",
+    "holepunch",
+    "pear",
+    "hypercore",
+    "qvac",
+    "local-first",
+    "scaffolding",
+    "cli"
+  ],
+  "license": "MIT"
+}

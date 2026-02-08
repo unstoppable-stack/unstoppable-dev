@@ -1,0 +1,408 @@
+---
+id: principles
+name: Development Principles
+category: core
+priority: high
+---
+
+# Development Principles
+
+## Pre-Implementation Checklist (MANDATORY)
+
+**Before writing ANY code**, you MUST clarify these decisions with the user. Do not assume defaults.
+
+### 1. App Topology
+Ask: "Is this a single app or multi-app system? If multi-app, list each app/process."
+- Single app
+- Multi-app (e.g., client + backoffice, UI + engine)
+
+### 2. Runtime Per App
+Ask: "What runtime should each app use?"
+| Runtime | Use When |
+|---------|----------|
+| **Pear Desktop** | Desktop app with HTML/CSS/JS UI, needs P2P distribution |
+| **Pear Terminal** | Headless process, background engine, CLI with P2P |
+| **Node.js CLI** | Simple terminal tool, no P2P distribution needed |
+| **Expo + Bare** | Mobile app with P2P backend |
+
+### 3. UI Framework
+Ask: "What UI approach?"
+- **Terminal CLI** - readline, ink, or simple console
+- **Pear HTML/CSS/JS** - Web technologies in Pear desktop
+- **React Native** - Expo mobile UI
+
+### 4. AI Model (if using QVAC)
+Ask: "Which AI model and use case?"
+| Use Case | Recommended Model Constant (`@qvac/sdk`) |
+|----------|------------------------------------------|
+| Tool calling (best) | `QWEN_3_1_7B_INST_Q4` |
+| Tool calling (lighter) | `QWEN_3_4B_INST_Q4_K_M` |
+| Tool calling (small) | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` |
+| General chat | `LLAMA_3_2_1B_INST_Q4_0` or `SALAMANDRATA_2B_INST_Q8` |
+| Mobile (tiny) | `QWEN3_0_6B_INST` |
+
+> **Note**: `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.6.0`. Use Qwen 3 models. 1B models are unreliable for tool calling; use 3B+ minimum.
+
+### 5. Data Storage
+Ask: "What data persistence do you need?"
+- **None** - Ephemeral, in-memory only
+- **Hyperbee** - Simple key-value store
+- **HyperDB** - Schema with indexes, queries
+- **Hyperdrive** - File storage
+
+### 6. P2P Pattern
+Ask: "What P2P capabilities?"
+- **None** - Local only
+- **Replication** - Sync data between peers
+- **RPC** - Request/response over P2P
+- **File sharing** - Transfer files between peers
+
+### 7. Package Structure
+Ask: "How should the code be organized?"
+- **Single package** - One package.json, simple structure
+- **Single package, multiple entry points** - Shared code, separate builds
+- **Monorepo with workspaces** - Fully separate packages
+
+---
+
+## Architecture Confirmation (MANDATORY)
+
+**Before writing ANY code**, you MUST:
+
+1. **Summarize the architecture** based on the checklist answers
+2. **List all apps** that will be created with their:
+   - Name and purpose
+   - Runtime type (Pear Desktop / Pear Terminal / Node CLI / Expo Mobile)
+   - Key modules used
+3. **Get explicit user confirmation** before proceeding
+
+### Confirmation Template
+
+Present this to the user and wait for approval:
+
+```
+## Proposed Architecture
+
+### Apps to Create:
+
+1. **[app-name]/** - [description]
+   - Runtime: [Pear Desktop | Pear Terminal | Node CLI | Expo Mobile]
+   - Modules: [list of modules]
+
+2. **[app-name]/** - [description]
+   - Runtime: [...]
+   - Modules: [...]
+
+### Shared Code:
+- [shared folder if applicable]
+
+### Communication:
+- [How apps communicate if multi-app]
+
+**Does this architecture look correct? (yes/no)**
+```
+
+Only proceed with implementation after receiving explicit confirmation.
+
+---
+
+## Documentation Requirements (MANDATORY)
+
+### Every App MUST Have a README
+
+When creating or scaffolding any application, you MUST create a `README.md` that includes:
+
+1. **Project title and description** - What does this app do?
+2. **Prerequisites** - What needs to be installed (Pear, Node, etc.)
+3. **Installation steps** - How to install dependencies
+4. **How to run** - Commands to start the app
+5. **Project structure** - Brief overview of the folder layout
+
+### README Template
+
+```markdown
+# [App Name]
+
+[One-line description of what this app does]
+
+## Prerequisites
+
+- [Runtime requirement, e.g., Pear Runtime, Node.js 20+]
+- [Any other dependencies]
+
+## Getting Started
+
+```bash
+# Install dependencies
+pnpm install
+
+# Run the app
+pnpm dev
+```
+
+## Project Structure
+
+```
+src/
+├── index.ts      # Entry point
+├── [folder]/     # [Description]
+└── [folder]/     # [Description]
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `pnpm dev` | Start development |
+| `pnpm build` | Build for production |
+```
+
+### Multi-App Projects
+
+For projects with multiple apps (client + server, UI + engine):
+- Each app directory MUST have its own README
+- The root README should explain the overall architecture and how to run all apps
+
+---
+
+## Local-First Design
+
+### Always Work Offline
+```typescript
+// GOOD: Check local first, sync if available
+async function getData(key: string) {
+  const local = await db.get(key)
+  if (local) return local
+
+  // Optionally wait for sync if online
+  if (swarm.connections.size > 0) {
+    await waitForSync(key)
+    return db.get(key)
+  }
+
+  return null
+}
+
+// BAD: Assume network is available
+async function getData(key: string) {
+  await syncWithServer()  // Will fail offline
+  return db.get(key)
+}
+```
+
+### Optimistic UI Updates
+```typescript
+// GOOD: Update UI immediately, sync in background
+function handleSave(data: Data) {
+  // 1. Update local immediately
+  db.put(data.id, data)
+
+  // 2. UI reflects change instantly
+  updateUI(data)
+
+  // 3. Sync happens automatically via Hyperswarm
+}
+```
+
+## P2P Networking
+
+### Handle Disconnection Gracefully
+```typescript
+swarm.on('connection', (socket, info) => {
+  console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
+
+  socket.on('error', (err) => {
+    // Don't crash - peers disconnect all the time
+    console.log('Peer error (normal):', err.message)
+  })
+
+  socket.on('close', () => {
+    console.log('Peer disconnected')
+    // App continues working - this is expected
+  })
+})
+```
+
+### Use Topics for Discovery
+```typescript
+// GOOD: Deterministic topic from app/room ID
+function getTopic(roomId: string): Buffer {
+  return crypto.createHash('sha256')
+    .update('my-app:' + roomId)
+    .digest()
+}
+
+// Join topic
+const topic = getTopic('room-123')
+const discovery = swarm.join(topic)
+
+// Wait for initial peers
+await discovery.flushed()
+```
+
+### Replicate Before Reading Remote Data
+```typescript
+// GOOD: Set up replication before accessing shared data
+swarm.on('connection', (socket) => {
+  // This ensures data syncs
+  db.corestore.replicate(socket)
+})
+
+// Later, after replication is flowing
+const value = await db.get(key)
+
+// BAD: Try to read without replication set up
+const value = await db.get(key)  // Might be stale or missing
+```
+
+## Data Handling
+
+### Everything is Async
+```typescript
+// GOOD: Always await Hypercore operations
+await db.ready()
+await db.put('key', value)
+const result = await db.get('key')
+
+// BAD: Forgetting await
+db.put('key', value)  // Won't work as expected
+```
+
+### Use Corestore for Multiple Hypercores
+```typescript
+// GOOD: Central store manages all cores
+const store = new Corestore('./storage')
+const db = new HyperDB(store.namespace('db'))
+const drive = new Hyperdrive(store.namespace('files'))
+
+// Replicating store replicates everything
+swarm.on('connection', (socket) => {
+  store.replicate(socket)
+})
+
+// BAD: Separate stores for each core
+const dbStore = new Corestore('./db')
+const fileStore = new Corestore('./files')  // Harder to manage
+```
+
+### Handle Conflicts
+```typescript
+// In P2P systems, conflicts can occur
+// HyperDB uses last-writer-wins by default
+
+// For more control, use versioned writes
+const node = await db.get(key)
+if (node) {
+  // Check version before updating
+  await db.put(key, newValue, { ...node })
+}
+```
+
+## Error Handling
+
+### Network Errors are Normal
+```typescript
+// GOOD: Expect and handle network issues
+try {
+  await someNetworkOperation()
+} catch (err) {
+  if (err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT') {
+    // Normal in P2P - continue offline
+    console.log('Network unavailable, working offline')
+  } else {
+    throw err
+  }
+}
+```
+
+### Storage Errors are Critical
+```typescript
+// GOOD: Handle storage errors seriously
+try {
+  await db.put(key, value)
+} catch (err) {
+  // This is a real problem - local storage issue
+  console.error('Storage error:', err)
+  notifyUser('Failed to save. Check disk space.')
+}
+```
+
+## Security
+
+### Keys are Identities
+```typescript
+// Every Hypercore has a key pair
+const core = store.get({ name: 'my-data' })
+await core.ready()
+
+console.log('Public key:', core.key.toString('hex'))
+// This key identifies the core across the network
+// Anyone with the key can read (if they can connect)
+```
+
+### Discovery Keys for Privacy
+```typescript
+// Don't share public keys directly in topics
+// Use discovery keys instead
+const discoveryKey = crypto.createHash('sha256')
+  .update(core.key)
+  .digest()
+
+swarm.join(discoveryKey)
+// Peers need the actual key to read data
+// Discovery key just helps find each other
+```
+
+## Testing
+
+### Test Locally with Multiple Instances
+```typescript
+// Create two peers in same process for testing
+const store1 = new Corestore('./test-storage-1')
+const store2 = new Corestore('./test-storage-2')
+
+const db1 = new HyperDB(store1)
+const db2 = new HyperDB(store2)
+
+// Pipe them together (simulates network)
+const s1 = store1.replicate(true)
+const s2 = store2.replicate(false)
+s1.pipe(s2).pipe(s1)
+
+// Now they sync
+await db1.put('key', 'value')
+await new Promise(r => setTimeout(r, 100))
+const result = await db2.get('key')
+```
+
+### Use RAM Storage for Tests
+```typescript
+import RAM from 'random-access-memory'
+
+const store = new Corestore(RAM)  // No disk writes
+```
+
+## Performance
+
+### Batch Writes
+```typescript
+// GOOD: Batch multiple writes
+const batch = db.batch()
+for (const item of items) {
+  batch.put(item.key, item.value)
+}
+await batch.flush()
+
+// BAD: Individual writes
+for (const item of items) {
+  await db.put(item.key, item.value)  // Slower
+}
+```
+
+### Limit Active Connections
+```typescript
+// Don't accept unlimited peers
+const swarm = new Hyperswarm({
+  maxPeers: 32  // Reasonable limit
+})
+```

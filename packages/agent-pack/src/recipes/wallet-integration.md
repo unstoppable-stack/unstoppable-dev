@@ -1,0 +1,57 @@
+---
+id: wallet-integration
+name: Wallet Integration
+category: recipe
+requires: [wdk]
+tags: [payments, wallet, crypto]
+---
+
+# Recipe: Wallet Integration
+
+## Problem
+
+Add multi-chain wallet support and send a transaction.
+
+## Prerequisites
+
+- WDK core and at least one chain wallet module installed.
+- Access to a chain provider or RPC endpoint.
+
+## Solution
+
+Use WDK core with chain-specific wallet modules and derive accounts from a seed
+phrase.
+
+## Full Example
+
+```js
+import WDK from "@tetherto/wdk";
+import WalletManagerEvm from "@tetherto/wdk-wallet-evm";
+
+const seedPhrase = WDK.getRandomSeedPhrase();
+const wdk = new WDK(seedPhrase).registerWallet("ethereum", WalletManagerEvm, {
+  provider: "https://eth.drpc.org",
+});
+
+const account = await wdk.getAccount("ethereum", 0);
+const address = await account.getAddress();
+console.log("address:", address);
+
+const balance = await account.getBalance();
+console.log("balance:", balance.toString());
+
+// Send a transaction (example)
+// const tx = await account.sendTransaction({ to: address, value: 1000000000000000000n })
+// console.log(tx.hash)
+```
+
+## Variations
+
+- Register multiple wallet modules (BTC, TRON, Solana) on the same seed phrase.
+- Use ERC-4337 modules for gasless flows.
+
+## Troubleshooting
+
+- If balance is zero, confirm you are using the correct network and provider
+  URL.
+- If transactions fail, check chain-specific API keys or paymaster settings.

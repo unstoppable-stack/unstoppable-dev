@@ -1,0 +1,251 @@
+---
+id: qvac
+name: QVAC SDK
+category: module
+requires: []
+tags: [ai, inference, local]
+priority: high
+---
+
+# QVAC SDK
+
+## Overview
+
+QVAC SDK provides local AI inference across Node.js, Bare, and Expo, backed by
+Bare-native inference engines. It exposes a function-based JS API that loads
+models, runs inference, streams tokens, and manages model lifecycle.
+
+## Version Notes
+
+- Verified in local sources: `@qvac/sdk@0.6.0` (tarball in
+  `research/.tmp-qvac-sdk/package`).
+- Docs mention Node/Bare/Expo minimums; confirm with current QVAC docs before
+  publishing.
+
+## Installation
+
+```bash
+npm install @qvac/sdk
+```
+
+## Quick Start
+
+```js
+import {
+  loadModel,
+  LLAMA_3_2_1B_INST_Q4_0,
+  completion,
+  unloadModel,
+} from "@qvac/sdk";
+
+const modelId = await loadModel({
+  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+  modelType: "llm",
+});
+
+const result = completion({
+  modelId,
+  history: [{ role: "user", content: "Hello" }],
+  stream: true,
+});
+
+for await (const token of result.tokenStream) {
+  process.stdout.write(token);
+}
+
+await unloadModel({ modelId });
+```
+
+## Core Concepts
+
+- Bare worker: non-Bare runtimes spawn a Bare worker on first SDK call.
+- Model registry: models can be loaded from local paths, HTTP URLs, or
+  Hyperdrive (`pear://`).
+- Streaming: `completion()` and `translate()` return `tokenStream` async
+  generators.
+- KV cache: `kvCache: true` auto-generates a cache key; a string key pins a
+  session. When a cache exists, only the last message is sent to the model.
+
+## Model Selection Guide
+
+| Use Case                        | Recommended Model                                              | Why                                                   |
+| ------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------- |
+| Tool calling / function calling | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` or `QWEN_3_1_7B_INST_Q4` | Tool-calling tuned model or strong structured output. |
+| General chat (small)            | `LLAMA_3_2_1B_INST_Q4_0`                                       | Small footprint, fast startup.                        |
+| General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
+| Code generation                 | _No explicit `CODER_\*` constants in 0.6.0\_                   | Use Qwen instruct models or check newer SDKs.         |
+| Mobile/small footprint          | `QWEN3_0_6B_INST` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
+| Multimodal (vision/video)       | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
+| Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
+| Speech-to-text                  | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
+| Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | NMT models for specific language pairs.               |
+
+Verified model constants exported by `@qvac/sdk@0.6.0` (subset):
+`LLAMA_3_2_1B_INST_Q4_0`, `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`,
+`QWEN3_0_6B_INST`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
+`SALAMANDRATA_2B_INST_Q8`, `SMOLVLM2_2_500M_MULTIMODAL_Q8_0`,
+`MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0`, `GTE_LARGE_FP16`,
+`EMBEDDINGGEMMA_300M_Q4_0`, `WHISPER_LARGE_V3_TURBO`, `WHISPER_TINY`,
+`VAD_SILERO_5_1_2`, `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`.
+
+> **Note**: If a model constant is not listed here, treat it as unverified for
+> 0.6.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
+
+## Context Window Limits
+
+QVAC does not expose explicit context window sizes in the SDK. Use model cards
+or external docs for exact limits.
+
+> **Note**: As a rough guide (unverified), 0.6B models often fall in the 2k-4k
+> token range, 1B models around ~4k, and 3B+ models 8k+. Tool-calling loops grow
+> history quickly, so plan trimming and caching.
+
+## API Reference
+
+- `loadModel({ modelSrc, modelType, modelConfig?, onProgress? }): Promise<string>` —
+  loads a model and returns `modelId`. `modelConfig` accepts `ctx_size`,
+  `n_discarded`, `tools: true`, and other llama.cpp params.
+  - **`tools: true`**: Always set this for tool-calling models. Activates the model's
+    native tool-calling template. The model can still generate free text — it is NOT
+    constrained to JSON-only output. Without it, tools silently don't work.
+- `completion({ modelId, history, stream, tools?, kvCache? })` — returns
+  `{ tokenStream, toolCallStream, toolCalls, stats, text }`.
+  **Does NOT accept `modelConfig`** — set that at load time.
+  - `tokenStream`: `AsyncIterable<string>` — streaming tokens
+  - `toolCallStream`: `AsyncIterable<{ type: 'toolCall', call: {...} }>` — real-time tool call events
+  - `toolCalls`: `Promise<ToolCall[]>` — all parsed tool calls
+  - `stats`: `Promise<{ timeToFirstToken, tokensPerSecond, cacheTokens }>` — performance metrics
+  - `text`: `Promise<string>` — full response text
+  - Process `tokenStream` and `toolCallStream` in **parallel** via `Promise.all`
+- `downloadAsset({ assetSrc, seed, onProgress })` downloads without loading.
+- `deleteCache({ kvCacheKey | all })` removes KV caches.
+  ```ts
+  import { deleteCache } from '@qvac/sdk'
+  await deleteCache({ kvCacheKey: sessionId })
+  ```
+- `embed`, `translate`, `transcribe`, `textToSpeech`, `ocr` for modality tasks.
+- `ragChunk`, `ragSaveEmbeddings`, `ragSearch`, `ragCloseWorkspace` for RAG.
+- `getModelInfo()` for registry metadata.
+- `loggingStream()` for model/SDK logs.
+- `startQVACProvider()` / `stopQVACProvider()` for delegated inference.
+
+## Integration with Other Modules
+
+- Pear: run inference in a Pear terminal "engine" and stream tokens to the UI
+  via `pear-pipe`.
+- Bare: inference runs in-process; ideal for embedded/mobile worklets.
+- Hyperswarm: delegated inference uses P2P topics and provider public keys.
+
+## Common Patterns
+
+```js
+// Download then load from cache
+await downloadAsset({ assetSrc: LLAMA_3_2_1B_INST_Q4_0 });
+const modelId = await loadModel({
+  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+  modelType: "llm",
+});
+```
+
+```js
+// Delegated inference consumer
+const modelId = await loadModel({
+  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+  modelType: "llm",
+  delegate: { topic, providerPublicKey },
+});
+```
+
+## Dependency Notes
+
+- **Zod v4 required**: `@qvac/sdk` internally depends on Zod v4. If your project
+  installs `zod@^3`, the `ToolInput` types are incompatible and produce confusing
+  TypeScript errors. Always install `zod@^4`:
+  ```bash
+  pnpm add zod@^4
+  ```
+
+## Qwen 3 `<think>` Token Handling
+
+Qwen 3 models (`QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, `QWEN3_0_6B_INST`)
+emit `<think>...</think>` blocks for internal reasoning before generating their
+response.
+
+- **Suppress reasoning**: Add `/no_think` to the end of your system prompt.
+- **Filter from output**: `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
+- **Context impact**: Think tokens count against the context window even when
+  suppressed or filtered from display.
+- **Streaming**: When streaming, check if you're inside a think block before
+  displaying tokens:
+  ```ts
+  function isInsideThinkBlock(text: string): boolean {
+    const lastOpen = text.lastIndexOf('<think>')
+    const lastClose = text.lastIndexOf('</think>')
+    return lastOpen > lastClose
+  }
+  ```
+
+## Context Management
+
+**IMPORTANT**: `completion()` does NOT accept `modelConfig`. Context settings
+go in `loadModel()`, caching goes in `completion()`:
+
+- **`modelConfig.ctx_size`** (in `loadModel()`): Set the context window size.
+- **`modelConfig.n_discarded`** (in `loadModel()`): Sliding window — auto-discard
+  oldest `N` tokens when context fills. Rule of thumb: `Math.floor(ctx_size / 10)`.
+  Eliminates manual history trimming.
+- **`kvCache: true`** (in `completion()`): Auto-generates a cache key.
+- **`kvCache: "session-id"`** (in `completion()`): Manual session key. Recommended.
+- **`deleteCache()`**: Remove cache files. Call when a conversation ends or model
+  changes.
+
+```ts
+// Context config at LOAD time
+const modelId = await loadModel({
+  modelSrc: QWEN_3_1_7B_INST_Q4,
+  modelType: 'llm',
+  modelConfig: {
+    ctx_size: 4096,
+    n_discarded: Math.floor(4096 / 10),
+  },
+})
+
+// Cache key at COMPLETION time
+const result = completion({ modelId, history, stream: true, kvCache: sessionId })
+```
+
+## Pitfalls & Gotchas
+
+- **Install `zod@^4`**, not v3 — QVAC depends on Zod v4 internally.
+- **Always set `tools: true` in `modelConfig`** when using tool-calling models —
+  without it, tools silently don't work. The model can still generate free text.
+- **Do NOT create a "respond" or "reply" tool** — the model generates free text
+  naturally with `tools: true` enabled.
+- **Process `tokenStream` and `toolCallStream` in parallel** via `Promise.all`,
+  not sequentially.
+- **Filter `<tool_call>` blocks from visible output** — the raw token stream
+  includes XML tool call blocks that should not be shown to users.
+- **Use JSON repair in fallback parsing** — small models (3-4B) produce slightly
+  malformed JSON in tool calls.
+- LLM models require `*.gguf` (llama.cpp). OCR/TTS use ONNX (`*.onnx`), NMT uses
+  `*.bin`.
+- Expo requires physical devices (no emulators) for QVAC LLM inference.
+- On Linux, Vulkan runtime and compatible GPU drivers are required for GPU
+  inference.
+- Context overflows are common on small models when history grows. Use
+  `n_discarded` for automatic sliding window, or `kvCache` + manual trimming.
+- **Qwen 3 models emit `<think>` blocks** — filter or suppress with `/no_think`.
+- **1B models are unreliable for tool calling** — use 3B+ minimum, 7B recommended.
+
+## Error Handling Patterns
+
+- Context overflow: trim older messages and retry the call.
+- Download failures: surface progress errors and provide retry logic.
+- Shutdown races: call `unloadModel()` and wait for streams to finish before
+  exit.
+
+## Resources
+
+- https://github.com/tetherto/qvac-sdk
+- https://github.com/tetherto/qvac-docs
+- https://github.com/tetherto/qvac-examples

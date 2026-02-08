@@ -1,0 +1,59 @@
+---
+id: corestore
+name: Corestore
+category: module
+requires: [hypercore]
+tags: [storage, management]
+priority: medium
+---
+
+# Corestore
+
+## Overview
+Corestore manages multiple Hypercores with shared storage and key derivation. It is commonly used to back Hyperdrive and other multi-core apps, simplifying replication and storage layout.
+
+## Installation
+```bash
+npm install corestore
+```
+
+## Quick Start
+```js
+import Corestore from "corestore"
+
+const store = new Corestore("./storage")
+const core = store.get({ name: "events" })
+await core.ready()
+await core.append("hello")
+```
+
+## Core Concepts
+- Named cores and deterministic key derivation.
+- Single storage location for many cores.
+- Replication at the store level.
+
+## API Reference
+- `new Corestore(storage, options)`
+- `store.get(opts)`
+- `store.replicate(stream)`
+- `store.ready()`
+
+## Integration with Other Modules
+- Hyperdrive expects a Corestore instance.
+- Replicate via Hyperswarm using `store.replicate(conn)`.
+
+## Common Patterns
+```js
+swarm.on("connection", (conn) => store.replicate(conn))
+```
+
+## Pitfalls & Gotchas
+- Call `await store.ready()` before creating cores in some runtimes.
+- Using different `name` values produces distinct keys and data.
+
+## Version Notes
+- Verified in local sources: `corestore` ^7.6.0 (qvac-health-dev).
+- Latest on npm: 7.7.0 (checked 2026-02-05).
+
+## Resources
+- https://github.com/holepunchto/corestore

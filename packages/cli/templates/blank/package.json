@@ -1,0 +1,14 @@
+{
+  "name": "unstoppable-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Run the dev script for your app(s) - see README.md'",
+    "build": "echo 'Run the build script for your app(s)'",
+    "test": "echo 'No tests configured yet'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,0 +1,121 @@
+---
+id: hyperswarm
+name: Hyperswarm
+category: module
+requires: []
+tags: [networking, p2p, dht]
+priority: high
+---
+
+# Hyperswarm
+
+## Overview
+
+Hyperswarm is a high-level API for discovering and connecting peers via DHT
+topics. It handles peer discovery, connection retries, and encrypted Noise
+connections, making it the default transport for Hypercore and Hyperdrive
+replication.
+
+## Version Notes
+
+- Verified in local sources: `hyperswarm` ^4.14.2 (qvac-health-dev).
+- Latest on npm: 4.16.0 (checked 2026-02-05).
+
+## Installation
+
+```bash
+npm install hyperswarm
+```
+
+## Quick Start
+
+```js
+import Hyperswarm from "hyperswarm";
+
+const swarm = new Hyperswarm();
+
+swarm.on("connection", (conn, info) => {
+  conn.write("hello from server");
+});
+
+const topic = Buffer.alloc(32).fill("hello world");
+const discovery = swarm.join(topic, { server: true, client: true });
+await discovery.flushed();
+```
+
+## Core Concepts
+
+- Topics: 32-byte buffers used to discover peers via the DHT.
+- Client vs server mode: server announces to the DHT, client connects to
+  announcers.
+- Encrypted streams: `connection` gives a Noise-encrypted duplex stream.
+- Firewalling: optional `firewall` callback to accept/deny peers by public key.
+
+## Join Options — IMPORTANT
+
+For reliable mutual discovery, **both peers** should use
+`{ server: true, client: true }`:
+
+```js
+const discovery = swarm.join(topic, { server: true, client: true })
+await discovery.flushed()
+```
+
+**Common mistake**: Splitting roles (`server: true, client: false` on one side
+and `server: false, client: true` on the other) is **unreliable** and leads to
+silent connection failures.
+
+**Waiting for discovery**: Use `discovery.flushed()` (the return value from
+`swarm.join()`), NOT `swarm.flush()`. `discovery.flushed()` waits for the
+specific topic's discovery announcements to complete. `swarm.flush()` waits for
+all pending DHT operations and connections globally.
+
+## API Reference
+
+- `new Hyperswarm(opts)`: create a swarm (`seed`, `keyPair`, `firewall`,
+  `maxPeers`).
+- `swarm.join(topic, { server, client })`: discover and connect on a topic.
+- `swarm.flush()`: wait for pending DHT operations and connections.
+- `swarm.on("connection", (socket, peerInfo) => {})`: handle peer connections.
+
+## Integration with Other Modules
+
+- Use `swarm.on("connection")` to `core.replicate(conn)` for
+  Hypercore/Hyperdrive.
+- Wrap the `conn` with `@hyperswarm/secret-stream` or multiplex protocols with
+  `protomux` for RPC-style messaging.
+
+## Common Patterns
+
+```js
+// Hypercore replication
+swarm.on("connection", (conn) => core.replicate(conn));
+const discovery = swarm.join(core.discoveryKey, { server: true, client: true });
+await discovery.flushed();
+```
+
+```js
+// Many-peer topic chat
+const discovery = swarm.join(topic, { server: true, client: true });
+await discovery.flushed();
+```
+
+## Pitfalls & Gotchas
+
+- Topics must be exactly 32 bytes; hash arbitrary strings first (e.g.,
+  `hypercore-crypto`).
+- Best practice is one Hyperswarm instance per app to reduce duplicate
+  connections.
+- **Both peers should join with `{ server: true, client: true }`** for mutual
+  discovery. Splitting server/client roles is unreliable.
+- **Use `discovery.flushed()`** (return value of `swarm.join()`) to wait for a
+  specific topic's announcements. `swarm.flush()` waits globally and is less
+  precise.
+- TypeScript types are provided by the `hyperswarm` package, but some connection
+  callback shapes are loose. If your tooling can't resolve them, use `Duplex`
+  types or `any` for `conn`/`info` and add local interfaces as needed.
+
+## Resources
+
+- https://github.com/holepunchto/hyperswarm
+- https://docs.holepunch.to/howto/connect-to-many-peers-by-topic-with-hyperswarm
