@@ -1,6 +1,6 @@
-import { mkdir, readFile, writeFile, readdir, copyFile, cp } from 'fs/promises'
+import { mkdir, readFile, writeFile, readdir } from 'fs/promises'
 import { existsSync } from 'fs'
-import { join, dirname, basename } from 'path'
+import { join, dirname } from 'path'
 import { fileURLToPath } from 'url'
 import type { AssistantId, TemplateId } from '../constants.js'
 
@@ -12,7 +12,6 @@ const AGENT_PACK_SRC = join(__dirname, '..', 'agent-pack-src')
 export interface BuildOptions {
   tool: AssistantId
   template: TemplateId
-  modules: string[]
   outputDir: string
   projectName: string
 }
@@ -24,7 +23,7 @@ export interface BuildResult {
 
 // ─── Content Loading ─────────────────────────────────────────────────────────
 
-async function loadContent(template: string, modules: string[]) {
+async function loadContent() {
   const content = {
     modules: [] as { id: string; content: string }[],
     recipes: [] as { id: string; content: string }[],
@@ -35,14 +34,15 @@ async function loadContent(template: string, modules: string[]) {
     }
   }
 
-  // Load modules
+  // Load ALL modules
   const modulesDir = join(AGENT_PACK_SRC, 'modules')
   if (existsSync(modulesDir)) {
-    for (const mod of modules) {
-      const modPath = join(modulesDir, `${mod}.md`)
-      if (existsSync(modPath)) {
-        content.modules.push({ id: mod, content: await readFile(modPath, 'utf-8') })
-      }
+    const moduleFiles = await readdir(modulesDir)
+    for (const file of moduleFiles.filter(f => f.endsWith('.md'))) {
+      content.modules.push({
+        id: file.replace('.md', ''),
+        content: await readFile(join(modulesDir, file), 'utf-8')
+      })
     }
   }
 
@@ -58,7 +58,7 @@ async function loadContent(template: string, modules: string[]) {
     }
   }
 
-  // Load core
+  // Load ALL core
   const coreDir = join(AGENT_PACK_SRC, 'core')
   if (existsSync(coreDir)) {
     const coreFiles = await readdir(coreDir)
@@ -70,7 +70,7 @@ async function loadContent(template: string, modules: string[]) {
     }
   }
 
-  // Load skills (thin SKILL.md + resources/)
+  // Load ALL skills (thin SKILL.md + resources/)
   const skillsDir = join(AGENT_PACK_SRC, 'skills')
   if (existsSync(skillsDir)) {
     const skillDirs = await readdir(skillsDir, { withFileTypes: true })
@@ -132,14 +132,6 @@ function parseFrontmatter(content: string): { data: any; body: string } {
   return { data, body: match[2] }
 }
 
-/** Pick only the 2-3 most important core files for slim output */
-function selectSlimCore(core: { id: string; content: string }[]) {
-  const priority = ['architecture', 'principles', 'patterns', 'cheatsheet']
-  return core
-    .filter(c => priority.includes(c.id))
-    .sort((a, b) => priority.indexOf(a.id) - priority.indexOf(b.id))
-}
-
 // ─── Claude Code Builder ─────────────────────────────────────────────────────
 
 async function buildClaude(
@@ -148,16 +140,13 @@ async function buildClaude(
 ): Promise<BuildResult> {
   const files: string[] = []
 
-  // 1. Build SLIM CLAUDE.md (≤8KB target — overview + patterns summary only)
+  // 1. Build SLIM CLAUDE.md
   let claudeMd = `# ${options.projectName}
 
 ## Overview
 This is an Unstoppable Stack project using the ${options.template} template.
 
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
-
-## Tech Stack
-${options.modules.map(m => `- **${m}**`).join('\n')}
 
 ## Commands
 - \`pnpm dev\` - Start development
@@ -215,7 +204,7 @@ For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
   const settings: any = {
     permissions: {
       allow: [
-        'Bash(npm:*)', 'Bash(pnpm:*)', 'Bash(pear:*)',
+        'Bash(npm:*)', 'Bash(pnpm:*)', 'Bash(bun:*)', 'Bash(pear:*)',
         'Bash(git add:*)', 'Bash(git commit:*)'
       ],
       ask: ['Bash(git push:*)'],
@@ -243,7 +232,7 @@ For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
     files.push(`.claude/rules/${core.id}.md`)
   }
 
-  // 5. Write module docs as path-scoped rules
+  // 5. Write ALL module docs as path-scoped rules
   for (const mod of content.modules) {
     const body = stripFrontmatter(mod.content)
     const pathScoped = `---
@@ -251,6 +240,10 @@ paths:
   - "src/p2p/**/*.ts"
   - "src/data/**/*.ts"
   - "src/ai/**/*.ts"
+  - "src/wallet/**/*.ts"
+  - "src/ui/**/*.ts"
+  - "src/components/**/*.ts"
+  - "src/components/**/*.tsx"
 ---
 
 ${body}
@@ -259,7 +252,7 @@ ${body}
     files.push(`.claude/rules/module-${mod.id}.md`)
   }
 
-  // 6. Write skills with resources (progressive disclosure)
+  // 6. Write ALL skills with resources (progressive disclosure)
   for (const skill of content.skills) {
     const skillDir = join(claudeDir, 'skills', skill.id)
     await mkdir(skillDir, { recursive: true })
@@ -299,9 +292,6 @@ alwaysApply: true
 # ${options.projectName}
 
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
-
-## Tech Stack
-${options.modules.map(m => `- **${m}**`).join('\n')}
 
 ## Commands
 - \`pnpm dev\` - Start development
@@ -351,7 +341,7 @@ ${body}
     files.push(`.cursor/rules/core-${core.id}.mdc`)
   }
 
-  // 3. Module docs with specific descriptions and file globs
+  // 3. ALL module docs with specific descriptions and file globs
   const moduleGlobs: Record<string, string[]> = {
     hyperdb: ['src/data/**/*.ts', 'src/db/**/*.ts'],
     hyperdrive: ['src/files/**/*.ts', 'src/storage/**/*.ts'],
@@ -361,7 +351,7 @@ ${body}
     corestore: ['src/data/**/*.ts'],
     qvac: ['src/ai/**/*.ts', 'src/inference/**/*.ts'],
     wdk: ['src/wallet/**/*.ts', 'src/payments/**/*.ts'],
-    pear: ['index.html', 'app.js', 'src/ui/**/*.ts'],
+    pear: ['index.html', 'app.js', 'src/ui/**/*.ts', 'src/components/**/*.tsx'],
     bare: ['src/**/*.ts'],
   }
 
@@ -379,7 +369,7 @@ ${body}
     files.push(`.cursor/rules/module-${mod.id}.mdc`)
   }
 
-  // 4. Skills as description-triggered rules
+  // 4. ALL skills as description-triggered rules
   for (const skill of content.skills) {
     const { data, body } = parseFrontmatter(skill.skillMd)
     const skillMdc = `---
@@ -393,8 +383,7 @@ ${body}
   }
 
   // 5. P2P patterns (glob-scoped)
-  if (options.modules.includes('hyperswarm') || options.modules.includes('hyperdb')) {
-    const p2pMdc = `---
+  const p2pMdc = `---
 description: P2P coding patterns for Hypercore stack - connection handling, replication, and discovery
 globs: ["src/p2p/**/*.ts", "src/data/**/*.ts"]
 ---
@@ -415,13 +404,11 @@ globs: ["src/p2p/**/*.ts", "src/data/**/*.ts"]
 - Don't forget to close connections on cleanup
 - Don't block app startup waiting for peers — read local data first
 `
-    await writeFile(join(rulesDir, 'p2p-patterns.mdc'), p2pMdc)
-    files.push('.cursor/rules/p2p-patterns.mdc')
-  }
+  await writeFile(join(rulesDir, 'p2p-patterns.mdc'), p2pMdc)
+  files.push('.cursor/rules/p2p-patterns.mdc')
 
   // 6. QVAC patterns (glob-scoped)
-  if (options.modules.includes('qvac')) {
-    const qvacMdc = `---
+  const qvacMdc = `---
 description: QVAC local AI inference patterns - model loading, streaming, tool calling
 globs: ["src/ai/**/*.ts", "src/inference/**/*.ts"]
 ---
@@ -445,9 +432,8 @@ globs: ["src/ai/**/*.ts", "src/inference/**/*.ts"]
 - Don't use Zod refinements (.integer(), .min()) in ToolInput schemas
 - Don't send entire conversation history without trimming
 `
-    await writeFile(join(rulesDir, 'qvac-patterns.mdc'), qvacMdc)
-    files.push('.cursor/rules/qvac-patterns.mdc')
-  }
+  await writeFile(join(rulesDir, 'qvac-patterns.mdc'), qvacMdc)
+  files.push('.cursor/rules/qvac-patterns.mdc')
 
   // 7. .cursorignore
   const cursorignore = `# Cursor ignore
@@ -475,7 +461,7 @@ async function buildOpenCode(
   await mkdir(join(openCodeDir, 'agents'), { recursive: true })
   await mkdir(join(openCodeDir, 'skills'), { recursive: true })
 
-  // 1. Build opencode.json with skill gating
+  // 1. Build opencode.json — all skills enabled
   const config: any = {
     $schema: 'https://opencode.ai/config.json',
     model: 'anthropic/claude-sonnet-4-5',
@@ -484,11 +470,10 @@ async function buildOpenCode(
     permission: {
       edit: 'allow',
       bash: {
-        'npm *': 'allow', 'pnpm *': 'allow', 'pear *': 'allow',
+        'npm *': 'allow', 'pnpm *': 'allow', 'bun *': 'allow', 'pear *': 'allow',
         'git commit *': 'allow', 'git push *': 'ask'
       },
-      // Skill gating: only enable skills relevant to selected modules
-      skill: { '*': false }
+      skill: { '*': 'allow' }
     },
     formatter: {
       prettier: {
@@ -499,60 +484,32 @@ async function buildOpenCode(
     agent: {}
   }
 
-  // Enable relevant skills based on modules
-  const skillModuleMap: Record<string, string[]> = {
-    'add-p2p-sync': ['hypercore', 'hyperswarm', 'hyperdb'],
-    'local-inference': ['qvac'],
-    'qvac-tool-calling': ['qvac'],
-    'qvac-chat-app': ['qvac'],
-    'file-sharing': ['hyperdrive'],
-    'offline-first-app': ['hypercore', 'hyperbee'],
-    'p2p-rpc': ['hyperswarm'],
-    'secure-communication': ['hyperswarm'],
-    'wallet-integration': ['wdk'],
-  }
-
-  for (const [skillId, requiredMods] of Object.entries(skillModuleMap)) {
-    if (requiredMods.some(m => options.modules.includes(m))) {
-      config.permission.skill[skillId] = 'allow'
-    }
-  }
-
-  // Planning agent (always)
+  // Always include all agents
   config.agent['planner'] = {
     description: 'Planning agent - helps create implementation plans before coding',
     mode: 'subagent',
     prompt: '.opencode/agents/planner.md'
   }
 
-  // P2P expert agent
-  if (options.modules.some((m: string) => ['hyperswarm', 'hyperdb', 'hyperdrive', 'hypercore'].includes(m))) {
-    config.agent['p2p-expert'] = {
-      description: 'Expert in P2P patterns, Hypercore, HyperDB, Hyperswarm, Hyperdrive',
-      mode: 'subagent',
-      prompt: '.opencode/agents/p2p-expert.md'
-    }
+  config.agent['p2p-expert'] = {
+    description: 'Expert in P2P patterns, Hypercore, HyperDB, Hyperswarm, Hyperdrive',
+    mode: 'subagent',
+    prompt: '.opencode/agents/p2p-expert.md'
   }
 
-  // AI expert agent
-  if (options.modules.includes('qvac')) {
-    config.agent['ai-expert'] = {
-      description: 'Expert in QVAC local AI inference, model selection, and tool calling',
-      mode: 'subagent',
-      prompt: '.opencode/agents/ai-expert.md'
-    }
+  config.agent['ai-expert'] = {
+    description: 'Expert in QVAC local AI inference, model selection, and tool calling',
+    mode: 'subagent',
+    prompt: '.opencode/agents/ai-expert.md'
   }
 
   await writeFile(join(options.outputDir, 'opencode.json'), JSON.stringify(config, null, 2))
   files.push('opencode.json')
 
-  // 2. Build SLIM instructions.md (lazy loading guidance)
+  // 2. Build SLIM instructions.md
   let instructions = `# ${options.projectName}
 
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
-
-## Tech Stack
-${options.modules.map(m => `- **${m}**`).join('\n')}
 
 ## Commands
 - \`pnpm dev\` - Start development
@@ -639,8 +596,7 @@ Help create clear, actionable implementation plans in \`planning/\`.
 `)
   files.push('.opencode/agents/planner.md')
 
-  if (config.agent['p2p-expert']) {
-    await writeFile(join(openCodeDir, 'agents', 'p2p-expert.md'), `---
+  await writeFile(join(openCodeDir, 'agents', 'p2p-expert.md'), `---
 description: Expert in P2P patterns and Holepunch stack
 mode: subagent
 ---
@@ -654,7 +610,7 @@ You are an expert in P2P application development with the Holepunch stack.
 - HyperDB distributed database with schemas
 - Hyperswarm P2P networking and discovery
 - Hyperdrive P2P filesystem
-- Pear desktop runtime
+- Pear desktop and terminal runtime
 
 ## Key Patterns
 - Always await \`db.ready()\` / \`core.ready()\`
@@ -666,11 +622,9 @@ You are an expert in P2P application development with the Holepunch stack.
 ## When to Use
 Call me for P2P data sync, connection debugging, replication setup, or peer discovery issues.
 `)
-    files.push('.opencode/agents/p2p-expert.md')
-  }
+  files.push('.opencode/agents/p2p-expert.md')
 
-  if (config.agent['ai-expert']) {
-    await writeFile(join(openCodeDir, 'agents', 'ai-expert.md'), `---
+  await writeFile(join(openCodeDir, 'agents', 'ai-expert.md'), `---
 description: Expert in QVAC local AI inference
 mode: subagent
 ---
@@ -696,10 +650,9 @@ You are an expert in local AI inference with QVAC.
 ## When to Use
 Call me for model setup, inference debugging, tool calling, or performance optimization.
 `)
-    files.push('.opencode/agents/ai-expert.md')
-  }
+  files.push('.opencode/agents/ai-expert.md')
 
-  // 4. Write skills with resources
+  // 4. Write ALL skills with resources
   for (const skill of content.skills) {
     const skillDir = join(openCodeDir, 'skills', skill.id)
     await mkdir(skillDir, { recursive: true })
@@ -726,7 +679,7 @@ export async function buildAgentPack(options: BuildOptions): Promise<BuildResult
     return { filesWritten: [], warnings: [] }
   }
 
-  const content = await loadContent(options.template, options.modules)
+  const content = await loadContent()
 
   switch (options.tool) {
     case 'claude':

@@ -5,7 +5,7 @@ import inquirer from 'inquirer'
 import chalk from 'chalk'
 import ora from 'ora'
 import { scaffold } from './scaffold.js'
-import { TEMPLATES, MODULES, ASSISTANTS } from './constants.js'
+import { TEMPLATES, ASSISTANTS } from './constants.js'
 
 const program = new Command()
 
@@ -16,7 +16,6 @@ program
   .argument('[project-name]', 'Name of the project')
   .option('-t, --template <template>', 'Template to use')
   .option('-a, --assistant <assistant>', 'AI assistant (claude, cursor, opencode, none)')
-  .option('-m, --modules <modules>', 'Additional modules (comma-separated)')
   .option('--no-install', 'Skip dependency installation')
   .action(async (projectName, options) => {
     console.log()
@@ -37,7 +36,6 @@ program
         projectName: answers.projectName,
         template: answers.template,
         assistant: answers.assistant,
-        modules: answers.modules,
         install: options.install !== false
       })
 
@@ -99,35 +97,7 @@ async function promptUser(projectName?: string, options?: any) {
     })
   }
 
-  // Additional modules (only ask if not provided via CLI)
-  // Note: empty string means "no additional modules", undefined means "ask"
-  if (options?.modules === undefined) {
-    questions.push({
-      type: 'checkbox',
-      name: 'modules',
-      message: 'Select additional modules:',
-      choices: (answers: any) => {
-        const template = options?.template || answers.template
-        const templateDef = TEMPLATES.find(t => t.id === template)
-        const includedModules: readonly string[] = templateDef?.modules || []
-
-        return MODULES.map(m => ({
-          name: `${m.name}${chalk.gray(` - ${m.description}`)}`,
-          value: m.id,
-          checked: includedModules.includes(m.id),
-          disabled: includedModules.includes(m.id) ? chalk.gray('(included in template)') : false
-        }))
-      }
-    })
-  }
-
   const answers = await inquirer.prompt(questions)
-
-  // Parse modules from CLI option if provided
-  // Empty string means no modules, undefined means use prompt answer
-  const cliModules = options?.modules !== undefined
-    ? (options.modules ? options.modules.split(',').map((m: string) => m.trim()).filter(Boolean) : [])
-    : null
 
   // Default to first template if only one exists
   const defaultTemplate = TEMPLATES.length === 1 ? TEMPLATES[0].id : undefined
@@ -136,7 +106,6 @@ async function promptUser(projectName?: string, options?: any) {
     projectName: projectName || answers.projectName,
     template: options?.template || answers.template || defaultTemplate,
     assistant: options?.assistant || answers.assistant,
-    modules: cliModules || answers.modules || []
   }
 }
 
