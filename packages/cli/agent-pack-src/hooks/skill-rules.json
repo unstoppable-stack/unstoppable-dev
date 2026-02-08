@@ -48,6 +48,12 @@
       "files": ["src/wallet/**", "src/payments/**"],
       "skill": "wallet-integration",
       "message": "This involves payments/wallet. Consider using /wallet-integration for WDK patterns."
+    },
+    {
+      "keywords": ["desktop", "gui", "window", "pear desktop", "visual", "ui app", "desktop app", "react ui"],
+      "files": ["index.html", "src/components/**", "src/pages/**", "src/styles/**"],
+      "skill": "pear-desktop-app",
+      "message": "This is a desktop app. Consider using /pear-desktop-app for Pear desktop setup with React + styled-components."
     }
   ]
 }
