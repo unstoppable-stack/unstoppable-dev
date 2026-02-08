@@ -19,27 +19,52 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *), Bash(bun *)
 
 ## Architecture Overview
 
-A Pear desktop app uses `index.js` + `pear-bridge` to create the window, and
-`index.html` as the web entrypoint loaded via the bridge:
+A Pear desktop app has two processes:
+
+1. **Renderer (browser):** React UI + styled-components. Runs in Chromium.
+   CANNOT use Node.js/Bare modules (hyperswarm, bare-rpc, @qvac/sdk, etc.).
+2. **Worker (Bare runtime):** P2P, storage, AI logic. Started via `pear-run`.
+   Communicates with the renderer via NDJSON over `Pear.worker.pipe()`.
+
+```
+┌── Renderer (Chromium) ──┐      ┌── Worker (Bare runtime) ──┐
+│  React UI                │ pipe │  P2P (hyperswarm)          │
+│  styled-components       │◄───►│  Storage (hyperbee)        │
+│  worker-bridge/          │NDJSON│  AI (@qvac/sdk)            │
+│  pear-run                │      │  Pear.worker.pipe()        │
+└──────────────────────────┘      └────────────────────────────┘
+```
+
+> **CRITICAL:** If your app only has a UI with NO P2P/storage/AI (pure
+> frontend), you don't need a worker. But the moment you use hyperswarm,
+> hypercore, hyperbee, bare-rpc, or @qvac/sdk — you MUST use a worker.
+
+### File Structure
 
 ```
 my-app/
-├── index.js            # Pear native entry — creates window via pear-electron + pear-bridge
-├── index.html          # HTML entrypoint — loaded by bridge, loads compiled React
-├── package.json        # Must have pear.type: "desktop" + pear.gui + pre + routes
-├── .swcrc              # SWC config for production builds
-├── .swcrc.dev          # SWC config for dev builds (React Refresh)
+├── index.js              # Pear native entry — creates window via pear-electron + pear-bridge
+├── index.html            # HTML entrypoint — loaded by bridge, loads compiled React
+├── package.json          # pear.type: "desktop" + pear.gui + pre + routes + unrouted
+├── .swcrc                # SWC config for production builds
+├── .swcrc.dev            # SWC config for dev builds (React Refresh)
+├── worker/
+│   └── index.ts          # Worker entry — P2P, storage, AI (runs in Bare)
 ├── src/
-│   ├── live-reload.ts  # Bootstrap: React Refresh init + dynamic import of ./index
-│   ├── index.tsx       # React root — mounts to #root
-│   ├── App.tsx         # Main app component
+│   ├── live-reload.ts    # Bootstrap: React Refresh init + dynamic import of ./index
+│   ├── index.tsx          # React root — mounts to #root
+│   ├── App.tsx            # Main app component
+│   ├── worker-bridge/     # NDJSON pipe communication (both sides)
+│   │   ├── types.ts       # WorkerPipeHandle, WorkerClientHandle
+│   │   ├── worker-pipe.ts # createWorkerPipe() — worker side
+│   │   └── worker-client.ts # createWorkerClient() — UI side
 │   ├── styles/
-│   │   ├── theme.ts    # Dark/light theme tokens
-│   │   └── GlobalStyles.ts  # CSS reset + global styles
-│   ├── components/     # Reusable UI components
-│   └── pages/          # Page-level components
-├── dist/               # SWC output (gitignored) — mirrors src/ structure
-└── assets/             # Static assets (fonts, images)
+│   │   ├── theme.ts       # Dark/light theme tokens
+│   │   └── GlobalStyles.ts # CSS reset + global styles
+│   ├── components/        # Reusable UI components
+│   └── pages/             # Page-level components
+├── dist/                  # SWC output (gitignored) — mirrors src/ + worker/ structure
+└── assets/                # Static assets (fonts, images)
 ```
 
 **CRITICAL — macOS case-insensitive filesystem**: Do NOT have files that differ
@@ -60,6 +85,9 @@ bootstrap (not `app.ts`).
        "type": "desktop",
        "pre": "pear-electron/pre",
        "routes": ".",
+       "unrouted": [
+         "/dist/worker/index.js"
+       ],
        "gui": {
          "width": 1024,
          "height": 768,
@@ -70,9 +98,10 @@ bootstrap (not `app.ts`).
      },
      "type": "module",
      "scripts": {
-       "dev": "bun run build && concurrently \"npm:watch\" \"pear run -d .\"",
-       "build": "bun run clean && bunx swc src -d dist --source-maps",
-       "watch": "bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev",
+       "dev": "bun run build && concurrently \"npm:watch:src\" \"npm:watch:worker\" \"pear run -d .\"",
+       "build": "bun run clean && bunx swc src -d dist --source-maps && bunx swc worker -d dist --source-maps",
+       "watch:src": "bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev",
+       "watch:worker": "bunx swc worker -d dist --source-maps --watch",
        "clean": "rm -rf dist"
      },
      "dependencies": {
@@ -80,7 +109,8 @@ bootstrap (not `app.ts`).
        "react-dom": "^19.1.0",
        "styled-components": "^6.1.0",
        "pear-electron": "^1.7.0",
-       "pear-bridge": "^1.2.4"
+       "pear-bridge": "^1.2.4",
+       "pear-run": "^1.0.7"
      },
      "devDependencies": {
        "@swc/cli": "^0.7.0",
@@ -101,15 +131,41 @@ bootstrap (not `app.ts`).
    - `"name"` — MUST be lowercase, no spaces (letters, numbers, hyphens only)
    - `"pre": "pear-electron/pre"` — required pre-script for desktop apps
    - `"routes": "."` — tells Pear to route all paths to current directory
+   - `"unrouted"` — **REQUIRED** when using workers. Lists worker files that
+     should NOT be served as web pages. Without this, the worker JS is
+     displayed as text in the renderer.
 
    **Critical script patterns:**
-   - `"dev"` — builds first with production config, THEN runs watch + pear concurrently
+   - `"dev"` — builds BOTH src + worker, then runs two watchers + pear concurrently
+   - `"build"` compiles BOTH `src` and `worker` directories to `dist/`
    - `pear run -d .` — use `-d` flag (NOT `--dev`) for dev mode
-   - `"npm:watch"` — concurrently shorthand for the `watch` script
-   - `"watch"` uses `.swcrc.dev` for React Refresh, `"build"` uses default `.swcrc`
+   - `"watch:src"` uses `.swcrc.dev` for React Refresh; `"watch:worker"` uses default `.swcrc`
+   - Worker watch does NOT use `.swcrc.dev` (no React Refresh needed)
 
-   **Required devDependency:**
+   **Required dependencies:**
+   - `"pear-run"` — required for spawning workers from the renderer
    - `"chokidar"` — required by `@swc/cli` for `--watch` mode
+
+   **Adding P2P modules** (add to `dependencies`):
+   ```json
+   "hyperswarm": "^4.16.0",
+   "bare-rpc": "^1.1.0",
+   "bare-process": "^4.2.2"
+   ```
+
+   **Adding storage** (add to `dependencies`):
+   ```json
+   "hypercore": "^11.24.0",
+   "hyperbee": "^2.27.3"
+   ```
+
+   **Adding AI** (add to `dependencies`):
+   ```json
+   "@qvac/sdk": "^0.6.0",
+   "zod": "^4.0.0"
+   ```
+
+   See `core/verified-versions.md` for the full version reference.
 
 2. **Create `index.js`** — the Pear native entry point (project root):
 
@@ -226,19 +282,46 @@ bootstrap (not `app.ts`).
 
 ## Key Gotchas
 
-- **`index.js` is the Pear entry point** — it uses `pear-electron` + `pear-bridge` to create the desktop window and load `index.html` via the bridge
-- **`pear-bridge` is a required dependency** — without it, the window cannot load `index.html`
-- **`"pre": "pear-electron/pre"` and `"routes": "."`** are required in pear config — missing them causes `Cannot find module '/'`
-- **`pear.name` MUST be lowercase** — no spaces, no uppercase. `"My App"` causes `ERR_INVALID_APP_NAME`. Use `"my-app"` instead
-- **`pear run -d .`** uses the `-d` flag (NOT `--dev`) for dev mode
-- **SWC outputs to `dist/src/`** — `bunx swc src -d dist` preserves the `src/` directory inside `dist/`. HTML must reference `./dist/src/live-reload.js`
-- **macOS case sensitivity** — `app.ts` and `App.tsx` compile to the same output file on case-insensitive filesystems. Use `live-reload.ts` for bootstrap
-- **`chokidar` must be installed** as a devDependency for SWC `--watch` to work
-- **Build before watch** — the dev script runs `bun run build` first (production config), then starts watch (dev config) + pear concurrently
-- **Use `.js` extensions in all imports** — SWC preserves import specifiers as-is. Write `import { Foo } from './types.js'` even in `.ts` source files, because the compiled `.js` file needs to resolve the `.js` extension at runtime
-- **`<pear-ctrl>`** provides native window controls — always include it in `index.html`
+### Worker Architecture (most common source of bugs)
+- **Renderer is a BROWSER** — P2P, storage, and AI modules CANNOT run in the
+  renderer. They crash with `ERR_UNKNOWN_URL_SCHEME` or `MODULE_NOT_FOUND`.
+  Use a worker process via `pear-run`.
+- **`pear.unrouted` is REQUIRED** — without it, worker JS files are served as
+  web pages. Add `/dist/worker/index.js` to the `unrouted` array.
+- **`Pear.worker.pipe()` is the ONLY communication channel** — do NOT use
+  `process.stdout` (goes to terminal) or `process.stdin`. The pipe is on fd 3.
+- **Send `workerReady` IMMEDIATELY** — before P2P DHT or model downloads.
+  The UI times out after 30s waiting. Use status messages for progress.
+- **All `bare-*` modules need `npm install`** — `bare-process`, `bare-fs`, etc.
+  are NOT built-in. You'll get `MODULE_NOT_FOUND` without them.
+- **Build scripts must compile BOTH `src/` AND `worker/`** — the worker is a
+  separate SWC compilation target.
+
+### Pear Config
+- **`index.js` is the Pear entry point** — uses `pear-electron` + `pear-bridge`
+- **`pear-bridge` is a required dependency** — without it, no `index.html` loading
+- **`"pre": "pear-electron/pre"` and `"routes": "."`** are required — missing causes `Cannot find module '/'`
+- **`pear.name` MUST be lowercase** — `"My App"` causes `ERR_INVALID_APP_NAME`
+- **`pear run -d .`** uses `-d` flag (NOT `--dev`)
+
+### Build & Imports
+- **SWC outputs to `dist/src/`** — `bunx swc src -d dist` preserves the `src/` prefix. HTML references `./dist/src/live-reload.js`
+- **Use `.js` extensions in ALL imports** — SWC preserves specifiers as-is
+- **macOS case sensitivity** — `app.ts` and `App.tsx` collide. Use `live-reload.ts`
+- **`chokidar` must be installed** for SWC `--watch`
+- **Build before watch** — dev script runs `bun run build` first, then watchers + pear
+
+### UI
+- **`<pear-ctrl>`** provides native window controls — always include
 - **`-webkit-app-region: drag`** on the title bar div makes it draggable
-- **No `localhost`** — Pear serves files from disk via the bridge, not a dev server
+- **No `localhost`** — Pear serves files from disk via bridge, not a dev server
+
+### Bare Runtime
+- **No `TextEncoder`** — use `charCodeAt()` or `bare-encoding`
+- **No `Buffer` global** — use `Uint8Array` or `b4a`
+- **No `crypto` module** — install `bare-crypto`
+- **No `node:*` URL scheme** — install `bare-*` equivalents
+- See `modules/bare.md` for the full API availability cheatsheet
 
 ## Deep Dive
 - Complete working example with theme + components: read `resources/full-example.md`

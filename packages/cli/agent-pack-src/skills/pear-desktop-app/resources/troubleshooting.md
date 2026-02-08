@@ -1,5 +1,111 @@
 # Pear Desktop App — Troubleshooting
 
+## Worker Errors (Most Common)
+
+### `GET node:net net::ERR_UNKNOWN_URL_SCHEME` (or `node:os`, `node:path`, etc.)
+
+**Cause**: P2P/storage/AI modules are imported directly in the renderer (React
+components). The renderer is a Chromium browser — it cannot use `node:*` modules.
+
+**Fix**: Move ALL P2P, storage, and AI code to a worker process:
+1. Create `worker/index.ts` using `createWorkerPipe()`
+2. Use `createWorkerClient()` in the UI to start the worker
+3. Communicate via NDJSON messages over the pipe
+4. See `resources/worker-pattern.md` for the full implementation
+
+### Window shows raw JavaScript source code instead of UI
+
+**Cause**: Missing `"unrouted"` in pear config. With `"routes": "."`, Pear
+serves ALL files as web pages — including the worker JS file.
+
+**Fix**: Add the worker file to `pear.unrouted`:
+```json
+{
+  "pear": {
+    "routes": ".",
+    "unrouted": [
+      "/dist/worker/index.js"
+    ]
+  }
+}
+```
+
+### Worker messages never reach the UI / "Worker init timeout"
+
+**Cause 1**: Worker uses `process.stdout.write()` instead of `Pear.worker.pipe()`.
+`process.stdout` writes to the terminal (fd 1), NOT to the UI pipe (fd 3).
+
+**Fix**: Use `Pear.worker.pipe()`:
+```typescript
+// ✗ WRONG — goes to terminal
+import process from 'bare-process'
+process.stdout.write(JSON.stringify(msg) + '\n')
+
+// ✓ CORRECT — goes to UI
+const pipe = await Pear.worker.pipe()
+pipe.write(JSON.stringify(msg) + '\n')
+```
+
+**Cause 2**: Worker sends `workerReady` after slow operations (P2P DHT flush,
+model download). The UI timeout is 30 seconds.
+
+**Fix**: Send `workerReady` immediately, before slow operations:
+```typescript
+const pipe = await createWorkerPipe()
+pipe.send({ type: 'workerReady' })  // ← IMMEDIATELY
+// Then start slow operations...
+connectP2P()   // 10-30+ seconds
+loadModel()    // minutes
+```
+
+### `MODULE_NOT_FOUND: Cannot find module 'bare-process'`
+
+**Cause**: `bare-process` (or other `bare-*` module) is not in `package.json`.
+Unlike Node.js, Bare has no built-in standard library.
+
+**Fix**: Install it:
+```bash
+bun add bare-process@^4.2.2
+```
+
+All `bare-*` modules must be explicit dependencies. See `modules/bare.md` for
+the dependency checklist.
+
+### `ReferenceError: TextEncoder is not defined`
+
+**Cause**: `TextEncoder` is a Web/Node.js API, not available in Bare.
+
+**Fix**: Use `charCodeAt()` instead:
+```typescript
+// ✗ WRONG
+const encoder = new TextEncoder()
+const bytes = encoder.encode(str)
+
+// ✓ CORRECT
+const buf = new Uint8Array(32)
+for (let i = 0; i < str.length; i++) {
+  buf[i % 32] ^= str.charCodeAt(i) & 0xff
+}
+```
+
+Or install `bare-encoding@^1.0.0` for TextEncoder/TextDecoder in Bare.
+
+### `SyntaxError: does not provide an export named 'completion'`
+
+**Cause**: Barrel exports (`src/lib/index.ts`) pull in `@qvac/sdk` transitively,
+even if the importing module doesn't use QVAC. The renderer can't parse the SDK.
+
+**Fix**: Import from specific files, NOT barrel exports:
+```typescript
+// ✗ WRONG — barrel re-exports ai-agent.ts which imports @qvac/sdk
+import { createServer } from '../src/lib/index.js'
+
+// ✓ CORRECT — only imports what's needed
+import { createServer } from '../src/lib/p2p-connection.js'
+```
+
+---
+
 ## Critical Launch Errors
 
 ### `Cannot find module '/'`

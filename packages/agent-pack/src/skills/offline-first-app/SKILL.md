@@ -12,7 +12,13 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 - User needs data that syncs when peers are available
 
 ## Prerequisites
-- Hypercore, Hyperbee, and Hyperswarm installed
+- Hypercore (`^11.24.0`), Hyperbee (`^2.27.3`), and Hyperswarm (`^4.16.0`)
+
+> **CRITICAL — Pear Desktop Apps:** Hypercore, Hyperbee, and Hyperswarm
+> CANNOT run in the renderer (browser context). They MUST run in a **worker
+> process** started via `pear-run`. The UI communicates with the worker via
+> NDJSON over `Pear.worker.pipe()`. See the `pear-desktop-app` skill →
+> `resources/worker-pattern.md` for the full worker bridge implementation.
 
 ## Steps
 

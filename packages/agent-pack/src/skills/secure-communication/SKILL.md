@@ -14,6 +14,10 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 ## Prerequisites
 - Hyperswarm, @hyperswarm/secret-stream, protomux, compact-encoding installed
 
+> **CRITICAL — Pear Desktop Apps:** These P2P modules CANNOT run in the
+> renderer (browser context). They MUST run in a **worker process** started
+> via `pear-run`. See the `pear-desktop-app` skill → `resources/worker-pattern.md`.
+
 ## Steps
 
 1. **Install dependencies**:

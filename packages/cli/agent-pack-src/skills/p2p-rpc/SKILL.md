@@ -12,9 +12,15 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 - User wants structured messaging over P2P connections
 
 ## Prerequisites
-- Hyperswarm installed for P2P connections
-- `bare-rpc` installed (works with any duplex stream, including Hyperswarm connections)
+- Hyperswarm (`^4.16.0`) installed for P2P connections
+- `bare-rpc` (`^1.1.0`) installed (works with any duplex stream)
 - `.npmrc` must contain `shamefully-hoist=true` for bare native binary resolution
+
+> **CRITICAL — Pear Desktop Apps:** `bare-rpc` and Hyperswarm CANNOT run in
+> the renderer (browser context). They MUST run in a **worker process** started
+> via `pear-run`. The UI communicates with the worker via NDJSON over
+> `Pear.worker.pipe()`. See the `pear-desktop-app` skill →
+> `resources/worker-pattern.md` for the full worker bridge implementation.
 
 ## ⚠ IMPORTANT: bare-rpc Has a Low-Level API
 

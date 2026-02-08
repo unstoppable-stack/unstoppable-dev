@@ -14,6 +14,11 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 ## Prerequisites
 - Hyperdrive, Corestore, and Hyperswarm installed
 
+> **CRITICAL — Pear Desktop Apps:** Hyperdrive, Corestore, and Hyperswarm
+> CANNOT run in the renderer (browser context). They MUST run in a **worker
+> process** started via `pear-run`. See the `pear-desktop-app` skill →
+> `resources/worker-pattern.md`.
+
 ## Steps
 
 1. **Install dependencies**:
