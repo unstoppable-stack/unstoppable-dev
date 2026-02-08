@@ -17,10 +17,6 @@ packages/cli/dist/
 *.log
 
 # Research reference apps (large, external codebases)
-research/qvac-app-workbench-desktop-main/
-research/qvac-app-workbench-mobile-main/
-research/qvac-health-dev/
-research/.tmp-qvac-sdk/
 
 # OS files
 .DS_Store
