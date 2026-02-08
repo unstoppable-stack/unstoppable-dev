@@ -184,14 +184,114 @@ Note: `dev` builds first with production `.swcrc`, then runs `watch` (with
 `src/live-reload.ts` → `dist/src/live-reload.js`. All file references must
 account for the `src/` prefix inside `dist/`.
 
+## CRITICAL: Desktop App Architecture — Renderer vs Worker
+
+In Pear desktop apps, the **renderer is a Chromium browser context**. It
+CANNOT use any module that depends on Node.js or Bare APIs:
+
+```
+┌─────────────── CANNOT use in renderer ──────────────────┐
+│  hyperswarm, hypercore, hyperbee, hyperdrive             │
+│  bare-rpc, bare-process, bare-fs, bare-path              │
+│  @qvac/sdk                                               │
+│  Any module that imports node:net, node:os, etc.         │
+└──────────────────────────────────────────────────────────┘
+```
+
+**Errors you'll see if you try:**
+```
+GET node:net net::ERR_UNKNOWN_URL_SCHEME
+GET node:os net::ERR_UNKNOWN_URL_SCHEME
+MODULE_NOT_FOUND: Cannot find module 'bare-process'
+ReferenceError: TextEncoder is not defined
+```
+
+### The Worker Pattern (mandatory for desktop apps with P2P/AI/storage)
+
+All P2P, storage, and AI code MUST run in a **separate worker process** started
+via `pear-run`. The UI communicates with the worker via NDJSON messages over
+`Pear.worker.pipe()`:
+
+```
+Renderer (Chromium browser)       Worker (Bare runtime)
+┌──────────────────────┐          ┌────────────────────────┐
+│  React UI             │  NDJSON  │  P2P (hyperswarm)      │
+│  styled-components    │◄────────►│  Storage (hyperbee)    │
+│  worker-client.ts     │   pipe   │  AI (QVAC SDK)         │
+│  uses: pear-run       │          │  uses: Pear.worker.pipe│
+└──────────────────────┘          └────────────────────────┘
+```
+
+### Required: `pear.unrouted` Config
+
+With `"routes": "."`, ALL files are served as web routes — including worker
+files. Worker files MUST be excluded with `"unrouted"`:
+
+```json
+{
+  "pear": {
+    "routes": ".",
+    "unrouted": [
+      "/dist/worker/index.js"
+    ]
+  }
+}
+```
+
+**Without `unrouted`:** Pear serves the worker JS as a web page in the renderer
+instead of spawning it as a Bare process. You'll see raw JavaScript displayed
+in the window instead of your React UI.
+
+### Worker Communication: `Pear.worker.pipe()`
+
+`pear-run` spawns workers with fd 3 as the communication pipe:
+- fd 0-2: inherited (terminal — used by `console.log`)
+- **fd 3: the pipe** (returned to the UI via `pear-run`)
+
+Workers MUST use `Pear.worker.pipe()` to access this pipe:
+
+```typescript
+/* global Pear */
+// ✓ CORRECT — writes to the UI
+const pipe = await Pear.worker.pipe()
+pipe.write(JSON.stringify({ type: 'workerReady' }) + '\n')
+pipe.on('data', (data: Buffer) => { /* parse NDJSON */ })
+
+// ✗ WRONG — writes to terminal, UI never sees it
+import process from 'bare-process'
+process.stdout.write(JSON.stringify(msg) + '\n')  // goes to terminal!
+```
+
+### Worker Lifecycle: Send `workerReady` Early
+
+Workers MUST send `{ type: 'workerReady' }` as their FIRST message, BEFORE
+any slow operations (P2P DHT announce, model downloads):
+
+```typescript
+async function init() {
+  const pipe = await Pear.worker.pipe()
+  setupPipeListener(pipe)
+  send({ type: 'workerReady' })       // ← IMMEDIATELY
+
+  // Slow operations happen AFTER UI starts
+  connectP2P()                          // DHT: 10-30+ seconds
+  loadModel()                           // Download: minutes
+}
+```
+
+Use separate status messages (`modelStatus`, `connectionChange`) to report
+progress to the UI after `workerReady`.
+
+For the full worker bridge implementation and code examples, see the
+`pear-desktop-app` skill → `resources/worker-pattern.md`.
+
 ## Integration with Other Modules
 
 - Pear apps are built on Bare, so P2P code can use Hyperswarm, Hypercore,
-  Hyperbee, and Hyperdrive directly.
-- QVAC integrates via a Pear terminal "engine" process and a Pear desktop UI,
-  typically connected with `pear-run` and `pear-pipe`.
-- Desktop apps can combine GUI (React UI) with a Bare worker process for
-  heavy P2P/AI operations.
+  Hyperbee, and Hyperdrive — **but only in workers for desktop apps**.
+- QVAC integrates via a worker process started with `pear-run`. The UI
+  communicates with the worker via NDJSON over `Pear.worker.pipe()`.
+- **Terminal apps** can use all modules directly (no renderer limitation).
 
 ## Common Patterns
 
@@ -259,6 +359,14 @@ Window controls bar with drag region:
 
 ## Pitfalls & Gotchas
 
+- **Renderer is a BROWSER** — P2P, storage, and AI modules CANNOT run in the
+  renderer. They MUST run in a worker. See "Desktop App Architecture" above.
+- **`pear.unrouted` is REQUIRED** when using workers — without it, worker JS
+  files are served as web pages instead of spawning in Bare.
+- **`Pear.worker.pipe()` is the ONLY way** to communicate from worker to UI.
+  `process.stdout` writes to the terminal, not to the renderer.
+- **Send `workerReady` EARLY** — before slow P2P/AI operations. The UI times
+  out after 30s waiting for this message.
 - **`pear run -d .`** — use `-d` flag, NOT `--dev`.
 - **`pear.name` must be lowercase** — no spaces or uppercase. Causes
   `ERR_INVALID_APP_NAME`.
@@ -267,6 +375,7 @@ Window controls bar with drag region:
 - **`"pre": "pear-electron/pre"` and `"routes": "."`** are required in pear
   config for desktop apps — missing them causes `Cannot find module '/'`.
 - **`pear-bridge` is a required dependency** — not just `pear-electron`.
+- **`pear-run` is a required dependency** — for worker spawning.
 - Apps are not reachable by other peers until you run `pear seed` and keep it
   running.
 - `pear run` on remote peers prompts for trust; use `--no-ask` to decline
@@ -281,6 +390,7 @@ Window controls bar with drag region:
 - **macOS case sensitivity** — don't have files that differ only by case (e.g.,
   `app.ts` and `App.tsx`). Use `live-reload.ts` for the bootstrap file.
 - **`chokidar`** must be in devDependencies for SWC `--watch` to work.
+- **All `bare-*` modules are npm packages** — they must be in `package.json`.
 
 ## Resources
 

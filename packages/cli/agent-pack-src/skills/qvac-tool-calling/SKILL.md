@@ -12,9 +12,13 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 - User needs structured output from a local model
 
 ## Prerequisites
-- QVAC SDK installed, Zod **v4** installed (`zod@^4`, not v3 — required for type compatibility with `@qvac/sdk`)
+- QVAC SDK installed (`@qvac/sdk@^0.6.0`), Zod **v4** installed (`zod@^4.0.0`)
 - A tool-calling-capable model: `QWEN_3_1_7B_INST_Q4` (recommended), `QWEN_3_4B_INST_Q4_K_M`, or `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`
 - Minimum 3B+ model for reliable tool calling; 1B models are unreliable
+
+> **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
+> (browser context). It MUST run in a **worker process** started via `pear-run`.
+> See the `pear-desktop-app` skill → `resources/worker-pattern.md`.
 
 ## ⚠ CRITICAL: Always Enable `tools: true`
 

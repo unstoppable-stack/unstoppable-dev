@@ -12,8 +12,14 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 - User needs offline AI capabilities
 
 ## Prerequisites
-- QVAC SDK installed (`@qvac/sdk`)
+- QVAC SDK installed (`@qvac/sdk@^0.6.0`)
 - Supported runtime: Node.js, Bare, or physical device for Expo
+
+> **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
+> (browser context). It MUST run in a **worker process** started via `pear-run`.
+> The UI communicates with the worker via NDJSON over `Pear.worker.pipe()`.
+> See the `pear-desktop-app` skill → `resources/worker-pattern.md` for the
+> full worker bridge implementation.
 
 ## Included Components
 

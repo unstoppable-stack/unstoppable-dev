@@ -14,7 +14,13 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 
 ## Prerequisites
 - Node.js 20+ with ESM support
-- `@qvac/sdk` and `zod@^4` installed
+- `@qvac/sdk` (`^0.6.0`) and `zod` (`^4.0.0`) installed
+
+> **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
+> (browser context). It MUST run in a **worker process** started via `pear-run`.
+> The UI communicates with the worker via NDJSON over `Pear.worker.pipe()`.
+> See the `pear-desktop-app` skill → `resources/worker-pattern.md` for the
+> full worker bridge implementation and a complete AI chat worker example.
 
 ## Steps
 

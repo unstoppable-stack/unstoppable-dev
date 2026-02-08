@@ -12,8 +12,14 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 - User needs an append-only log shared across peers
 
 ## Prerequisites
-- Hypercore and Hyperswarm installed (check package.json)
+- Hypercore (`^11.24.0`) and Hyperswarm (`^4.16.0`) installed
 - Node.js or Bare runtime with ESM support
+
+> **CRITICAL — Pear Desktop Apps:** Hypercore, Hyperswarm, and Corestore
+> CANNOT run in the renderer (browser context). They MUST run in a **worker
+> process** started via `pear-run`. The UI communicates with the worker via
+> NDJSON over `Pear.worker.pipe()`. See the `pear-desktop-app` skill →
+> `resources/worker-pattern.md` for the full worker bridge implementation.
 
 ## Included Components
 

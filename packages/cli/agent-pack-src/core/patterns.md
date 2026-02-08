@@ -12,14 +12,28 @@ priority: high
 When creating apps, use these templates based on the runtime type. Each app should be in its own folder with its own README.
 
 ### Pear Desktop App
-For desktop apps with HTML/CSS/JS UI:
+For desktop apps with React UI + Bare worker for P2P/AI/storage:
 
 ```
 my-desktop-app/
-├── index.html           # Entry point (loaded by Pear)
-├── app.js               # Main application logic
-├── styles.css           # Styling
-├── package.json
+├── index.js              # Pear native entry (pear-electron + pear-bridge)
+├── index.html            # Web entry (pear-ctrl + script tag)
+├── package.json          # pear config with unrouted for workers
+├── .swcrc / .swcrc.dev   # SWC configs
+├── worker/
+│   └── index.ts          # Bare worker (P2P, storage, AI)
+├── src/
+│   ├── live-reload.ts    # Bootstrap with React Refresh
+│   ├── index.tsx          # React root
+│   ├── App.tsx            # Main component
+│   ├── worker-bridge/     # NDJSON pipe communication
+│   │   ├── types.ts
+│   │   ├── worker-pipe.ts
+│   │   └── worker-client.ts
+│   └── styles/
+│       ├── theme.ts
+│       └── GlobalStyles.ts
+├── dist/                  # SWC output (gitignored)
 └── README.md
 ```
 
@@ -27,19 +41,46 @@ my-desktop-app/
 ```json
 {
   "name": "my-desktop-app",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "type": "module",
   "pear": {
-    "name": "My Desktop App",
-    "type": "desktop"
+    "name": "my-desktop-app",
+    "type": "desktop",
+    "pre": "pear-electron/pre",
+    "routes": ".",
+    "unrouted": ["/dist/worker/index.js"],
+    "gui": { "width": 1024, "height": 768, "backgroundColor": "#171817" }
   },
   "scripts": {
-    "dev": "pear dev",
-    "stage": "pear stage",
-    "release": "pear release"
+    "dev": "bun run build && concurrently \"npm:watch:src\" \"npm:watch:worker\" \"pear run -d .\"",
+    "build": "bun run clean && bunx swc src -d dist --source-maps && bunx swc worker -d dist --source-maps",
+    "watch:src": "bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev",
+    "watch:worker": "bunx swc worker -d dist --source-maps --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "pear-electron": "^1.7.0",
+    "pear-bridge": "^1.2.4",
+    "pear-run": "^1.0.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "styled-components": "^6.1.0"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.7.0",
+    "@swc/core": "^1.3.0",
+    "chokidar": "^4.0.3",
+    "concurrently": "^9.0.0",
+    "pear-hotmods": "^1.0.0",
+    "pear-interface": "^1.0.0",
+    "react-refresh": "^0.17.0",
+    "typescript": "^5.0.0"
   }
 }
 ```
+
+> **CRITICAL:** The renderer is a Chromium browser. P2P, storage, and AI modules
+> MUST run in the `worker/` process. See `pear-desktop-app` skill for details.
 
 ### Pear Terminal App
 For headless processes, background engines, or CLI tools with P2P:
@@ -207,12 +248,15 @@ my-mobile-app/
 ## App Initialization
 
 ### Standard Setup Pattern
+
+> **Pear desktop apps:** This code runs in the **worker**, not the renderer.
+> See the `pear-desktop-app` skill for the worker pattern.
+
 ```typescript
-// src/index.ts
+// worker/index.ts (or src/index.ts for terminal/Node.js apps)
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import HyperDB from 'hyperdb'
-import crypto from 'crypto'
 
 interface AppContext {
   store: Corestore
@@ -294,23 +338,29 @@ my-project/
 }
 ```
 
-### Pear Desktop + Terminal Engine Pattern
-For LLM apps: UI in Pear Desktop, inference in Pear Terminal:
+### Pear Desktop + Worker Pattern (Recommended for AI/P2P)
+For apps with UI + heavy backend (P2P, AI inference, storage):
 
 ```
-my-llm-app/
-├── ui/                      # Pear Desktop app (HTML/CSS/JS)
-│   ├── index.html
-│   ├── app.js
-│   └── package.json         # "pear": { "type": "desktop" }
-├── engine/                  # Pear Terminal app (QVAC)
-│   ├── index.js
-│   └── package.json         # "pear": { "type": "terminal" }
-└── shared/
-    └── protocol.js          # Message format between UI <-> Engine
+my-app/
+├── index.js                 # Pear native entry (pear-electron + pear-bridge)
+├── index.html               # Web entry
+├── package.json             # Single package, pear.unrouted for worker
+├── worker/
+│   └── index.ts             # Bare worker (P2P, AI, storage)
+├── src/
+│   ├── App.tsx              # React UI
+│   ├── worker-bridge/       # NDJSON pipe communication
+│   │   ├── types.ts
+│   │   ├── worker-pipe.ts   # Worker side: createWorkerPipe()
+│   │   └── worker-client.ts # UI side: createWorkerClient()
+│   └── ...
+└── dist/
 ```
 
-**Communication:** Use `pear-run` + `pear-pipe` to stream between apps.
+**Communication:** Worker started via `pear-run`, communicates with UI via
+NDJSON over `Pear.worker.pipe()`. See `pear-desktop-app` skill →
+`resources/worker-pattern.md` for full implementation.
 
 ### Monorepo with Workspaces
 For larger projects with truly separate packages:
@@ -345,39 +395,48 @@ my-project/
 
 ## Room/Channel Pattern
 
+### Topic Creation (Bare-Compatible)
+
+**Do NOT use `crypto.createHash`** — it's Node.js-only and crashes in Bare.
+Use `charCodeAt` XOR-folding instead:
+
+```typescript
+// src/p2p/topic.ts — works in Bare, Node.js, and browsers
+export function createTopic(namespace: string): Uint8Array {
+  const buf = new Uint8Array(32)
+  for (let i = 0; i < namespace.length; i++) {
+    buf[i % 32] ^= namespace.charCodeAt(i) & 0xff
+  }
+  return buf
+}
+```
+
 ### Join a Shared Space
 ```typescript
 // src/p2p/room.ts
+import { createTopic } from './topic.js'
 
 interface Room {
-  topic: Buffer
-  members: Map<string, PeerInfo>
-  db: HyperDB
+  topic: Uint8Array
+  members: Map<string, any>
   join: () => Promise<void>
   leave: () => Promise<void>
 }
 
-export function createRoom(swarm: Hyperswarm, store: Corestore, roomId: string): Room {
-  // Deterministic topic from room ID
-  const topic = crypto.createHash('sha256')
-    .update('my-app:room:' + roomId)
-    .digest()
-
-  const members = new Map<string, PeerInfo>()
-  const db = new HyperDB(store.namespace('room:' + roomId))
+export function createRoom(swarm: any, store: any, roomId: string): Room {
+  const topic = createTopic('my-app:room:' + roomId)
+  const members = new Map<string, any>()
 
   let discovery: any = null
 
   return {
     topic,
     members,
-    db,
 
     async join() {
-      await db.ready()
       discovery = swarm.join(topic)
 
-      swarm.on('connection', (socket, info) => {
+      swarm.on('connection', (socket: any, info: any) => {
         const peerId = info.publicKey.toString('hex').slice(0, 8)
         members.set(peerId, info)
 
@@ -385,8 +444,8 @@ export function createRoom(swarm: Hyperswarm, store: Corestore, roomId: string):
           members.delete(peerId)
         })
 
-        // Replicate room data
-        db.corestore.replicate(socket)
+        // Replicate data
+        store.replicate(socket)
       })
 
       await discovery.flushed()
@@ -402,6 +461,9 @@ export function createRoom(swarm: Hyperswarm, store: Corestore, roomId: string):
   }
 }
 ```
+
+> **Note:** In Pear desktop apps, this code runs in the **worker**, not in the
+> renderer. See the `pear-desktop-app` skill for the worker pattern.
 
 ## Data Sync Patterns
 
@@ -610,31 +672,48 @@ await store.update(s => ({ ...s, user: 'alice' }))
 
 ## Graceful Shutdown Pattern
 
+### In Pear Apps (desktop workers and terminal apps)
+
+Use `Pear.teardown()` — NOT `process.on('SIGINT')` (which requires `bare-process`):
+
 ```typescript
-// src/index.ts
+// worker/index.ts or index.js (Pear app)
+declare const Pear: { teardown(fn: () => Promise<void>): void }
+
+async function main() {
+  const swarm = new Hyperswarm()
+  const core = new Hypercore('./storage')
+
+  // Register cleanup with Pear lifecycle
+  Pear.teardown(async () => {
+    console.log('Shutting down...')
+    await swarm.destroy()
+    await core.close()
+  })
+}
+```
+
+### In Node.js Scripts (non-Pear)
+
+For plain Node.js scripts (not running in Pear), use process signals:
+
+```typescript
+// src/index.ts (Node.js)
 
 async function main() {
   const { store, db, swarm, cleanup } = await createApp('./storage')
 
-  // Your app logic here...
-
-  // Handle various shutdown signals
   const shutdown = async (signal: string) => {
     console.log(`Received ${signal}, shutting down...`)
-
-    // Give active connections time to finish
     await new Promise(r => setTimeout(r, 1000))
-
     await cleanup()
     process.exit(0)
   }
 
   process.on('SIGINT', () => shutdown('SIGINT'))
   process.on('SIGTERM', () => shutdown('SIGTERM'))
-  process.on('uncaughtException', async (err) => {
-    console.error('Uncaught exception:', err)
-    await cleanup()
-    process.exit(1)
-  })
 }
 ```
+
+> **Note:** `process` is NOT a global in Bare. If you need it, install
+> `bare-process@^4.2.2` and import it explicitly.
