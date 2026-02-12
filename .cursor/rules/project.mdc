@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Project Overview
 
-A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, templates, and AI agent packs that work across Claude, Cursor, and OpenCode.
+A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, and OpenCode.
 
 ## Vision
 
@@ -67,14 +67,13 @@ pnpm --filter website dev # Run website locally
 
 ### Phase 1: POC
 - [ ] CLI skeleton (init command, prompts, scaffolding)
-- [ ] One working template (Starter)
 - [ ] Agent pack v0 (rules + 3-5 recipes)
 - [ ] Website v0 (landing + getting started)
 
-### Phase 2: Templates & Docs
-- [ ] Additional templates (P2P sync, AI local, mobile)
+### Phase 2: Content & Docs
 - [ ] Per-module documentation
 - [ ] More recipes and patterns
+- [ ] Mobile platform support (Expo Bare)
 
 ### Phase 3: Unstoppable Auth
 - [ ] Local-first identity model

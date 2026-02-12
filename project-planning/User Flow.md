@@ -14,8 +14,6 @@ A dev who wants to ship local-first / p2p / unstoppable apps without hand-wiring
 
 • Editor/assistant: Claude / Cursor / OpenCode
 
-• App type: (starter templates)
-
 • Modules to include: QVAC, Pear, Unstoppable Auth, Expo Bare, etc.
 
 5. CLI scaffolds project + configures “agent instructions/skills” for the chosen tool.

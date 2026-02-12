@@ -41,7 +41,7 @@ When working on this codebase:
 1. **Understand the P2P model** - Apps don't have traditional servers. Data lives on user devices and syncs peer-to-peer.
 2. **Local-first mindset** - Everything should work offline. Network is a nice-to-have for sync.
 3. **Module boundaries** - Each Holepunch module (Hypercore, HyperDB, Hyperdrive) is independent but composable.
-4. **Template awareness** - When helping users build, know which template they started from and which modules are included.
+4. **Module awareness** - Know which stack modules the user's project uses and which are available.
 5. **Recipes over raw docs** - Prefer showing working patterns over explaining APIs in the abstract.
 
 ## Key Resources

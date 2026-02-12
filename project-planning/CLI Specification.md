@@ -30,6 +30,6 @@ It should contain:
 
 • Architecture guidelines (how unstoppable apps are structured)
 
-• Template-aware generation (knows what the CLI scaffolded)
+• Module-aware generation (knows what stack modules are available)
 
 • Recipes: auth, p2p sync, model inference, storage, etc.

@@ -43,7 +43,6 @@ packages/agent-pack/src/
 │   ├── ai/         # Model manager, chat session, tool runner
 │   ├── p2p/        # Swarm manager, replication
 │   └── data/       # Corestore, DB setup
-└── templates/      # Template-specific context
 ```
 
 ## Size Budgets

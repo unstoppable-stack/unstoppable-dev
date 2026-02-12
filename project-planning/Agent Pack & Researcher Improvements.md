@@ -14,7 +14,7 @@ This document audits the current agent pack system, synthesizes best practices f
 |-----------|--------|-------|
 | **Research pipeline** | Working | OpenCode researcher agent produces docs in `research/output/` |
 | **Sync script** | Working | `sync-research.js` copies research → `packages/agent-pack/src/` |
-| **Agent pack source** | 34 files | 7 core, 12 modules, 15 recipes, 1 template |
+| **Agent pack source** | 34 files | 7 core, 12 modules, 15 recipes |
 | **CLI builder** | Working | Generates Claude/Cursor/OpenCode configs from source |
 | **Tool specs** | Documented | Feature matrix, per-tool capabilities, unified model |
 | **Researcher agent** | OpenCode only | `research/.opencode/` with researcher + skills |
@@ -131,7 +131,7 @@ The SKILL.md says "Read `resources/hyperdb-api.md` for the full API" — the age
 
 **Our gap**: We generate everything, no gating.
 
-**Action**: CLI generates a config with only template-relevant skills enabled. User can enable more later.
+**Action**: CLI generates a config with only relevant skills enabled. User can enable more later.
 
 ---
 
@@ -168,9 +168,6 @@ packages/agent-pack/src/
 │           ├── api-reference.md
 │           ├── full-example.md
 │           └── troubleshooting.md
-│
-├── templates/                    # Template-specific context
-│   └── <template>.md
 │
 └── hooks/                        # NEW: Hook scripts
     ├── skill-activator.sh        # Auto-suggest skills based on prompt
@@ -325,7 +322,7 @@ The researcher should be able to _verify_ that generated agent packs actually wo
 # Skill: Test Agent Pack Output
 
 ## Steps
-1. Run CLI: `node packages/cli/dist/index.js test-app --template blank --assistant claude --modules hyperdb --no-install`
+1. Run CLI: `node packages/cli/dist/index.js test-app --assistant claude --no-install`
 2. Verify generated files exist and are valid
 3. Check CLAUDE.md size is within budget
 4. Verify skills reference existing resources
@@ -568,5 +565,3 @@ The current Cursor output only has one glob-scoped rule (`p2p-patterns.mdc`). Ad
 ### Recipes (15 files)
 - file-sharing, local-inference, local-p2p-testing, offline-first-app, p2p-data-sync, p2p-ndjson-messaging, p2p-rpc, qvac-delegated-inference, qvac-embeddings-rag-sqlite, qvac-kv-cache, qvac-logging, qvac-model-sources, qvac-multimodal-vision, qvac-tool-calling, qvac-transcription, qvac-translation, secure-communication, wallet-integration
 
-### Templates (1 file)
-- qvac-ai.md

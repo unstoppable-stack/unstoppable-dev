@@ -42,7 +42,7 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 • pitfalls / constraints
 
-• templates it enables
+• apps it enables
 
 ⸻
   
@@ -65,11 +65,11 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 ### **Roadmap (after POC)**  
 
-**Phase 1: Templates + docs depth**
-
-• Add more templates (Expo Bare app, P2P sync app, inference-enabled app)
+**Phase 1: Content + docs depth**
 
 • Fill docs for each module (copy/paste snippets + recipes)
+
+• Add mobile platform support (Expo Bare)
 
 • Improve CLI module selection
 
@@ -78,7 +78,7 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 • Define auth model (local-first identity + recovery + device linking)
 
-• Integrate into templates + agent recipes
+• Integrate into agent recipes
 
 • Add website docs + examples
 
@@ -98,7 +98,7 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 • Polished experience on top of the agent pack
 
-• Tight integration with CLI and templates
+• Tight integration with CLI and agent pack
 
 ⸻
 
@@ -106,9 +106,7 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 **8) Immediate next tasks (good first tickets)**
 
-1. **Define 1 POC template** (name, modules included, what it runs)
-
-2. **CLI skeleton**
+1. **CLI skeleton**
 
 • init command
 
@@ -122,7 +120,7 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 
 • “how to add a feature”
 
-• 3–5 recipes that match the template
+• 3–5 recipes for common patterns
 
 4. **Website v0**
 
@@ -131,4 +129,4 @@ A website + CLI that lets developers scaffold and “vibe-code” apps on the **
 • docs placeholder + “Showcase coming soon”
 
 
-If you want, paste your preferred POC template idea (e.g., “Expo Bare starter with P2P + auth stub” vs “Bare + Pear minimal”), and I’ll turn this into a tighter spec with: folder layout, CLI prompts, and the exact “agent instructions” you’d ship for Claude/Cursor/OpenCode.
+The CLI scaffolds a blank project with the agent pack configured for the chosen AI assistant. The agent pack guides the developer through building from scratch.

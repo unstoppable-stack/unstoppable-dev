@@ -7,15 +7,14 @@ globs: ["packages/cli/**/*.ts"]
 
 ## Overview
 
-The CLI (`create-unstoppable-app`) scaffolds new projects with the Unstoppable Stack. It prompts users for project name, template, AI assistant, and modules, then generates the project with tool-specific agent configurations.
+The CLI (`create-unstoppable-app`) scaffolds new projects with the Unstoppable Stack. It prompts users for project name and AI assistant, then generates the project with tool-specific agent configurations.
 
 ## Key Files
 
 - `packages/cli/src/index.ts` — CLI entry point, Commander.js setup, interactive prompts
-- `packages/cli/src/constants.ts` — Templates, modules, assistants definitions
-- `packages/cli/src/scaffold.ts` — Project scaffolding logic (copy templates, process package.json, install deps)
+- `packages/cli/src/constants.ts` — Assistants definitions
+- `packages/cli/src/scaffold.ts` — Project scaffolding logic (generate project, process package.json, install deps)
 - `packages/cli/src/agent-pack/index.ts` — Agent pack builder (generates Claude/Cursor/OpenCode configs)
-- `packages/cli/templates/` — Template directories (blank, p2p-sync, qvac-ai)
 - `packages/cli/agent-pack-src/` — Content bundled with CLI (synced from agent-pack via sync script)
 
 ## Build & Test

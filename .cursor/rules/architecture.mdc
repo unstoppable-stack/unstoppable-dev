@@ -14,11 +14,6 @@ unstoppable-stack/
 ├── packages/
 │   ├── website/                 # unstoppable.dev - Next.js site
 │   ├── cli/                     # create-unstoppable-app CLI
-│   ├── templates/               # Project scaffolds
-│   │   ├── starter/             # Basic Pear + Bare starter
-│   │   ├── p2p-sync/            # P2P data sync template
-│   │   ├── ai-local/            # QVAC inference template
-│   │   └── expo-mobile/         # Expo Bare mobile template
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
@@ -49,11 +44,6 @@ unstoppable-stack/
 - **Package Name**: `create-unstoppable-app`
 - **Distribution**: npm
 - **Build**: tsup (ESM output)
-
-### Templates (packages/templates)
-- Structure follows scaffolded app conventions
-- Each template includes its own README and agent instructions
-- Templates are copied and processed by CLI
 
 ### Agent Pack (packages/agent-pack)
 - Portable format that generates tool-specific configs

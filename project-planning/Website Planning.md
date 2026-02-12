@@ -72,7 +72,7 @@
 ### 2. Getting Started (`/getting-started`)
 - Prerequisites (Node.js 20+)
 - Install CLI: `npm create unstoppable-app@latest`
-- Interactive flow walkthrough (choose AI assistant, template, modules)
+- Interactive flow walkthrough (choose AI assistant)
 - Terminal output preview
 - "Next steps" — open editor, start building
 

@@ -16,7 +16,7 @@
 
 • Docs skeleton (even if incomplete)
 
-2. CLI that scaffolds **one template** (keep it tight):
+2. CLI that scaffolds **a project with agent pack** (keep it tight):
 
 • Example: “Local-first starter” using Bare + Pear + minimal Holepunch wiring
 

@@ -16,40 +16,99 @@ lead to working knowledge.
 
 ---
 
-## Stack Coverage Matrix
+## Coverage by Category
 
-| Module / Pattern | Status | Validated By | Agent Pack Files |
-|------------------|--------|-------------|-----------------|
-| **Pear Desktop** (renderer + worker) | Battle-tested | coffee-assistant-ui | modules/pear.md, skills/pear-desktop-app/ |
-| **Bare Runtime** (API surface, bare-* deps) | Battle-tested | coffee-assistant-ui | modules/bare.md |
-| **Hyperswarm** (P2P connections, topics) | Battle-tested | coffee-assistant, coffee-assistant-ui | modules/hyperswarm.md, skills/add-p2p-sync/ |
-| **bare-rpc** (RPC over P2P) | Battle-tested | coffee-assistant, coffee-assistant-ui | skills/p2p-rpc/ |
-| **Hyperbee** (KV storage) | Battle-tested | coffee-assistant, coffee-assistant-ui | modules/hyperbee.md |
-| **Hypercore** (append-only log) | Battle-tested | coffee-assistant (indirect via Hyperbee) | modules/hypercore.md |
-| **QVAC SDK** (chat, streaming, kv-cache) | Battle-tested | coffee-assistant, coffee-assistant-ui | modules/qvac.md, skills/qvac-chat-app/ |
-| **QVAC Tool Calling** (Zod schemas) | Battle-tested | coffee-assistant, coffee-assistant-ui | skills/qvac-tool-calling/ |
-| **Worker Bridge** (NDJSON pipe) | Battle-tested | coffee-assistant-ui | skills/pear-desktop-app/resources/worker-pattern.md |
-| **React + styled-components in Pear** | Battle-tested | coffee-assistant-ui | skills/pear-desktop-app/resources/ui-kit.md |
-| **SWC + React Refresh build** | Battle-tested | coffee-assistant-ui | skills/pear-desktop-app/resources/build-setup.md |
-| **Package versions** | Battle-tested | coffee-assistant-ui, workbench | core/verified-versions.md |
-| **HyperDB** (structured P2P database) | Docs only | — | modules/hyperdb.md |
-| **Hyperdrive** (P2P file storage) | Docs only | — | modules/hyperdrive.md, skills/file-sharing/ |
-| **Corestore** (multi-core management) | Docs only | — | modules/corestore.md |
-| **WDK Wallet** (crypto payments) | Docs only | — | modules/wdk.md, skills/wallet-integration/ |
-| **Expo Bare** (mobile P2P apps) | Docs only | — | modules/expo-bare.md |
-| **SecretStream + Protomux** | Docs only | — | skills/secure-communication/ |
-| **Pear Terminal apps** | Partial | coffee-assistant (ran as Node) | modules/pear.md (terminal section thin) |
-| **Multi-writer replication** | Not covered | — | — |
-| **Identity / auth** | Not covered | — | — |
-| **QVAC Vision** | Docs only | — | recipes/qvac-multimodal-vision.md |
-| **QVAC Transcription** | Docs only | — | recipes/qvac-transcription.md |
-| **QVAC Translation** | Docs only | — | recipes/qvac-translation.md |
-| **QVAC Embeddings / RAG** | Docs only | — | recipes/qvac-embeddings-rag-sqlite.md |
-| **QVAC Delegated Inference** | Docs only | — | recipes/qvac-delegated-inference.md |
-| **Offline-first sync** | Docs only | — | skills/offline-first-app/ |
+### Platform / Runtime
 
-**Legend:**
-- **Battle-tested** = built in a real app, bugs found & fixed, knowledge extracted
-- **Docs only** = agent pack has content but it was written from official docs, not validated
-- **Partial** = some aspects validated, others theoretical
-- **Not covered** = no agent pack content exists yet
+| Item | Status | Validated By |
+|------|--------|-------------|
+| **Pear Desktop** (renderer + worker split) | Battle-tested | coffee-assistant-ui |
+| **Pear Desktop** (pear config, unrouted, GUI) | Battle-tested | coffee-assistant-ui |
+| **Bare Runtime** (API surface, bare-* as npm deps) | Battle-tested | coffee-assistant-ui |
+| **Pear Terminal** | Not covered | — |
+| **Expo Bare / Mobile (iOS)** | Not covered | — |
+| **Expo Bare / Mobile (Android)** | Not covered | — |
+| **bare-pack (mobile bundling)** | Not covered | — |
+| **Pear Seeding / Distribution** | Not covered | — |
+| **Electron (non-Pear desktop)** | Not covered | — |
+
+### QVAC (Local AI)
+
+| Item | Status | Validated By |
+|------|--------|-------------|
+| **Chat completion (streaming)** | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **KV Cache (multi-turn)** | Battle-tested | coffee-assistant |
+| **Tool Calling (Zod v4 schemas)** | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **Model loading / unloading** | Battle-tested | coffee-assistant |
+| **Model download with progress** | Battle-tested | coffee-assistant |
+| **Think tag filtering** | Battle-tested | coffee-assistant-ui |
+| **Multimodal / Vision** | Docs only | — |
+| **Transcription (Whisper)** | Docs only | — |
+| **Translation** | Docs only | — |
+| **Text-to-Speech** | Docs only | — |
+| **OCR** | Docs only | — |
+| **Embeddings / RAG** | Docs only | — |
+| **Delegated Inference** | Docs only | — |
+| **Sharded Models** | Docs only | — |
+| **Model Registry / Discovery** | Docs only | — |
+| **Logging / File Transport** | Docs only | — |
+| **MCP (websearch, etc.)** | Not covered | — |
+
+### P2P & Data
+
+| Item | Status | Validated By |
+|------|--------|-------------|
+| **Hyperswarm** (topic join, peer discovery) | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **bare-rpc** (RPC over P2P streams) | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **Hyperbee** (KV storage, persistence) | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **Hypercore** (append-only log, indirect) | Battle-tested | coffee-assistant (via Hyperbee) |
+| **NDJSON messaging** (protocol design) | Battle-tested | coffee-assistant, coffee-assistant-ui |
+| **Topic creation** (Bare-compatible) | Battle-tested | coffee-assistant-ui |
+| **Worker bridge** (Pear.worker.pipe) | Battle-tested | coffee-assistant-ui |
+| **HyperDB** (structured P2P database) | Docs only | — |
+| **Hyperdrive** (P2P file storage) | Docs only | — |
+| **Corestore** (multi-core management) | Docs only | — |
+| **Multi-writer replication** | Not covered | — |
+| **SecretStream** (end-to-end encryption) | Docs only | — |
+| **Protomux** (multiplexed channels) | Docs only | — |
+| **Compact-encoding** (binary messages) | Docs only | — |
+| **Hypercore replication** (standalone) | Docs only | — |
+| **HyperDHT** (direct, not via Hyperswarm) | Docs only | — |
+
+### WDK (Wallet / Payments)
+
+| Item | Status | Validated By |
+|------|--------|-------------|
+| **Wallet creation** | Not validated | — |
+| **Send / Receive USDt** | Not validated | — |
+| **Balance queries** | Not validated | — |
+| **Transaction history** | Not validated | — |
+| **Payment verification over P2P** | Not validated | — |
+| **Subscription payments** | Not validated | — |
+
+### Build Tooling & DX
+
+| Item | Status | Validated By |
+|------|--------|-------------|
+| **SWC compilation** (src + worker) | Battle-tested | coffee-assistant-ui |
+| **React Refresh / HMR** | Battle-tested | coffee-assistant-ui |
+| **Dual watch mode** (src + worker) | Battle-tested | coffee-assistant-ui |
+| **Package version pinning** | Battle-tested | verified-versions.md |
+| **.swcrc / .swcrc.dev configs** | Battle-tested | coffee-assistant-ui |
+| **Testing patterns** (mock swarm, etc.) | Not covered | — |
+| **CI/CD for Pear apps** | Not covered | — |
+
+---
+
+## Summary
+
+| Category | Battle-tested | Docs only | Not covered | Total |
+|----------|--------------|-----------|-------------|-------|
+| Platform / Runtime | 3 | 0 | 6 | 9 |
+| QVAC | 6 | 10 | 1 | 17 |
+| P2P & Data | 7 | 7 | 1 | 15 |
+| WDK | 0 | 0 | 6 | 6 |
+| Build Tooling | 5 | 0 | 2 | 7 |
+| **Total** | **21** | **17** | **16** | **54** |
+
+**~39% battle-tested, ~31% docs only, ~30% not covered.**

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, templates, and AI agent packs that work across Claude, Cursor, and OpenCode.
+A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, and OpenCode.
 
 ## Vision
 
@@ -19,11 +19,6 @@ unstoppable-stack/
 ├── packages/
 │   ├── website/                 # unstoppable.dev - Next.js site
 │   ├── cli/                     # create-unstoppable-app CLI
-│   ├── templates/               # Project scaffolds
-│   │   ├── starter/             # Basic Pear + Bare starter
-│   │   ├── p2p-sync/            # P2P data sync template
-│   │   ├── ai-local/            # QVAC inference template
-│   │   └── expo-mobile/         # Expo Bare mobile template
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
@@ -86,11 +81,6 @@ unstoppable-stack/
 - **Package Name**: `create-unstoppable-app`
 - **Distribution**: npm
 
-### Templates (packages/templates)
-- Structure follows scaffolded app conventions
-- Each template includes its own README and agent instructions
-- Templates are copied and processed by CLI
-
 ### Agent Pack (packages/agent-pack) — v2
 - Portable format that generates tool-specific configs
 - **Skills** with progressive disclosure (thin SKILL.md + resources/)
@@ -147,24 +137,11 @@ pnpm create unstoppable-app
     Cursor
     OpenCode
     None
-? Select a template:
-  ❯ Starter (Pear + Bare basics)
-    P2P Sync App (HyperDB + Hyperswarm)
-    AI Local (QVAC inference)
-    Mobile (Expo Bare)
-? Select additional modules:
-  ◉ HyperDB (P2P database)
-  ◉ Hyperdrive (P2P files)
-  ◯ QVAC (AI inference)
-  ◯ WDK Wallet (crypto payments)
 ```
 
 ### Output
 ```
 Creating my-app...
-✓ Scaffolded from starter template
-✓ Added HyperDB module
-✓ Added Hyperdrive module
 ✓ Configured Claude Code agent pack
 ✓ Installed dependencies
 
@@ -182,7 +159,7 @@ The agent pack provides AI assistants with context about:
 1. **Architecture Guidelines** - How unstoppable apps are structured
 2. **Module Documentation** - What each module does, when to use it
 3. **Recipes** - Common patterns (auth, sync, storage, inference)
-4. **Template Awareness** - Knows what was scaffolded
+4. **Skills** - Guided implementation workflows with progressive disclosure
 
 ### Format per Tool
 
@@ -210,19 +187,17 @@ The agent pack provides AI assistants with context about:
 
 ### Phase 1: POC
 - [ ] CLI skeleton (init command, prompts, scaffolding)
-- [ ] One working template (Starter)
 - [ ] Agent pack v0 (rules + 3-5 recipes)
 - [ ] Website v0 (landing + getting started)
 
-### Phase 2: Templates & Docs
-- [ ] Additional templates (P2P sync, AI local, mobile)
+### Phase 2: Content & Mobile
+- [ ] Mobile platform support (Expo Bare)
 - [ ] Per-module documentation
 - [ ] More recipes and patterns
 
 ### Phase 3: Unstoppable Auth
 - [ ] Local-first identity model
 - [ ] Device linking and recovery
-- [ ] Integration into templates
 
 ### Phase 4: Cloud Services (Monetization)
 - [ ] Inference hosting
@@ -307,6 +282,6 @@ When working on this codebase:
 
 3. **Module boundaries** - Each Holepunch module (Hypercore, HyperDB, Hyperdrive) is independent but composable.
 
-4. **Template awareness** - When helping users build, know which template they started from and which modules are included.
+4. **Module awareness** - Know which stack modules the user's project uses and which are available.
 
 5. **Recipes over raw docs** - Prefer showing working patterns over explaining APIs in the abstract.
