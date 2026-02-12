@@ -323,8 +323,51 @@ bootstrap (not `app.ts`).
 - **No `node:*` URL scheme** — install `bare-*` equivalents
 - See `modules/bare.md` for the full API availability cheatsheet
 
+## Distribution (Sharing with Other Machines)
+
+**CRITICAL:** `pear stage` alone does NOT make the app available on the network.
+You must seed it.
+
+### Workflow
+
+1. **Stage** — build and package locally:
+   ```bash
+   bun run stage    # builds + runs: pear stage .
+   ```
+   This produces a `pear://<key>` link, but nobody can fetch it yet.
+
+2. **Seed** — serve to the P2P network (**KEEP RUNNING** while others fetch):
+   ```bash
+   bun run seed     # runs: pear seed .
+   ```
+
+3. **Remote machine** — fetch and run:
+   ```bash
+   pear run pear://<key>
+   ```
+   Once the remote machine caches the app, the seeder can stop.
+
+4. **Release** — publish a versioned release:
+   ```bash
+   bun run release  # runs: pear release
+   ```
+
+### Recommended Scripts
+
+```json
+{
+  "stage": "bun run build && pear stage .",
+  "seed": "pear seed .",
+  "release": "pear release"
+}
+```
+
+> Without `pear seed`, remote machines will get `ERR_INVALID_MANIFEST` — there's
+> no source on the network to download from.
+
 ## Deep Dive
 - Complete working example with theme + components: read `resources/full-example.md`
 - Build setup (SWC configs): read `resources/build-setup.md`
 - UI component kit reference: read `resources/ui-kit.md`
+- Worker pattern & init order: read `resources/worker-pattern.md`
 - Troubleshooting: read `resources/troubleshooting.md`

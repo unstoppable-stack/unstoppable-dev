@@ -411,7 +411,13 @@ export function createTopic(namespace: string): Uint8Array {
 }
 ```
 
-### Join a Shared Space
+### Join a Shared Space (Idempotent)
+
+**CRITICAL: Make join/leave operations idempotent.** In Pear desktop apps,
+the worker may auto-rejoin from saved state while the UI simultaneously
+sends a join request. Without a guard, the second call destroys the first
+swarm mid-DHT-discovery, losing all connection progress.
+
 ```typescript
 // src/p2p/room.ts
 import { createTopic } from './topic.js'
@@ -422,6 +428,9 @@ interface Room {
   join: () => Promise<void>
   leave: () => Promise<void>
 }
+
+let currentRoomId: string | null = null
+let currentSwarm: any = null
 
 export function createRoom(swarm: any, store: any, roomId: string): Room {
   const topic = createTopic('my-app:room:' + roomId)
@@ -434,7 +443,20 @@ export function createRoom(swarm: any, store: any, roomId: string): Room {
     members,
 
     async join() {
-      discovery = swarm.join(topic)
+      // Idempotent guard — skip if already in this room
+      if (currentRoomId === roomId && currentSwarm) {
+        return  // Already here, re-send state to UI if needed
+      }
+
+      // Leave previous room first
+      if (currentSwarm) {
+        await currentSwarm.destroy()
+      }
+
+      currentRoomId = roomId
+      currentSwarm = swarm
+
+      discovery = swarm.join(topic, { server: true, client: true })
 
       swarm.on('connection', (socket: any, info: any) => {
         const peerId = info.publicKey.toString('hex').slice(0, 8)
@@ -457,6 +479,8 @@ export function createRoom(swarm: any, store: any, roomId: string): Room {
         discovery = null
       }
       members.clear()
+      currentRoomId = null
+      currentSwarm = null
     }
   }
 }
