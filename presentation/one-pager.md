@@ -56,18 +56,29 @@ We built the same P2P desktop app (Coffee Assistant) twice:
 
 The toolchain is Phase 1. The bigger vision:
 
-**Phase 2 — Unstoppable Auth**
+**Phase 2 — Unstoppable Vault**
+A desktop app that syncs with any Unstoppable Stack app. Three services:
+- **Data Sync** — replicates Hyperbees, HyperDBs, Hypercores (always backed up)
+- **File Sync** — replicates Hyperdrives (files seeded 24/7)
+- **AI Provider** — runs powerful models (7B+) that phone/tablet apps can delegate
+  to over P2P using QVAC's built-in delegation (`startQVACProvider`)
+
+The Vault is a **personal cloud**. Same Hyperswarm protocol as everything else.
+
+**Phase 3 — Unstoppable Auth**
 Local-first identity. One keypair across all unstoppable apps.
-No passwords, no auth servers. Device linking and recovery built in.
 
-**Phase 3 — Unstoppable Subscriptions**
-Cloud services for P2P apps — without the developer needing servers.
+**Phase 4 — Unstoppable Cloud (Subscriptions)**
+Hosted version of the Vault — same protocol, run by Tether.
 
-| Free (local) | Subscriber |
-|-------------|-----------|
-| On-device AI (3B models) | Cloud inference (70B+) |
-| Local storage | Cloud-backed persistence |
-| Files online when device is on | Always-available file seeding |
+| Free (Vault on your desktop) | Subscriber (Cloud by Tether) |
+|------------------------------|------------------------------|
+| Your GPU (3B-13B models) | Tether GPUs (70B+) |
+| Local storage | Cloud-replicated, always on |
+| Files seeded when Vault is running | Files seeded 24/7 |
+| Free | USDt subscription via WDK |
+
+**Apps don't change.** Switch from Vault to Cloud by swapping a topic + public key.
 
 - Users subscribe via USDt (WDK)
 - Tether provides infrastructure (inference, storage, seeding)
@@ -76,15 +87,16 @@ Cloud services for P2P apps — without the developer needing servers.
 
 ## The Flywheel
 
-Better tooling → more developers → more apps → more users → more
-subscribers → revenue → fund better tooling. Every payment in USDt.
+Better tooling → more developers → more apps → users start with free Vault →
+upgrade to paid Cloud → revenue → fund better tooling. Every payment in USDt.
 
 ## Status
 
 - CLI: working (scaffolds for Claude, Cursor, OpenCode)
-- Agent Pack: 50% battle-tested (Pear, Bare, Hyperswarm, RPC, Hyperbee, QVAC)
+- Agent Pack: 39% battle-tested (21/54 items), structured roadmap to 81%
 - Website: built (landing, docs, getting started)
-- 5 more reference apps planned to validate the remaining stack
+- Vault: planned (technical architecture designed)
+- 7 reference apps planned to validate the remaining stack
 
 ## Impact
 

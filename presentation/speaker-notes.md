@@ -137,10 +137,13 @@ them verbatim.
 - Brief. "This is the public face. Where developers discover us."
 - Mention it's built and deployed (if it is by then).
 
-## Slide 19: Roadmap
-- Show that you have a plan, not just a prototype.
-- "We've validated about half the stack. Five more apps will cover the rest."
-- Each app is designed to test specific modules.
+## Slide 19: Roadmap — Stack Coverage
+- Show the coverage bar chart. Make it visual.
+- "We track knowledge across four categories: Platform, AI, P2P, and Payments.
+  Right now, 39% is battle-tested. 7 more apps will bring us to 81%."
+- Don't go into detail on each app — just show you have a structured plan.
+- The key message: "This isn't random. We know exactly what's validated
+  and what's not, and we have a plan for each gap."
 
 ## Slide 20: The Bigger Picture — Today
 - Come back to the simple story.
@@ -153,77 +156,101 @@ them verbatim.
 - This is the pivot moment. The energy should go up here.
 - "What I've shown you so far is Phase 1. The toolchain. That's the
   foundation. But the real vision is much bigger."
-- Three phases, quick. Don't explain yet — just set up the next slides.
+- Four phases now. Don't explain yet — just set up the next slides.
 
-## Slide 22: Unstoppable Auth
-- Identity is the bridge between "developer tool" and "platform."
-- "Right now, P2P apps have no identity system. Every developer builds
-  their own, or they just skip it. That's not sustainable."
-- "Unstoppable Auth gives users a single identity across all apps built
-  with the stack. One keypair, multiple devices, no passwords, no
-  centralized auth server."
-- For technical audience: "It's keypair-based. The private key lives on
-  the device. Device linking uses a challenge protocol. No seed phrases."
-- For CEO: "Think of it as Apple ID for the unstoppable ecosystem."
+## Slide 22: Unstoppable Vault — The Bridge to Cloud
+- This is a NEW concept since last time. Take a moment to set it up.
+- "Before we go to the cloud, there's a smarter first step."
+- "The Vault is a desktop app that syncs with ALL your unstoppable apps.
+  It replicates your data, seeds your files, and — this is the key —
+  runs powerful AI models that your other devices can delegate to."
+- Let the diagram speak. Three apps → one Vault.
+- "Think of it as your personal server. Except it's just a Pear desktop app."
 
-## Slide 23: Unstoppable Subscriptions
-- This is the business model slide. Take your time.
-- "P2P apps are amazing but they have limits. Your phone can run a 3B
-  model, but not a 70B model. Your files are only available when your
-  laptop is open. Your data lives on one device."
-- "Subscriptions remove those limits."
-- "Users who want more — better AI, always-online files, cloud backup —
-  they subscribe. And they pay in USDt."
+## Slide 23: Vault — What It Does
+- Walk through the three services. Spend most time on AI delegation.
+- "Data sync — straightforward. Your Hyperbees and databases get
+  replicated to the Vault. Always backed up."
+- "File sync — your Hyperdrives are mirrored. Files are available even
+  when the original app is closed."
+- "AI Provider — this is where it gets exciting."
+- Explain the phone→desktop delegation with enthusiasm:
+- "Your phone runs a 1B or 3B model. Good, but limited. Your desktop
+  has a GPU and 32 gigs of RAM. It can run a 7B or 13B model."
+- "With QVAC's built-in delegation, your phone app just says 'hey Vault,
+  run this for me.' The Vault runs the big model and streams tokens back
+  over P2P. Same API. The app doesn't even know the difference."
+- "And if the Vault is offline? `fallbackToLocal: true` — it just uses
+  the on-device model. No crash, no error."
 
-## Slide 24: Zero Infrastructure for Builders
+## Slide 24: From Vault to Cloud — Same Protocol
+- THIS is the strategic slide. Make the connection crystal clear.
+- "The Vault runs on your desktop. The Cloud runs on Tether's servers.
+  But the protocol is identical."
+- "An app connects to the Vault with a topic and a public key. It connects
+  to the Cloud with... a different topic and public key. That's it."
+- "The app code doesn't change. Not one line."
+- "So we build the Vault first — it's free, it's local, users love it.
+  Then we offer the Cloud — same thing but always on, bigger models,
+  unlimited storage. Users upgrade naturally."
+- "We don't have to convince anyone to switch to a cloud product.
+  They're already using the protocol."
+
+## Slide 25: Unstoppable Auth
+- Quicker now — the Vault set up the context.
+- "For all of this to work across apps, users need an identity."
+- "Keypair-based. No email, no password, no auth server. One identity
+  across all their unstoppable apps."
+- For CEO: "Think Apple ID, but for the unstoppable ecosystem. And
+  no one controls it except the user."
+
+## Slide 26: Unstoppable Subscriptions
+- Business model slide. Connect to the Vault → Cloud progression.
+- "Free tier: the Vault. Your desktop GPU, your storage, your network."
+- "Paid tier: the Cloud. Tether's GPUs, unlimited storage, always on."
+- "The upgrade path is natural. Users start free, hit the limits of
+  their device, and subscribe for more power."
+
+## Slide 27: Zero Infrastructure for Builders
 - THIS is the slide that will light up the room.
-- "Here's the part that changes everything: the app builder never
-  touches a server."
-- "They build the app with `npx create-unstoppable-app`. They publish
-  it. Users download it. Some users subscribe. Tether handles the
-  infrastructure — inference, storage, seeding. And the builder gets
-  a revenue share."
-- "No AWS. No billing dashboard. No DevOps. Just build the app."
-- Let that sink in. Pause.
-- "This means a solo developer in Chile, or Nigeria, or Indonesia can
-  build an app that earns money without any infrastructure costs."
-- Connect to the pillars: "That's financial stability through creation."
+- "The app builder never touches a server. They build the app, users
+  download it, some subscribe to the Cloud, Tether handles everything,
+  and the builder gets a revenue share."
+- "No AWS. No billing. No DevOps."
+- Pause. Let it sink in.
+- "A solo developer anywhere in the world can build an app that earns
+  money without any infrastructure costs."
 
-## Slide 25: The Flywheel
-- Quick visual slide. Walk through the loop.
-- "Better tools → more developers → more apps → more users → more
-  subscribers → more revenue → fund better tools. And every payment
-  goes through USDt."
-- "This is a self-reinforcing loop. And the Unstoppable Stack is the
-  entry point."
+## Slide 28: The Flywheel
+- Quick visual. Walk the loop.
+- "Better tools → more developers → more apps → users start with the
+  free Vault → upgrade to the paid Cloud → revenue → fund better tools."
+- "Every payment in USDt."
 
-## Slide 26: The Full Stack Vision
-- This is the "zoom out" moment. Show the full picture.
-- Don't read every row. Hit the key insight:
-- "From the foundation (Holepunch P2P, QVAC AI, WDK payments) up to
-  the apps that people use every day — it's all connected. And it's
-  all powered by Tether technology."
+## Slide 29: The Full Stack Vision
+- Zoom out. Show all layers with phases.
+- "Phase 1 is done — the toolchain works. Phase 2 is the Vault.
+  Phase 3 is auth. Phase 4 is the Cloud and subscriptions."
+- "Each phase unlocks the next. And the foundation — Holepunch,
+  QVAC, WDK — exists today."
 
-## Slide 27: Why This Matters for Tether
-- Now speak business. Be confident.
-- For PM: "Developer adoption is the leading indicator. If developers
-  build with our stack, users follow."
-- For CEO: "Recurring revenue from subscriptions. Every payment in USDt.
-  A developer ecosystem that grows itself."
-- "No one else is doing this. There's no AI-native P2P toolkit with a
-  built-in business model for app builders. We'd be first."
+## Slide 30: Why This Matters for Tether
+- Speak business. Be confident.
+- Hit the progressive path: "Vault is free and builds the user base.
+  Cloud is paid and generates revenue. It's a natural funnel."
+- "No one else has this. No AI-native P2P toolkit, no personal sync hub,
+  no built-in business model for builders. We'd be first."
 
-## Slide 28: The Ask
-- Be specific and reasonable.
-- "I'm not asking for a big team or a huge budget. I'm asking for
-  support to keep building. Five more reference apps to validate the
-  stack. Collaboration with Holepunch on docs. And a green light to
-  launch publicly."
-- "The subscription model is Phase 3. But we need Phase 1 and 2 solid
-  first. The foundation has to work before we build on it."
+## Slide 31: The Ask
+- Be specific. Six items.
+- "7 more reference apps to get from 39% to 81% coverage."
+- "Build the Vault — it validates 7 agent pack gaps in one app AND
+  creates the protocol for the Cloud."
+- "Launch publicly. Collaborate with Holepunch. Start exploring the
+  subscription model."
 
-## Slide 29: One More Thing
-- If you can do a live demo, do it here. It's the strongest closer.
+## Slide 32: One More Thing
+- If you can do a live demo, do it here. Strongest closer.
 - Scaffold → open in Cursor → type one prompt → watch the app build.
 - "That's the unstoppable stack."
 

@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Unstoppable Stack</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --accent: #00D4AA;
+    --accent-dim: #00A88A;
+    --tether: #50AF95;
+    --holepunch: #6C63FF;
+    --bg: #0A0A0A;
+    --surface: #141414;
+    --surface2: #1E1E1E;
+    --text: #F0F0F0;
+    --text-dim: #999;
+    --danger: #FF6B6B;
+    --warn: #FFD93D;
+  }
+
+  .reveal {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 32px;
+    color: var(--text);
+  }
+
+  .reveal .slides { text-align: left; }
+
+  .reveal .slides section {
+    padding: 40px 60px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .reveal h1, .reveal h2, .reveal h3 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .reveal h1 { font-size: 2.4em; line-height: 1.1; }
+  .reveal h2 { font-size: 1.5em; margin-bottom: 0.6em; }
+  .reveal h3 { font-size: 1.1em; color: var(--accent); margin-bottom: 0.4em; }
+
+  .reveal p, .reveal li {
+    font-size: 0.72em;
+    line-height: 1.6;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .reveal ul { list-style: none; padding: 0; margin: 0; }
+  .reveal ul li { padding: 0.2em 0; }
+  .reveal ul li::before {
+    content: "→ ";
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .reveal strong { color: var(--accent); font-weight: 600; }
+  .reveal em { color: var(--text-dim); font-style: normal; }
+
+  .reveal code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--accent);
+  }
+
+  .reveal pre {
+    background: var(--surface);
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .reveal pre code {
+    font-size: 0.55em;
+    line-height: 1.6;
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  .subtitle { color: var(--text-dim); font-size: 0.7em !important; font-weight: 300; }
+  .accent { color: var(--accent) !important; }
+  .danger { color: var(--danger) !important; }
+  .warn { color: var(--warn) !important; }
+  .dim { color: var(--text-dim) !important; }
+  .small { font-size: 0.6em !important; }
+  .center { text-align: center !important; }
+
+  .badge {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 0.5em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .badge-green { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .badge-purple { background: rgba(108,99,255,0.15); color: var(--holepunch); border: 1px solid rgba(108,99,255,0.3); }
+  .badge-red { background: rgba(255,107,107,0.15); color: var(--danger); border: 1px solid rgba(255,107,107,0.3); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.62em;
+  }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+    border-bottom: 2px solid var(--accent-dim);
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid #222;
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  .diagram {
+    background: var(--surface);
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.5em;
+    line-height: 1.5;
+    color: var(--text-dim);
+    white-space: pre;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .diagram .accent { color: var(--accent); }
+  .diagram .hl { color: var(--text); font-weight: 500; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h3 { margin-top: 0; font-size: 0.8em; }
+  .card p { font-size: 0.6em; margin: 0; }
+
+  .number-big {
+    font-size: 3em;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .number-label {
+    font-size: 0.6em;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 6px 0;
+    font-size: 0.6em;
+  }
+  .bar-label { width: 120px; text-align: right; color: var(--text-dim); }
+  .bar-track {
+    flex: 1;
+    height: 24px;
+    background: var(--surface2);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding-left: 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--bg);
+  }
+  .bar-fill.green { background: var(--accent); }
+  .bar-fill.purple { background: var(--holepunch); }
+  .bar-fill.red { background: var(--danger); }
+
+  .phase-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #1a1a1a;
+    font-size: 0.65em;
+  }
+  .phase-row:last-child { border-bottom: none; }
+  .phase-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9em;
+    flex-shrink: 0;
+  }
+  .phase-done { background: var(--accent); color: var(--bg); }
+  .phase-next { background: var(--holepunch); color: white; }
+  .phase-plan { background: var(--surface2); color: var(--text-dim); border: 1px solid #333; }
+  .phase-content { flex: 1; }
+  .phase-content strong { color: var(--text); }
+  .phase-status { color: var(--text-dim); font-size: 0.85em; }
+
+  .title-slide { display: flex !important; flex-direction: column; justify-content: center; align-items: center; text-align: center !important; }
+  .title-slide h1 { text-align: center; }
+  .title-slide p { text-align: center; }
+
+  .reveal .slides section { transition: all 0.4s ease; }
+  .reveal .progress { color: var(--accent); height: 4px; }
+  .reveal .controls { color: var(--accent); }
+  .reveal .slide-number { color: var(--text-dim); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+
+  .quote {
+    border-left: 4px solid var(--accent);
+    padding: 16px 24px;
+    margin: 20px 0;
+    background: var(--surface);
+    border-radius: 0 12px 12px 0;
+    font-size: 0.75em;
+    font-style: italic;
+    color: var(--text);
+  }
+
+  .timeline {
+    position: relative;
+    margin: 20px 0;
+    padding-left: 30px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #333;
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 18px;
+    font-size: 0.65em;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .timeline-item.dim-item::before { background: #555; }
+  .timeline-item .tl-title { font-weight: 600; color: var(--text); }
+  .timeline-item .tl-detail { color: var(--text-dim); font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<section class="title-slide">
+  <p class="small dim" style="margin-bottom: 8px; letter-spacing: 0.15em; text-transform: uppercase;">Introducing</p>
+  <h1 style="margin-bottom: 16px;">The Unstoppable Stack</h1>
+  <p class="subtitle" style="max-width: 600px;">AI-native tooling for building apps with<br><strong>Holepunch</strong> P2P + <strong>QVAC</strong> AI + <strong>WDK</strong> Wallet</p>
+  <p class="dim small" style="margin-top: 40px;">Simon Iribarren</p>
+</section>
+
+<!-- ==================== SLIDE 2: VIBE-CODING IS POWERFUL ==================== -->
+<section>
+  <h2>Vibe-Coding Has Changed Everything</h2>
+
+  <p>In the last months I've been building apps with AI assistants.<br>
+  The speed is <strong>unreal</strong>.</p>
+
+  <div class="grid-2" style="margin-top: 16px;">
+    <div class="card">
+      <h3>Yoga Studio App</h3>
+      <p>Built for my mom in Chile. Class management, attendance, payments. Built in hours — not weeks.</p>
+    </div>
+    <div class="card">
+      <h3>Personal Finance App</h3>
+      <p>Expenses, income, Bitcoin tracking. Same approach — describe what I want, get working code.</p>
+    </div>
+  </div>
+
+  <p style="margin-top: 20px;">AI assistants like Claude and Cursor are <strong>incredibly good</strong> at building apps with React, Next.js, Postgres, Stripe...</p>
+
+  <p class="dim small">Any developer can build a full-stack centralized app in minutes.</p>
+</section>
+
+<!-- ==================== SLIDE 3: BUT NOT WITH OUR STACK ==================== -->
+<section>
+  <h2>But Not With Our Stack</h2>
+
+  <p>Then I tried building with <strong>Holepunch + QVAC + WDK</strong>. The same AI <span class="danger">falls apart</span>.</p>
+
+  <div class="grid-2" style="margin-top: 12px;">
+    <div class="card" style="border-top: 3px solid var(--holepunch); padding: 16px;">
+      <h3 style="color: var(--holepunch); font-size: 0.7em;">P2P / Platform</h3>
+      <ul style="font-size: 0.85em;">
+        <li><span class="danger">Doesn't know which libraries to pick</span> <span class="dim">— dozens of Holepunch modules, AI can't find the simplest path</span></li>
+        <li><span class="danger">Node / Bare incompatibilities</span> <span class="dim">— uses Node APIs that don't exist in Bare runtime</span></li>
+        <li><span class="danger">Can't set up a Pear Desktop app</span> <span class="dim">— worker process, React, TypeScript, build pipeline</span></li>
+        <li><span class="danger">Wrong package versions</span> <span class="dim">— guesses versions that don't exist</span></li>
+      </ul>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--tether); padding: 16px;">
+      <h3 style="color: var(--tether); font-size: 0.7em;">AI / QVAC</h3>
+      <ul style="font-size: 0.85em;">
+        <li><span class="danger">Doesn't handle context overflow</span> <span class="dim">— hits token limits, no trimming strategy</span></li>
+        <li><span class="danger">Streaming done wrong</span> <span class="dim">— drops chunks, breaks UI updates</span></li>
+        <li><span class="danger">Think tags not handled</span> <span class="dim">— raw &lt;think&gt; tags leak into user UI</span></li>
+        <li><span class="danger">Vision, TTS, transcription?</span> <span class="dim">— hasn't even been tried, more trial & error ahead</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="quote" style="margin-top: 16px;">
+    If developers can vibe-code any app with a regular stack but can't with ours — <strong>they won't adopt our technologies.</strong>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 4: THE ADOPTION RISK ==================== -->
+<section>
+  <h2>The Adoption Risk</h2>
+
+  <table>
+    <tr>
+      <th></th>
+      <th>Centralized <span class="dim">(React / AWS)</span></th>
+      <th>Our Stack <span class="dim">(Holepunch / QVAC / WDK)</span></th>
+    </tr>
+    <tr>
+      <td>AI builds it correctly?</td>
+      <td><strong>Yes</strong>, effortlessly</td>
+      <td><span class="danger">No</span>, constant errors</td>
+    </tr>
+    <tr>
+      <td>Time to working app</td>
+      <td>Minutes</td>
+      <td><span class="danger">Hours of debugging</span></td>
+    </tr>
+    <tr>
+      <td>Infrastructure needed</td>
+      <td>Servers <span class="dim">($50-5K/mo)</span></td>
+      <td><strong>None</strong></td>
+    </tr>
+    <tr>
+      <td>Adoption trend</td>
+      <td>Accelerating</td>
+      <td><span class="danger">At risk</span></td>
+    </tr>
+  </table>
+
+  <p style="margin-top: 20px;">Our stack has a <strong>structural advantage</strong> — no servers, no infra costs, private by default. But none of that matters if <strong>AI can't help developers use it</strong>.</p>
+
+  <p>Every day AI gets better at centralized — <strong>the gap widens.</strong></p>
+</section>
+
+<!-- ==================== SLIDE 5: THE IDEA ==================== -->
+<section class="title-slide">
+  <h1 style="font-size: 1.6em; max-width: 800px;">What if we could teach AI<br>how to use our stack<br><span class="accent">correctly?</span></h1>
+
+  <p class="subtitle" style="margin-top: 24px; max-width: 600px;">
+    A structured, battle-tested knowledge base<br>that any AI assistant can use to build<br>Holepunch + QVAC + WDK apps.
+  </p>
+
+  <pre style="max-width: 500px; text-align: left; margin-top: 32px;"><code>npx create-unstoppable-app</code></pre>
+</section>
+
+<!-- ==================== SLIDE 6: MY JOURNEY — CLI ==================== -->
+<section>
+  <h2>How I Proved It Works <span class="dim" style="font-size: 0.5em; font-weight: 400;">Part 1 — CLI</span></h2>
+
+  <p>I built the same app — <strong>Coffee Assistant</strong> — multiple times.</p>
+
+  <div class="card" style="border-top: 3px solid var(--danger); margin-top: 16px;">
+    <h3 style="color: var(--danger); font-size: 0.75em;">CLI App — 3 attempts before it worked</h3>
+    <p>Two P2P terminal apps with AI: Hyperswarm + bare-rpc + QVAC + Hyperbee.</p>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div>
+        <p><span class="danger" style="font-size: 1em;">Attempt 1:</span> Complete failure. AI couldn't set up P2P.</p>
+        <p><span class="danger" style="font-size: 1em;">Attempt 2:</span> Partial. Got stuck on RPC + streaming.</p>
+        <p><span class="warn" style="font-size: 1em;">Attempt 3:</span> Finally working after <strong style="color: var(--text);">dozens of prompts</strong> and heavy debugging.</p>
+      </div>
+      <div>
+        <p style="margin-top: 4px;">After getting it working, I asked the AI to <strong style="color: var(--text);">identify reusable modules</strong> — extract patterns that could be reused across any app.</p>
+        <p class="dim" style="margin-top: 8px;">This became the first seed of the agent pack knowledge.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="dim small" style="margin-top: 16px;">At this point I realized: if it's this hard for me, no other developer would even try.</p>
+</section>
+
+<!-- ==================== SLIDE 7: MY JOURNEY — DESKTOP ==================== -->
+<section>
+  <h2>How I Proved It Works <span class="dim" style="font-size: 0.5em; font-weight: 400;">Part 2 — Desktop</span></h2>
+
+  <div class="grid-2" style="margin-top: 12px;">
+    <div class="card" style="border-top: 3px solid var(--warn);">
+      <h3 style="color: var(--warn); font-size: 0.75em;">Desktop App — Attempt 1</h3>
+      <p>Same app as Pear Desktop + React UI.</p>
+      <p style="margin-top: 10px;">Setting up Pear was <span class="danger">extremely difficult</span>. I had to point the AI to the QVAC Workbench app as a reference just to get the project scaffolded.</p>
+      <p style="margin-top: 8px;" class="dim">Most devs won't have a reference app to copy from.</p>
+      <p style="margin-top: 10px;">At least the AI <strong style="color: var(--text);">could reuse the P2P logic</strong> from the CLI — that knowledge carried over.</p>
+      <p style="margin-top: 10px;">This time I had a <strong style="color: var(--text);">better process</strong> — documenting every fix as I went, extracting patterns systematically.</p>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <h3 style="font-size: 0.75em;">Desktop App — Attempt 2</h3>
+      <p>Fresh project. Agent pack loaded with all extracted knowledge.</p>
+      <p style="margin-top: 10px; font-size: 1em;"><strong>1 prompt to plan.</strong></p>
+      <p style="font-size: 1em;"><strong>1 prompt to confirm.</strong></p>
+      <p style="margin-top: 10px;">Fully working app.<br>Decent React UI.<br><strong style="color: var(--accent);">Zero debugging.</strong></p>
+      <p style="margin-top: 12px; font-size: 1em;"><strong>It felt like magic.</strong></p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 8: THE NUMBERS ==================== -->
+<section>
+  <h2>The Result</h2>
+
+  <div class="grid-2" style="margin-top: 20px;">
+    <div class="card" style="text-align: center; border-color: #333;">
+      <p class="dim small" style="margin-bottom: 8px;">Without the Unstoppable Stack</p>
+      <div class="number-big danger" style="color: var(--danger);">5 attempts</div>
+      <div class="number-label">3 CLI tries + 1 painful desktop setup</div>
+      <p class="dim small" style="margin-top: 10px;">Dozens of prompts each. Constant debugging.</p>
+    </div>
+    <div class="card" style="text-align: center; border-color: var(--accent);">
+      <p class="dim small" style="margin-bottom: 8px;">With the Unstoppable Stack</p>
+      <div class="number-big">2 prompts</div>
+      <div class="number-label">one to plan, one to confirm</div>
+      <p class="dim small" style="margin-top: 10px;">Zero errors. Working app with UI. Felt like magic.</p>
+    </div>
+  </div>
+
+  <div class="quote" style="margin-top: 24px;">
+    This is the difference between <span class="danger">"our stack is too hard"</span> and <strong>"this is the easiest way to build a P2P app."</strong>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 9: HOW IT WORKS ==================== -->
+<section>
+  <h2>How the Knowledge Is Built</h2>
+
+  <p>Not docs from docs. <strong>Patterns extracted from real, working apps.</strong></p>
+
+  <div class="diagram" style="font-size: 0.5em; line-height: 2;">  <span class="hl">Build real app</span> → <span style="color: var(--danger)">hit bugs</span> → <span class="hl">document every fix</span> → <span class="accent">extract into agent pack</span>
+                                          ↓
+                          <span class="hl">Scaffold fresh project</span> → vibe-code same app
+                                          ↓
+                             Works first try? → <span class="accent">Knowledge validated ✓</span>
+                             Fails?          → <span style="color: var(--danger)">Fix gaps, repeat</span></div>
+
+  <p style="margin-top: 12px;">The agent pack today:</p>
+
+  <div class="grid-2">
+    <div>
+      <ul>
+        <li><strong>12</strong> module docs <em>(Pear, Bare, QVAC, WDK...)</em></li>
+        <li><strong>10</strong> skills with full code examples</li>
+        <li><strong>18</strong> recipes for common patterns</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li><strong>8</strong> reusable TypeScript components</li>
+        <li>Pinned, <strong>verified package versions</strong></li>
+        <li>Real error messages → <strong>real fixes</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="small dim" style="margin-top: 8px;">Works with Claude Code, Cursor, and OpenCode. Same knowledge, adapted per tool.</p>
+</section>
+
+<!-- ==================== SLIDE 10: COVERAGE ==================== -->
+<section>
+  <h2>Stack Coverage</h2>
+
+  <p class="dim small" style="margin-bottom: 16px;">We track every capability across 4 categories. Each must be battle-tested.</p>
+
+  <div style="margin-top: 12px;">
+    <div class="bar-row">
+      <span class="bar-label">Platform</span>
+      <div class="bar-track">
+        <div class="bar-fill green" style="width: 33%;">3/9</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">QVAC (AI)</span>
+      <div class="bar-track">
+        <div class="bar-fill green" style="width: 35%;">6/17</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">P2P & Data</span>
+      <div class="bar-track">
+        <div class="bar-fill green" style="width: 47%;">7/15</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">WDK</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width: 3%; background: #333; min-width: 40px; color: var(--text-dim);">0/6</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 24px;">
+    <div class="bar-row">
+      <span class="bar-label" style="font-weight: 600; color: var(--text);">Today</span>
+      <div class="bar-track">
+        <div class="bar-fill green" style="width: 39%;">39%</div>
+      </div>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label" style="font-weight: 600; color: var(--text);">After 7 apps</span>
+      <div class="bar-track">
+        <div class="bar-fill green" style="width: 81%;">81%</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="small dim" style="margin-top: 12px;">7 more reference apps — each designed to validate specific gaps. Same build → extract → validate loop.</p>
+</section>
+
+<!-- ==================== SLIDE 11: OPPORTUNITY - VAULT ==================== -->
+<section>
+  <h2>The Opportunity: Unstoppable Vault</h2>
+  <p class="subtitle">A desktop app that syncs with any Unstoppable Stack app</p>
+
+  <table style="margin-top: 16px;">
+    <tr>
+      <th>Service</th>
+      <th>What it does</th>
+    </tr>
+    <tr>
+      <td><strong>Data Sync</strong></td>
+      <td>Replicates Hyperbees, HyperDBs — always backed up</td>
+    </tr>
+    <tr>
+      <td><strong>File Sync</strong></td>
+      <td>Replicates Hyperdrives — files seeded 24/7</td>
+    </tr>
+    <tr>
+      <td><strong>AI Provider</strong></td>
+      <td>Runs 7B+ models — phone apps <strong>delegate inference</strong> over P2P</td>
+    </tr>
+  </table>
+
+  <div class="diagram" style="margin-top: 16px; text-align: center;">Phone <span class="dim">(1B model)</span>  ──── <span class="accent">P2P delegation</span> ────►  Desktop Vault <span class="dim">(7B model)</span>
+                          ◄──── <span class="accent">streams tokens</span> ────
+<span class="dim">If Vault offline → falls back to on-device model automatically</span></div>
+
+  <p class="small dim">Built into QVAC: <code>startQVACProvider()</code> on the Vault, <code>loadModel({ delegate })</code> on the app.</p>
+</section>
+
+<!-- ==================== SLIDE 12: VAULT → CLOUD ==================== -->
+<section>
+  <h2>Vault → Cloud <span class="dim" style="font-size: 0.6em; font-weight: 400;">Same Protocol</span></h2>
+
+  <div class="grid-2" style="margin-top: 16px;">
+    <div class="card" style="border-color: var(--accent);">
+      <h3 style="color: var(--accent);">Vault <span class="badge badge-green">Free</span></h3>
+      <p>Your desktop<br>Your GPU (7-13B models)<br>Your storage<br>Free forever</p>
+    </div>
+    <div class="card" style="border-color: var(--holepunch);">
+      <h3 style="color: var(--holepunch);">Cloud <span class="badge badge-purple">Subscription</span></h3>
+      <p>Tether-hosted<br>H100 GPUs (70B+ models)<br>Unlimited storage, always on<br>USDt via WDK</p>
+    </div>
+  </div>
+
+  <pre style="margin-top: 20px;"><code>// App code is identical. Just swap topic + key.
+loadModel({
+  delegate: { topic: vaultOrCloudTopic, providerPublicKey: vaultOrCloudKey }
+})</code></pre>
+
+  <p>Users start free → upgrade to Cloud naturally when they need more power.</p>
+</section>
+
+<!-- ==================== SLIDE 13: BUSINESS MODEL ==================== -->
+<section>
+  <h2>Business Model</h2>
+
+  <div class="diagram" style="font-size: 0.55em; line-height: 1.8;">
+<span class="hl">Developer</span>                                <span class="hl">Tether Cloud</span>
+  builds app ─────────────────────►  runs <span class="accent">inference</span>
+  <span class="dim">(zero servers, zero infra)</span>              stores <span class="accent">data</span>
+                                      seeds <span class="accent">files</span>
+  ◄──── <span class="accent">revenue share</span> ──────────  charges subscription
+                                            ▲
+                                            │ <span class="accent">USDt (WDK)</span>
+                                         <span class="hl">Users</span></div>
+
+  <div class="grid-2" style="margin-top: 16px;">
+    <div>
+      <ul>
+        <li>Builders pay <strong>$0</strong> for infrastructure</li>
+        <li>They just build the app — no servers, no DevOps</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li>Users pay in <strong>USDt</strong> for more power</li>
+        <li>Builders get <strong>revenue share</strong></li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="small dim" style="margin-top: 8px;">Every subscription payment flows through USDt + WDK. More apps → more users → more USDt utility.</p>
+</section>
+
+<!-- ==================== SLIDE 14: PHASES ==================== -->
+<section>
+  <h2>Phases</h2>
+
+  <div style="margin-top: 20px;">
+    <div class="phase-row">
+      <div class="phase-num phase-done">1</div>
+      <div class="phase-content">
+        <strong>Toolchain</strong> — CLI + Agent Pack + Website
+      </div>
+      <div class="phase-status"><span class="badge badge-green">Done</span></div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-next">2</div>
+      <div class="phase-content">
+        <strong>Vault</strong> — Personal sync hub + AI delegation
+      </div>
+      <div class="phase-status"><span class="badge badge-purple">Designed</span></div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-plan">3</div>
+      <div class="phase-content">
+        <strong>Auth</strong> — Local-first identity across apps
+      </div>
+      <div class="phase-status"><span class="dim">Planned</span></div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-plan">4</div>
+      <div class="phase-content">
+        <strong>Cloud + Subscriptions</strong> — Hosted Vault, payments in USDt
+      </div>
+      <div class="phase-status"><span class="dim">Vision</span></div>
+    </div>
+  </div>
+
+  <p class="small dim" style="margin-top: 24px;">Each phase unlocks the next. The foundation (Holepunch + QVAC + WDK) exists today.</p>
+</section>
+
+<!-- ==================== SLIDE 15: THE VISION ==================== -->
+<section>
+  <h2>The Vision</h2>
+  <p class="subtitle" style="margin-bottom: 12px;">A factory of unstoppable apps — powered by our infrastructure</p>
+
+  <div style="position: relative; margin-top: 8px;">
+    <!-- Top: App Builders -->
+    <div style="text-align: center; margin-bottom: 12px;">
+      <span class="badge badge-green" style="font-size: 0.55em; padding: 6px 20px;">APP BUILDERS</span>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 8px;">
+      <div style="background: var(--surface); border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 0.5em;">
+        <span style="font-size: 1.4em;">&#9749;</span><br>Coffee App
+      </div>
+      <div style="background: var(--surface); border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 0.5em;">
+        <span style="font-size: 1.4em;">&#128172;</span><br>Chat App
+      </div>
+      <div style="background: var(--surface); border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 0.5em;">
+        <span style="font-size: 1.4em;">&#128466;</span><br>Notes App
+      </div>
+      <div style="background: var(--surface); border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 0.5em;">
+        <span style="font-size: 1.4em;">&#127925;</span><br>Voice App
+      </div>
+      <div style="background: var(--surface); border: 1px solid #2a2a2a; border-radius: 8px; padding: 8px 14px; text-align: center; font-size: 0.5em; color: var(--text-dim);">
+        <span style="font-size: 1.4em;">...</span><br>Any App
+      </div>
+    </div>
+
+    <!-- Module badges inside each app -->
+    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 14px;">
+      <span style="background: rgba(108,99,255,0.2); color: var(--holepunch); border: 1px solid rgba(108,99,255,0.3); padding: 3px 10px; border-radius: 12px; font-size: 0.45em; font-weight: 600;">HOLEPUNCH P2P</span>
+      <span style="background: rgba(80,175,149,0.2); color: var(--tether); border: 1px solid rgba(80,175,149,0.3); padding: 3px 10px; border-radius: 12px; font-size: 0.45em; font-weight: 600;">QVAC AI</span>
+      <span style="background: rgba(255,217,61,0.2); color: var(--warn); border: 1px solid rgba(255,217,61,0.3); padding: 3px 10px; border-radius: 12px; font-size: 0.45em; font-weight: 600;">WDK WALLET</span>
+    </div>
+
+    <!-- Deploy targets -->
+    <div style="text-align: center; font-size: 0.45em; color: var(--text-dim); margin-bottom: 14px;">
+      Deploy to: <strong style="color: var(--text);">Pear</strong> &nbsp;|&nbsp; <strong style="color: var(--text);">App Store</strong> &nbsp;|&nbsp; <strong style="color: var(--text);">Play Store</strong> &nbsp;|&nbsp; <strong style="color: var(--text);">Web</strong>
+    </div>
+
+    <!-- Arrow down -->
+    <div style="text-align: center; font-size: 0.7em; color: var(--accent); margin-bottom: 6px;">&#9660; &nbsp; users connect &nbsp; &#9660;</div>
+
+    <!-- Middle: Users + connections -->
+    <div style="display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; align-items: center;">
+      <!-- Left: Vault -->
+      <div class="card" style="border-color: var(--accent); text-align: center; padding: 14px;">
+        <h3 style="font-size: 0.65em; margin-bottom: 6px;">Unstoppable Vault</h3>
+        <p style="font-size: 0.5em; color: var(--text-dim); margin-bottom: 6px;">Your desktop. Free forever.</p>
+        <div style="font-size: 0.45em; line-height: 1.8;">
+          <span style="color: var(--accent);">&#10003;</span> Data backup<br>
+          <span style="color: var(--accent);">&#10003;</span> File seeding 24/7<br>
+          <span style="color: var(--accent);">&#10003;</span> AI inference (7B)
+        </div>
+      </div>
+
+      <!-- Center: Auth bridge -->
+      <div style="text-align: center;">
+        <div style="font-size: 0.4em; color: var(--text-dim); margin-bottom: 6px;">UNSTOPPABLE<br>AUTH</div>
+        <div style="font-size: 1.2em; color: var(--accent);">&#8596;</div>
+        <div style="font-size: 0.4em; color: var(--text-dim); margin-top: 6px;">same identity<br>same protocol</div>
+      </div>
+
+      <!-- Right: Cloud -->
+      <div class="card" style="border-color: var(--holepunch); text-align: center; padding: 14px;">
+        <h3 style="font-size: 0.65em; color: var(--holepunch); margin-bottom: 6px;">Unstoppable Cloud</h3>
+        <p style="font-size: 0.5em; color: var(--text-dim); margin-bottom: 6px;">Tether-hosted. Subscription.</p>
+        <div style="font-size: 0.45em; line-height: 1.8;">
+          <span style="color: var(--holepunch);">&#10003;</span> Unlimited storage<br>
+          <span style="color: var(--holepunch);">&#10003;</span> Always-on seeding<br>
+          <span style="color: var(--holepunch);">&#10003;</span> AI inference (70B+)
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom row: revenue -->
+    <div style="display: flex; justify-content: space-between; margin-top: 14px; padding: 0 20px;">
+      <div style="font-size: 0.45em; color: var(--text-dim); text-align: center; flex: 1;">
+        <span style="color: var(--accent);">&#8593;</span> Users upgrade when they need more power
+      </div>
+      <div style="font-size: 0.45em; text-align: center; flex: 1;">
+        <span style="color: var(--warn);">USDt</span> <span style="color: var(--text-dim);">subscriptions</span> &rarr; <span style="color: var(--accent);">revenue share</span> <span style="color: var(--text-dim);">to builders</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 16: THE ASK ==================== -->
+<section>
+  <h2>The Ask</h2>
+
+  <div style="margin-top: 24px;">
+    <div class="phase-row">
+      <div class="phase-num phase-done" style="font-size: 0.8em;">1</div>
+      <div class="phase-content"><strong>Continue building</strong> — 7 reference apps to reach 81% stack coverage</div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-next" style="font-size: 0.8em;">2</div>
+      <div class="phase-content"><strong>Build the Vault</strong> — bridges to Cloud, validates 7 stack gaps at once</div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-plan" style="font-size: 0.8em;">3</div>
+      <div class="phase-content"><strong>Collaborate with Holepunch</strong> — joint effort on docs + Auth</div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num phase-plan" style="font-size: 0.8em;">4</div>
+      <div class="phase-content"><strong>Launch unstoppable.dev</strong> — public beta</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SLIDE 17: DEMO ==================== -->
+<section class="title-slide">
+  <p class="dim small" style="letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 8px;">Live Demo</p>
+  <h1 style="font-size: 1.8em; margin-bottom: 24px;">One prompt to plan.<br>One prompt to build.</h1>
+  <pre style="max-width: 500px; text-align: left;"><code>npx create-unstoppable-app</code></pre>
+  <p class="subtitle" style="margin-top: 32px; font-size: 0.8em;"><strong>That's the unstoppable stack.</strong></p>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    width: 1280,
+    height: 720,
+    margin: 0.04,
+    transition: 'fade',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'fade',
+    center: false,
+    controls: true,
+    progress: true,
+    history: true,
+  });
+</script>
+</body>
+</html>

@@ -362,22 +362,33 @@ Positions Tether as a developer platform, not just a token.
 
 ---
 
-## Slide 19: Roadmap — What's Next
+## Slide 19: Roadmap — Stack Coverage
 
-**Currently validated:**
-Pear Desktop, Bare Runtime, Hyperswarm, bare-rpc, Hyperbee, QVAC (chat + tools)
+We track knowledge across 4 categories. Each must be battle-tested:
 
-**Next apps to build (to validate remaining modules):**
+```
+                    Battle-tested    Docs only    Not covered
+  Platform          ███░░░░░░        3/9
+  QVAC (AI)         ██████░░░░░      6/17
+  P2P & Data        ███████░░░░░░░░  7/15
+  WDK (Payments)    ░░░░░░           0/6
+                    ─────────────────────────
+  Total             21/54  (39%)
+```
 
-| App | Validates |
-|-----|-----------|
-| P2P File Sync | Hyperdrive, Corestore |
-| Collaborative Notes | HyperDB, multi-writer, offline-first |
-| Encrypted Chat | SecretStream, Protomux |
-| Mobile P2P App | Expo Bare, bare-pack |
-| Payment App | WDK Wallet |
+**What's validated:** Pear Desktop, Bare Runtime, Hyperswarm, bare-rpc,
+Hyperbee, QVAC chat + streaming + tool calling
 
-Each app follows the same loop: build → find bugs → fix knowledge → validate.
+**What's next — by category:**
+
+| Category | Key gaps to fill |
+|----------|-----------------|
+| **Platform** | Pear Terminal, Expo Bare (mobile), pear stage/release |
+| **QVAC** | Vision, Transcription, RAG/Embeddings, Delegated Inference, TTS |
+| **P2P** | HyperDB + multi-writer, Hyperdrive, SecretStream, Protomux |
+| **WDK** | Everything — wallet creation, send/receive, payment flows |
+
+7 planned reference apps will take coverage from **39% → 81%**.
 
 ---
 
@@ -407,55 +418,137 @@ It's the foundation for a **platform**.
 
 ```
 Phase 1 (now)     → Toolchain: CLI + Agent Pack + Website
-Phase 2 (next)    → Unstoppable Auth: Local-first identity
-Phase 3 (future)  → Unstoppable Subscriptions: Cloud services for P2P apps
+Phase 2 (next)    → Unstoppable Vault: Personal sync + AI hub
+Phase 3           → Unstoppable Auth: Local-first identity
+Phase 4 (future)  → Unstoppable Cloud: Hosted services + subscriptions
 ```
 
 ---
 
-## Slide 22: Unstoppable Auth
+## Slide 22: Unstoppable Vault — The Bridge to Cloud
 
-Today, every app reinvents authentication. And most P2P apps have
-no authentication at all.
+Before the cloud, there's a simpler step: a desktop app that syncs with
+**any app** built with the Unstoppable Stack.
 
-**Unstoppable Auth** is a local-first identity system:
+```
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ Coffee   │  │ Notes    │  │ Finance  │
+│ App      │  │ App      │  │ App      │
+└────┬─────┘  └────┬─────┘  └────┬─────┘
+     │             │             │
+     └──────┬──────┴──────┬──────┘
+            │  Hyperswarm │
+     ┌──────▼─────────────▼──────┐
+     │                           │
+     │    Unstoppable Vault      │
+     │                           │
+     │  Data Sync (Hyperbee,     │
+     │    HyperDB, Hypercore)    │
+     │  File Sync (Hyperdrive)   │
+     │  AI Provider (QVAC)       │
+     │                           │
+     └───────────────────────────┘
+```
 
-- Identity lives on your device (keypair-based, no email/password)
-- Works across apps built with the stack
-- Device linking and recovery (no seed phrases)
-- Optional verification (prove you're the same person across apps)
-
-**For developers:** Add `unstoppable-auth` to your app → users get identity
-for free. No auth server. No database of passwords.
-
-**For users:** One identity across all unstoppable apps. Their data,
-their keys, their control.
-
----
-
-## Slide 23: Unstoppable Subscriptions — The Business Model
-
-Here's where it gets interesting.
-
-P2P apps are powerful but limited by the device:
-- Small AI models (3B) instead of powerful ones (70B+)
-- Storage limited to local disk
-- Files only available when the device is online
-
-**Unstoppable Subscriptions** remove these limits:
-
-| Free (local-only) | Subscriber |
-|--------------------|-----------|
-| On-device AI (3B models) | Cloud inference (70B+ models) |
-| Local storage only | Cloud-backed data persistence |
-| Files available when online | Files always seeded & available |
-| Basic features | Premium features per app |
+Three services in one app:
 
 ---
 
-## Slide 24: How It Works — Zero Infrastructure for Builders
+## Slide 23: Vault — What It Does
 
-This is the key insight: **app builders don't need any servers.**
+**1. Data Sync** — Replicates your apps' Hyperbees, HyperDBs, and Hypercores.
+Your data is backed up and always available, even when the original app is closed.
+
+**2. File Sync** — Replicates Hyperdrives. Your files are seeded 24/7.
+Other peers can access them even when your app is offline.
+
+**3. AI Provider** — This is the exciting one.
+
+QVAC has **built-in P2P delegation**. The Vault runs `startQVACProvider()`
+with powerful models (7B, 13B). Your phone app calls
+`loadModel({ delegate: { topic, providerPublicKey } })`.
+
+```
+Phone (1B model)              Desktop Vault (7B model)
+┌─────────────────┐           ┌──────────────────────┐
+│                 │   P2P     │                      │
+│  "Analyze this" │──────────►│  Runs 7B model       │
+│                 │           │  Streams tokens back  │
+│  Gets 7B-quality│◄──────────│                      │
+│  response       │  tokens   │  GPU: RTX 4090       │
+└─────────────────┘           └──────────────────────┘
+```
+
+**Same API.** The app calls `completion()` exactly the same way whether
+running locally or delegated. If the Vault is offline, `fallbackToLocal: true`
+uses the on-device model.
+
+---
+
+## Slide 24: From Vault to Cloud — Same Protocol
+
+The Vault is your **personal cloud**. The actual Cloud is the **hosted version**.
+
+```
+         Vault (your PC)             Cloud (Tether)
+        ┌──────────────┐            ┌──────────────┐
+        │ 7B model     │            │ 70B+ model   │
+        │ 1 TB storage │            │ Unlimited    │
+        │ Your network │            │ Always on    │
+        │ Free         │            │ Subscription │
+        └──────┬───────┘            └──────┬───────┘
+               │                           │
+               │    Same protocol:         │
+               │    delegate: {            │
+               │      topic,              │
+               │      providerPublicKey   │
+               │    }                      │
+               │                           │
+               └───────────┬───────────────┘
+                           │
+                   Apps don't change.
+                   Just swap topic + key.
+```
+
+**The app code is identical.** Users start with the free Vault.
+When they want more power, they upgrade to the Cloud subscription.
+The developer changes nothing.
+
+---
+
+## Slide 25: Unstoppable Auth
+
+For all of this to work across apps, users need an identity.
+
+**Unstoppable Auth** — a local-first identity system:
+
+- Keypair-based (no email, no password, no auth server)
+- Works across all apps built with the stack
+- Device linking and recovery
+- The Vault and Cloud know who you are across apps
+
+**For developers:** One line — `import { auth } from '@unstoppable/auth'`
+**For users:** One identity across all their unstoppable apps.
+
+---
+
+## Slide 26: Unstoppable Subscriptions — The Business Model
+
+P2P apps are powerful but limited by the device.
+**Subscriptions** remove those limits:
+
+| | Free (Vault) | Subscriber (Cloud) |
+|---|---|---|
+| **AI** | Your desktop GPU (3B-13B) | Tether GPUs (70B+) |
+| **Data** | Backed up locally | Cloud-replicated, always on |
+| **Files** | Seeded when Vault is running | Seeded 24/7 |
+| **Cost** | Free | USDt subscription via WDK |
+
+---
+
+## Slide 27: How It Works — Zero Infrastructure for Builders
+
+The key insight: **app builders don't need any servers.**
 
 ```
 ┌──────────────┐                    ┌──────────────────────┐
@@ -477,18 +570,17 @@ This is the key insight: **app builders don't need any servers.**
                                      └────────────────┘
 ```
 
-1. Developer builds an app using the stack (free, no servers needed)
-2. Users use the app for free (local-only mode)
-3. Users who want more power subscribe (paid via WDK / USDt)
-4. Tether provides the cloud services (inference, storage, seeding)
+1. Developer builds an app using the stack (free, no servers)
+2. Users get the free Vault for local sync + AI delegation
+3. Users who want more power subscribe to the Cloud (USDt via WDK)
+4. Tether provides the infrastructure
 5. **Revenue is shared with the app builder**
 
-**The builder never provisions a server. Never manages billing.
-Never runs infrastructure. They just build the app.**
+**The builder never provisions a server. They just build the app.**
 
 ---
 
-## Slide 25: The Flywheel
+## Slide 28: The Flywheel
 
 ```
   Better tooling (Unstoppable Stack)
@@ -516,54 +608,55 @@ And every subscription payment flows through **USDt + WDK**.
 
 ---
 
-## Slide 26: The Full Stack Vision
+## Slide 29: The Full Stack Vision
 
-| Layer | What | Who |
-|-------|------|-----|
-| **Apps** | Health, Finance, AI Workbench, Community, ... | Developers (anyone) |
-| **Toolchain** | CLI, Agent Pack, Website | unstoppable.dev |
-| **Identity** | Unstoppable Auth (local-first, cross-app) | Tether / Holepunch |
-| **Cloud Services** | Inference, storage, file seeding | Tether |
-| **Payments** | Subscriptions, revenue share | WDK + USDt |
-| **Foundation** | Holepunch P2P + QVAC AI + WDK Wallet | Tether + Holepunch |
+| Layer | What | Phase |
+|-------|------|-------|
+| **Apps** | Health, Finance, AI Workbench, Community, ... | Now (devs build) |
+| **Toolchain** | CLI, Agent Pack, Website | Phase 1 (done) |
+| **Vault** | Personal sync + AI delegation hub | Phase 2 (next) |
+| **Identity** | Unstoppable Auth (local-first, cross-app) | Phase 3 |
+| **Cloud** | Hosted Vault: inference, storage, seeding | Phase 4 |
+| **Payments** | Subscriptions + revenue share via WDK + USDt | Phase 4 |
+| **Foundation** | Holepunch P2P + QVAC AI + WDK Wallet | Exists today |
 
-**From the bottom up:**
-- Holepunch provides the P2P foundation
-- QVAC provides local AI
-- WDK provides payments
-- The Unstoppable Stack makes it all accessible
-- Subscriptions make it sustainable
-- Developers get rewarded
-- Users get unstoppable apps
+Each phase unlocks the next:
+- **Toolchain** → developers can build apps
+- **Vault** → users can sync and get better AI locally
+- **Auth** → identity works across apps
+- **Cloud** → subscriptions, revenue, ecosystem
 
 ---
 
-## Slide 27: Why This Matters for Tether
+## Slide 30: Why This Matters for Tether
 
 - **Developer adoption** — AI-native tooling removes the #1 barrier
 - **Ecosystem growth** — More apps = more users = more USDt utility
-- **Recurring revenue** — Subscriptions for cloud inference, storage, seeding
-- **USDt integration** — Every subscription payment uses USDt via WDK
-- **Competitive advantage** — No other P2P stack has AI tooling OR a business model for builders
+- **Recurring revenue** — Cloud subscriptions for inference, storage, seeding
+- **USDt integration** — Every payment uses USDt via WDK
+- **Competitive advantage** — No other P2P stack has AI tooling, a personal
+  sync hub, OR a business model for builders
 - **The AI shift** — We ride the wave instead of fighting it
+- **Progressive path** — Vault (free, local) → Cloud (paid, hosted).
+  Users upgrade naturally as they need more power
 - **Brand** — Tether as a developer platform, not just a stablecoin
 
 ---
 
-## Slide 28: The Ask
+## Slide 31: The Ask
 
-1. **Support to continue building** — 5 more reference apps to validate
-   the full stack
-2. **Collaboration with Holepunch** — Joint effort on documentation and
-   Unstoppable Auth design
-3. **Launch unstoppable.dev** — Public beta with the CLI and agent pack
-4. **Explore cloud services** — Define the subscription tiers and
-   revenue share model
-5. **Community** — Discord/Telegram for early adopters
+1. **Continue building** — 7 reference apps to validate the full stack
+   (39% → 81% coverage)
+2. **Build the Vault** — Personal sync + AI delegation app, the stepping
+   stone to the Cloud
+3. **Collaboration with Holepunch** — Joint effort on docs and Auth design
+4. **Launch unstoppable.dev** — Public beta with CLI and agent pack
+5. **Explore Cloud services** — Subscription tiers and revenue share model
+6. **Community** — Discord/Telegram for early adopters
 
 ---
 
-## Slide 29: One More Thing
+## Slide 32: One More Thing
 
 > *Demo: Scaffold a project, open in Cursor, type one prompt,
 > watch a P2P desktop app appear*
