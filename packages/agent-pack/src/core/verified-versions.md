@@ -7,11 +7,13 @@ priority: high
 
 # Verified Package Versions
 
-Battle-tested package versions from the Coffee Assistant UI project and the
-QVAC Workbench reference app. **Always use these versions** when generating
-`package.json` files — do not guess or use `latest`.
+Battle-tested package versions from the Coffee Assistant UI project, the
+QVAC Workbench reference app, and the Slack P2P desktop app. **Always use
+these versions** when generating `package.json` files — do not guess or use
+`latest`. If a package isn't listed here, run `npm view <package> versions --json | tail -5`
+to get the actual latest version before writing `package.json`.
 
-Last verified: 2026-02-08
+Last verified: 2026-02-10
 
 ---
 
@@ -32,6 +34,12 @@ Last verified: 2026-02-08
 | `hyperswarm` | `^4.16.0` | Peer discovery via DHT topics |
 | `hypercore` | `^11.24.0` | Append-only log (foundation) |
 | `hyperbee` | `^2.27.3` | Key-value store on Hypercore |
+| `corestore` | `^7.8.0` | Multi-Hypercore storage manager |
+| `protomux` | `^3.10.1` | Protocol multiplexing over streams |
+| `compact-encoding` | `^2.18.0` | Binary encoding for Protomux messages |
+| `@hyperswarm/secret-stream` | `^6.9.1` | Encrypted stream wrapper |
+| `b4a` | `^1.7.3` | Buffer/Uint8Array compatibility |
+| `hyperdht` | `^6.29.0` | DHT node (transitive via hyperswarm; needed directly for local bootstrap in dev) |
 | `bare-rpc` | `^1.1.0` | RPC over duplex streams |
 
 ## Bare Runtime Modules
@@ -116,7 +124,13 @@ worker for P2P and/or AI operations:
     "build": "bun run clean && bunx swc src -d dist --source-maps && bunx swc worker -d dist --source-maps",
     "watch:src": "bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev",
     "watch:worker": "bunx swc worker -d dist --source-maps --watch",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "dev:local": "bun run build && concurrently \"npm:dht\" \"npm:watch:src\" \"npm:watch:worker\" \"pear run -d .\"",
+    "dht": "node dht-bootstrap.js",
+    "peer2": "bash test-peer2.sh",
+    "stage": "bun run build && pear stage .",
+    "seed": "pear seed .",
+    "release": "pear release"
   },
   "dependencies": {
     "pear-electron": "^1.7.0",
@@ -141,22 +155,33 @@ worker for P2P and/or AI operations:
 }
 ```
 
-### Adding P2P (Hyperswarm + bare-rpc):
+### Adding P2P (Hyperswarm + Protomux messaging):
 
 ```json
 "dependencies": {
   "hyperswarm": "^4.16.0",
-  "bare-rpc": "^1.1.0",
+  "protomux": "^3.10.1",
+  "compact-encoding": "^2.18.0",
+  "b4a": "^1.7.3",
   "bare-process": "^4.2.2"
 }
 ```
 
-### Adding Storage (Hypercore + Hyperbee):
+### Adding Storage (Corestore + Hyperbee):
 
 ```json
 "dependencies": {
+  "corestore": "^7.8.0",
   "hypercore": "^11.24.0",
   "hyperbee": "^2.27.3"
+}
+```
+
+### Adding Dev Testing (local DHT bootstrap):
+
+```json
+"devDependencies": {
+  "hyperdht": "^6.29.0"
 }
 ```
 

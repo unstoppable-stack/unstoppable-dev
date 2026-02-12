@@ -2,7 +2,7 @@
 
 Complete implementation of the renderer↔worker communication pattern using
 NDJSON over `Pear.worker.pipe()`. All code is battle-tested from the Coffee
-Assistant UI project and the QVAC Workbench reference app.
+Assistant UI project, the QVAC Workbench reference app, and the Slack P2P app.
 
 ---
 
@@ -231,13 +231,12 @@ export type { WorkerClientHandle, WorkerClientOptions } from './worker-client.js
 
 ## Example: P2P + Storage Worker (`worker/index.ts`)
 
-From the Coffee Assistant backoffice app. Handles Hyperswarm server, bare-rpc,
-and Hyperbee persistence:
+Battle-tested init sequence. The order of steps is **critical** — see comments.
 
 ```typescript
 import { createWorkerPipe } from '../src/worker-bridge/worker-pipe.js'
 import Hyperswarm from 'hyperswarm'
-import Hypercore from 'hypercore'
+import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 
 // Topic creation — Bare-compatible (no crypto, no TextEncoder)
@@ -252,15 +251,22 @@ function createTopic(namespace: string): Uint8Array {
 async function init() {
   const pipe = await createWorkerPipe()
 
-  // Init storage
-  const core = new Hypercore('./storage/db')
-  const db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+  // ── Step 1: Init storage (sync-ish, fast) ──
+  const store = new Corestore('./storage')
+  await store.ready()
+  const db = new Hyperbee(store.get({ name: 'db' }), {
+    keyEncoding: 'utf-8',
+    valueEncoding: 'json',
+  })
   await db.ready()
 
-  // Send workerReady IMMEDIATELY — before slow P2P operations
-  pipe.send({ type: 'workerReady' })
+  // ── Step 2: Load saved state from DB ──
+  const profileNode = await db.get('profile:local')
+  const workspaceNode = await db.get('workspace:current')
 
-  // Handle UI messages
+  // ── Step 3: Register message handler BEFORE workerReady ──
+  // CRITICAL: The UI reacts to workerReady immediately and sends messages.
+  // If this handler isn't registered yet, those messages are LOST.
   pipe.onMessage(async (msg: any) => {
     switch (msg.type) {
       case 'getData':
@@ -271,29 +277,76 @@ async function init() {
         await db.put(msg.key, msg.value)
         pipe.send({ type: 'dataSaved', key: msg.key })
         break
+      case 'joinRoom':
+        await joinRoom(msg.roomId)
+        break
       case 'exit':
-        await swarm.destroy()
-        await core.close()
+        if (swarm) await swarm.destroy()
+        await store.close()
         await pipe.destroy()
         break
     }
   })
 
-  // Start P2P (slow — happens AFTER workerReady)
-  const swarm = new Hyperswarm()
-  const topic = createTopic('my-app:data:v1')
-  swarm.join(topic)
-
-  swarm.on('connection', (socket: any) => {
-    core.replicate(socket)
-    pipe.send({ type: 'peerConnected', count: swarm.connections.size })
+  // ── Step 4: Send workerReady WITH saved state ──
+  // Include saved state so the UI can skip setup screens for returning users.
+  pipe.send({
+    type: 'workerReady',
+    savedUsername: profileNode?.value?.username || null,
+    savedWorkspace: workspaceNode?.value?.code || null,
   })
 
-  console.log('[Worker] P2P server started')
+  // ── Step 5: Auto-rejoin (slow, async — safe because handler already registered) ──
+  let swarm: Hyperswarm | null = null
+  if (workspaceNode?.value?.code) {
+    await joinRoom(workspaceNode.value.code)
+  }
+
+  // ── Room join (idempotent) ──
+  let currentRoom: string | null = null
+  async function joinRoom(roomId: string) {
+    // Guard: skip if already in this room
+    if (currentRoom === roomId && swarm) {
+      pipe.send({ type: 'roomJoined', roomId })
+      return
+    }
+    // Leave previous room
+    if (swarm) await swarm.destroy()
+
+    swarm = new Hyperswarm()
+    currentRoom = roomId
+    const topic = createTopic(`my-app:${roomId}`)
+    const discovery = swarm.join(topic, { server: true, client: true })
+    await discovery.flushed()
+
+    swarm.on('connection', (socket: any) => {
+      store.replicate(socket)
+      pipe.send({ type: 'peerConnected', count: swarm!.connections.size })
+    })
+
+    pipe.send({ type: 'roomJoined', roomId })
+    console.log('[Worker] Joined room:', roomId)
+  }
+
+  console.log('[Worker] Ready')
 }
 
 init().catch((err) => console.error('[Worker] Init failed:', err))
 ```
+
+### Init Order Summary
+
+| Step | What | Why |
+|------|------|-----|
+| 1 | Init storage | Fast, sync-ish — no messages to lose |
+| 2 | Load saved state | Need it for step 4 |
+| 3 | `pipe.onMessage()` | **BEFORE workerReady** — UI sends messages immediately after |
+| 4 | `pipe.send(workerReady)` | Include saved state so UI can skip setup |
+| 5 | Auto-rejoin | Slow, async — safe because handler is registered |
+
+> **WARNING:** If you register `onMessage` AFTER sending `workerReady`, the UI
+> will send messages during any `await` gap and they will be silently lost.
+> This is the #1 cause of "worker ignores my messages" bugs.
 
 ---
 
@@ -374,10 +427,12 @@ export function App() {
 ### Conventions
 
 1. Every message has a `type` string field.
-2. `workerReady` is always the first message from the worker.
-3. `exit` is always the shutdown signal from the UI.
-4. Use descriptive type names: `newOrder`, `cartUpdate`, `dataSaved`.
-5. Worker-side errors should be sent as messages, not thrown:
+2. **CRITICAL:** Register `pipe.onMessage()` BEFORE sending `workerReady`. The UI reacts to `workerReady` immediately and may send messages during any `await` gap in the worker's init sequence.
+3. `workerReady` is always the first message from the worker. Include saved state (username, last room, etc.) so the UI can skip setup screens for returning users.
+4. `exit` is always the shutdown signal from the UI.
+5. Use descriptive type names: `newOrder`, `cartUpdate`, `dataSaved`.
+6. Make join/leave operations **idempotent** — the worker may auto-rejoin from saved state while the UI simultaneously requests a join.
+7. Worker-side errors should be sent as messages, not thrown:
    ```typescript
    pipe.send({ type: 'error', message: 'Failed to connect' })
    ```
