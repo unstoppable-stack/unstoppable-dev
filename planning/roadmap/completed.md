@@ -4,7 +4,7 @@
 
 ### App 1: Coffee Assistant (CLI)
 
-**Location:** `research/coffee-assistant/`
+**Location:** `sandbox/coffee-assistant/`
 **Platform:** Node.js terminal (not Pear)
 
 Two terminal apps — a Client with an AI barista and a Backoffice with order
@@ -28,7 +28,7 @@ management — communicating over P2P.
 
 ### App 2: Coffee Assistant UI (Pear Desktop)
 
-**Location:** `research/coffee-assistant-ui/`
+**Location:** `sandbox/coffee-assistant-ui/`
 **Platform:** Pear Desktop (two apps: client + backoffice)
 
 Same concept rebuilt as Pear Desktop apps with React UIs. This was the
@@ -43,7 +43,7 @@ breakthrough app for understanding the renderer vs worker architecture.
 | **Build** | SWC (src + worker), React Refresh, Dual watch, .swcrc/.swcrc.dev |
 | **UI** | React 19, styled-components, pear-ctrl |
 
-**6 critical fixes documented (`research/coffee-assistant-ui/fixes/`):**
+**6 critical fixes documented (`sandbox/coffee-assistant-ui/fixes/`):**
 1. Renderer vs Worker split — P2P/AI modules crash in Chromium
 2. `pear.unrouted` config — Without it, worker JS served as web page
 3. Bare runtime modules — Must be installed as npm packages

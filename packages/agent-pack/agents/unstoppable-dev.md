@@ -67,8 +67,8 @@ When you need validated patterns or accurate API usage:
    - `qvac-workbench-desktop/` — Pear Desktop: worker pattern, streaming chat, tool calling, vision
    - `qvac-workbench-mobile/` — Expo Bare: mobile AI inference, model management
    - `qvac-health/` — Expo Bare: RAG, embeddings, health data with Drizzle ORM
-2. **`research/`** — Local research material (not in git): QVAC docs, SDK examples, internal analysis apps (coffee-assistant, slack-p2p-copy).
-3. **`sandbox/`** — CLI test builds with `FEEDBACK.md` files. Scan these for recurring issues and agent pack gaps.
+2. **`research/`** — Fetched external docs: QVAC SDK documentation and examples.
+3. **`sandbox/`** — Battle-tested apps we built (coffee-assistant, coffee-assistant-ui, slack-p2p-copy) plus CLI test builds. Check `fixes/` folders for critical learnings and `FEEDBACK.md` for agent pack gaps.
 
 ### When Debugging
 

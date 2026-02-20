@@ -40,12 +40,18 @@ cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
 
 ## Research Sources
 
-### Local Reference Apps (in research/)
-- `research/coffee-assistant/` — Battle-tested app with AI + P2P + RPC (primary reference)
-- `research/qvac-app-workbench-desktop-main/` — Desktop app with Pear + QVAC
-- `research/qvac-app-workbench-mobile-main/` — Mobile app example
-- `research/qvac-health-dev/` — Health app with Bare + QVAC
-- `research/qvac-docs/` — QVAC documentation
+### Battle-tested apps (in sandbox/)
+- `sandbox/coffee-assistant/` — P2P + AI + RPC app (primary reference)
+- `sandbox/coffee-assistant-ui/` — Pear Desktop with React, worker pattern, 6 critical fixes
+- `sandbox/slack-p2p-copy/` — P2P messaging with Hyperswarm
+
+### Upstream reference apps (in reference-apps/ — git submodules)
+- `reference-apps/qvac-workbench-desktop/` — Pear Desktop AI workbench
+- `reference-apps/qvac-workbench-mobile/` — Expo Bare AI workbench
+- `reference-apps/qvac-health/` — Mobile health app with local AI
+
+### Fetched documentation (in research/)
+- `research/qvac-docs/` — QVAC SDK documentation
 - `research/qvac-examples/` — QVAC SDK examples
 
 ### External Documentation

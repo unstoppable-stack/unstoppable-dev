@@ -26,14 +26,14 @@ unstoppable-stack/
 │   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
 │   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
 │   └── qvac-health/             # Mobile health app with local AI
-├── research/                    # Local research material (not tracked)
-├── sandbox/                     # CLI test builds with feedback (gitignored)
+├── research/                    # Fetched docs and SDK examples (qvac-docs, qvac-examples)
+├── sandbox/                     # Battle-tested apps + CLI test builds (gitignored)
 └── planning/                    # All planning, roadmap, status, presentations
     ├── vision/                  # Strategy and product direction
     ├── roadmap/                 # Coverage tracking (54 items)
     ├── features/                # Deep planning per feature
     ├── status/                  # Sprint-level tracking
-    └── presentation/            # Pitch deck and materials
+    └── presentations/            # Pitch decks grouped by date+name
 ```
 
 ## Tech Stack

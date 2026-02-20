@@ -1,32 +1,34 @@
 # Sandbox
 
-Apps built using `create-unstoppable-app` for testing and feedback. This folder is **gitignored** but intentionally accessible to AI agents.
+Internal apps built for testing, validation, and learning. This folder is **gitignored** but intentionally accessible to AI agents.
 
-## Purpose
+## Contents
 
-Each subfolder is a project scaffolded with the CLI, used to:
+### Battle-tested apps (built during research)
 
-1. **Validate the CLI** — Does scaffolding work correctly?
-2. **Test the agent pack** — Are rules, skills, and recipes effective?
-3. **Collect feedback** — What went well? What needs improvement?
+| App | Platform | Key Patterns Validated |
+|-----|----------|----------------------|
+| `coffee-assistant/` | Node.js CLI | P2P + AI + RPC, Hyperswarm, bare-rpc, Hyperbee, QVAC tool calling |
+| `coffee-assistant-ui/` | Pear Desktop | Renderer/worker split, NDJSON IPC, React + SWC, Pear config |
+| `slack-p2p-copy/` | Pear Desktop | P2P messaging, Hyperswarm, real-time sync |
 
-## Structure
+### CLI test builds
 
-Each test app should include a `FEEDBACK.md` at its root:
+Apps scaffolded with `create-unstoppable-app` for testing the CLI and agent pack. Each should include a `FEEDBACK.md`:
 
 ```
 sandbox/
-├── my-test-app/
-│   ├── FEEDBACK.md          # What worked, what didn't, improvement ideas
-│   ├── src/                  # The scaffolded app
-│   ├── package.json
+├── coffee-assistant/         # Battle-tested: P2P + AI CLI app
+├── coffee-assistant-ui/      # Battle-tested: Pear Desktop app
+├── slack-p2p-copy/           # Battle-tested: P2P messaging app
+├── my-test-app/              # CLI test build (future)
+│   ├── FEEDBACK.md
 │   └── ...
-└── another-test/
-    ├── FEEDBACK.md
-    └── ...
 ```
 
 ## FEEDBACK.md Template
+
+For CLI test builds, include:
 
 ```markdown
 # Feedback: <app-name>
@@ -53,9 +55,9 @@ sandbox/
 
 ## For AI Agents
 
-When improving the agent pack:
+This folder is your **primary source of battle-tested knowledge**:
 
-1. Scan `sandbox/*/FEEDBACK.md` for recurring issues
-2. Cross-reference gaps with `packages/agent-pack/src/skills/`
-3. Prioritize fixes that affect multiple test apps
-4. After fixing an issue, re-test by scaffolding a new app here
+1. **`coffee-assistant/`** — First app built. Validates Hyperswarm, bare-rpc, Hyperbee, QVAC streaming + tool calling. Check `KNOWLEDGE_BASE_FEEDBACK.md` for agent pack improvement notes.
+2. **`coffee-assistant-ui/`** — Desktop breakthrough. Check `fixes/` for the 6 critical fixes (renderer/worker split, pear.unrouted, TextEncoder, etc.).
+3. **`slack-p2p-copy/`** — P2P messaging. Check `fixes/` for Hyperswarm and real-time sync patterns.
+4. **CLI test builds** — Scan `*/FEEDBACK.md` for recurring agent pack issues.

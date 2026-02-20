@@ -18,10 +18,12 @@ When you receive batch app-build feedback or error reports and need to systemati
 ### 2. Verify Against Sources
 - Prefer local source code and reference apps
 - Cross-check with battle-tested apps:
-  - `research/coffee-assistant/` (AI + P2P + RPC reference)
-  - `research/qvac-app-workbench-desktop-main/`
-  - `research/qvac-app-workbench-mobile-main/`
-  - `research/qvac-health-dev/`
+  - `sandbox/coffee-assistant/` (AI + P2P + RPC reference)
+  - `sandbox/coffee-assistant-ui/` (Pear Desktop + worker pattern)
+  - `sandbox/slack-p2p-copy/` (P2P messaging)
+  - `reference-apps/qvac-workbench-desktop/` (upstream Pear Desktop)
+  - `reference-apps/qvac-workbench-mobile/` (upstream Expo Bare)
+  - `reference-apps/qvac-health/` (upstream mobile health)
 - If info is missing, add a `> **Note**:` in docs
 
 ### 3. Update Agent Pack

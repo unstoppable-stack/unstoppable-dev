@@ -31,19 +31,19 @@ unstoppable-stack/
 │   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
 │   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
 │   └── qvac-health/             # Mobile health app with local AI
-├── research/                    # Local research material (not tracked)
+├── research/                    # Fetched docs and SDK examples
 │   ├── qvac-docs/               # QVAC SDK documentation
-│   ├── qvac-examples/           # QVAC SDK examples
-│   ├── coffee-assistant/        # Internal P2P + AI analysis
-│   ├── coffee-assistant-ui/     # Internal desktop UI analysis
-│   └── slack-p2p-copy/          # Internal P2P messaging analysis
-├── sandbox/                     # CLI test builds with feedback (gitignored)
+│   └── qvac-examples/           # QVAC SDK examples
+├── sandbox/                     # Battle-tested apps + CLI test builds (gitignored)
+│   ├── coffee-assistant/        # P2P + AI + RPC (Node.js CLI)
+│   ├── coffee-assistant-ui/     # Pear Desktop + React + Worker
+│   └── slack-p2p-copy/          # P2P messaging
 └── planning/                    # All planning, roadmap, status, and presentations
     ├── vision/                  # Strategy and product direction
     ├── roadmap/                 # Coverage tracking (54 items, 5 categories)
     ├── features/                # Deep planning per feature (vault, website, etc.)
     ├── status/                  # Sprint-level tracking and priorities
-    └── presentation/            # Pitch deck and speaker materials
+    └── presentations/            # Pitch decks grouped by date+name
 ```
 
 ---
@@ -136,20 +136,27 @@ git submodule update --remote --merge
 
 ### Research Folder (`research/`)
 
-Local reference material — **not tracked by git**. Contains fetched docs, SDK examples, and internal analysis apps consulted when updating the agent pack.
+Fetched external documentation and SDK examples consulted when updating the agent pack.
 
 ```
 research/
 ├── qvac-docs/               # QVAC SDK documentation
-├── qvac-examples/           # QVAC SDK examples
-├── coffee-assistant/         # Internal: P2P + AI + RPC analysis
-├── coffee-assistant-ui/      # Internal: desktop UI analysis
-└── slack-p2p-copy/           # Internal: P2P messaging analysis
+└── qvac-examples/           # QVAC SDK examples
 ```
 
 ### Sandbox (`sandbox/`)
 
-Apps scaffolded with `create-unstoppable-app` for testing. **Gitignored** but accessible to AI agents. Each test app should include a `FEEDBACK.md` documenting what worked, what didn't, and improvement ideas for the agent pack.
+Battle-tested apps we built + CLI test builds. **Gitignored** but accessible to AI agents.
+
+```
+sandbox/
+├── coffee-assistant/         # Battle-tested: P2P + AI + RPC (Node.js CLI)
+├── coffee-assistant-ui/      # Battle-tested: Pear Desktop + React + Worker
+├── slack-p2p-copy/           # Battle-tested: P2P messaging
+└── <cli-test-builds>/        # Future: scaffolded with create-unstoppable-app
+```
+
+The battle-tested apps contain `fixes/` folders and planning notes — these are the primary source of validated patterns for the agent pack. CLI test builds should include a `FEEDBACK.md`.
 
 ---
 
@@ -288,7 +295,7 @@ my-app/
 - WDK: (documentation needed)
 
 ### This Project
-- Planning: `./planning/` (vision, roadmap, features, status, presentation)
+- Planning: `./planning/` (vision, roadmap, features, status, presentations)
 - Website: `./packages/website/`
 - CLI: `./packages/cli/`
 - Reference Apps: `./reference-apps/` (git submodules)
@@ -332,6 +339,6 @@ When working on this codebase:
 
 6. **Reference apps** - `reference-apps/` contains upstream apps as git submodules. Use `git submodule update --remote` to pull latest changes, then analyze diffs and commits for new patterns.
 
-7. **Research material** - `research/` is local (not tracked). Contains QVAC docs, SDK examples, and internal analysis apps. Consult when writing or validating agent pack content.
+7. **Research material** - `research/` contains fetched QVAC docs and SDK examples. Consult when writing or validating agent pack content.
 
-8. **Sandbox** - `sandbox/` is gitignored but accessible to you. It contains CLI-scaffolded test apps with `FEEDBACK.md` files. Scan these for agent pack improvement opportunities.
+8. **Sandbox** - `sandbox/` is gitignored but accessible to you. It contains battle-tested apps (`coffee-assistant`, `coffee-assistant-ui`, `slack-p2p-copy`) and CLI test builds. The battle-tested apps have `fixes/` folders with critical learnings. Scan `FEEDBACK.md` files for improvement opportunities.

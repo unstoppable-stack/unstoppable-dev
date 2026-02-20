@@ -51,17 +51,14 @@ Sprint-level tracking — current priorities, next-up tasks, recently completed.
 | `vault/` | Vault phases and what it validates |
 | `website/` | Website pages, sections, components |
 
-### Presentation (`presentation/`)
-Pitch deck and speaker materials.
+### Presentations (`presentations/`)
+Pitch decks and speaker materials, grouped by date and name.
 
-| File | Contents |
-|------|----------|
-| `deck-outline.md` | Full 32-slide deck outline |
-| `deck-short.md` | Short version of the deck |
-| `one-pager.md` | One-page summary |
-| `short-deck.html` | HTML presentation |
-| `speaker-notes.md` | Full speaker notes |
-| `speaker-notes-short.md` | Short speaker notes |
+| Folder | Date | Description |
+|--------|------|-------------|
+| `2026-02-internal-pitch/` | Feb 2026 | Full vision pitch: agent pack, Vault, subscriptions |
+
+New presentations go in `YYYY-MM-<short-name>/` subfolders.
 
 ## For AI Agents
 
@@ -73,3 +70,4 @@ When the user asks about plans, roadmap, or priorities:
 4. **"Tell me about feature X"** → Check `features/` for deep planning docs
 5. **"What's the vision?"** → See `vision/overview.md`
 6. **"What's been done?"** → See `roadmap/completed.md`
+7. **"Presentation materials"** → See `presentations/` for decks grouped by date

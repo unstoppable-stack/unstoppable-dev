@@ -32,18 +32,24 @@ cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
 
 **Rule**: All agent pack content is edited directly in `packages/agent-pack/src/`. Always sync changes to `packages/cli/agent-pack-src/`.
 
-## Research Folder
+## Reference Material
 
-The `research/` folder contains **reference material** — battle-tested apps, mini-apps, and libraries. These are NOT synced to the agent pack. They serve as ground truth when writing or updating documentation.
+Three locations provide ground truth for writing agent pack content:
 
 ```
-research/
-├── coffee-assistant/              # Battle-tested AI + P2P + RPC app
-├── qvac-app-workbench-desktop-main/
-├── qvac-app-workbench-mobile-main/
-├── qvac-docs/
-├── qvac-examples/
-└── qvac-health-dev/
+reference-apps/                    # Upstream apps (git submodules)
+├── qvac-workbench-desktop/        # Pear Desktop AI workbench
+├── qvac-workbench-mobile/         # Expo Bare AI workbench
+└── qvac-health/                   # Mobile health app with local AI
+
+sandbox/                           # Battle-tested apps we built
+├── coffee-assistant/              # P2P + AI + RPC (Node.js CLI)
+├── coffee-assistant-ui/           # Pear Desktop + React + Worker pattern
+└── slack-p2p-copy/                # P2P messaging app
+
+research/                          # Fetched docs and SDK examples
+├── qvac-docs/                     # QVAC SDK documentation
+└── qvac-examples/                 # QVAC SDK examples
 ```
 
 ## Size Budgets
