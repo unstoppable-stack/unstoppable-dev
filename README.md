@@ -80,11 +80,11 @@ The core of the project. A structured knowledge base that teaches AI assistants 
 packages/agent-pack/src/
 ├── core/               # Architecture, patterns, verified package versions
 ├── modules/            # 12 module docs (Pear, Bare, Hyperswarm, QVAC, ...)
-├── skills/             # 10 guided skills with full code examples
-│   ├── pear-desktop-app/   # Desktop app with worker pattern
-│   ├── p2p-rpc/            # RPC over P2P connections
-│   ├── qvac-chat-app/      # AI chat with tool calling
-│   ├── qvac-tool-calling/  # Zod schemas + tool loop
+├── skills/             # 17 tiered skills organized by capability
+│   ├── setup-pear-desktop/    # Platform: Desktop app with worker pattern
+│   ├── add-p2p-networking/    # P2P: Hyperswarm peer discovery
+│   ├── add-ai-chat/           # AI: QVAC chat with tool calling
+│   ├── add-database/          # Data: HyperDB structured storage
 │   └── ...
 ├── recipes/            # 18 focused patterns (kv-cache, NDJSON, encryption, ...)
 ├── components/         # Reusable TypeScript (chat session, swarm manager, ...)
@@ -99,7 +99,7 @@ We don't write docs from docs. We **build real apps**, hit real bugs, fix them, 
 Build app → Find bugs → Document fixes → Extract into agent pack → Validate by rebuilding from scratch
 ```
 
-If the AI can rebuild the same app using only the agent pack — the knowledge is validated. See [Roadmap/](./Roadmap/) for the full coverage matrix.
+If the AI can rebuild the same app using only the agent pack — the knowledge is validated. See [planning/roadmap/](./planning/roadmap/) for the full coverage matrix.
 
 ### Multi-tool support
 
@@ -120,12 +120,18 @@ unstoppable-stack/
 │   ├── agent-pack/       # AI knowledge base (source of truth)
 │   ├── website/          # unstoppable.dev — Next.js site
 │   └── templates/        # Project scaffolds (blank, p2p-sync, qvac-ai)
-├── research/             # Reference apps — ground truth for the agent pack
-│   ├── coffee-assistant/       # CLI app: P2P + RPC + QVAC + Hyperbee
-│   └── coffee-assistant-ui/    # Desktop app: Pear + React + Worker pattern
-├── Roadmap/              # Coverage matrix, next apps, gap analysis
-├── presentation/         # Deck, speaker notes, one-pager
-└── project-planning/     # Architecture decisions and planning docs
+├── reference-apps/       # Upstream apps as git submodules (ground truth)
+│   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
+│   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
+│   └── qvac-health/             # Mobile health app with local AI
+├── research/             # Local research material (not tracked)
+├── sandbox/              # CLI test builds with feedback (gitignored)
+└── planning/             # Roadmap, status, features, presentations
+    ├── vision/           # Strategy and product direction
+    ├── roadmap/          # Coverage tracking (54 items)
+    ├── features/         # Deep planning per feature
+    ├── status/           # Sprint-level tracking
+    └── presentation/     # Pitch deck and materials
 ```
 
 ## Development
@@ -171,7 +177,7 @@ These patterns have been built, debugged, and validated in real apps:
 - **Bare Runtime** — API compatibility (no TextEncoder/Buffer/crypto), bare-* as npm deps
 - **Worker Bridge** — `Pear.worker.pipe()` for renderer↔worker communication
 
-See [Roadmap/00-overview.md](./Roadmap/00-overview.md) for the full coverage matrix.
+See [planning/roadmap/overview.md](./planning/roadmap/overview.md) for the full coverage matrix.
 
 ## Roadmap
 
@@ -183,7 +189,7 @@ See [Roadmap/00-overview.md](./Roadmap/00-overview.md) for the full coverage mat
 | **Unstoppable Auth** | Planned | Local-first identity across apps |
 | **Unstoppable Subscriptions** | Vision | Cloud inference, storage, seeding — revenue share with builders |
 
-See [Roadmap/](./Roadmap/) for the detailed plan.
+See [planning/roadmap/](./planning/roadmap/) for the detailed plan.
 
 ## Built With
 
