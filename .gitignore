@@ -1,8 +1,12 @@
 **/dist/
 **/node_modules/
 **/build/
-research/qvac-app-workbench-desktop-main
-research/qvac-app-workbench-mobile-main
-research/
 **/.next
 **/out
+
+# Local research material (not tracked, fetched/created locally)
+research/
+
+# Sandbox test apps (agent-accessible but not committed)
+sandbox/*
+!sandbox/README.md

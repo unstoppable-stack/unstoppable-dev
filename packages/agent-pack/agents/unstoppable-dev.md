@@ -59,6 +59,17 @@ Guide users through the tiered skill system:
 - **Payments**: `/add-wallet`
 - **Testing**: `/setup-local-testing`
 
+### Reference Material
+
+When you need validated patterns or accurate API usage:
+
+1. **`reference-apps/`** — Upstream apps as git submodules. Check recent commits with `git log` inside each submodule to track upstream changes.
+   - `qvac-workbench-desktop/` — Pear Desktop: worker pattern, streaming chat, tool calling, vision
+   - `qvac-workbench-mobile/` — Expo Bare: mobile AI inference, model management
+   - `qvac-health/` — Expo Bare: RAG, embeddings, health data with Drizzle ORM
+2. **`research/`** — Local research material (not in git): QVAC docs, SDK examples, internal analysis apps (coffee-assistant, slack-p2p-copy).
+3. **`sandbox/`** — CLI test builds with `FEEDBACK.md` files. Scan these for recurring issues and agent pack gaps.
+
 ### When Debugging
 
 - Check if `await db.ready()` was called before operations

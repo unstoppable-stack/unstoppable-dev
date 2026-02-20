@@ -22,7 +22,12 @@ unstoppable-stack/
 ├── docs/                        # Extended documentation
 │   ├── modules/                 # Per-module documentation
 │   └── recipes/                 # Common patterns and recipes
-├── research/                    # Reference material (battle-tested apps, libraries)
+├── reference-apps/              # Upstream apps as git submodules (tracked)
+│   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
+│   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
+│   └── qvac-health/             # Mobile health app with local AI
+├── research/                    # Local research material (not tracked)
+├── sandbox/                     # CLI test builds with feedback (gitignored)
 └── project-planning/            # Planning documents
 ```
 

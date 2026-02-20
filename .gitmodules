@@ -1,0 +1,9 @@
+[submodule "reference-apps/qvac-workbench-mobile"]
+	path = reference-apps/qvac-workbench-mobile
+	url = https://github.com/tetherto/qvac-app-workbench-mobile.git
+[submodule "reference-apps/qvac-workbench-desktop"]
+	path = reference-apps/qvac-workbench-desktop
+	url = https://github.com/tetherto/qvac-app-workbench-desktop.git
+[submodule "reference-apps/qvac-health"]
+	path = reference-apps/qvac-health
+	url = https://github.com/tetherto/qvac-health.git
