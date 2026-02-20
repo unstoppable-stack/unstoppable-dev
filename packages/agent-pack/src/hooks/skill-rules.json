@@ -2,58 +2,94 @@
   "description": "Maps keywords and file patterns to relevant skills for auto-activation",
   "rules": [
     {
-      "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
-      "files": ["src/p2p/**", "src/data/**"],
-      "skill": "add-p2p-sync",
-      "message": "This looks like a P2P data sync task. Consider using /add-p2p-sync for Hypercore replication patterns."
+      "keywords": ["desktop", "gui", "window", "pear desktop", "visual", "ui app", "desktop app", "react ui"],
+      "files": ["index.html", "src/components/**", "src/pages/**", "src/styles/**"],
+      "skill": "setup-pear-desktop",
+      "message": "This is a desktop app. Consider using /setup-pear-desktop for Pear desktop setup with React + styled-components."
     },
     {
-      "keywords": ["inference", "llm", "model", "ai", "chat", "completion", "qvac"],
-      "files": ["src/ai/**", "src/inference/**"],
-      "skill": "local-inference",
-      "message": "This involves local AI inference. Consider using /local-inference for QVAC SDK patterns."
+      "keywords": ["terminal", "daemon", "service", "background", "headless", "pear terminal"],
+      "files": [],
+      "skill": "setup-pear-terminal",
+      "message": "This looks like a terminal/service app. Consider using /setup-pear-terminal for a headless Pear app."
     },
     {
-      "keywords": ["tool calling", "function calling", "tools", "agent with tools", "structured output"],
-      "files": ["src/ai/**", "src/tools/**"],
-      "skill": "qvac-tool-calling",
-      "message": "This involves tool/function calling. Consider using /qvac-tool-calling for QVAC tool patterns."
+      "keywords": ["mobile", "react native", "expo", "ios", "android", "phone"],
+      "files": ["app.json", "app/**", "backend/**"],
+      "skill": "setup-mobile-app",
+      "message": "This is a mobile app. Consider using /setup-mobile-app for Expo + Bare setup."
     },
     {
-      "keywords": ["file", "share", "upload", "download", "drive", "mirror"],
-      "files": ["src/files/**", "src/storage/**"],
-      "skill": "file-sharing",
-      "message": "This involves file sharing. Consider using /file-sharing for Hyperdrive patterns."
-    },
-    {
-      "keywords": ["offline", "local-first", "works without", "no internet", "persist"],
-      "files": ["src/data/**", "src/store/**"],
-      "skill": "offline-first-app",
-      "message": "This is an offline-first pattern. Consider using /offline-first-app for Hyperbee storage + sync."
+      "keywords": ["p2p", "peer", "swarm", "discovery", "connect", "networking"],
+      "files": ["src/p2p/**"],
+      "skill": "add-p2p-networking",
+      "message": "This involves P2P networking. Consider using /add-p2p-networking for Hyperswarm setup."
     },
     {
       "keywords": ["rpc", "remote procedure", "request response", "api between peers"],
       "files": ["src/p2p/**", "src/rpc/**"],
-      "skill": "p2p-rpc",
-      "message": "This involves P2P RPC. Consider using /p2p-rpc for Protomux request/response patterns."
+      "skill": "add-p2p-rpc",
+      "message": "This involves P2P RPC. Consider using /add-p2p-rpc for bare-rpc request/response patterns."
     },
     {
-      "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream"],
+      "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
+      "files": ["src/p2p/**", "src/data/**"],
+      "skill": "add-p2p-sync",
+      "message": "This looks like a data sync task. Consider using /add-p2p-sync for Hypercore replication."
+    },
+    {
+      "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream", "protomux"],
       "files": ["src/p2p/**", "src/messaging/**"],
-      "skill": "secure-communication",
-      "message": "This involves secure messaging. Consider using /secure-communication for encrypted Protomux channels."
+      "skill": "add-encrypted-channels",
+      "message": "This involves secure messaging. Consider using /add-encrypted-channels for encrypted Protomux channels."
+    },
+    {
+      "keywords": ["offline", "local-first", "persist", "key-value", "hyperbee", "kv store"],
+      "files": ["src/data/**", "src/store/**"],
+      "skill": "add-kv-storage",
+      "message": "This is a storage pattern. Consider using /add-kv-storage for Hyperbee offline-first storage."
+    },
+    {
+      "keywords": ["database", "schema", "index", "multi-writer", "hyperdb", "structured data"],
+      "files": ["src/data/**", "src/db/**"],
+      "skill": "add-database",
+      "message": "This involves structured data. Consider using /add-database for HyperDB with schema and indexes."
+    },
+    {
+      "keywords": ["file", "share", "upload", "download", "drive", "mirror"],
+      "files": ["src/files/**", "src/storage/**"],
+      "skill": "add-file-storage",
+      "message": "This involves file storage. Consider using /add-file-storage for Hyperdrive."
+    },
+    {
+      "keywords": ["inference", "llm", "model", "ai", "chat", "completion", "qvac", "tool calling"],
+      "files": ["src/ai/**", "src/inference/**"],
+      "skill": "add-ai-chat",
+      "message": "This involves AI inference. Consider using /add-ai-chat for QVAC chat, streaming, and tool calling."
+    },
+    {
+      "keywords": ["vision", "image", "photo", "multimodal", "picture"],
+      "files": ["src/ai/**", "src/vision/**"],
+      "skill": "add-ai-vision",
+      "message": "This involves image analysis. Consider using /add-ai-vision for QVAC multimodal vision."
+    },
+    {
+      "keywords": ["transcribe", "transcription", "speech", "audio", "whisper", "voice"],
+      "files": ["src/ai/**", "src/audio/**"],
+      "skill": "add-ai-transcription",
+      "message": "This involves audio transcription. Consider using /add-ai-transcription for QVAC Whisper."
+    },
+    {
+      "keywords": ["rag", "embedding", "vector", "search", "knowledge base", "semantic"],
+      "files": ["src/ai/**", "src/search/**"],
+      "skill": "add-ai-rag",
+      "message": "This involves RAG/search. Consider using /add-ai-rag for QVAC embeddings and vector search."
     },
     {
       "keywords": ["wallet", "payment", "bitcoin", "ethereum", "token", "crypto", "transaction"],
       "files": ["src/wallet/**", "src/payments/**"],
-      "skill": "wallet-integration",
-      "message": "This involves payments/wallet. Consider using /wallet-integration for WDK patterns."
-    },
-    {
-      "keywords": ["desktop", "gui", "window", "pear desktop", "visual", "ui app", "desktop app", "react ui"],
-      "files": ["index.html", "src/components/**", "src/pages/**", "src/styles/**"],
-      "skill": "pear-desktop-app",
-      "message": "This is a desktop app. Consider using /pear-desktop-app for Pear desktop setup with React + styled-components."
+      "skill": "add-wallet",
+      "message": "This involves payments/wallet. Consider using /add-wallet for WDK patterns."
     }
   ]
 }

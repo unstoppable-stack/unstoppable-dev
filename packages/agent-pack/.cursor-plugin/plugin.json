@@ -1,0 +1,29 @@
+{
+  "name": "unstoppable-stack",
+  "version": "0.1.0",
+  "description": "Build truly unstoppable apps with P2P protocols, local AI inference, and crypto payments. Rules, skills, and agents for Holepunch, QVAC, and WDK development.",
+  "author": {
+    "name": "Unstoppable Stack"
+  },
+  "homepage": "https://unstoppable.dev",
+  "license": "MIT",
+  "keywords": [
+    "p2p",
+    "holepunch",
+    "hyperswarm",
+    "hypercore",
+    "qvac",
+    "local-ai",
+    "pear",
+    "bare",
+    "local-first",
+    "wdk",
+    "crypto"
+  ],
+  "logo": "assets/logo.svg",
+  "rules": ["src/core", "src/modules", "src/recipes"],
+  "skills": "src/skills",
+  "agents": "agents",
+  "commands": "commands",
+  "hooks": "hooks/hooks.json"
+}

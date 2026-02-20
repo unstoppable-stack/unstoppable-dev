@@ -15,6 +15,11 @@ export const ASSISTANTS = [
     description: 'Open source terminal agent'
   },
   {
+    id: 'codex',
+    name: 'Codex',
+    description: 'OpenAI terminal coding agent'
+  },
+  {
     id: 'none',
     name: 'None',
     description: 'Skip AI assistant setup'

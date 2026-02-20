@@ -1,19 +1,22 @@
 {
   "name": "@unstoppable/agent-pack",
   "version": "0.1.0",
-  "description": "AI agent configurations for the Unstoppable Stack",
+  "description": "AI agent configurations for the Unstoppable Stack — also a Cursor plugin",
   "type": "module",
   "scripts": {
     "sync": "node scripts/sync-research.js",
-    "sync:dry": "node scripts/sync-research.js --dry-run"
+    "sync:dry": "node scripts/sync-research.js --dry-run",
+    "convert-plugin": "node scripts/convert-to-plugin.mjs"
   },
   "keywords": [
     "unstoppable-stack",
+    "cursor-plugin",
     "ai",
     "agent",
-    "claude",
-    "cursor",
-    "opencode"
+    "p2p",
+    "holepunch",
+    "qvac",
+    "local-first"
   ],
   "license": "MIT"
 }

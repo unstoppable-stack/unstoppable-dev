@@ -1,0 +1,62 @@
+---
+description: Hyperbee: sorted key-value store built on Hypercore
+alwaysApply: false
+---
+
+# Hyperbee
+
+## Overview
+Hyperbee is a key-value database built on Hypercore. It provides ordered key ranges, prefix scans, and transactional batches on top of an append-only log, making it a common building block for local-first state and indexes.
+
+## Installation
+```bash
+npm install hyperbee
+```
+
+## Quick Start
+```js
+import Hypercore from "hypercore"
+import Hyperbee from "hyperbee"
+
+const core = new Hypercore("./db")
+const db = new Hyperbee(core, { keyEncoding: "utf-8", valueEncoding: "json" })
+await db.ready()
+
+await db.put("profile", { name: "Ava" })
+const value = await db.get("profile")
+console.log(value.value)
+```
+
+## Core Concepts
+- Ordered KV store with range scans.
+- Batches for atomic multi-key writes.
+- Backed by Hypercore replication.
+
+## API Reference
+- `new Hyperbee(core, options)`
+- `db.get(key)` / `db.put(key, value)` / `db.del(key)`
+- `db.createReadStream(opts)` / `db.createHistoryStream(opts)`
+- `db.batch()`
+
+## Integration with Other Modules
+- Replicate the underlying Hypercore via Hyperswarm.
+- Hyperdrive uses Hyperbee for filesystem metadata.
+
+## Common Patterns
+```js
+const batch = db.batch()
+batch.put("a", 1)
+batch.put("b", 2)
+await batch.flush()
+```
+
+## Pitfalls & Gotchas
+- Always `await db.ready()` before accessing keys.
+- Writes are staged until flushed in a batch context.
+
+## Version Notes
+- Latest on npm: 2.27.3 (checked 2026-02-05).
+- Hyperbee version not found in local sources; verify from project `package.json` in target app.
+
+## Resources
+- https://github.com/holepunchto/hyperbee

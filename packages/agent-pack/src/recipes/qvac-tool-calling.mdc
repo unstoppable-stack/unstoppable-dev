@@ -1,0 +1,187 @@
+---
+description: Recipe: QVAC tool/function calling with Zod schemas and structured output
+alwaysApply: false
+---
+
+# Recipe: QVAC Tool Calling
+
+## Problem
+
+Enable an LLM to call local tools/functions and feed results back into the
+conversation.
+
+## Prerequisites
+
+- QVAC SDK installed (`@qvac/sdk`).
+- **Zod v4** installed (`zod@^4`, not v3 — required for `ToolInput` type compatibility).
+- A tool-calling-capable model: `QWEN_3_1_7B_INST_Q4` (recommended), `QWEN_3_4B_INST_Q4_K_M`, or `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`.
+- 3B+ model minimum for reliable tool calling; 1B models are unreliable.
+
+## Key Rule: Always Enable `tools: true`
+
+**Always set `modelConfig.tools: true`** in `loadModel()` when using tool-calling
+models. This activates the model's native tool-calling template. The model can
+still generate free text — it is NOT constrained to JSON-only output.
+
+Without `tools: true`, the model describes tool usage in plain text instead of
+actually calling tools. This is the #1 cause of "tool calling doesn't work."
+
+> **Do NOT create a "respond" or "reply" tool.** The model generates free text
+> naturally with `tools: true` enabled.
+
+## Solution
+
+### Step 1: Define tools using ToolInput with Zod v4
+
+```ts
+import { z } from 'zod'
+import type { ToolInput } from '@qvac/sdk'
+
+const tools: ToolInput[] = [{
+  name: 'get_weather',
+  description: 'Get current weather for a city.',
+  parameters: z.object({
+    city: z.string().describe('City name'),
+  }),
+  handler: async ({ city }) => {
+    return { city, temp: 22, condition: 'sunny' }
+  },
+}]
+```
+
+Use only basic Zod types (`z.string()`, `z.number()`, `z.boolean()`, `z.object()`,
+`z.array()`). Avoid `.integer()`, `.min()`, `.regex()` — validate inside the handler.
+
+### Step 2: Load model with `tools: true`
+
+```ts
+import { loadModel, QWEN_3_1_7B_INST_Q4 } from '@qvac/sdk'
+
+const CTX_SIZE = 4096
+const modelId = await loadModel({
+  modelSrc: QWEN_3_1_7B_INST_Q4,
+  modelType: 'llm',
+  modelConfig: {
+    ctx_size: CTX_SIZE,
+    n_discarded: Math.floor(CTX_SIZE / 10), // 10% sliding window
+    tools: true, // REQUIRED — activates tool-calling template
+  },
+})
+```
+
+### Step 3: Run tool-calling loop with parallel stream processing
+
+```ts
+import { completion, deleteCache, unloadModel } from '@qvac/sdk'
+
+const MAX_TOOL_ROUNDS = 10
+
+async function runToolCallingLoop(opts: {
+  modelId: string
+  history: Array<{ role: string; content: string }>
+  tools: ToolInput[]
+  kvCache: string
+  onToken?: (token: string) => void
+}): Promise<string> {
+  const { modelId, history, tools, kvCache, onToken } = opts
+
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const result = completion({ modelId, history, stream: true, tools, kvCache })
+
+    // Process tokenStream + toolCallStream in PARALLEL
+    let fullResponse = ''
+    const tokenTask = (async () => {
+      for await (const token of result.tokenStream) {
+        fullResponse += token
+        onToken?.(token)
+      }
+    })()
+    const toolCallTask = (async () => {
+      for await (const evt of result.toolCallStream) { /* real-time events */ }
+    })()
+    await Promise.all([tokenTask, toolCallTask])
+
+    const toolCalls = await result.toolCalls
+    if (!toolCalls || toolCalls.length === 0) {
+      history.push({ role: 'assistant', content: fullResponse })
+      return fullResponse.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+    }
+
+    history.push({ role: 'assistant', content: fullResponse })
+    for (const call of toolCalls) {
+      let toolResult: unknown
+      try {
+        toolResult = call.invoke ? await call.invoke() : call.arguments
+      } catch (error) {
+        toolResult = { error: error instanceof Error ? error.message : String(error) }
+      }
+      history.push({
+        role: 'user',
+        content: `Tool "${call.name}" returned:\n\n${JSON.stringify(toolResult)}`,
+      })
+    }
+  }
+
+  return '[Max tool rounds reached]'
+}
+```
+
+### Step 4: Use it
+
+```ts
+const sessionId = `session-${Date.now()}`
+const history = [
+  { role: 'system', content: 'You are a helpful assistant. /no_think' },
+  { role: 'user', content: "What's the weather in Paris?" },
+]
+
+const response = await runToolCallingLoop({
+  modelId, history, tools, kvCache: sessionId,
+  onToken: (t) => process.stdout.write(t),
+})
+
+// Cleanup
+await deleteCache({ kvCacheKey: sessionId })
+await unloadModel({ modelId })
+```
+
+## Advanced Patterns
+
+### Token filtering (strip `<tool_call>` blocks from visible output)
+
+See `skill-qvac-tool-calling` for the `createTokenFilter()` pattern that strips
+tool call XML blocks from the visible token stream.
+
+### Fallback parsing with JSON repair
+
+When the SDK fails to parse tool calls, parse `<tool_call>` blocks manually from
+the raw response text. Use JSON repair for malformed output from small models.
+See `skill-qvac-tool-calling` for the full implementation.
+
+## Troubleshooting
+
+### Problem: Model describes tool calls in text but never executes them
+
+**Most common cause**: `tools: true` not set in `modelConfig` at load time.
+**Fix**: Always include `tools: true` in `modelConfig` in `loadModel()`.
+
+### Problem: Tool calls parsed but `toolCalls` is empty
+
+**Symptoms**: Response text contains `<tool_call>` blocks but SDK returns `[]`.
+**Solution**: Use fallback `<tool_call>` parsing. See `skill-qvac-tool-calling`.
+
+### Problem: Context overflow
+
+**Solution**: Set `n_discarded` in `modelConfig` for automatic sliding window.
+Keep tool outputs compact.
+
+### Problem: `<tool_call>` blocks visible in chat
+
+**Solution**: Use `createTokenFilter()` pattern from `skill-qvac-tool-calling`.
+
+## Related
+
+- `skill-qvac-tool-calling` — full skill with all patterns
+- `skill-qvac-chat-app` — complete chat app example
+- `output/modules/qvac.md`
+- `output/recipes/qvac-kv-cache.md`
