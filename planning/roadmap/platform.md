@@ -65,7 +65,7 @@
 ### Next: Build a mobile P2P app — highest effort, most unknowns
 
 ### Reference material available:
-- `research/qvac-app-workbench-mobile-main/` — Tether's mobile QVAC reference app
+- `reference-apps/qvac-workbench-mobile/` — Tether's mobile QVAC reference app
 - QVAC docs: `sdk/tutorials/expo.mdx` — Expo tutorial
 
 ---
@@ -78,6 +78,6 @@
 
 ### Reference material available:
 - QVAC docs: `sdk/tutorials/electron.mdx` — Electron tutorial
-- `research/qvac-app-workbench-desktop-main/` — Uses Pear, not Electron
+- `reference-apps/qvac-workbench-desktop/` — Uses Pear, not Electron
 
 ### Low priority — Pear is the primary desktop runtime

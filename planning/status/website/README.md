@@ -8,7 +8,7 @@
 - `packages/website/src/app/page.tsx` — Landing
 - `packages/website/src/app/getting-started/page.tsx` — Guide
 - `packages/website/src/app/docs/page.tsx` — Docs
-- `project-planning/Website Planning.md` — Wireframes + design tokens
+- `planning/features/website.md` — Wireframes + design tokens
 
 ---
 

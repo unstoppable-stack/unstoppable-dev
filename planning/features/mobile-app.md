@@ -196,8 +196,8 @@ Stack:
 - zustand for state management
 
 I have two reference apps to base this on:
-1. research/qvac-app-workbench-mobile-main/ — Shows QVAC setup on Expo (QvacProvider, model loading, streaming chat)
-2. research/qvac-health-dev/ — Shows bare-pack worklets, Hyperswarm on mobile, hrpc schemas, P2P sync
+1. reference-apps/qvac-workbench-mobile/ — Shows QVAC setup on Expo (QvacProvider, model loading, streaming chat)
+2. reference-apps/qvac-health/ — Shows bare-pack worklets, Hyperswarm on mobile, hrpc schemas, P2P sync
 
 Architecture:
 - React Native layer: notes UI, AI chat, settings

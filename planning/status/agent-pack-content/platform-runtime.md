@@ -49,7 +49,7 @@ No further work needed. Well covered by coffee-assistant-ui.
 
 ### Next Up — Building "Unstoppable Notes" mobile reference app
 
-Full plan: `project-planning/unstoppable-notes-mobile.md`
+Full plan: `planning/features/mobile-app.md`
 
 | # | Task | Effort |
 |---|------|--------|
@@ -61,7 +61,7 @@ Full plan: `project-planning/unstoppable-notes-mobile.md`
 
 ### Reference Material
 
-- `research/qvac-app-workbench-mobile-main/` — Tether's mobile reference
+- `reference-apps/qvac-workbench-mobile/` — Tether's mobile reference
 - `research/qvac-docs/sdk/tutorials/expo.mdx` — Official Expo tutorial
 
 ---

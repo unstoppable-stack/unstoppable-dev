@@ -33,8 +33,8 @@ research folder. Fix any API mismatches.
 
 ## 3. Extract More from Workbench Reference App
 
-**Source:** `research/qvac-app-workbench-desktop-main/`,
-`research/qvac-app-workbench-mobile-main/`
+**Source:** `reference-apps/qvac-workbench-desktop/`,
+`reference-apps/qvac-workbench-mobile/`
 
 **Task:** These are Tether's official reference apps. Mine them for:
 - Additional Pear config patterns

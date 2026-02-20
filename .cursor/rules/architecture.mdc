@@ -28,7 +28,12 @@ unstoppable-stack/
 │   └── qvac-health/             # Mobile health app with local AI
 ├── research/                    # Local research material (not tracked)
 ├── sandbox/                     # CLI test builds with feedback (gitignored)
-└── project-planning/            # Planning documents
+└── planning/                    # All planning, roadmap, status, presentations
+    ├── vision/                  # Strategy and product direction
+    ├── roadmap/                 # Coverage tracking (54 items)
+    ├── features/                # Deep planning per feature
+    ├── status/                  # Sprint-level tracking
+    └── presentation/            # Pitch deck and materials
 ```
 
 ## Tech Stack

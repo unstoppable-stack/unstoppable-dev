@@ -1,5 +1,5 @@
 ---
-description: Project tracking and sprint management. Consult project-status/ folder before starting work and update it after completing tasks.
+description: Project tracking and sprint management. Consult planning/ folder before starting work and update it after completing tasks.
 alwaysApply: true
 ---
 
@@ -7,11 +7,11 @@ alwaysApply: true
 
 ## Before Starting Work
 
-1. **Read `project-status/README.md`** for priorities and coverage summary.
+1. **Read `planning/status/README.md`** for priorities and coverage summary.
 
 2. **Navigate to the relevant subfolder:**
 
-   **Agent Pack Content** (`project-status/01-agent-pack-content/`)
+   **Agent Pack Content** (`planning/status/agent-pack-content/`)
    - `README.md` — Coverage summary (39% battle-tested)
    - `platform-runtime.md` — Pear Desktop/Terminal/Mobile/Electron
    - `qvac-ai.md` — Vision, RAG, Transcription, TTS, OCR, etc.
@@ -19,27 +19,32 @@ alwaysApply: true
    - `wdk-payments.md` — Wallet operations (0% validated)
    - `build-tooling.md` — Testing, CI/CD
 
-   **Agent Pack Architecture** (`project-status/02-agent-pack-architecture/`)
+   **Agent Pack Architecture** (`planning/status/agent-pack-architecture/`)
    - `README.md` — Skill system, builders, auto-activation, hooks
 
-   **Unstoppable Vault** (`project-status/03-unstoppable-vault/`)
+   **Unstoppable Vault** (`planning/status/vault/`)
    - `README.md` — Phases, services, what it validates
 
-   **Website** (`project-status/04-website/`)
+   **Website** (`planning/status/website/`)
    - `README.md` — Pages, sections, components
 
 3. **Reference detailed planning docs** when needed:
-   - Agent Pack: `project-planning/Agent Pack & Researcher Improvements.md`
-   - Vault: `project-planning/unstoppable-vault.md` + `project-planning/unstoppable-vault-technical.md`
-   - Website: `project-planning/Website Planning.md`
-   - Long-term coverage: `Roadmap/` directory
+   - Agent Pack: `planning/features/agent-pack.md`
+   - Vault: `planning/features/vault.md` + `planning/features/vault-technical.md`
+   - Website: `planning/features/website.md`
+   - Long-term coverage: `planning/roadmap/`
+
+4. **For roadmap and coverage tracking:**
+   - Full matrix: `planning/roadmap/overview.md`
+   - Per-category: `planning/roadmap/platform.md`, `qvac.md`, `p2p.md`, `wdk.md`
+   - Planned apps: `planning/roadmap/reference-apps.md`
 
 ## After Completing a Task
 
 1. Move it from "Next Up" to "Recently Completed" with today's date
 2. Add follow-up tasks if applicable
 3. Update "Current state" / coverage numbers if they changed
-4. Update `project-status/README.md` status column if workstream status changed
+4. Update `planning/status/README.md` status column if workstream status changed
 
 ## Priority Order
 

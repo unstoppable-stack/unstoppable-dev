@@ -9,7 +9,7 @@ output for all three tools. Researcher is OpenCode-only. No auto-activation.
 **Key files:**
 - `packages/cli/src/agent-pack/index.ts` — Builders
 - `packages/agent-pack/src/hooks/skill-rules.json` — Auto-activation rules
-- `project-planning/Agent Pack & Researcher Improvements.md` — Full planning doc
+- `planning/features/agent-pack.md` — Full planning doc
 
 ---
 

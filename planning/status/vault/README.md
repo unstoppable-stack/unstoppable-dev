@@ -6,8 +6,8 @@ Unstoppable Stack app. Also provides delegated AI inference.
 **Current state:** Planning complete. No code yet.
 
 **Key files:**
-- `project-planning/unstoppable-vault.md` — Concept
-- `project-planning/unstoppable-vault-technical.md` — Technical architecture
+- `planning/features/vault.md` — Concept
+- `planning/features/vault-technical.md` — Technical architecture
 
 ---
 

@@ -38,7 +38,12 @@ unstoppable-stack/
 │   ├── coffee-assistant-ui/     # Internal desktop UI analysis
 │   └── slack-p2p-copy/          # Internal P2P messaging analysis
 ├── sandbox/                     # CLI test builds with feedback (gitignored)
-└── project-planning/            # Planning documents (this phase)
+└── planning/                    # All planning, roadmap, status, and presentations
+    ├── vision/                  # Strategy and product direction
+    ├── roadmap/                 # Coverage tracking (54 items, 5 categories)
+    ├── features/                # Deep planning per feature (vault, website, etc.)
+    ├── status/                  # Sprint-level tracking and priorities
+    └── presentation/            # Pitch deck and speaker materials
 ```
 
 ---
@@ -283,7 +288,7 @@ my-app/
 - WDK: (documentation needed)
 
 ### This Project
-- Planning: `./project-planning/`
+- Planning: `./planning/` (vision, roadmap, features, status, presentation)
 - Website: `./packages/website/`
 - CLI: `./packages/cli/`
 - Reference Apps: `./reference-apps/` (git submodules)

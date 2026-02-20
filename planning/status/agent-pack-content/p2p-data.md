@@ -73,7 +73,7 @@ The **Vault build** will battle-test all Corestore patterns. See
 ### Next Up
 
 The **Vault build** (File Sync service) will battle-test Hyperdrive. Can also
-be validated by the P2P File Sync reference app (see Roadmap/06-next-apps.md).
+be validated by the P2P File Sync reference app (see planning/roadmap/reference-apps.md).
 
 ---
 
