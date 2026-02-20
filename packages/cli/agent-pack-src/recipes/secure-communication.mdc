@@ -1,0 +1,59 @@
+---
+description: Recipe: encrypted P2P communication with Protomux secret streams
+alwaysApply: false
+---
+
+# Recipe: Secure Communication
+
+## Problem
+
+Send encrypted messages over P2P connections with a structured protocol.
+
+## Prerequisites
+
+- Hyperswarm installed.
+- `@hyperswarm/secret-stream` and `protomux` installed.
+
+## Solution
+
+Wrap Hyperswarm connections with `@hyperswarm/secret-stream` and multiplex
+messages using `protomux`.
+
+## Full Example
+
+```js
+import Hyperswarm from "hyperswarm";
+import SecretStream from "@hyperswarm/secret-stream";
+import Protomux from "protomux";
+import c from "compact-encoding";
+
+const swarm = new Hyperswarm();
+
+swarm.on("connection", (conn, info) => {
+  const secure = new SecretStream(info.client, conn);
+  const mux = new Protomux(secure);
+
+  const channel = mux.createChannel({ protocol: "chat" });
+  const msg = channel.addMessage({
+    encoding: c.string,
+    onmessage: (m) => console.log("recv:", m),
+  });
+
+  channel.open();
+  msg.send("hello encrypted");
+});
+
+const topic = Buffer.alloc(32).fill("secure-chat");
+swarm.join(topic, { server: true, client: true });
+```
+
+## Variations
+
+- Use `SecretStream.keyPair(seed)` to make deterministic identities.
+- Implement request/response on top of Protomux for RPC-style APIs.
+
+## Troubleshooting
+
+- If peers do not connect, confirm both sides join the same 32-byte topic.
+- If messages are not received, ensure `channel.open()` is called before
+  sending.

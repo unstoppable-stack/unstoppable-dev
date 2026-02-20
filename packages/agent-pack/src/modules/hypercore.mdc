@@ -1,0 +1,68 @@
+---
+description: Hypercore: append-only log, the foundation of all Holepunch data structures
+alwaysApply: false
+---
+
+# Hypercore
+
+## Overview
+Hypercore is a secure, distributed append-only log used to replicate data streams between peers. It supports sparse replication (download only needed blocks) and integrity via signed Merkle trees, making it the base for Hyperbee and Hyperdrive.
+
+## Version Notes
+- Latest on npm: 11.24.0 (checked 2026-02-05).
+- Hypercore version not found in local sources; verify from project `package.json` in target app.
+
+## Installation
+```bash
+npm install hypercore
+```
+
+## Quick Start
+```js
+import Hypercore from "hypercore"
+
+const core = new Hypercore("./storage")
+await core.append("hello")
+
+const value = await core.get(0)
+console.log(value.toString())
+```
+
+## Core Concepts
+- Append-only log: new data is appended as blocks, never overwritten.
+- Auth & integrity: blocks are signed and verified with Merkle tree proofs.
+- Optional encryption: set `encryption` or `setEncryptionKey()` for block encryption.
+- Discovery key: derived from the public key; used for peer discovery without revealing the read capability.
+- Replication: use `core.replicate(stream)` with Hyperswarm connections.
+
+## API Reference
+- `new Hypercore(storage, [key], [options])`
+- `await core.append(block | blocks)`
+- `await core.get(index, { wait, timeout })`
+- `const stream = core.replicate(isInitiatorOrStream)`
+- `core.discoveryKey`, `core.key`, `core.length`
+
+## Integration with Other Modules
+- Hyperswarm supplies encrypted transport streams for replication.
+- Hyperbee uses Hypercore as its storage layer.
+- Hyperdrive uses two Hypercores (metadata + content).
+
+## Common Patterns
+```js
+// Replicate over Hyperswarm
+swarm.on("connection", (conn) => core.replicate(conn))
+swarm.join(core.discoveryKey)
+```
+
+```js
+// Sparse read with timeout
+const block = await core.get(42, { timeout: 5000 })
+```
+
+## Pitfalls & Gotchas
+- Hypercore v10 is not wire-compatible with v9; use v10 across peers.
+- Use `core.findingPeers()` to coordinate `core.update()` with swarm discovery.
+
+## Resources
+- https://github.com/holepunchto/hypercore
+- https://docs.holepunch.to/howto/replicate-and-persist-with-hypercore

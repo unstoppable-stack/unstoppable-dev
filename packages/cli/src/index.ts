@@ -15,7 +15,7 @@ program
   .version('0.1.0')
   .argument('[project-name]', 'Name of the project')
   .option('-t, --template <template>', 'Template to use')
-  .option('-a, --assistant <assistant>', 'AI assistant (claude, cursor, opencode, none)')
+  .option('-a, --assistant <assistant>', 'AI assistant (claude, cursor, opencode, codex, none)')
   .option('--no-install', 'Skip dependency installation')
   .action(async (projectName, options) => {
     console.log()

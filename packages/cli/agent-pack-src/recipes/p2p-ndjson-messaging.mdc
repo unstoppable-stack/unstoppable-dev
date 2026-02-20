@@ -1,0 +1,150 @@
+---
+description: Recipe: NDJSON messaging over Hyperswarm P2P streams
+alwaysApply: false
+---
+
+# Recipe: NDJSON Messaging Over Hyperswarm
+
+## Problem
+
+Send lightweight JSON messages between peers without Protomux or RPC framing.
+
+## Prerequisites
+
+- Hyperswarm installed
+- Basic understanding of Node.js streams
+
+## Solution
+
+### Step 1: Define a newline-delimited JSON protocol
+
+Each message is one JSON object per line. This keeps framing simple and avoids
+partial JSON parse errors.
+
+```ts
+type WireMessage = {
+  type: "chat" | "ping" | "pong";
+  id?: string;
+  payload?: Record<string, unknown>;
+};
+```
+
+### Step 2: Parse incoming stream data with a buffer
+
+```ts
+const decoder = new TextDecoder();
+let buffer = "";
+
+conn.on("data", (chunk: Buffer) => {
+  buffer += decoder.decode(chunk, { stream: true });
+  const lines = buffer.split("\n");
+  buffer = lines.pop() ?? "";
+
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const msg = JSON.parse(line) as WireMessage;
+    handleMessage(msg);
+  }
+});
+```
+
+### Step 3: Serialize outgoing messages with a newline
+
+```ts
+function sendMessage(msg: WireMessage) {
+  conn.write(`${JSON.stringify(msg)}\n`);
+}
+```
+
+## Full Example
+
+```ts
+import Hyperswarm from "hyperswarm";
+
+type WireMessage = {
+  type: "chat" | "ping" | "pong";
+  id?: string;
+  payload?: Record<string, unknown>;
+};
+
+const swarm = new Hyperswarm();
+const topic = Buffer.alloc(32).fill("ndjson-demo");
+
+swarm.on("connection", (conn, info) => {
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  function handleMessage(msg: WireMessage) {
+    if (msg.type === "ping") {
+      sendMessage({ type: "pong", id: msg.id });
+      return;
+    }
+
+    if (msg.type === "chat") {
+      console.log("chat:", msg.payload);
+    }
+  }
+
+  function sendMessage(msg: WireMessage) {
+    conn.write(`${JSON.stringify(msg)}\n`);
+  }
+
+  conn.on("data", (chunk: Buffer) => {
+    buffer += decoder.decode(chunk, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      handleMessage(JSON.parse(line) as WireMessage);
+    }
+  });
+
+  conn.on("close", () => console.log("peer disconnected", info.publicKey));
+  conn.on("error", (err) => console.error("conn error", err));
+
+  if (info.client) {
+    sendMessage({ type: "ping", id: crypto.randomUUID() });
+    sendMessage({ type: "chat", payload: { text: "hello" } });
+  }
+});
+
+const discovery = swarm.join(topic, { server: true, client: true });
+await discovery.flushed();
+```
+
+## Variations
+
+### Variation 1: Add message size limits
+
+If you accept untrusted peers, cap line length before parsing to avoid memory
+blowups.
+
+```ts
+const MAX_LINE = 64 * 1024;
+if (line.length > MAX_LINE) throw new Error("message too large");
+```
+
+### Variation 2: Add acks and retries
+
+Attach `id` fields and keep a map of pending messages. Retry if you do not
+receive a `pong`/`ack` within a timeout.
+
+## Troubleshooting
+
+### Problem: JSON parse errors on incoming data
+
+**Symptoms**: `SyntaxError: Unexpected end of JSON input`. **Solution**: Ensure
+you buffer chunks and only parse full lines. Never parse partial stream chunks
+directly.
+
+### Problem: Messages arrive merged together
+
+**Symptoms**: Two JSON objects appear concatenated without separators.
+**Solution**: Always add `\n` after each `JSON.stringify` and split on newline
+when reading.
+
+## Related
+
+- `output/modules/hyperswarm.md`
+- `output/recipes/p2p-rpc.md`

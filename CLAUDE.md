@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, and OpenCode.
+A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, OpenCode, and Codex.
 
 ## Vision
 
@@ -22,7 +22,8 @@ unstoppable-stack/
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
-│       └── opencode/            # OpenCode skills
+│       ├── opencode/            # OpenCode skills
+│       └── codex/               # Codex (OpenAI) AGENTS.md + skills
 ├── docs/                        # Extended documentation
 │   ├── modules/                 # Per-module documentation
 │   └── recipes/                 # Common patterns and recipes
@@ -85,7 +86,7 @@ unstoppable-stack/
 - Portable format that generates tool-specific configs
 - **Skills** with progressive disclosure (thin SKILL.md + resources/)
 - **Hooks** for auto-activation (skill-rules.json) and formatting
-- Build step generates Claude/Cursor/OpenCode formats
+- Build step generates Claude/Cursor/OpenCode/Codex formats
 
 ### Agent Pack Editing
 
@@ -136,6 +137,7 @@ pnpm create unstoppable-app
   ❯ Claude Code
     Cursor
     OpenCode
+    Codex
     None
 ```
 
@@ -174,6 +176,11 @@ The agent pack provides AI assistants with context about:
 **OpenCode** (`opencode.json` + skills):
 - Agent configuration
 - Skill definitions
+
+**Codex** (`AGENTS.md` + `.codex/`):
+- Project instructions in `AGENTS.md`
+- Skills in `.codex/skills/`
+- Project config in `.codex/config.toml`
 
 ---
 

@@ -16,7 +16,7 @@ output for all three tools. Researcher is OpenCode-only. No auto-activation.
 ## What's Working
 
 - 10 skills with thin SKILL.md + resources/ (progressive disclosure)
-- CLI builders for Claude (skills + hooks), Cursor (.mdc + globs), OpenCode (skills + agents)
+- CLI builders for Claude (skills + hooks), Cursor (.mdc + globs), OpenCode (skills + agents), Codex (AGENTS.md + skills)
 - Researcher agent (OpenCode-only) with write-module, write-recipe, verify skills
 
 ---

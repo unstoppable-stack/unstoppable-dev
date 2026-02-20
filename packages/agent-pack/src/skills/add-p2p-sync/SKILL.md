@@ -1,7 +1,8 @@
 ---
 name: add-p2p-sync
-description: Add P2P data synchronization between peers using Hypercore and Hyperswarm
-allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
+description: Add P2P data replication between peers using Hypercore and
+  Corestore. Use when the user needs to sync an append-only log or data
+  store across devices. Requires add-p2p-networking first.
 ---
 
 # Add P2P Data Sync
@@ -18,7 +19,7 @@ allowed-tools: Read, Grep, Edit, Write, Bash(npm *), Bash(pnpm *)
 > **CRITICAL — Pear Desktop Apps:** Hypercore, Hyperswarm, and Corestore
 > CANNOT run in the renderer (browser context). They MUST run in a **worker
 > process** started via `pear-run`. The UI communicates with the worker via
-> NDJSON over `Pear.worker.pipe()`. See the `pear-desktop-app` skill →
+> NDJSON over `Pear.worker.pipe()`. See the `setup-pear-desktop` skill →
 > `resources/worker-pattern.md` for the full worker bridge implementation.
 
 ## Included Components

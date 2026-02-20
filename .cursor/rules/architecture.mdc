@@ -17,7 +17,8 @@ unstoppable-stack/
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
-│       └── opencode/            # OpenCode skills
+│       ├── opencode/            # OpenCode skills
+│       └── codex/               # Codex (OpenAI) AGENTS.md + skills
 ├── docs/                        # Extended documentation
 │   ├── modules/                 # Per-module documentation
 │   └── recipes/                 # Common patterns and recipes
@@ -48,4 +49,4 @@ unstoppable-stack/
 ### Agent Pack (packages/agent-pack)
 - Portable format that generates tool-specific configs
 - Core content in markdown (rules, recipes, architecture)
-- Build step generates Claude/Cursor/OpenCode formats
+- Build step generates Claude/Cursor/OpenCode/Codex formats

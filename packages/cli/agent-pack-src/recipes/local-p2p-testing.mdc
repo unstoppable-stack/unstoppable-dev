@@ -1,0 +1,61 @@
+---
+description: Recipe: testing P2P apps locally with multiple peer instances
+alwaysApply: false
+---
+
+# Recipe: Local P2P Testing (Multiple Peers)
+
+## Problem
+Run two or more peers locally to validate replication and messaging.
+
+## Solution
+Start separate processes with distinct storage directories, join the same topic, and verify data replication between peers.
+
+## Full Example
+```js
+// peer-a.js
+import Hypercore from "hypercore"
+import Hyperswarm from "hyperswarm"
+import b4a from "b4a"
+
+const core = new Hypercore("./tmp/peer-a")
+await core.ready()
+
+const swarm = new Hyperswarm()
+swarm.on("connection", (conn) => core.replicate(conn))
+swarm.join(core.discoveryKey, { server: true, client: true })
+
+console.log("A key:", b4a.toString(core.key, "hex"))
+
+setInterval(() => core.append(Buffer.from(`ping:${Date.now()}`)), 2000)
+```
+
+```js
+// peer-b.js
+import Hypercore from "hypercore"
+import Hyperswarm from "hyperswarm"
+import b4a from "b4a"
+
+const keyHex = process.argv[2]
+const core = new Hypercore("./tmp/peer-b", b4a.from(keyHex, "hex"))
+await core.ready()
+
+const swarm = new Hyperswarm()
+swarm.on("connection", (conn) => core.replicate(conn))
+swarm.join(core.discoveryKey, { server: true, client: true })
+await swarm.flush()
+
+for await (const block of core.createReadStream({ live: true })) {
+  console.log("B recv:", block.toString())
+}
+```
+
+Run in two terminals:
+```bash
+node peer-a.js
+node peer-b.js <key-from-peer-a>
+```
+
+## Variations
+- Use a shared Hyperswarm topic instead of direct keys for multi-writer tests.
+- For offline-only testing, run a local HyperDHT bootstrap node and pass `bootstrap` to `new Hyperswarm({ bootstrap: [...] })`.

@@ -1,0 +1,91 @@
+---
+description: Recipe: loading QVAC models from filesystem, HTTP, and Hyperdrive sources
+alwaysApply: false
+---
+
+# Recipe: QVAC Model Sources (Filesystem, HTTP, Hyperdrive)
+
+## Problem
+
+Load models from local files, HTTP URLs, or `pear://` Hyperdrive links.
+
+## Prerequisites
+
+- QVAC SDK installed (`@qvac/sdk`).
+- A valid model file path or URL.
+
+## Solution
+
+### Step 1: Load a model from disk
+
+```ts
+const modelId = await loadModel({
+  modelSrc: "/path/to/model.gguf",
+  modelType: "llm",
+});
+```
+
+### Step 2: Load a model from HTTP
+
+```ts
+const modelId = await loadModel({
+  modelSrc: "https://example.com/model.gguf",
+  modelType: "llm",
+});
+```
+
+### Step 3: Load a model from Hyperdrive
+
+```ts
+const modelId = await loadModel({
+  modelSrc: "pear://<hyperdrive-key>/model.gguf",
+  modelType: "llm",
+});
+```
+
+## Full Example
+
+```ts
+import { loadModel, completion, unloadModel } from "@qvac/sdk";
+
+const source = process.argv[2] ?? "./models/model.gguf";
+const modelId = await loadModel({ modelSrc: source, modelType: "llm" });
+
+const result = completion({
+  modelId,
+  history: [{ role: "user", content: "Say hello." }],
+  stream: true,
+});
+
+for await (const token of result.tokenStream) {
+  process.stdout.write(token);
+}
+
+await unloadModel({ modelId });
+```
+
+## Variations
+
+### Variation 1: Download-only prefetch
+
+Use `downloadAsset({ assetSrc: source })` to cache without loading.
+
+### Variation 2: Hyperdrive registry constants
+
+Use constants like `LLAMA_3_2_1B_INST_Q4_0` instead of raw URLs.
+
+## Troubleshooting
+
+### Problem: Invalid path or URL
+
+**Symptoms**: Load fails with "file not found" or HTTP errors. **Solution**:
+Confirm the path/URL is accessible and points to a `.gguf` file.
+
+### Problem: Hyperdrive URL fails
+
+**Symptoms**: Download never completes. **Solution**: Ensure the peer hosting
+the drive is seeding and reachable.
+
+## Related
+
+- `output/modules/qvac.md`

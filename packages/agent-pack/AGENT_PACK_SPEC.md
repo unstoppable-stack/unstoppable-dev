@@ -6,86 +6,108 @@ The Agent Pack provides AI coding assistants with the knowledge to build apps on
 
 ## Architecture
 
+The agent pack is structured as a **Cursor plugin** (the most structured format) while remaining portable to Claude Code and OpenCode. The `.cursor-plugin/plugin.json` manifest maps content to Cursor's component types.
+
 ```
 agent-pack/
-├── AGENT_PACK_SPEC.md      # This file
-├── src/                     # Canonical source (markdown)
-│   ├── core/               # Core instructions (always included)
-│   │   ├── architecture.md
-│   │   ├── principles.md
-│   │   └── patterns.md
-│   ├── modules/            # Per-module knowledge
-│   │   ├── pear.md
-│   │   ├── hyperdb.md
-│   │   ├── qvac.md
+├── .cursor-plugin/
+│   └── plugin.json          # Cursor plugin manifest
+├── AGENT_PACK_SPEC.md       # This file
+├── README.md                # Plugin documentation
+├── src/                     # Canonical source
+│   ├── core/                # Always-on rules (.mdc)
+│   │   ├── architecture.mdc
+│   │   ├── principles.mdc
+│   │   ├── cheatsheet.mdc
+│   │   ├── verified-versions.mdc
+│   │   ├── patterns.mdc
+│   │   ├── design-guide.mdc
+│   │   ├── production-readiness.mdc
+│   │   └── scenarios.mdc
+│   ├── modules/             # Per-module rules (.mdc, agent-decided)
+│   │   ├── hyperswarm.mdc
+│   │   ├── qvac.mdc
+│   │   ├── pear.mdc
 │   │   └── ...
-│   ├── recipes/            # Task-oriented guides
-│   │   ├── p2p-sync.md
-│   │   ├── local-inference.md
+│   ├── recipes/             # Pattern rules (.mdc, agent-decided)
+│   │   ├── p2p-rpc.mdc
+│   │   ├── local-inference.mdc
+│   │   ├── qvac-tool-calling.mdc
 │   │   └── ...
-│   └── templates/          # Template-specific context
-│       ├── starter.md
-│       ├── qvac-ai.md
-│       └── ...
-├── build/                  # Build script
-│   └── index.ts
-└── dist/                   # Generated outputs (gitignored)
-    ├── claude/
-    ├── cursor/
-    └── opencode/
+│   ├── skills/              # Guided workflows (SKILL.md + resources/)
+│   │   ├── local-inference/
+│   │   ├── pear-desktop-app/
+│   │   ├── add-p2p-sync/
+│   │   └── ...
+│   ├── hooks/               # Legacy skill-rules.json
+│   └── components/          # Reusable TypeScript code for scaffolding
+│       ├── ai/
+│       ├── p2p/
+│       ├── data/
+│       └── wallet/
+├── agents/                  # Custom agent configurations
+│   └── unstoppable-dev.md
+├── commands/                # Agent-executable commands
+│   ├── scaffold-p2p-app.md
+│   ├── add-qvac.md
+│   └── add-p2p-sync.md
+├── hooks/
+│   └── hooks.json           # Cursor plugin hook definitions
+└── scripts/                 # Build and utility scripts
 ```
 
 ---
 
 ## Source Format
 
-All source files use markdown with YAML frontmatter:
+### Rules (.mdc files)
+
+Rules in `src/core/`, `src/modules/`, and `src/recipes/` use Cursor-compatible YAML frontmatter:
 
 ```markdown
 ---
-id: hyperdb
-name: HyperDB
-category: module
-requires: [hypercore, hyperswarm]
-tags: [database, p2p, sync]
+description: HyperDB: P2P key-value database with schema, indexes, and multi-writer support
+alwaysApply: false
 ---
 
 # HyperDB
 
 ## What It Does
 P2P key-value database built on Hypercore...
-
-## When To Use
-- You need data sync between peers
-- You want offline-first storage
-- You need conflict resolution
-
-## Quick Start
-\`\`\`javascript
-import HyperDB from 'hyperdb'
-// ...
-\`\`\`
-
-## Key Concepts
-...
-
-## Common Patterns
-...
-
-## Gotchas
-...
 ```
 
-### Frontmatter Fields
+### Rule Frontmatter Fields
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `id` | Yes | Unique identifier |
-| `name` | Yes | Display name |
-| `category` | Yes | `core`, `module`, `recipe`, `template` |
-| `requires` | No | Dependencies (other module IDs) |
-| `tags` | No | Searchable tags |
-| `priority` | No | `high`, `medium`, `low` (default: medium) |
+| `description` | Yes | Brief description (used by Cursor for agent-decided activation) |
+| `alwaysApply` | Yes | `true` for core rules, `false` for contextual ones |
+| `globs` | No | File patterns for automatic activation (e.g., `"**/*.ts"`) |
+
+### Skills (SKILL.md files)
+
+Skills in `src/skills/*/SKILL.md` use skill-specific frontmatter:
+
+```markdown
+---
+name: local-inference
+description: Add local AI inference using QVAC SDK with streaming token output
+---
+
+# Local AI Inference
+...
+```
+
+### Agents and Commands
+
+Agents (`agents/*.md`) and commands (`commands/*.md`) use name/description frontmatter:
+
+```markdown
+---
+name: unstoppable-dev
+description: Specialized agent for building P2P, local-first applications
+---
+```
 
 ---
 
@@ -131,45 +153,22 @@ project/
 
 ---
 
-### Cursor
+### Cursor (Plugin)
 
-**Output:** `.cursor/rules` file + `.cursorrules` (legacy)
+**Primary distribution**: Cursor Marketplace plugin (this repo IS the plugin).
+
+Users install the plugin from the marketplace, which provides all rules, skills, agents, commands, and hooks automatically. No build step needed for Cursor — the `.cursor-plugin/plugin.json` manifest handles discovery.
+
+**Secondary distribution**: CLI scaffolding copies selected content into the project.
 
 ```
 project/
-├── .cursorrules           # Legacy format (simple rules)
 └── .cursor/
-    └── rules              # New format (detailed)
+    └── rules/             # Selected rules copied by CLI
+        ├── principles.mdc
+        ├── verified-versions.mdc
+        └── [module-specific rules]
 ```
-
-**.cursor/rules Structure:**
-```markdown
-# Unstoppable Stack Project
-
-## Project Context
-This is a [template-name] project using the Unstoppable Stack.
-
-## Tech Stack
-- Pear Runtime for desktop P2P apps
-- HyperDB for data synchronization
-- [other selected modules]
-
-## Code Patterns
-[Key patterns from core/patterns.md]
-
-## Do's and Don'ts
-- DO: [extracted from gotchas]
-- DON'T: [extracted from gotchas]
-
-## File Structure
-[Project structure explanation]
-```
-
-**Build rules:**
-- More concise than Claude format
-- Focus on rules and constraints
-- Include code snippets inline
-- Max ~20KB recommended
 
 ---
 
@@ -417,8 +416,11 @@ Agent pack versions track:
 
 ## Distribution
 
-### Via CLI (Primary)
-Agent pack is bundled with CLI and generated during scaffold.
+### Via Cursor Marketplace (Primary for Cursor)
+The agent pack is published as a Cursor plugin. Users install it from the marketplace and get all rules, skills, agents, and commands automatically.
+
+### Via CLI (Primary for Claude/OpenCode)
+Agent pack content is bundled with the CLI and generated during scaffold.
 
 ### Via npm (Secondary)
 ```bash

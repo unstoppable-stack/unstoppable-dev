@@ -34,13 +34,16 @@ async function loadContent() {
     }
   }
 
+  const isRule = (f: string) => f.endsWith('.md') || f.endsWith('.mdc')
+  const stripExt = (f: string) => f.replace(/\.mdc?$/, '')
+
   // Load ALL modules
   const modulesDir = join(AGENT_PACK_SRC, 'modules')
   if (existsSync(modulesDir)) {
     const moduleFiles = await readdir(modulesDir)
-    for (const file of moduleFiles.filter(f => f.endsWith('.md'))) {
+    for (const file of moduleFiles.filter(isRule)) {
       content.modules.push({
-        id: file.replace('.md', ''),
+        id: stripExt(file),
         content: await readFile(join(modulesDir, file), 'utf-8')
       })
     }
@@ -50,9 +53,9 @@ async function loadContent() {
   const recipesDir = join(AGENT_PACK_SRC, 'recipes')
   if (existsSync(recipesDir)) {
     const recipes = await readdir(recipesDir)
-    for (const recipe of recipes.filter(f => f.endsWith('.md'))) {
+    for (const recipe of recipes.filter(isRule)) {
       content.recipes.push({
-        id: recipe.replace('.md', ''),
+        id: stripExt(recipe),
         content: await readFile(join(recipesDir, recipe), 'utf-8')
       })
     }
@@ -62,9 +65,9 @@ async function loadContent() {
   const coreDir = join(AGENT_PACK_SRC, 'core')
   if (existsSync(coreDir)) {
     const coreFiles = await readdir(coreDir)
-    for (const file of coreFiles.filter(f => f.endsWith('.md'))) {
+    for (const file of coreFiles.filter(isRule)) {
       content.core.push({
-        id: file.replace('.md', ''),
+        id: stripExt(file),
         content: await readFile(join(coreDir, file), 'utf-8')
       })
     }
@@ -686,6 +689,145 @@ Call me for model setup, inference debugging, tool calling, or performance optim
   return { filesWritten: files, warnings: [] }
 }
 
+// ─── Codex Builder ──────────────────────────────────────────────────────────
+
+async function buildCodex(
+  content: any,
+  options: BuildOptions
+): Promise<BuildResult> {
+  const files: string[] = []
+
+  const codexDir = join(options.outputDir, '.codex')
+  await mkdir(join(codexDir, 'skills'), { recursive: true })
+
+  // 1. Build AGENTS.md (Codex's equivalent of CLAUDE.md)
+  let agentsMd = `# ${options.projectName}
+
+## Overview
+This is an Unstoppable Stack project using the ${options.template} template.
+
+Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
+
+## Commands
+- \`pnpm dev\` - Start development
+- \`pnpm build\` - Build for production
+- \`pnpm test\` - Run tests
+
+## Project Structure
+\`\`\`
+├── planning/         # Architecture decisions & feature plans
+├── src/              # Application source code
+│   ├── app/          # Application logic
+│   ├── p2p/          # P2P networking
+│   ├── data/         # Database/storage
+│   └── ui/           # UI components
+└── README.md
+\`\`\`
+
+## Before Building
+
+**You MUST follow this process:**
+
+1. **Ask the pre-implementation checklist questions** (see architecture skill)
+2. **Propose an architecture** listing all apps to be created
+3. **Get user confirmation** before writing any code
+4. **Create each app** with its own folder and README
+
+## Available Skills
+
+Skills provide guided implementation for common patterns. Check \`.codex/skills/\` for details:
+
+${content.skills.map((s: any) => {
+    const { data } = parseFrontmatter(s.skillMd)
+    return `- **${s.id}** — ${data.description || s.id}`
+  }).join('\n')}
+
+## Key Patterns
+
+- **Local-first**: Always write locally first, sync is opportunistic
+- **P2P**: No central servers — data lives on user devices
+- **Privacy**: Users control their data
+- **Offline AI**: Local inference via QVAC, no API calls needed
+
+## P2P Development Rules
+
+- Always await \`db.ready()\` / \`core.ready()\` before operations
+- Handle peer disconnection gracefully (\`conn.on('close')\`, \`conn.on('error')\`)
+- Use Hyperswarm topics for discoverability
+- Replicate data structures over connections
+- Don't store large blobs in HyperDB (use Hyperdrive)
+- Don't hardcode discovery keys
+- Don't forget to close connections on cleanup
+
+## QVAC (Local AI) Rules
+
+- Always \`unloadModel()\` when done to free memory
+- Use \`onProgress\` callback for download UX
+- Use \`kvCache: sessionId\` for multi-turn conversations
+- Set \`tools: true\` in \`modelConfig\` when using tool-calling models
+- Use streaming for responsive UX
+- Don't run multiple models simultaneously (memory)
+
+For detailed module docs and patterns, see the skills in \`.codex/skills/\`.
+`
+
+  await writeFile(join(options.outputDir, 'AGENTS.md'), agentsMd)
+  files.push('AGENTS.md')
+
+  // 2. Build .codex/config.toml
+  const skillConfigs = content.skills.map((s: any) =>
+    `[[skills.config]]\npath = ".codex/skills/${s.id}"\nenabled = true`
+  ).join('\n\n')
+
+  const configToml = `# Codex project configuration for ${options.projectName}
+# See: https://developers.openai.com/codex/config-reference
+
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+${skillConfigs}
+`
+
+  await writeFile(join(codexDir, 'config.toml'), configToml)
+  files.push('.codex/config.toml')
+
+  // 3. Write core docs as AGENTS.md files in subdirectories
+  // Codex supports nested AGENTS.md discovery, so we place core docs
+  // in .codex/ where they supplement the root AGENTS.md
+  const coreDir = join(codexDir, 'docs')
+  await mkdir(coreDir, { recursive: true })
+
+  for (const core of content.core) {
+    await writeFile(join(coreDir, `${core.id}.md`), stripFrontmatter(core.content))
+    files.push(`.codex/docs/${core.id}.md`)
+  }
+
+  // 4. Write ALL module docs alongside core docs
+  for (const mod of content.modules) {
+    await writeFile(join(coreDir, `module-${mod.id}.md`), stripFrontmatter(mod.content))
+    files.push(`.codex/docs/module-${mod.id}.md`)
+  }
+
+  // 5. Write ALL skills with resources (same structure as Claude)
+  for (const skill of content.skills) {
+    const skillDir = join(codexDir, 'skills', skill.id)
+    await mkdir(skillDir, { recursive: true })
+    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
+    files.push(`.codex/skills/${skill.id}/SKILL.md`)
+
+    if (skill.resources.length > 0) {
+      const resDir = join(skillDir, 'resources')
+      await mkdir(resDir, { recursive: true })
+      for (const res of skill.resources) {
+        await writeFile(join(resDir, res.name), res.content)
+        files.push(`.codex/skills/${skill.id}/resources/${res.name}`)
+      }
+    }
+  }
+
+  return { filesWritten: files, warnings: [] }
+}
+
 // ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function buildAgentPack(options: BuildOptions): Promise<BuildResult> {
@@ -702,6 +844,8 @@ export async function buildAgentPack(options: BuildOptions): Promise<BuildResult
       return buildCursor(content, options)
     case 'opencode':
       return buildOpenCode(content, options)
+    case 'codex':
+      return buildCodex(content, options)
     default:
       return { filesWritten: [], warnings: ['Unknown tool'] }
   }

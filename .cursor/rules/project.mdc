@@ -7,7 +7,7 @@ alwaysApply: true
 
 ## Project Overview
 
-A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, and OpenCode.
+A toolchain enabling developers to scaffold and "vibe-code" apps using P2P protocols, local AI, and crypto payments. The stack provides a CLI, website, and AI agent packs that work across Claude, Cursor, OpenCode, and Codex.
 
 ## Vision
 
@@ -57,6 +57,17 @@ pnpm --filter cli build   # Build CLI
 # Website development
 pnpm --filter website dev # Run website locally
 ```
+
+## Testing the CLI
+
+The user has `create-unstoppable-app` installed globally as an npm package.
+When testing CLI changes:
+
+1. Build the CLI: `cd packages/cli && npx tsup src/index.ts --format esm`
+2. Install globally: `npm install -g .` (from `packages/cli/`)
+3. Test by running: `create-unstoppable-app` (the globally installed command)
+
+**Never** run the CLI directly via `node dist/index.js`. Always rebuild and reinstall the global package so the user can test with the real `create-unstoppable-app` command.
 
 ## Development Phases
 
