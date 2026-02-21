@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pear Desktop Deep Dive</title>
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a22;
+    --border: #2a2a35;
+    --text: #e4e4ec;
+    --muted: #8888a0;
+    --accent: #6c5ce7;
+    --accent2: #00cec9;
+    --warn: #fdcb6e;
+    --danger: #e17055;
+    --success: #00b894;
+    --code-bg: #12121a;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .deck {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 100px;
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    overflow-y: auto;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: all;
+  }
+
+  .slide.prev {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  /* Title slide */
+  .slide-title {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
+  .slide-title h1 {
+    font-size: 3.2rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .slide-title .subtitle {
+    font-size: 1.3rem;
+    color: var(--muted);
+    max-width: 600px;
+  }
+
+  /* Content slides */
+  h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 32px;
+    letter-spacing: -0.5px;
+  }
+
+  h2 .num {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent2);
+  }
+
+  p, li {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 16px; }
+
+  ul, ol {
+    padding-left: 24px;
+    margin-bottom: 16px;
+  }
+
+  li { margin-bottom: 8px; }
+
+  strong { color: #fff; font-weight: 600; }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--code-bg);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.95em;
+    color: var(--accent2);
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  .keyword { color: #c792ea; }
+  .string { color: #c3e88d; }
+  .comment { color: #546e7a; }
+  .fn { color: #82aaff; }
+  .type { color: #ffcb6b; }
+
+  /* Diagram boxes */
+  .diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    font-family: 'SF Mono', monospace;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  .diagram .label-renderer { color: var(--accent); font-weight: 700; }
+  .diagram .label-worker { color: var(--accent2); font-weight: 700; }
+  .diagram .label-pipe { color: var(--warn); }
+  .diagram .dim { color: var(--muted); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .badge-yes { background: rgba(0,184,148,0.15); color: var(--success); }
+  .badge-no { background: rgba(136,136,160,0.15); color: var(--muted); }
+  .badge-critical { background: rgba(225,112,85,0.15); color: var(--danger); }
+  .badge-high { background: rgba(253,203,110,0.15); color: var(--warn); }
+
+  /* Callout boxes */
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: rgba(108,92,231,0.08);
+    padding: 16px 20px;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    margin-bottom: 20px;
+  }
+
+  .callout-warn {
+    border-left-color: var(--warn);
+    background: rgba(253,203,110,0.08);
+  }
+
+  .callout-danger {
+    border-left-color: var(--danger);
+    background: rgba(225,112,85,0.08);
+  }
+
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Two column layout */
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin-bottom: 20px;
+  }
+
+  .col {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 28px;
+    right: 40px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 100;
+  }
+
+  .nav button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1.1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .nav button:hover {
+    background: var(--border);
+    border-color: var(--muted);
+  }
+
+  .nav button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .counter {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    min-width: 50px;
+    text-align: center;
+  }
+
+  /* Progress bar */
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .slide { padding: 40px 32px; }
+    h2 { font-size: 1.6rem; }
+    .cols { grid-template-columns: 1fr; }
+    .slide-title h1 { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- SLIDE 0: Title -->
+  <div class="slide slide-title active" data-slide="0">
+    <h1>Pear Desktop Deep Dive</h1>
+    <p class="subtitle">The 10 things you need to know before building a Pear Desktop app</p>
+    <p style="color:var(--muted); margin-top:40px; font-size:0.95rem;">Use arrow keys or buttons to navigate &middot; Press <code>F</code> for fullscreen</p>
+  </div>
+
+  <!-- SLIDE 1 -->
+  <div class="slide" data-slide="1">
+    <h2><span class="num">01</span> The Fundamental Model: Two Processes</h2>
+
+    <div class="diagram"><span class="label-renderer">RENDERER (Chromium / Electron)</span>         <span class="label-worker">WORKER (Bare Runtime)</span>
+<span class="dim">├──</span> React, DOM, CSS                        <span class="dim">├──</span> P2P: Hyperswarm, RPC
+<span class="dim">├──</span> Browser APIs only                       <span class="dim">├──</span> AI: @qvac/sdk
+<span class="dim">├──</span> NO node:*, NO bare-*                    <span class="dim">├──</span> Storage: Hyperbee, HyperDB
+<span class="dim">└──</span> pear-electron + pear-bridge             <span class="dim">└──</span> bare-fs, bare-process, bare-crypto
+          <span class="label-pipe">│                                │</span>
+          <span class="label-pipe">└──── NDJSON over pear-run pipe ──┘</span></div>
+
+    <div class="callout">
+      <p>This is <strong>not optional</strong> for apps using P2P, AI, or native modules. The renderer is a browser — it cannot import <code>hyperswarm</code>, <code>@qvac/sdk</code>, or even <code>bare-fs</code>.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" data-slide="2">
+    <h2><span class="num">02</span> When Do You Need a Worker?</h2>
+
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>Needs Worker?</th><th>Reason</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>React UI only</td><td><span class="badge badge-no">No</span></td><td>Browser context is enough</td></tr>
+        <tr><td>Hyperswarm (P2P)</td><td><span class="badge badge-yes">Yes</span></td><td>Uses <code>node:net</code> under the hood</td></tr>
+        <tr><td>HyperDB / Hyperbee</td><td><span class="badge badge-yes">Yes</span></td><td>Uses Hypercore (native)</td></tr>
+        <tr><td>QVAC SDK (AI inference)</td><td><span class="badge badge-yes">Yes</span></td><td>Compiled for Bare, not browser</td></tr>
+        <tr><td>File system access</td><td><span class="badge badge-yes">Yes</span></td><td><code>bare-fs</code> not available in browser</td></tr>
+        <tr><td>RPC over P2P</td><td><span class="badge badge-yes">Yes</span></td><td><code>bare-rpc</code> is Bare-only</td></tr>
+        <tr><td>HTTP fetch to APIs</td><td><span class="badge badge-no">No</span></td><td>Browser <code>fetch()</code> works</td></tr>
+        <tr><td>localStorage</td><td><span class="badge badge-no">No</span></td><td>Browser API</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <p><strong>Rule of thumb:</strong> any module starting with <code>bare-*</code> or <code>hyper*</code>, or <code>@qvac/sdk</code>, must run in a worker.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" data-slide="3">
+    <h2><span class="num">03</span> The Communication Pipe</h2>
+
+    <p>Workers talk to the renderer through <code>Pear.worker.pipe()</code> — a bidirectional channel on <strong>file descriptor 3</strong>.</p>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Renderer side (pear-run)</h3>
+        <pre><code><span class="keyword">import</span> run <span class="keyword">from</span> <span class="string">"pear-run"</span>
+
+<span class="keyword">const</span> pipe = <span class="fn">run</span>(<span class="string">"/dist/worker/index.js"</span>, args)
+pipe.<span class="fn">write</span>(JSON.<span class="fn">stringify</span>(msg) + <span class="string">"\n"</span>)
+pipe.<span class="fn">on</span>(<span class="string">"data"</span>, handler)</code></pre>
+      </div>
+      <div class="col">
+        <h3>Worker side (Pear global)</h3>
+        <pre><code><span class="keyword">const</span> pipe = <span class="keyword">await</span> Pear.worker.<span class="fn">pipe</span>()
+
+pipe.<span class="fn">write</span>(JSON.<span class="fn">stringify</span>(msg) + <span class="string">"\n"</span>)
+pipe.<span class="fn">on</span>(<span class="string">"data"</span>, handler)</code></pre>
+      </div>
+    </div>
+
+    <div class="callout callout-danger">
+      <p><strong>Critical gotcha:</strong> <code>process.stdout</code> goes to the terminal, NOT the renderer. The pipe is on fd&nbsp;3. This was our most confusing bug — the worker looked like it was working but the UI received nothing.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" data-slide="4">
+    <h2><span class="num">04</span> The <code>unrouted</code> Config is Mandatory</h2>
+
+    <p><code>"routes": "."</code> makes ALL files web-routable. Without <code>"unrouted"</code>, your worker JS file gets served as a web page in Chromium — showing raw source code instead of your UI.</p>
+
+    <pre><code>{
+  <span class="string">"pear"</span>: {
+    <span class="string">"routes"</span>: <span class="string">"."</span>,
+    <span class="string">"unrouted"</span>: [
+      <span class="string">"/dist/worker/index.js"</span>
+    ],
+    <span class="string">"gui"</span>: {
+      <span class="string">"width"</span>: 1224,
+      <span class="string">"height"</span>: 808,
+      <span class="string">"backgroundColor"</span>: <span class="string">"#151517"</span>
+    },
+    <span class="string">"stage"</span>: {
+      <span class="string">"entrypoints"</span>: [<span class="string">"/dist/worker/index.js"</span>, <span class="string">"/index.html"</span>, <span class="string">"/index.js"</span>],
+      <span class="string">"ignore"</span>: [<span class="string">"src"</span>, <span class="string">"worker"</span>, <span class="string">".git"</span>]
+    }
+  }
+}</code></pre>
+
+    <div class="callout callout-warn">
+      <p>Every worker file must appear in <strong>both</strong> <code>unrouted</code> (exclude from routing) and <code>stage.entrypoints</code> (include in app bundle).</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide" data-slide="5">
+    <h2><span class="num">05</span> Bare Runtime is Minimal</h2>
+
+    <p>Bare is <strong>not Node.js</strong>. It ships with almost nothing built-in.</p>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Available in Bare</h3>
+        <ul>
+          <li><code>Uint8Array</code>, <code>ArrayBuffer</code>, <code>DataView</code></li>
+          <li><code>setTimeout</code>, <code>setInterval</code></li>
+          <li><code>console.log/error/warn</code></li>
+          <li><code>JSON</code>, <code>Math</code>, <code>Date</code>, <code>Promise</code></li>
+          <li><code>bare-process</code> <em>(npm install)</em></li>
+          <li><code>bare-fs</code> <em>(npm install)</em></li>
+          <li><code>bare-path</code> <em>(npm install)</em></li>
+          <li><code>bare-crypto</code> <em>(npm install)</em></li>
+          <li><code>bare-os</code> <em>(npm install)</em></li>
+          <li><code>bare-env</code> <em>(npm install)</em></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3 style="color:var(--danger)">NOT Available in Bare</h3>
+        <ul>
+          <li><code>TextEncoder</code> / <code>TextDecoder</code></li>
+          <li><code>URL</code> / <code>URLSearchParams</code></li>
+          <li><code>fetch</code> / <code>Request</code> / <code>Response</code></li>
+          <li><code>crypto</code> (Web Crypto)</li>
+          <li><code>Buffer</code> (use <code>b4a</code> package)</li>
+          <li><code>process</code> (use <code>bare-process</code>)</li>
+          <li><code>fs</code> (use <code>bare-fs</code>)</li>
+          <li><code>path</code> (use <code>bare-path</code>)</li>
+          <li><code>btoa</code> / <code>atob</code></li>
+          <li>All <code>node:*</code> modules</li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="color:var(--muted)">Every <code>bare-*</code> module must be explicitly installed — forgetting one gives <code>MODULE_NOT_FOUND</code>.</p>
+  </div>
+
+  <!-- SLIDE 6 -->
+  <div class="slide" data-slide="6">
+    <h2><span class="num">06</span> Send <code>workerReady</code> BEFORE Slow Ops</h2>
+
+    <p>Slow operations in Pear apps can take 30 seconds to several minutes:</p>
+    <ul>
+      <li>DHT announce (<code>discovery.flushed()</code>) — <strong>30+ seconds</strong></li>
+      <li>Model download — <strong>minutes</strong> on first run</li>
+      <li>Autobase sync — <strong>variable</strong></li>
+    </ul>
+
+    <div class="cols" style="margin-top:24px">
+      <div class="col" style="border-color:var(--danger)">
+        <h3 style="color:var(--danger)">Wrong — UI times out</h3>
+        <pre><code><span class="keyword">await</span> <span class="fn">initP2P</span>()     <span class="comment">// 30+ seconds</span>
+<span class="keyword">await</span> <span class="fn">loadModel</span>()    <span class="comment">// minutes</span>
+<span class="fn">send</span>({ type: <span class="string">"workerReady"</span> })
+<span class="comment">// ← too late, UI already showed timeout</span></code></pre>
+      </div>
+      <div class="col" style="border-color:var(--success)">
+        <h3>Right — UI starts immediately</h3>
+        <pre><code><span class="fn">send</span>({ type: <span class="string">"workerReady"</span> })
+<span class="comment">// UI unblocks ↑</span>
+<span class="keyword">await</span> <span class="fn">initP2P</span>()     <span class="comment">// background</span>
+<span class="keyword">await</span> <span class="fn">loadModel</span>()    <span class="comment">// background</span>
+<span class="fn">send</span>({ type: <span class="string">"modelStatus"</span>, status: <span class="string">"ready"</span> })</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7 -->
+  <div class="slide" data-slide="7">
+    <h2><span class="num">07</span> The Entry Point Chain</h2>
+
+    <div class="diagram"><span class="dim">package.json</span> <span class="string">"pear"</span> config
+  <span class="dim">│</span>
+  <span class="dim">├──</span> <span class="label-renderer">index.js</span>              <span class="dim">← Main process: pear-electron + pear-bridge</span>
+  <span class="dim">│     └──</span> loads <span class="label-renderer">index.html</span>
+  <span class="dim">│</span>
+  <span class="dim">├──</span> <span class="label-renderer">index.html</span>            <span class="dim">← UI shell: &lt;pear-ctrl&gt; + &lt;div id="root"&gt;</span>
+  <span class="dim">│     └──</span> loads dist/src/<span class="label-renderer">live-reload.js</span>
+  <span class="dim">│           └──</span> imports <span class="label-renderer">./index</span> (React app)
+  <span class="dim">│</span>
+  <span class="dim">└──</span> <span class="label-worker">worker/index.ts</span>       <span class="dim">← Spawned by pear-run from renderer</span>
+        <span class="dim">└──</span> <span class="label-pipe">Pear.worker.pipe()</span> for communication</div>
+
+    <p>Key dependencies per layer:</p>
+    <ul>
+      <li><code>pear-electron</code> + <code>pear-bridge</code> = renderer shell</li>
+      <li><code>pear-run</code> = spawns worker from renderer</li>
+      <li><code>Pear.worker.pipe()</code> = worker communication</li>
+      <li><code>Pear.teardown()</code> = cleanup on exit</li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 8 -->
+  <div class="slide" data-slide="8">
+    <h2><span class="num">08</span> Build Tooling: SWC, Not Bundlers</h2>
+
+    <p>Pear apps use <strong>SWC</strong> for file-to-file transpilation (TS → JS). No bundling — module resolution happens at runtime.</p>
+
+    <pre><code><span class="comment"># Build both renderer and worker</span>
+bunx swc src -d dist --source-maps
+bunx swc worker -d dist --source-maps
+
+<span class="comment"># Dev mode: concurrent watch + live reload</span>
+concurrently \
+  <span class="string">"bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev"</span> \
+  <span class="string">"bunx swc worker -d dist --source-maps --watch"</span> \
+  <span class="string">"pear run -d ."</span></code></pre>
+
+    <div class="cols">
+      <div class="col">
+        <h3>.swcrc (production)</h3>
+        <ul>
+          <li>Minification with mangle</li>
+          <li>Dead code elimination</li>
+          <li>React Refresh <strong>off</strong></li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3>.swcrc.dev (development)</h3>
+        <ul>
+          <li>No minification</li>
+          <li>Source maps enabled</li>
+          <li>React Refresh <strong>on</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 9 -->
+  <div class="slide" data-slide="9">
+    <h2><span class="num">09</span> Production Patterns from the Workbench</h2>
+
+    <table>
+      <thead>
+        <tr><th>Pattern</th><th>What</th><th>Why</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Message Router</strong></td><td>Builder-pattern router with Zod</td><td>Type-safe, extensible routing</td></tr>
+        <tr><td><strong>Handler / Service</strong></td><td>Handlers route, Services hold state</td><td>Testable separation of concerns</td></tr>
+        <tr><td><strong>Factory DI</strong></td><td><code>createHandler(deps)</code></td><td>Easy mock injection for tests</td></tr>
+        <tr><td><strong>Token Batching</strong></td><td>Flush every 150ms, not per-token</td><td>Smooth streaming, no pipe flood</td></tr>
+        <tr><td><strong>Pending Requests</strong></td><td>ID-based req/res over pipe</td><td>Async semantics on unidirectional pipe</td></tr>
+        <tr><td><strong>Multi-Worker</strong></td><td>AI worker + Data worker</td><td>Isolation, independent lifecycles</td></tr>
+        <tr><td><strong>Scoped Logging</strong></td><td><code>createScopedLogger("Mod")</code></td><td>Debuggable, filterable logs</td></tr>
+        <tr><td><strong>Cleanup Chain</strong></td><td><code>Pear.teardown()</code> + SIGKILL</td><td>No zombie processes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SLIDE 10 -->
+  <div class="slide" data-slide="10">
+    <h2><span class="num">10</span> Critical Gotchas (Battle-Tested)</h2>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th>Gotcha</th><th>Severity</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Barrel imports pull P2P/AI modules into renderer → crash</td><td><span class="badge badge-critical">Critical</span></td></tr>
+        <tr><td>2</td><td>Missing <code>unrouted</code> → worker served as web page</td><td><span class="badge badge-critical">Critical</span></td></tr>
+        <tr><td>3</td><td><code>process.stdout</code> instead of <code>Pear.worker.pipe()</code></td><td><span class="badge badge-critical">Critical</span></td></tr>
+        <tr><td>4</td><td><code>TextEncoder</code> in Bare → ReferenceError</td><td><span class="badge badge-critical">Critical</span></td></tr>
+        <tr><td>5</td><td><code>bare-process</code> not in package.json</td><td><span class="badge badge-critical">Critical</span></td></tr>
+        <tr><td>6</td><td>Worker ready after slow init → UI timeout</td><td><span class="badge badge-high">High</span></td></tr>
+        <tr><td>7</td><td>P2P errors crash worker process</td><td><span class="badge badge-high">High</span></td></tr>
+        <tr><td>8</td><td>Large audio messages overflow buffer</td><td><span class="badge badge-high">Medium</span></td></tr>
+        <tr><td>9</td><td>Unsupported model config params crash SDK</td><td><span class="badge badge-high">Medium</span></td></tr>
+        <tr><td>10</td><td>External URLs blocked by CSP (<code>pear.links</code>)</td><td><span class="badge badge-high">Medium</span></td></tr>
+      </tbody>
+    </table>
+
+    <p style="color:var(--muted); margin-top:12px">Each of these was discovered the hard way during our coffee-assistant-ui build. Full details in <code>sandbox/coffee-assistant-ui/fixes/</code>.</p>
+  </div>
+
+  <!-- SLIDE 11 -->
+  <div class="slide" data-slide="11">
+    <h2><span class="num">11</span> Pear Module Essentials</h2>
+
+    <div class="cols">
+      <div class="col">
+        <h3>Every Desktop App Needs</h3>
+        <table>
+          <tbody>
+            <tr><td><code>pear-electron</code></td><td>Electron shell</td></tr>
+            <tr><td><code>pear-bridge</code></td><td>HTTP bridge for HTML</td></tr>
+            <tr><td><code>pear-run</code></td><td>Spawn workers</td></tr>
+            <tr><td><code>pear-interface</code></td><td>TS types (dev)</td></tr>
+            <tr><td><code>pear-hotmods</code></td><td>Live reload (dev)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="col">
+        <h3>Worker Dependencies</h3>
+        <table>
+          <tbody>
+            <tr><td><code>bare-process</code></td><td>Process info, argv, env</td></tr>
+            <tr><td><code>bare-fs</code></td><td>File system ops</td></tr>
+            <tr><td><code>bare-path</code></td><td>Path manipulation</td></tr>
+            <tr><td><code>bare-crypto</code></td><td>Hash, random bytes</td></tr>
+            <tr><td><code>bare-env</code></td><td>Environment variables</td></tr>
+            <tr><td><code>bare-os</code></td><td>OS info</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p>Plus: <code>pear-inspect</code> for remote debugging, <code>pear-crasher</code> for crash logs, <code>pear-updates</code> for update notifications, <code>pear-user-dirs</code> for Documents/Downloads paths.</p>
+  </div>
+
+  <!-- SLIDE 12: Checklist -->
+  <div class="slide" data-slide="12">
+    <h2><span class="num">12</span> Quick-Start Checklist</h2>
+
+    <ol>
+      <li><code>pear init --type desktop</code> (or scaffold manually)</li>
+      <li>Add <code>pear-electron</code>, <code>pear-bridge</code>, <code>pear-run</code> as dependencies</li>
+      <li>Create <code>index.js</code> — main process bootstrap</li>
+      <li>Create <code>index.html</code> — with <code>&lt;pear-ctrl&gt;</code> and <code>#root</code></li>
+      <li>Create <code>src/</code> — renderer (React) code</li>
+      <li>Create <code>worker/</code> — Bare runtime code</li>
+      <li>Configure <code>package.json</code> pear field: <code>type</code>, <code>pre</code>, <code>routes</code>, <code>unrouted</code>, <code>gui</code>, <code>stage</code></li>
+      <li>Install all <code>bare-*</code> modules needed by worker</li>
+      <li>Set up SWC configs (<code>.swcrc</code> + <code>.swcrc.dev</code>)</li>
+      <li>Build: <code>bunx swc src -d dist && bunx swc worker -d dist</code></li>
+      <li>Run: <code>pear run -d .</code></li>
+    </ol>
+
+    <div class="callout" style="margin-top:24px">
+      <p>Full research documents available in <code>research/pear-desktop-deep-dive/</code> — 8 detailed docs covering architecture, worker pattern, Bare constraints, modules, build tooling, UI patterns, gotchas, and production patterns.</p>
+    </div>
+  </div>
+
+</div>
+
+<!-- Navigation -->
+<nav class="nav">
+  <button id="prev" onclick="go(-1)" aria-label="Previous">&#8592;</button>
+  <span class="counter" id="counter">1 / 13</span>
+  <button id="next" onclick="go(1)" aria-label="Next">&#8594;</button>
+</nav>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+
+  function show(n) {
+    slides.forEach((s, i) => {
+      s.classList.remove('active', 'prev');
+      if (i === n) s.classList.add('active');
+      else if (i < n) s.classList.add('prev');
+    });
+    current = n;
+    progress.style.width = ((n / (total - 1)) * 100) + '%';
+    counter.textContent = (n + 1) + ' / ' + total;
+    prevBtn.disabled = n === 0;
+    nextBtn.disabled = n === total - 1;
+  }
+
+  function go(dir) {
+    const next = current + dir;
+    if (next >= 0 && next < total) show(next);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      go(1);
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      go(-1);
+    }
+    if (e.key === 'Home') { e.preventDefault(); show(0); }
+    if (e.key === 'End') { e.preventDefault(); show(total - 1); }
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  });
+
+  // Touch swipe
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 60) go(diff > 0 ? 1 : -1);
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>
