@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P2P Data Sync Deep Dive</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #d2a8ff;
+  --accent4: #f0883e;
+  --danger: #f85149;
+  --code-bg: #1c2129;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100vh;
+}
+
+.deck {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  padding: 60px 80px;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.slide.active {
+  display: flex;
+  opacity: 1;
+}
+
+.slide-title {
+  align-items: center;
+  text-align: center;
+}
+
+.slide-title h1 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 16px;
+}
+
+.slide-title .subtitle {
+  font-size: 1.3rem;
+  color: var(--muted);
+  max-width: 700px;
+}
+
+h2 {
+  font-size: 2rem;
+  color: var(--accent);
+  margin-bottom: 24px;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.3rem;
+  color: var(--accent3);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+p, li {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+ul, ol {
+  padding-left: 24px;
+  margin-bottom: 16px;
+}
+
+li { margin-bottom: 8px; }
+
+li strong { color: var(--accent2); }
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  margin: 12px 0;
+  max-height: 55vh;
+}
+
+code {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  background: var(--code-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+
+.highlight { color: var(--accent); font-weight: 600; }
+.highlight2 { color: var(--accent2); font-weight: 600; }
+.highlight3 { color: var(--accent3); font-weight: 600; }
+.warn { color: var(--accent4); font-weight: 600; }
+.danger { color: var(--danger); font-weight: 600; }
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+  font-size: 0.95rem;
+}
+
+th, td {
+  border: 1px solid var(--border);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+th {
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+td { color: var(--text); }
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.badge-p2p { background: #1a3a2a; color: var(--accent2); }
+.badge-hybrid { background: #2a2a1a; color: var(--accent4); }
+.badge-central { background: #3a1a1a; color: var(--danger); }
+
+.nav {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 100;
+}
+
+.nav button {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.nav button:hover {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.nav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.nav button:disabled:hover {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.counter {
+  color: var(--muted);
+  font-size: 0.9rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent3));
+  transition: width 0.35s ease;
+  z-index: 100;
+}
+
+.diagram {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--accent2);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  white-space: pre;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.spectrum {
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+}
+
+.spectrum-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent4), var(--danger));
+  margin: 0 12px;
+}
+
+.spectrum-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 800px) {
+  .slide { padding: 30px 24px; }
+  .slide-title h1 { font-size: 2rem; }
+  h2 { font-size: 1.4rem; }
+  p, li { font-size: 0.95rem; }
+  .two-col { grid-template-columns: 1fr; gap: 16px; }
+  pre { font-size: 0.75rem; padding: 10px; }
+  table { font-size: 0.8rem; }
+  th, td { padding: 6px 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 0: Title -->
+<div class="slide slide-title active" data-slide="0">
+  <h1>P2P Data Sync Deep Dive</h1>
+  <p class="subtitle">Storage strategies, sync patterns, and how to build the Unstoppable Vault</p>
+  <p style="color:var(--muted); margin-top:40px; font-size:0.95rem;">
+    Use arrow keys or buttons to navigate &middot; Press <code>F</code> for fullscreen
+  </p>
+</div>
+
+<!-- SLIDE 1: The Layer Cake -->
+<div class="slide" data-slide="1">
+  <h2>1. The Holepunch Data Stack</h2>
+  <p>Everything is built in layers, starting from the append-only log.</p>
+  <div class="diagram">                     APPLICATION LAYER
+    HyperDB (schema + indexes)   │   Hyperdrive (files + dirs)
+  ───────────────────────────────┼───────────────────────────────
+           Autobase              │        Hyperbee
+    (multi-writer linearizer)    │   (sorted B-tree on one core)
+  ───────────────────────────────┴───────────────────────────────
+                          Corestore
+         (factory + key derivation + multi-core management)
+  ───────────────────────────────────────────────────────────────
+                          Hypercore
+             (append-only log — the foundation)
+  ───────────────────────────────────────────────────────────────
+                         Hyperswarm
+             (peer discovery + encrypted connections)</div>
+  <ul>
+    <li><strong>Hypercore:</strong> Append-only log, single writer, sparse replication, merkle-verified</li>
+    <li><strong>Corestore:</strong> Manages many cores, deterministic key derivation, multiplexed replication</li>
+    <li><strong>Hyperbee:</strong> Sorted KV on one core &middot; <strong>Autobase:</strong> Merges multiple writers</li>
+    <li><strong>HyperDB:</strong> Schema + indexes, P2P or local backend &middot; <strong>Hyperdrive:</strong> P2P filesystem</li>
+  </ul>
+</div>
+
+<!-- SLIDE 2: Single vs Multi Writer -->
+<div class="slide" data-slide="2">
+  <h2>2. Single-Writer vs Multi-Writer</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3>Single Writer (Hypercore/Hyperbee)</h3>
+      <ul>
+        <li>One device holds the secret key and appends</li>
+        <li>Everyone else is a <span class="highlight">read-only replica</span></li>
+        <li>Zero conflict resolution — there's only one truth</li>
+        <li>Simple, fast, efficient</li>
+      </ul>
+      <p class="warn" style="margin-top:12px">⚠ Writer must be online for new data</p>
+    </div>
+    <div class="card">
+      <h3>Multi-Writer (Autobase)</h3>
+      <ul>
+        <li>Multiple writers, each with their own Hypercore</li>
+        <li><span class="highlight2">Causal DAG</span> linearized into deterministic order</li>
+        <li>Indexer quorum signs checkpoints (ordering locks)</li>
+        <li>Late joiners can fast-forward</li>
+      </ul>
+      <p class="highlight3" style="margin-top:12px">✦ apply() MUST be deterministic — will be replayed on reorder</p>
+    </div>
+  </div>
+  <p style="margin-top:20px; font-size:1.1rem;"><strong>Rule:</strong> Use Autobase whenever multiple users OR multiple devices write to the same data.</p>
+</div>
+
+<!-- SLIDE 3: Data vs Files -->
+<div class="slide" data-slide="3">
+  <h2>3. Structured Data vs Files</h2>
+  <table>
+    <tr><th>Need</th><th>Tool</th><th>Writer Model</th><th>Key Feature</th></tr>
+    <tr><td>Simple KV store</td><td><span class="highlight">Hyperbee</span></td><td>Single</td><td>Sorted range queries, sparse</td></tr>
+    <tr><td>Schema + indexes</td><td><span class="highlight">HyperDB</span></td><td>Single (bee) or local (rocks)</td><td>Build step, two backends</td></tr>
+    <tr><td>Multi-user collab</td><td><span class="highlight2">Autobase → Hyperbee</span></td><td>Multi</td><td>Linearized view</td></tr>
+    <tr><td>Files / blobs</td><td><span class="highlight3">Hyperdrive</span></td><td>Single</td><td>P2P filesystem, sparse download</td></tr>
+    <tr><td>Event streams</td><td>Raw Hypercore</td><td>Single</td><td>Append-only, byte seeking</td></tr>
+  </table>
+  <div class="card" style="margin-top:16px; border-color: var(--danger);">
+    <p><span class="danger">⛔ Never store large blobs in Hyperbee.</span> It bloats the B-tree.
+    Store files in Hyperdrive, metadata in Hyperbee. Link them via paths.</p>
+  </div>
+</div>
+
+<!-- SLIDE 4: The Keet Pattern -->
+<div class="slide" data-slide="4">
+  <h2>4. How Keet Solves Multi-Device</h2>
+  <p>Keet is fully P2P chat by Holepunch. Each <em>room</em> is an Autobase.</p>
+  <div class="two-col">
+    <div>
+      <h3>Multi-Device: Per-Device Writers</h3>
+      <div class="diagram">Phone (writer-phone)      Desktop (writer-desktop)
+     │                           │
+     ▼                           ▼
+  Autobase Room → Linearized View (same on both)</div>
+      <ul>
+        <li>Each device gets its own writer Hypercore</li>
+        <li>Autobase merges all devices' writes</li>
+        <li>Device linking via QR code / secure key exchange</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Identity: Key Pairs</h3>
+      <ul>
+        <li>24-word seed phrase = master key</li>
+        <li>No email, no phone, no server</li>
+        <li>Corestore derives all keys from seed</li>
+        <li>Trade-off: lose seed → lose identity</li>
+      </ul>
+      <h3 style="margin-top:20px">File Sharing</h3>
+      <ul>
+        <li>Each file gets its own Hyperdrive</li>
+        <li>Drive key embedded in chat message</li>
+        <li>Sparse: only requested files download</li>
+        <li>No file size limit</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: Availability -->
+<div class="slide" data-slide="5">
+  <h2>5. Availability: The #1 P2P Challenge</h2>
+  <p>P2P data is only available when at least one peer holding it is online.</p>
+
+  <div class="spectrum">
+    <span class="spectrum-label">Fully P2P</span>
+    <div class="spectrum-bar"></div>
+    <span class="spectrum-label">Fully Centralized</span>
+  </div>
+
+  <table>
+    <tr>
+      <th>Strategy</th><th>Availability</th><th>Privacy</th><th>Cost</th><th>Example</th>
+    </tr>
+    <tr>
+      <td><span class="badge badge-p2p">P2P</span> Pure P2P</td>
+      <td>Low — offline = gone</td><td>Maximum</td><td>Free</td><td>Keet</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-hybrid">Hybrid</span> P2P + Vault</td>
+      <td>High — always-on local peer</td><td>High (your HW)</td><td>Free (your HW)</td><td>Unstoppable Vault</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-hybrid">Hybrid</span> P2P + Cloud</td>
+      <td>Very High — hosted seeder</td><td>Trust provider</td><td>Subscription</td><td>Unstoppable Cloud</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-central">Central</span> Server</td>
+      <td>Maximum</td><td>Minimum</td><td>Ongoing</td><td>Traditional apps</td>
+    </tr>
+  </table>
+
+  <p style="margin-top:16px;">The <span class="highlight2">Vault is the sweet spot</span>: user-controlled, high availability, no trust issues. The Cloud is just a remote Vault.</p>
+</div>
+
+<!-- SLIDE 6: When Centralized -->
+<div class="slide" data-slide="6">
+  <h2>6. When P2P Isn't Enough</h2>
+  <div class="two-col">
+    <div>
+      <h3>Needs a Server</h3>
+      <ul>
+        <li><span class="warn">Global search</span> — can't search data you don't have</li>
+        <li><span class="warn">User directory</span> — finding users by name</li>
+        <li><span class="warn">Model registry</span> — QVAC catalog of AI models</li>
+        <li><span class="warn">Financial transactions</span> — global ordering</li>
+        <li><span class="warn">Push notifications</span> — can't push to offline devices</li>
+      </ul>
+    </div>
+    <div>
+      <h3>P2P Handles Fine</h3>
+      <ul>
+        <li><span class="highlight2">Data storage</span> — Hypercore/Hyperbee</li>
+        <li><span class="highlight2">File storage</span> — Hyperdrive</li>
+        <li><span class="highlight2">Multi-writer</span> — Autobase</li>
+        <li><span class="highlight2">Peer discovery</span> — Hyperswarm DHT</li>
+        <li><span class="highlight2">AI inference</span> — QVAC delegation</li>
+        <li><span class="highlight2">Identity</span> — key-based auth</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:20px">The Unstoppable Stack is <strong>~90% P2P</strong>, with strategic centralization for discovery (model registry, search) and payments (WDK).</p>
+</div>
+
+<!-- SLIDE 7: QVAC Registry Pattern -->
+<div class="slide" data-slide="7">
+  <h2>7. The QVAC Registry Pattern</h2>
+  <p>The ideal hybrid: <span class="highlight">centralized discovery</span>, <span class="highlight2">P2P data transfer</span>.</p>
+  <div class="diagram">Client                    Registry Server               Hyperdrive (P2P)
+  │                            │                              │
+  │── list all models ────────►│                              │
+  │◄── metadata (name, size,  ─│                              │
+  │    checksum, drive key)    │                              │
+  │                            │                              │
+  │── download model ─────────────────────────────────────────►│
+  │◄── model file (P2P) ──────────────────────────────────────│
+  │                            │                              │
+  │  Centralized: discovery    │     P2P: data transfer       │</div>
+  <ul>
+    <li><code>qvacModelRegistryList()</code> — queries centralized API for model metadata</li>
+    <li><code>qvacModelRegistrySearch({ filter: "whisper" })</code> — search by engine, name, type</li>
+    <li>Actual model download can be via Hyperdrive or HTTP</li>
+  </ul>
+  <p style="margin-top:12px"><strong>Pattern:</strong> The server helps you <em>find</em> things. Actual data is peer-to-peer.</p>
+</div>
+
+<!-- SLIDE 8: Vault Architecture -->
+<div class="slide" data-slide="8">
+  <h2>8. Vault: Protocol-Level Replication</h2>
+  <p>The Vault replicates <span class="highlight">Hypercores</span>, not app data. It doesn't need to understand your data model.</p>
+  <div class="two-col">
+    <div>
+      <h3>Three Replication Modes</h3>
+      <table style="font-size: 0.9rem">
+        <tr><th>App Data</th><th>Vault Action</th></tr>
+        <tr><td>Hyperbee/Hypercore</td><td><code>store.get({ key })</code> + full download</td></tr>
+        <tr><td>Autobase</td><td>Replicate all writer cores via Corestore</td></tr>
+        <tr><td>Hyperdrive</td><td>Replicate + mirror to local FS</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Design Principles</h3>
+      <ul>
+        <li><strong>Read-only</strong> — never writes to app data</li>
+        <li><strong>Corestore-per-app</strong> — isolation between apps</li>
+        <li><strong>Full download</strong> — backup, not sparse cache</li>
+        <li><strong>Just a peer</strong> — apps don't know it's a Vault</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:16px">Compatible with <strong>any app</strong> because it works at the Corestore/replication level.</p>
+</div>
+
+<!-- SLIDE 9: Vault Storage Layout -->
+<div class="slide" data-slide="9">
+  <h2>9. Vault Storage & Registration</h2>
+  <div class="two-col">
+    <div>
+      <h3>Storage Layout</h3>
+      <div class="diagram">~/.unstoppable-vault/
+├── vault-store/        # Vault's own cores
+├── apps/
+│   ├── coffee-app/     # Corestore per app
+│   ├── notes-app/      # Isolated storage
+│   └── ...
+├── drives/
+│   ├── coffee-app/
+│   │   └── files/      # Mirrored drive
+│   └── ...
+└── config/
+    ├── registry.json
+    └── settings.json</div>
+    </div>
+    <div>
+      <h3>Registration Protocol</h3>
+      <pre style="font-size:0.8rem">// App → Vault
+{
+  type: 'register',
+  appId: 'coffee-assistant',
+  appName: 'Coffee Assistant',
+  data: [{
+    key: 'abc123...',
+    kind: 'hyperbee',
+    name: 'orders'
+  }],
+  drives: [{
+    key: 'def456...',
+    name: 'attachments',
+    syncMode: 'full'
+  }],
+  requestAI: true
+}</pre>
+      <p>All apps join <code>unstoppable:vault:discover:v1</code> topic. Vault acks with capabilities.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: Multi-Vault Sync -->
+<div class="slide" data-slide="10">
+  <h2>10. Multi-Vault & Cloud Transition</h2>
+  <div class="diagram">  Laptop Vault                           Desktop Vault
+  ┌──────────────────┐                   ┌──────────────────┐
+  │ • Coffee App     │◄────────────────►│ • Coffee App     │
+  │ • Notes App      │   Autobase       │ • Finance App    │
+  │                  │   registry sync  │                  │
+  │ After sync:      │                  │ After sync:      │
+  │ ALL apps ────────│──────────────────│───── ALL apps    │
+  └──────────────────┘                   └──────────────────┘</div>
+  <div class="two-col">
+    <div>
+      <h3>Vault-to-Vault Sync</h3>
+      <ul>
+        <li>Registry is an Autobase (both can write)</li>
+        <li>User-specific discovery topic from master key</li>
+        <li>Each Vault replicates cores/drives it doesn't have</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Vault → Cloud (Same Protocol)</h3>
+      <ul>
+        <li>Cloud is a Vault hosted by Tether</li>
+        <li>Same replication protocol, same registration</li>
+        <li>Apps point to different topic + key, that's it</li>
+        <li>Adds: powerful GPUs, 24/7 uptime, subscription</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: Build Order -->
+<div class="slide" data-slide="11">
+  <h2>11. Recommended Build Order</h2>
+  <table>
+    <tr><th>Phase</th><th>Scope</th><th>Effort</th><th>Validates</th></tr>
+    <tr>
+      <td><span class="highlight2">Phase 1</span></td>
+      <td>Manual registration + single-writer replication + dashboard</td>
+      <td>1-2 weeks</td>
+      <td>Corestore, Hypercore, Hyperbee</td>
+    </tr>
+    <tr>
+      <td><span class="highlight2">Phase 2</span></td>
+      <td>Hyperdrive replication + auto-discovery + SDK</td>
+      <td>1-2 weeks</td>
+      <td>Hyperdrive, Localdrive, Mirror</td>
+    </tr>
+    <tr>
+      <td><span class="highlight">Phase 3</span></td>
+      <td>Autobase support + QVAC delegation + data browser</td>
+      <td>2 weeks</td>
+      <td>Autobase, QVAC, multi-writer</td>
+    </tr>
+    <tr>
+      <td><span class="highlight3">Phase 4</span></td>
+      <td>Vault-to-Vault sync + export/import</td>
+      <td>1-2 weeks</td>
+      <td>Multi-device, recovery</td>
+    </tr>
+    <tr>
+      <td><span class="warn">Phase 5</span></td>
+      <td>Cloud (separate project, same protocol)</td>
+      <td>TBD</td>
+      <td>Hosted availability</td>
+    </tr>
+  </table>
+  <p style="margin-top:16px"><strong>Phase 1-2 is the MVP.</strong> It validates Corestore, Hyperdrive, and standalone Hypercore replication — three of the biggest agent pack gaps.</p>
+</div>
+
+<!-- SLIDE 12: Decision Tree -->
+<div class="slide" data-slide="12">
+  <h2>12. Quick Decision Tree</h2>
+  <div class="diagram">  Do I need multi-writer?
+  ├── Yes → Autobase + Hyperbee view
+  └── No
+      ├── Structured data → Hyperbee (simple) or HyperDB (schema)
+      ├── Files → Hyperdrive
+      └── Event stream → Raw Hypercore
+
+  Do I need always-on availability?
+  ├── Yes → Add Vault seeder (or Cloud)
+  └── No → Pure P2P is fine
+
+  Do I need global search / discovery?
+  ├── Yes → Add centralized index (like QVAC registry)
+  └── No → Hyperswarm DHT is enough
+
+  Do I need multi-device write?
+  ├── Yes → Per-device writer cores + Autobase (Keet pattern)
+  └── No → Single Hypercore is fine</div>
+  <p style="margin-top:16px">The Vault is compatible with <strong>all</strong> these patterns because it operates at the replication layer, not the data model layer.</p>
+</div>
+
+<!-- SLIDE 13: End -->
+<div class="slide slide-title" data-slide="13">
+  <h1>Key Takeaway</h1>
+  <p class="subtitle" style="max-width:800px">The Unstoppable Vault is <em>just another peer with good uptime</em>.<br>
+  It replicates at the Corestore level, so it's compatible with any app.<br>
+  The Cloud is the same thing, hosted remotely. Apps don't need to change.</p>
+  <p style="color:var(--muted); margin-top:40px; font-size:0.95rem;">
+    Full research: <code>research/p2p-data-sync/</code>
+  </p>
+</div>
+
+</div>
+
+<nav class="nav">
+  <button id="prev" onclick="go(-1)" aria-label="Previous">&#8592;</button>
+  <span class="counter" id="counter">1 / 14</span>
+  <button id="next" onclick="go(1)" aria-label="Next">&#8594;</button>
+</nav>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const progress = document.getElementById('progress');
+const counter = document.getElementById('counter');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+
+function show(n) {
+  if (n < 0 || n >= total) return;
+  slides[current].classList.remove('active');
+  current = n;
+  slides[current].classList.add('active');
+  progress.style.width = ((current / (total - 1)) * 100) + '%';
+  counter.textContent = (current + 1) + ' / ' + total;
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === total - 1;
+}
+
+function go(dir) {
+  show(current + dir);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+  else if (e.key === 'Home') { e.preventDefault(); show(0); }
+  else if (e.key === 'End') { e.preventDefault(); show(total - 1); }
+  else if (e.key === 'f' || e.key === 'F') {
+    e.preventDefault();
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+let touchStartX = 0;
+document.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
+document.addEventListener('touchend', (e) => {
+  const dx = e.changedTouches[0].screenX - touchStartX;
+  if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+});
+
+show(0);
+</script>
+</body>
+</html>
