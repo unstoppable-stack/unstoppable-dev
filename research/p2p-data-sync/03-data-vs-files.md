@@ -218,6 +218,18 @@ await db.put('photo:001', { name: 'beach.jpg', path: '/photos/beach.jpg' })
 
 The block size limit for Hypercore is 15 MB (`Hypercore.MAX_SUGGESTED_BLOCK_SIZE`). Anything larger must be split.
 
+### What About Hyperblobs?
+
+You might wonder: "Can I use Hyperblobs directly instead of Hyperdrive?"
+
+**Hyperblobs** is a raw blob store on a single Hypercore. It chunks data by block size and returns a blob ID (byte/block offsets). But it has no indexing — you must track IDs yourself.
+
+**Hyperdrive = Hyperbee (file index) + Hyperblobs (file content).** The Hyperbee maps file paths to blob IDs, and Hyperblobs stores the actual bytes. So when you use Hyperdrive, you're already using Hyperblobs under the hood.
+
+Use Hyperdrive for file storage. Use Hyperblobs directly only if you're building a custom storage layer and don't need filesystem semantics.
+
+See [07-hyperblobs-and-storage-comparison.md](./07-hyperblobs-and-storage-comparison.md) for the full comparison including the QVAC registry pattern.
+
 ---
 
 ## Decision Matrix

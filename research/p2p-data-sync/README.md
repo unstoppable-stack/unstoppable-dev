@@ -12,6 +12,7 @@ Research into building P2P applications with data synchronization across devices
 | [04-when-centralized.md](./04-when-centralized.md) | Cases where P2P alone isn't enough — registry servers, always-on seeding, the QVAC model registry pattern |
 | [05-keet-architecture.md](./05-keet-architecture.md) | How Keet handles fully P2P chat, multi-device sync, and availability |
 | [06-vault-architecture.md](./06-vault-architecture.md) | Recommended architecture for the Unstoppable Vault based on all findings |
+| [07-hyperblobs-and-storage-comparison.md](./07-hyperblobs-and-storage-comparison.md) | Hyperblobs explained, Hyperbee vs HyperDB decision guide, the QVAC registry storage pattern |
 | [PRESENTATION.md](./PRESENTATION.md) | Markdown summary of key findings |
 
 ## Sources

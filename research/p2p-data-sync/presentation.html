@@ -366,9 +366,78 @@ td { color: var(--text); }
   </div>
 </div>
 
-<!-- SLIDE 4: The Keet Pattern -->
+<!-- SLIDE 4: Hyperblobs & Hyperdrive Internals -->
 <div class="slide" data-slide="4">
-  <h2>4. How Keet Solves Multi-Device</h2>
+  <h2>4. Hyperblobs: The Hidden Layer</h2>
+  <p><span class="highlight3">Hyperblobs</span> is a raw blob store on a Hypercore. You almost never use it directly &mdash; but it powers Hyperdrive.</p>
+  <div class="two-col">
+    <div>
+      <h3>What Hyperblobs Does</h3>
+      <ul>
+        <li>Stores binary data chunked by block size (64 KB default)</li>
+        <li>Returns a blob ID: <code>{ byteOffset, blockOffset, blockLength, byteLength }</code></li>
+        <li>Streaming read/write for large blobs</li>
+        <li><span class="danger">No indexing</span> &mdash; you must track IDs yourself</li>
+      </ul>
+      <h3 style="margin-top:16px">Hyperdrive = Hyperbee + Hyperblobs</h3>
+      <div class="diagram">Hyperdrive internals:
+├── db (Hyperbee)       ← path → blob ID + metadata
+└── blobs (Hyperblobs)  ← blob ID → file bytes</div>
+    </div>
+    <div>
+      <h3>The QVAC Registry Pattern</h3>
+      <div class="diagram">QVAC Model Registry
+├── Hyperbee (index)
+│   └── name, size, checksum
+│   └── hyperbeeKey (lookup)
+│   └── hyperdriveKey (drive)
+│
+└── Hyperdrive (storage)
+    └── model.gguf files
+    └── pear://driveKey/file.gguf</div>
+      <p style="margin-top:8px; font-size:0.95rem">Metadata in <span class="highlight">Hyperbee</span>, files in <span class="highlight2">Hyperdrive</span> (via Hyperblobs). This is the recommended pattern.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: Hyperbee vs HyperDB -->
+<div class="slide" data-slide="5">
+  <h2>5. Hyperbee vs HyperDB: Which to Use?</h2>
+  <table>
+    <tr><th>Feature</th><th>Hyperbee</th><th>HyperDB (bee)</th><th>HyperDB (rocks)</th></tr>
+    <tr><td>Build step</td><td><span class="highlight2">None</span></td><td>Required</td><td>Required</td></tr>
+    <tr><td>Schema validation</td><td>Manual</td><td><span class="highlight2">Automatic</span></td><td><span class="highlight2">Automatic</span></td></tr>
+    <tr><td>Secondary indexes</td><td>Manual (sub-dbs)</td><td><span class="highlight2">Built-in</span></td><td><span class="highlight2">Built-in</span></td></tr>
+    <tr><td>P2P replication</td><td><span class="highlight2">Yes</span></td><td><span class="highlight2">Yes</span></td><td><span class="danger">No</span></td></tr>
+    <tr><td>Multi-writer</td><td>Via Autobase</td><td>Via Autobase</td><td>N/A</td></tr>
+    <tr><td>Battle-tested</td><td><span class="highlight2">Heavily</span> (Keet, QVAC, Hyperdrive)</td><td>Less so</td><td>Less so</td></tr>
+    <tr><td>Best for</td><td>KV, state, registries</td><td>App databases</td><td>Local caches</td></tr>
+  </table>
+  <div class="two-col" style="margin-top:16px">
+    <div class="card">
+      <h3>Use Hyperbee (default)</h3>
+      <ul>
+        <li>Simple settings / state storage</li>
+        <li>Chat (Autobase + Hyperbee view)</li>
+        <li>Metadata indexes (QVAC registry)</li>
+        <li>When zero build step matters</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Graduate to HyperDB when</h3>
+      <ul>
+        <li>3+ collections that cross-reference</li>
+        <li>Need "find X where Y = Z" queries</li>
+        <li>Need same code for P2P &amp; local</li>
+        <li>Building a data-heavy app (CRM, inventory)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: The Keet Pattern -->
+<div class="slide" data-slide="6">
+  <h2>6. How Keet Solves Multi-Device</h2>
   <p>Keet is fully P2P chat by Holepunch. Each <em>room</em> is an Autobase.</p>
   <div class="two-col">
     <div>
@@ -402,9 +471,9 @@ td { color: var(--text); }
   </div>
 </div>
 
-<!-- SLIDE 5: Availability -->
-<div class="slide" data-slide="5">
-  <h2>5. Availability: The #1 P2P Challenge</h2>
+<!-- SLIDE 7: Availability -->
+<div class="slide" data-slide="7">
+  <h2>7. Availability: The #1 P2P Challenge</h2>
   <p>P2P data is only available when at least one peer holding it is online.</p>
 
   <div class="spectrum">
@@ -438,9 +507,9 @@ td { color: var(--text); }
   <p style="margin-top:16px;">The <span class="highlight2">Vault is the sweet spot</span>: user-controlled, high availability, no trust issues. The Cloud is just a remote Vault.</p>
 </div>
 
-<!-- SLIDE 6: When Centralized -->
-<div class="slide" data-slide="6">
-  <h2>6. When P2P Isn't Enough</h2>
+<!-- SLIDE 8: When Centralized -->
+<div class="slide" data-slide="8">
+  <h2>8. When P2P Isn't Enough</h2>
   <div class="two-col">
     <div>
       <h3>Needs a Server</h3>
@@ -467,9 +536,9 @@ td { color: var(--text); }
   <p style="margin-top:20px">The Unstoppable Stack is <strong>~90% P2P</strong>, with strategic centralization for discovery (model registry, search) and payments (WDK).</p>
 </div>
 
-<!-- SLIDE 7: QVAC Registry Pattern -->
-<div class="slide" data-slide="7">
-  <h2>7. The QVAC Registry Pattern</h2>
+<!-- SLIDE 9: QVAC Registry Pattern -->
+<div class="slide" data-slide="9">
+  <h2>9. The QVAC Registry Pattern</h2>
   <p>The ideal hybrid: <span class="highlight">centralized discovery</span>, <span class="highlight2">P2P data transfer</span>.</p>
   <div class="diagram">Client                    Registry Server               Hyperdrive (P2P)
   │                            │                              │
@@ -489,9 +558,9 @@ td { color: var(--text); }
   <p style="margin-top:12px"><strong>Pattern:</strong> The server helps you <em>find</em> things. Actual data is peer-to-peer.</p>
 </div>
 
-<!-- SLIDE 8: Vault Architecture -->
-<div class="slide" data-slide="8">
-  <h2>8. Vault: Protocol-Level Replication</h2>
+<!-- SLIDE 10: Vault Architecture -->
+<div class="slide" data-slide="10">
+  <h2>10. Vault: Protocol-Level Replication</h2>
   <p>The Vault replicates <span class="highlight">Hypercores</span>, not app data. It doesn't need to understand your data model.</p>
   <div class="two-col">
     <div>
@@ -516,9 +585,9 @@ td { color: var(--text); }
   <p style="margin-top:16px">Compatible with <strong>any app</strong> because it works at the Corestore/replication level.</p>
 </div>
 
-<!-- SLIDE 9: Vault Storage Layout -->
-<div class="slide" data-slide="9">
-  <h2>9. Vault Storage & Registration</h2>
+<!-- SLIDE 11: Vault Storage Layout -->
+<div class="slide" data-slide="11">
+  <h2>11. Vault Storage & Registration</h2>
   <div class="two-col">
     <div>
       <h3>Storage Layout</h3>
@@ -560,9 +629,9 @@ td { color: var(--text); }
   </div>
 </div>
 
-<!-- SLIDE 10: Multi-Vault Sync -->
-<div class="slide" data-slide="10">
-  <h2>10. Multi-Vault & Cloud Transition</h2>
+<!-- SLIDE 12: Multi-Vault Sync -->
+<div class="slide" data-slide="12">
+  <h2>12. Multi-Vault & Cloud Transition</h2>
   <div class="diagram">  Laptop Vault                           Desktop Vault
   ┌──────────────────┐                   ┌──────────────────┐
   │ • Coffee App     │◄────────────────►│ • Coffee App     │
@@ -592,9 +661,9 @@ td { color: var(--text); }
   </div>
 </div>
 
-<!-- SLIDE 11: Build Order -->
-<div class="slide" data-slide="11">
-  <h2>11. Recommended Build Order</h2>
+<!-- SLIDE 13: Build Order -->
+<div class="slide" data-slide="13">
+  <h2>13. Recommended Build Order</h2>
   <table>
     <tr><th>Phase</th><th>Scope</th><th>Effort</th><th>Validates</th></tr>
     <tr>
@@ -631,9 +700,9 @@ td { color: var(--text); }
   <p style="margin-top:16px"><strong>Phase 1-2 is the MVP.</strong> It validates Corestore, Hyperdrive, and standalone Hypercore replication — three of the biggest agent pack gaps.</p>
 </div>
 
-<!-- SLIDE 12: Decision Tree -->
-<div class="slide" data-slide="12">
-  <h2>12. Quick Decision Tree</h2>
+<!-- SLIDE 14: Decision Tree -->
+<div class="slide" data-slide="14">
+  <h2>14. Quick Decision Tree</h2>
   <div class="diagram">  Do I need multi-writer?
   ├── Yes → Autobase + Hyperbee view
   └── No
@@ -655,8 +724,8 @@ td { color: var(--text); }
   <p style="margin-top:16px">The Vault is compatible with <strong>all</strong> these patterns because it operates at the replication layer, not the data model layer.</p>
 </div>
 
-<!-- SLIDE 13: End -->
-<div class="slide slide-title" data-slide="13">
+<!-- SLIDE 15: End -->
+<div class="slide slide-title" data-slide="15">
   <h1>Key Takeaway</h1>
   <p class="subtitle" style="max-width:800px">The Unstoppable Vault is <em>just another peer with good uptime</em>.<br>
   It replicates at the Corestore level, so it's compatible with any app.<br>
@@ -670,7 +739,7 @@ td { color: var(--text); }
 
 <nav class="nav">
   <button id="prev" onclick="go(-1)" aria-label="Previous">&#8592;</button>
-  <span class="counter" id="counter">1 / 14</span>
+  <span class="counter" id="counter">1 / 16</span>
   <button id="next" onclick="go(1)" aria-label="Next">&#8594;</button>
 </nav>
 

@@ -277,6 +277,43 @@ const alice = await db.get('@myapp/members', { name: 'Alice' })
 
 ---
 
+## Hyperblobs — Raw Blob Store
+
+**What:** A blob store on a single Hypercore. Chunks binary data by configurable block size (default 64 KB) and returns a blob ID (byte/block offsets).
+
+**Usage:**
+```js
+const Hyperblobs = require('hyperblobs')
+const blobs = new Hyperblobs(core)
+
+const id = await blobs.put(Buffer.from('hello world'))
+// id = { byteOffset: 0, blockOffset: 0, blockLength: 1, byteLength: 11 }
+
+const data = await blobs.get(id) // => Buffer.from('hello world')
+
+// Streaming for large blobs
+const ws = blobs.createWriteStream()
+largeFileStream.pipe(ws)
+// After finish: ws.id contains the blob ID
+```
+
+**Key properties:**
+- Stores blobs in a single Hypercore, chunked by `blockSize`.
+- Each blob is identified by its offset bounds — you must track these IDs yourself.
+- Supports partial reads and streaming.
+- No indexing, no key-value, no paths — just a chunk store.
+
+**When to use directly:** Almost never. Hyperdrive wraps Hyperblobs with a Hyperbee index, giving you filesystem semantics. Use Hyperdrive for files. Use Hyperblobs directly only if building a custom storage layer.
+
+**Relationship to Hyperdrive:**
+```
+Hyperdrive internals:
+├── db (Hyperbee)       ← path → { blob: blobId, metadata }
+└── blobs (Hyperblobs)  ← blobId → actual file bytes
+```
+
+---
+
 ## Hyperdrive — P2P File System
 
 **What:** A distributed file system. Files are stored as blobs in Hyperblobs (backed by Hypercore), indexed by a Hyperbee (file tree).
