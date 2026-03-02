@@ -23,7 +23,7 @@ Run one command. Open your AI editor. Describe what you want. Get a working app.
 npx create-unstoppable-app
 ```
 
-Your AI assistant (Claude, Cursor, or OpenCode) gets pre-loaded with battle-tested knowledge about the entire stack — so it actually builds things that work.
+Your AI assistant (Claude, Cursor, OpenCode, or Codex) gets pre-loaded with battle-tested knowledge about the entire stack — so it actually builds things that work.
 
 ## Why?
 
@@ -58,8 +58,6 @@ npx create-unstoppable-app
 # Follow the prompts
 ? Project name: my-app
 ? AI assistant: Cursor
-? Template: Blank Project
-
 # Open in your editor and start building
 cd my-app
 ```
@@ -110,6 +108,7 @@ The same knowledge base generates configs for:
 | **Claude Code** | `.claude/` directory with rules, skills, and hooks |
 | **Cursor** | `.cursor/rules/*.mdc` with description-triggered and glob-scoped rules |
 | **OpenCode** | `opencode.json` with skills and specialized agents |
+| **Codex** | `AGENTS.md` + `.codex/` with skills and config |
 
 ## Repository Structure
 
@@ -119,19 +118,19 @@ unstoppable-stack/
 │   ├── cli/              # create-unstoppable-app — scaffolds projects
 │   ├── agent-pack/       # AI knowledge base (source of truth)
 │   ├── website/          # unstoppable.dev — Next.js site
-│   └── templates/        # Project scaffolds (blank, p2p-sync, qvac-ai)
+│   └── templates/        # Project scaffolds (starter)
 ├── reference-apps/       # Upstream apps as git submodules (ground truth)
 │   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
 │   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
 │   └── qvac-health/             # Mobile health app with local AI
-├── research/             # Local research material (not tracked)
+├── research/             # Deep dives and SDK docs (pear-desktop, p2p-data-sync, qvac)
 ├── sandbox/              # CLI test builds with feedback (gitignored)
 └── planning/             # Roadmap, status, features, presentations
     ├── vision/           # Strategy and product direction
     ├── roadmap/          # Coverage tracking (54 items)
     ├── features/         # Deep planning per feature
     ├── status/           # Sprint-level tracking
-    └── presentation/     # Pitch deck and materials
+    └── presentations/    # Pitch decks grouped by date+name
 ```
 
 ## Development
