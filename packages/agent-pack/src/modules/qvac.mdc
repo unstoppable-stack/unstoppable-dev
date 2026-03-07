@@ -13,16 +13,37 @@ models, runs inference, streams tokens, and manages model lifecycle.
 
 ## Version Notes
 
-- Verified in local sources: `@qvac/sdk@0.6.0` (tarball in
-  `research/.tmp-qvac-sdk/package`).
-- Docs mention Node/Bare/Expo minimums; confirm with current QVAC docs before
-  publishing.
+- Latest npm: `@qvac/sdk@0.7.0` (verified 2026-03-06).
+- Reference apps (workbench, qvac-health) currently on `^0.6.1`.
+- SDK uses file-based configuration since 0.5.0 (see Configuration section).
 
 ## Installation
 
 ```bash
 npm install @qvac/sdk
 ```
+
+## Configuration
+
+Since SDK 0.5.0, QVAC uses file-based configuration instead of `setConfig()`.
+Create a config file in your project root:
+
+```json
+// qvac.config.json
+{
+  "cacheDirectory": "/custom/cache/path",
+  "swarmRelays": ["relay-key-1", "relay-key-2"]
+}
+```
+
+Config resolution order:
+1. `QVAC_CONFIG_PATH` environment variable (explicit path)
+2. Project root auto-discovery (`qvac.config.{ts,js,json}`)
+3. SDK defaults
+
+Supported formats: `.json`, `.js` (`export default`), `.ts` (typed `QvacConfig`).
+
+> **Migration**: Remove all `setConfig()` calls — they no longer exist.
 
 ## Quick Start
 
@@ -69,23 +90,25 @@ await unloadModel({ modelId });
 | Tool calling / function calling | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` or `QWEN_3_1_7B_INST_Q4` | Tool-calling tuned model or strong structured output. |
 | General chat (small)            | `LLAMA_3_2_1B_INST_Q4_0`                                       | Small footprint, fast startup.                        |
 | General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
-| Code generation                 | _No explicit `CODER_\*` constants in 0.6.0\_                   | Use Qwen instruct models or check newer SDKs.         |
+| Code generation                 | _No explicit `CODER_\*` constants in 0.7.0\_                   | Use Qwen instruct models or check newer SDKs.         |
+| Highest quality (desktop)       | `GPT_OSS_20B_INST_Q4_K_M`                                      | ~12GB, desktop only. Non-standard tool call format.   |
 | Mobile/small footprint          | `QWEN3_0_6B_INST` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
 | Multimodal (vision/video)       | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
 | Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
 | Speech-to-text                  | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
 | Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | NMT models for specific language pairs.               |
 
-Verified model constants exported by `@qvac/sdk@0.6.0` (subset):
+Verified model constants exported by `@qvac/sdk@0.7.0` (subset):
 `LLAMA_3_2_1B_INST_Q4_0`, `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`,
 `QWEN3_0_6B_INST`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
+`QWEN_3_8B_INST_Q4_K_M`, `GPT_OSS_20B_INST_Q4_K_M`,
 `SALAMANDRATA_2B_INST_Q8`, `SMOLVLM2_2_500M_MULTIMODAL_Q8_0`,
 `MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0`, `GTE_LARGE_FP16`,
 `EMBEDDINGGEMMA_300M_Q4_0`, `WHISPER_LARGE_V3_TURBO`, `WHISPER_TINY`,
 `VAD_SILERO_5_1_2`, `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`.
 
 > **Note**: If a model constant is not listed here, treat it as unverified for
-> 0.6.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
+> 0.7.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
 
 ## Context Window Limits
 

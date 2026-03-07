@@ -12,7 +12,7 @@ device.
 
 ## Prerequisites
 
-- QVAC SDK installed (`@qvac/sdk` or `@tetherto/sdk-dev`).
+- QVAC SDK installed (`@qvac/sdk`).
 - Hyperswarm networking available (default in QVAC).
 - A shared topic and provider public key.
 
@@ -117,10 +117,10 @@ await unloadModel({ modelId });
 Set `QVAC_HYPERSWARM_SEED` on provider/consumer to pin public keys for
 firewalling.
 
-### Variation 2: SDK-dev delegation options
+### Variation 2: Delegation options
 
-Some builds support delegation options like timeouts or fallback-to-local.
-Verify your SDK build before using them.
+Some SDK versions support delegation options like timeouts or fallback-to-local.
+Verify your SDK version before using them.
 
 ## Troubleshooting
 

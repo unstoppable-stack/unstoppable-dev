@@ -1,6 +1,6 @@
 # QVAC Model Selection Guide
 
-## Verified Model Constants (`@qvac/sdk@0.6.0`)
+## Verified Model Constants (`@qvac/sdk@0.7.0`)
 
 These are the **exact import names** from `@qvac/sdk`. Only use constants listed here.
 
@@ -14,6 +14,7 @@ These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 | `LLAMA_3_2_1B_INST_Q4_0` | Llama 3.2 | ~1GB | General chat, fast startup |
 | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` | Llama 3.2 | ~1GB | Tool calling (tuned, but less reliable than Qwen 3B+) |
 | `SALAMANDRATA_2B_INST_Q8` | Salamandra | ~2GB | Higher quality chat |
+| `GPT_OSS_20B_INST_Q4_K_M` | GPT-OSS | ~12GB | Highest quality, desktop only (large) |
 
 ### Non-LLM Models
 
@@ -39,6 +40,7 @@ import {
   LLAMA_3_2_1B_INST_Q4_0,
   LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K,
   SALAMANDRATA_2B_INST_Q8,
+  GPT_OSS_20B_INST_Q4_K_M,
 } from '@qvac/sdk'
 ```
 
@@ -47,12 +49,14 @@ import {
 - **Tool calling needed?** → `QWEN_3_1_7B_INST_Q4` (best) or `QWEN_3_4B_INST_Q4_K_M` (lighter)
 - **Mobile app?** → `QWEN3_0_6B_INST` (tiny) or `LLAMA_3_2_1B_INST_Q4_0` (small)
 - **Desktop general chat?** → `SALAMANDRATA_2B_INST_Q8` (quality) or `LLAMA_3_2_1B_INST_Q4_0` (fast)
-- **Quality matters most?** → `QWEN_3_1_7B_INST_Q4`
+- **Quality matters most?** → `GPT_OSS_20B_INST_Q4_K_M` (desktop) or `QWEN_3_1_7B_INST_Q4` (balanced)
 - **Minimum viable tool calling?** → `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` (but 3B+ is more reliable)
 
 ## Important Notes
 
-> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.6.0`. The SDK exports Qwen 3 family models instead.
+> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.7.0`. The SDK exports Qwen 3 family models instead.
+
+> **GPT-OSS note**: GPT-OSS-20B emits tool calls in a non-standard format (`<|channel|>commentary to=functions.<name>`). The workbench handles this with a model-specific fallback parser. If using GPT-OSS with tool calling, implement a fallback parser for its format.
 
 > **Tool calling reliability by size**: 1B models are unreliable for tool calling. Use 3B+ minimum, 7B recommended. Each additional tool increases grammar complexity and reduces reliability on smaller models.
 
