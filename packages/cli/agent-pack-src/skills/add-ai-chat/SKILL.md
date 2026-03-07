@@ -14,7 +14,7 @@ description: Add local AI inference using QVAC SDK with streaming chat,
 - User needs offline AI capabilities without cloud APIs
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.6.0`) and `zod` (`^4.0.0`) installed
+- `@qvac/sdk` (`^0.7.0`) and `zod` (`^4.0.0`) installed
 - Supported runtime: Node.js, Bare, or physical device for Expo
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
@@ -39,7 +39,7 @@ Your project includes battle-tested components in `src/ai/`:
    ```
    > **IMPORTANT**: Install Zod v4 (not v3) — `@qvac/sdk` depends on Zod v4 internally.
 
-2. **Choose the right model** (verified constants from `@qvac/sdk@0.6.0`):
+2. **Choose the right model** (verified constants from `@qvac/sdk@0.7.0`):
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
@@ -50,7 +50,7 @@ Your project includes battle-tested components in `src/ai/`:
    | General chat (quality) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
    | Mobile (tiny) | `QWEN3_0_6B_INST` | ~0.5GB |
 
-   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.6.0`. The SDK exports Qwen 3 models.
+   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.7.0`. The SDK exports Qwen 3 models.
 
 3. **Use the included components**:
    ```ts

@@ -6,5 +6,4 @@
 
 
 # Sandbox test apps (agent-accessible but not committed)
-sandbox/*
 !sandbox/README.md

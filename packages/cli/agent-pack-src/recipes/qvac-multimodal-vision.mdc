@@ -98,7 +98,7 @@ Add multiple `attachments` entries to the same message to compare images.
 
 ### Variation 2: Projection API differences
 
-Older builds used `mmprojId`. In 0.6.0 use `projectionModelSrc`.
+Older builds used `mmprojId`. In 0.5.0+ use `projectionModelSrc`.
 
 ## Troubleshooting
 

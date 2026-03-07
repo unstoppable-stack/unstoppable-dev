@@ -11,7 +11,7 @@ these versions** when generating `package.json` files — do not guess or use
 `latest`. If a package isn't listed here, run `npm view <package> versions --json | tail -5`
 to get the actual latest version before writing `package.json`.
 
-Last verified: 2026-02-10
+Last verified: 2026-03-06
 
 ---
 
@@ -20,7 +20,7 @@ Last verified: 2026-02-10
 | Package | Version | Purpose |
 |---------|---------|---------|
 | `pear-electron` | `^1.7.0` | Desktop window runtime (creates Chromium window) |
-| `pear-bridge` | `^1.2.4` | Loads `index.html` inside the Pear window |
+| `pear-bridge` | `^1.2.5` | Loads `index.html` inside the Pear window |
 | `pear-run` | `^1.0.7` | Spawns Bare worker processes from the renderer |
 | `pear-hotmods` | `^1.0.0` | Dev only — live reload for `pear-electron` UI apps |
 | `pear-interface` | `^1.0.0` | Dev only — TypeScript stubs for Pear globals |
@@ -29,15 +29,15 @@ Last verified: 2026-02-10
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `hyperswarm` | `^4.16.0` | Peer discovery via DHT topics |
-| `hypercore` | `^11.24.0` | Append-only log (foundation) |
+| `hyperswarm` | `^4.17.0` | Peer discovery via DHT topics |
+| `hypercore` | `^11.27.0` | Append-only log (foundation) |
 | `hyperbee` | `^2.27.3` | Key-value store on Hypercore |
 | `corestore` | `^7.8.0` | Multi-Hypercore storage manager |
 | `protomux` | `^3.10.1` | Protocol multiplexing over streams |
-| `compact-encoding` | `^2.18.0` | Binary encoding for Protomux messages |
+| `compact-encoding` | `^2.19.0` | Binary encoding for Protomux messages |
 | `@hyperswarm/secret-stream` | `^6.9.1` | Encrypted stream wrapper |
-| `b4a` | `^1.7.3` | Buffer/Uint8Array compatibility |
-| `hyperdht` | `^6.29.0` | DHT node (transitive via hyperswarm; needed directly for local bootstrap in dev) |
+| `b4a` | `^1.8.0` | Buffer/Uint8Array compatibility |
+| `hyperdht` | `^6.29.1` | DHT node (transitive via hyperswarm; needed directly for local bootstrap in dev) |
 | `bare-rpc` | `^1.1.0` | RPC over duplex streams |
 
 ## Bare Runtime Modules
@@ -48,23 +48,23 @@ installing it, you'll get `MODULE_NOT_FOUND`.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `bare-process` | `^4.2.2` | `process` equivalent (pid, argv, env, exit) |
-| `bare-fs` | `^4.5.0` | File system operations |
+| `bare-process` | `^4.3.0` | `process` equivalent (pid, argv, env, exit) |
+| `bare-fs` | `^4.5.5` | File system operations |
 | `bare-path` | `^3.0.0` | Path manipulation |
-| `bare-crypto` | `^1.13.0` | Cryptographic primitives |
-| `bare-encoding` | `^1.0.0` | TextEncoder / TextDecoder for Bare |
-| `bare-buffer` | `^3.4.1` | Buffer implementation for Bare |
-| `bare-subprocess` | `^5.1.4` | Child process spawning |
+| `bare-crypto` | `^1.13.4` | Cryptographic primitives |
+| `bare-encoding` | `^1.0.3` | TextEncoder / TextDecoder for Bare |
+| `bare-buffer` | `^3.5.0` | Buffer implementation for Bare |
+| `bare-subprocess` | `^5.2.2` | Child process spawning |
 | `bare-env` | `^3.0.0` | Environment variable access |
 | `bare-net` | `^2.2.0` | TCP / IPC sockets |
 | `bare-console` | `^6.1.0` | Console API |
-| `bare-os` | (match workbench) | OS info (platform, arch, homedir) |
+| `bare-os` | `^3.7.1` | OS info (platform, arch, homedir) |
 
 ## AI (QVAC)
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@qvac/sdk` | `^0.6.0` | Local AI inference SDK |
+| `@qvac/sdk` | `^0.7.0` | Local AI inference SDK |
 | `zod` | `^4.0.0` | Schema validation for tool definitions |
 
 ## UI (React + styled-components)
@@ -132,7 +132,7 @@ worker for P2P and/or AI operations:
   },
   "dependencies": {
     "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.4",
+    "pear-bridge": "^1.2.5",
     "pear-run": "^1.0.7",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -157,11 +157,11 @@ worker for P2P and/or AI operations:
 
 ```json
 "dependencies": {
-  "hyperswarm": "^4.16.0",
+    "hyperswarm": "^4.17.0",
   "protomux": "^3.10.1",
-  "compact-encoding": "^2.18.0",
-  "b4a": "^1.7.3",
-  "bare-process": "^4.2.2"
+    "compact-encoding": "^2.19.0",
+    "b4a": "^1.8.0",
+    "bare-process": "^4.3.0"
 }
 ```
 
@@ -170,7 +170,7 @@ worker for P2P and/or AI operations:
 ```json
 "dependencies": {
   "corestore": "^7.8.0",
-  "hypercore": "^11.24.0",
+    "hypercore": "^11.27.0",
   "hyperbee": "^2.27.3"
 }
 ```
@@ -179,7 +179,7 @@ worker for P2P and/or AI operations:
 
 ```json
 "devDependencies": {
-  "hyperdht": "^6.29.0"
+  "hyperdht": "^6.29.1"
 }
 ```
 
@@ -187,7 +187,7 @@ worker for P2P and/or AI operations:
 
 ```json
 "dependencies": {
-  "@qvac/sdk": "^0.6.0",
+  "@qvac/sdk": "^0.7.0",
   "zod": "^4.0.0"
 }
 ```

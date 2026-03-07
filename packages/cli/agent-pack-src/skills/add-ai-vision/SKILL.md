@@ -13,7 +13,7 @@ description: Add QVAC multimodal vision for local image analysis. Use when
 - User needs to extract text, identify objects, or describe images
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.6.0`) installed
+- `@qvac/sdk` (`^0.7.0`) installed
 - A multimodal vision model loaded
 - Familiarity with `add-ai-chat` (model loading, completion API)
 

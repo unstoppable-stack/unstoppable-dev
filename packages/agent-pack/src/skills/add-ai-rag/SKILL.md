@@ -14,7 +14,7 @@ description: Add local embeddings and RAG (Retrieval-Augmented Generation)
 - User wants to index and query local files
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.6.0`) installed
+- `@qvac/sdk` (`^0.7.0`) installed
 - An LLM for generation (see `add-ai-chat`)
 - An embedding model for vectorization
 

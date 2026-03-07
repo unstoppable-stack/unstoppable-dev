@@ -13,7 +13,7 @@ description: Add local audio transcription using QVAC Whisper models. Use
 - User needs to process audio files or record from microphone
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.6.0`) installed
+- `@qvac/sdk` (`^0.7.0`) installed
 - A Whisper model available
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.
