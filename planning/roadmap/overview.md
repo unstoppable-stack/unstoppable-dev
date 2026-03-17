@@ -68,7 +68,7 @@ lead to working knowledge.
 | **HyperDB** (structured P2P database) | Docs only | — |
 | **Hyperdrive** (P2P file storage) | Docs only | — |
 | **Corestore** (multi-core management) | Docs only | — |
-| **Multi-writer replication** | Not covered | — |
+| **Multi-writer replication (Autobase)** | Documented | modules/autobase.mdc, skills/add-multi-writer-sync |
 | **SecretStream** (end-to-end encryption) | Docs only | — |
 | **Protomux** (multiplexed channels) | Docs only | — |
 | **Compact-encoding** (binary messages) | Docs only | — |

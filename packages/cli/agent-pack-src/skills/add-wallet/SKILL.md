@@ -19,7 +19,7 @@ description: Add crypto wallet and payment capabilities using Tether WDK.
 
 1. **Install dependencies**:
    ```bash
-   pnpm add @tetherto/wdk @tetherto/wdk-wallet-evm
+   npm i @tetherto/wdk @tetherto/wdk-wallet-evm
    ```
 
 2. **Create wallet module** in `src/wallet/index.ts`:
@@ -53,6 +53,22 @@ console.log('address:', address)
 - Use OS keychain or secure storage for seed persistence
 - Confirm correct network/provider URL before transactions
 - Check chain-specific API keys or paymaster settings
+
+## Critical Rules
+- **NEVER log or print seed phrases** — not to console, not to files, not to replicated data. A leaked seed means total loss of funds.
+- **Always verify transaction details before signing** — confirm recipient address, amount, and network. There is no undo for on-chain transactions.
+- **Handle network errors gracefully** — provider URLs go down, RPC calls timeout. Wrap all chain interactions in try/catch with retries and user feedback.
+- **WDK SDK maturity is limited** — expect rough edges, missing documentation, and API changes. Pin your WDK version and test thoroughly before upgrading.
+- **Never hardcode provider URLs in production** — use configuration or environment variables. Public RPC endpoints have rate limits.
+- **Store seed phrases in OS keychain or secure storage** — never in `.env`, `localStorage`, config files, or any replicated data structure.
+
+## Validation
+1. WDK initializes without errors (`new WDK(seedPhrase)` succeeds)
+2. Wallet module registers for the target chain (`.registerWallet()` doesn't throw)
+3. Account derivation returns a valid address (`getAccount()` + `getAddress()`)
+4. Balance query returns a number (even if 0 on testnet)
+5. Transaction signing completes without error (test on testnet first)
+6. Seed phrase is not present in any log output, config file, or version-controlled file
 
 ## Deep Dive
 - Full example with transactions: read `resources/full-example.md`

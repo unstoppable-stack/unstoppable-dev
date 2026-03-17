@@ -81,7 +81,7 @@
 |------|--------|----------------|-------|
 | Schema definition | Docs only | modules/hyperdb.md | From official docs |
 | Queries | Docs only | modules/hyperdb.md | From official docs |
-| Multi-writer | Not covered | — | Key differentiator from Hyperbee |
+| Multi-writer (Autobase) | Documented | modules/autobase.mdc, skills/add-multi-writer-sync | Key differentiator from Hyperbee |
 | Auto-replication | Docs only | modules/hyperdb.md | — |
 | Indexes | Not covered | — | — |
 

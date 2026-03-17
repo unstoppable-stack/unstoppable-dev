@@ -23,7 +23,7 @@ description: Add local audio transcription using QVAC Whisper models. Use
 
 1. **Install QVAC** (if not already):
    ```bash
-   pnpm add @qvac/sdk
+   npm i @qvac/sdk
    ```
 
 2. **Load a Whisper model**:
@@ -73,6 +73,22 @@ description: Add local audio transcription using QVAC Whisper models. Use
   - Node.js: `node-record-lpcm16` or `sox`
   - Mobile: Expo Audio API
   - Pear Desktop: Web Audio API in renderer, send to worker
+
+## Critical Rules
+- **Whisper models are large** — even "tiny" is ~75MB, "base" ~150MB, "large" ~3GB. Pick the smallest model that meets your quality needs and test on target hardware.
+- **Audio format must be supported** — Whisper expects 16kHz mono WAV. Passing MP3, AAC, or stereo audio produces garbled output or errors. Convert with `sox` or `ffmpeg` first.
+- **Streaming transcription has a different API** — `transcribeStream()` is not the same as `transcribe()`. Don't mix them or assume the same options work for both.
+- **Don't transcribe without checking model is loaded** — calling `transcribe()` before the model finishes loading throws or hangs.
+- **Don't skip audio preprocessing** — noise, echo, and low volume dramatically hurt accuracy. Apply gain normalization and noise reduction when possible.
+- **Long recordings must be chunked** — transcribing a 2-hour file in one call will exhaust memory. Split into segments (30s-2min) and concatenate results.
+
+## Validation
+1. Whisper model loads successfully (`loadModel` with `modelType: 'transcription'` resolves)
+2. A known audio file (WAV, 16kHz, mono) transcribes with recognizable text output
+3. Output text is readable and matches the spoken content
+4. Timestamps are accurate if requested (segment start/end align with audio)
+5. Streaming transcription emits segments in real time (if using `transcribeStream`)
+6. Non-WAV audio is rejected or converted before transcription (no silent corruption)
 
 ## Key Gotchas
 - Whisper models are separate from LLM models — different `modelType`

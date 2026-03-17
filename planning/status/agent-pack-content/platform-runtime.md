@@ -1,6 +1,6 @@
 # Platform / Runtime — Content Status
 
-**3 battle-tested, 0 docs-only, 6 not covered** out of 9 items.
+**10 battle-tested, 1 docs-only, 1 partial** out of 12 items.
 
 ---
 
@@ -34,34 +34,33 @@ No further work needed. Well covered by coffee-assistant-ui.
 
 ---
 
-## Mobile (Expo Bare) — NOT COVERED — TOP PRIORITY
+## Mobile (Expo Bare) — BATTLE-TESTED (via codex-mobile-slack-p2p-2)
 
-| Item | Status | Notes |
-|------|--------|-------|
-| React Native + Bare worklet | Docs only | modules/expo-bare.md |
-| `bare-pack` bundling | Not covered | iOS/Android targets |
-| `react-native-bare-kit` | Not covered | RN ↔ Bare bridge |
-| Bare suspension/resume | Not covered | Mobile lifecycle |
-| Hyperswarm on mobile | Not covered | NAT issues? |
-| QVAC on mobile | Not covered | Device-dependent (RAM/GPU) |
-| iOS build pipeline | Not covered | Xcode integration |
-| Android build pipeline | Not covered | Gradle integration |
+| Item | Status | Agent Pack File |
+|------|--------|----------------|
+| React Native + Bare worklet | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| `bare-pack` bundling | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| `react-native-bare-kit` (Worklet + IPC + bare-rpc) | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| pnpm addon linking | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| QVAC on mobile (runtime split) | Battle-tested | recipes/qvac-mobile-expo.mdc |
+| iOS CocoaPods addon embedding | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| Storage paths (absolute via expo-file-system) | Battle-tested | skills/setup-mobile-app/SKILL.md |
+| Bare suspension/resume | Docs only | Not yet battle-tested |
+| Hyperswarm on mobile | Battle-tested | codex-mobile-slack-p2p-2 P2P chat |
+| Android build pipeline | Partial | Scripts exist but not device-tested |
 
-### Next Up — Building "Unstoppable Notes" mobile reference app
-
-Full plan: `planning/features/mobile-app.md`
+### Next Up
 
 | # | Task | Effort |
 |---|------|--------|
-| 1 | **Phase 1: Validate toolchain** — Expo + bare-kit + bare-pack hello world | Large |
-| 2 | **Phase 2: Notes + AI** — Drizzle/SQLite CRUD + QvacProvider chat | Large |
-| 3 | **Phase 3: P2P sync** — Bare worklet with Hyperswarm + Corestore | Large |
-| 4 | **Extract knowledge** — Rewrite modules/expo-bare.md with battle-tested findings | Medium |
-| 5 | **Create mobile skill** — New skill for agent pack: mobile-p2p-app | Medium |
+| 1 | Battle-test Android device build end-to-end | Medium |
+| 2 | Test Bare suspend/resume on backgrounded mobile app | Medium |
+| 3 | Update modules/expo-bare.md with battle-tested findings | Small |
 
 ### Reference Material
 
 - `reference-apps/qvac-workbench-mobile/` — Tether's mobile reference
+- `sandbox/codex-mobile-slack-p2p-2/` — Battle-tested Expo + Bare + QVAC + P2P app
 - `research/qvac-docs/sdk/tutorials/expo.mdx` — Official Expo tutorial
 
 ---

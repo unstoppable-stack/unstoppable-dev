@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Unstoppable Agent — Local AI + P2P Knowledge</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --accent: #00D4AA;
+    --accent-dim: #00A88A;
+    --accent-glow: rgba(0,212,170,0.15);
+    --tether: #50AF95;
+    --holepunch: #6C63FF;
+    --nous: #E040FB;
+    --bg: #07070A;
+    --surface: #111118;
+    --surface2: #1A1A24;
+    --surface3: #22222E;
+    --text: #EEEEF2;
+    --text-dim: #888899;
+    --text-muted: #555566;
+    --danger: #FF6B6B;
+    --warn: #FFD93D;
+    --blue: #4D9EFF;
+    --orange: #FF8A50;
+  }
+
+  .reveal {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 30px;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .reveal .slides { text-align: left; }
+
+  .reveal .slides section {
+    padding: 48px 64px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    text-align: left;
+  }
+
+  .reveal h1 { font-size: 2.6em; line-height: 1.05; font-weight: 800; }
+  .reveal h2 { font-size: 1.6em; margin-bottom: 0.5em; }
+  .reveal h3 { font-size: 1.1em; color: var(--accent); margin-bottom: 0.3em; font-weight: 600; }
+  .reveal h4 { font-size: 0.85em; color: var(--text-dim); font-weight: 500; margin-bottom: 0.2em; }
+
+  .reveal p, .reveal li {
+    font-size: 0.7em;
+    line-height: 1.65;
+    color: var(--text);
+    font-weight: 400;
+  }
+
+  .reveal ul { list-style: none; padding: 0; margin: 0; }
+  .reveal ul li { padding: 0.25em 0; }
+  .reveal ul li::before {
+    content: "› ";
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 2px;
+  }
+
+  .reveal strong { color: var(--accent); font-weight: 600; }
+  .reveal em { color: var(--text-dim); font-style: normal; }
+
+  .reveal code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.82em;
+    color: var(--accent);
+    border: 1px solid var(--surface3);
+  }
+
+  .reveal pre {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-size: 0.52em;
+    line-height: 1.55;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    width: 100%;
+    margin: 0.6em 0;
+  }
+
+  .reveal pre code {
+    background: none;
+    padding: 0;
+    border: none;
+    color: var(--text);
+    font-size: 1em;
+  }
+
+  /* Title slide */
+  .title-slide { text-align: center !important; display: flex !important; flex-direction: column; justify-content: center; align-items: center; }
+  .title-slide h1 { text-align: center; margin-bottom: 0.15em; }
+  .title-slide .subtitle {
+    font-size: 0.85em;
+    color: var(--accent);
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    margin-bottom: 1.5em;
+  }
+  .title-slide .meta {
+    font-size: 0.5em;
+    color: var(--text-muted);
+    margin-top: 0.5em;
+  }
+
+  /* Section divider */
+  .section-divider {
+    text-align: center !important;
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .section-divider h2 {
+    text-align: center;
+    font-size: 2.2em;
+    margin-bottom: 0.3em;
+  }
+  .section-divider p {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.75em;
+  }
+
+  /* Grid layouts */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 0.5em; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 0.5em; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; margin-top: 0.5em; }
+
+  /* Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent-dim); }
+  .card h3 { margin-top: 0; font-size: 0.9em; }
+  .card p, .card li { font-size: 0.62em; }
+
+  .card-accent {
+    background: linear-gradient(135deg, var(--surface), var(--accent-glow));
+    border-color: var(--accent-dim);
+  }
+
+  .card-holepunch { border-left: 3px solid var(--holepunch); }
+  .card-tether { border-left: 3px solid var(--tether); }
+  .card-nous { border-left: 3px solid var(--nous); }
+  .card-blue { border-left: 3px solid var(--blue); }
+
+  /* Stat blocks */
+  .stat { text-align: center; padding: 16px; }
+  .stat .number {
+    font-size: 2.2em;
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+  .stat .label {
+    font-size: 0.55em;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* Table */
+  .reveal table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.58em;
+    margin: 0.5em 0;
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--surface3);
+  }
+  .reveal table th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--surface3);
+  }
+  .reveal table td {
+    padding: 8px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text);
+  }
+  .reveal table tr:last-child td { border-bottom: none; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 0.5em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin: 2px;
+    letter-spacing: 0.02em;
+  }
+  .tag-green { background: rgba(0,212,170,0.15); color: var(--accent); border: 1px solid rgba(0,212,170,0.3); }
+  .tag-purple { background: rgba(108,99,255,0.15); color: var(--holepunch); border: 1px solid rgba(108,99,255,0.3); }
+  .tag-pink { background: rgba(224,64,251,0.15); color: var(--nous); border: 1px solid rgba(224,64,251,0.3); }
+  .tag-blue { background: rgba(77,158,255,0.15); color: var(--blue); border: 1px solid rgba(77,158,255,0.3); }
+  .tag-orange { background: rgba(255,138,80,0.15); color: var(--orange); border: 1px solid rgba(255,138,80,0.3); }
+  .tag-dim { background: var(--surface2); color: var(--text-dim); border: 1px solid var(--surface3); }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0.8em 0;
+    flex-wrap: wrap;
+  }
+  .flow-node {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 0.6em;
+    font-weight: 500;
+    text-align: center;
+    min-width: 100px;
+  }
+  .flow-node.active {
+    border-color: var(--accent);
+    background: var(--accent-glow);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .flow-arrow {
+    color: var(--text-muted);
+    font-size: 1.2em;
+  }
+
+  /* Highlight box */
+  .highlight-box {
+    background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(108,99,255,0.08));
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 0.5em 0;
+  }
+  .highlight-box p { font-size: 0.72em; }
+
+  /* Architecture diagram */
+  .arch-layer {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin: 8px 0;
+    position: relative;
+  }
+  .arch-layer .layer-label {
+    font-size: 0.5em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .arch-layer .layer-items {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .arch-layer .layer-item {
+    background: var(--surface2);
+    border: 1px solid var(--surface3);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 0.55em;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .arch-layer .layer-item.primary {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+  }
+
+  /* Comparison check/cross */
+  .check { color: var(--accent); }
+  .cross { color: var(--danger); }
+  .partial { color: var(--warn); }
+
+  /* Animated gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, var(--accent), var(--holepunch), var(--nous));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Emoji sizing */
+  .emoji { font-size: 1.6em; margin-bottom: 8px; display: block; }
+
+  /* Slide number */
+  .reveal .slide-number { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); }
+
+  /* Progress bar */
+  .reveal .progress { height: 3px; }
+  .reveal .progress span { background: var(--accent); }
+
+  /* Fragment fade */
+  .reveal .fragment.fade-up { transform: translateY(20px); }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: Title -->
+<!-- ============================================================ -->
+<section class="title-slide" data-background-gradient="radial-gradient(ellipse at 50% 50%, #0F1A18 0%, #07070A 70%)">
+  <div class="subtitle">RESEARCH &amp; ARCHITECTURE PROPOSAL</div>
+  <h1>The <span class="gradient-text">Unstoppable</span> Agent</h1>
+  <p style="font-size:0.72em; color:var(--text-dim); max-width:700px; text-align:center; margin-top:0.5em;">
+    A local-first AI coding agent that runs on small models,<br>
+    learns from experience, and shares knowledge peer-to-peer.
+  </p>
+  <div class="meta">
+    <span class="tag tag-green">QVAC SDK</span>
+    <span class="tag tag-purple">Hyperswarm</span>
+    <span class="tag tag-pink">Self-Improving</span>
+    <span class="tag tag-blue">P2P Skills</span>
+  </div>
+  <div class="meta" style="margin-top:1.5em;">March 2026 &nbsp;&middot;&nbsp; The Unstoppable Stack</div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: The Vision -->
+<!-- ============================================================ -->
+<section>
+  <h2>The Vision</h2>
+  <div class="highlight-box">
+    <p style="font-size:0.78em; margin:0;">
+      Build an AI coding agent that is <strong>truly unstoppable</strong> &mdash;
+      runs entirely on your machine, needs no API keys, learns from what it does,
+      and gets smarter as more people use it through P2P knowledge sharing.
+    </p>
+  </div>
+
+  <div class="grid-3" style="margin-top:1em;">
+    <div class="card">
+      <span class="emoji">&#x1F9E0;</span>
+      <h3>Local Inference</h3>
+      <p>QVAC SDK runs Qwen/Llama models locally. No cloud, no API keys, no censorship.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">&#x1F504;</span>
+      <h3>Self-Improving</h3>
+      <p>Creates skills from experience. What it learns solving your problem helps it solve the next one.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">&#x1F310;</span>
+      <h3>P2P Knowledge</h3>
+      <p>Skills, feedback, and tips flow between users via Hyperswarm. The network gets smarter together.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: Why Now? -->
+<!-- ============================================================ -->
+<section>
+  <h2>Why Now?</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Small Models Got Good</h3>
+      <ul>
+        <li><strong>Qwen3-Coder-Next</strong> (3B active params) matches Claude Sonnet 4.5 on coding</li>
+        <li><strong>Qwen 3.1 7B</strong> has reliable tool calling</li>
+        <li>Runs on a MacBook &mdash; no GPU cluster needed</li>
+        <li>44.3% on SWE-Bench Pro (local model!)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>We Have the Stack</h3>
+      <ul>
+        <li><strong>QVAC SDK</strong> &mdash; 8 AI task types, ready to use</li>
+        <li><strong>Hyperswarm</strong> &mdash; P2P networking, battle-tested</li>
+        <li><strong>HyperDB</strong> &mdash; P2P key-value database</li>
+        <li><strong>17 skills</strong> already written for agent pack</li>
+        <li><strong>3 reference apps</strong> proving the patterns</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:0.8em;">
+    <p style="margin:0; font-size:0.68em;">
+      <strong>The gap:</strong> No existing agent combines local inference + P2P knowledge sharing + self-improvement.
+      Hermes needs cloud APIs. CoPaw is cloud-first. OpenCode has no skill creation. <em>We fill this gap.</em>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: Section — Research -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #12101F 0%, #07070A 70%)">
+  <h2>Research<br><span class="gradient-text">Deep Dive</span></h2>
+  <p>Three open-source agents studied in depth</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: Projects Analyzed -->
+<!-- ============================================================ -->
+<section>
+  <h2>Projects Analyzed</h2>
+
+  <div class="grid-3">
+    <div class="card card-nous">
+      <h3 style="color:var(--nous);">Hermes Agent</h3>
+      <p><em>Nous Research &middot; 7.4k stars</em></p>
+      <p>"The agent that grows with you" &mdash; self-improving with skill creation, memory, trajectory compression for RL training.</p>
+      <div style="margin-top:8px;">
+        <span class="tag tag-pink">Self-Improving</span>
+        <span class="tag tag-pink">40+ Tools</span>
+        <span class="tag tag-dim">Python</span>
+      </div>
+    </div>
+    <div class="card card-blue">
+      <h3 style="color:var(--blue);">CoPaw</h3>
+      <p><em>AgentScope &middot; 11.8k stars</em></p>
+      <p>Personal AI assistant with skill hub, multi-channel delivery (DingTalk, Discord, iMessage), local model support.</p>
+      <div style="margin-top:8px;">
+        <span class="tag tag-blue">Skill Hub</span>
+        <span class="tag tag-blue">Multi-Channel</span>
+        <span class="tag tag-dim">Python</span>
+      </div>
+    </div>
+    <div class="card card-holepunch">
+      <h3 style="color:var(--holepunch);">OpenCode</h3>
+      <p><em>anomalyco &middot; 122k stars</em></p>
+      <p>Go-based coding agent with beautiful TUI, clean provider abstraction, LSP integration, sub-agent pattern.</p>
+      <div style="margin-top:8px;">
+        <span class="tag tag-purple">122k Stars</span>
+        <span class="tag tag-purple">TUI</span>
+        <span class="tag tag-dim">Go</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: Landscape Comparison -->
+<!-- ============================================================ -->
+<section>
+  <h2>Landscape Comparison</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Claude Code</th>
+        <th>Hermes</th>
+        <th>CoPaw</th>
+        <th>OpenCode</th>
+        <th style="color:var(--accent);">Ours</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Local model support</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check">&#x2713;</td>
+        <td class="check">&#x2713;</td>
+        <td class="check">&#x2713;</td>
+        <td class="check"><strong>&#x2713; QVAC</strong></td>
+      </tr>
+      <tr>
+        <td>Skill system</td>
+        <td class="check">&#x2713;</td>
+        <td class="check">&#x2713;</td>
+        <td class="check">&#x2713;</td>
+        <td class="partial">~</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+      </tr>
+      <tr>
+        <td>Self-improving (creates skills)</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+      </tr>
+      <tr>
+        <td>Memory persistence</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check">&#x2713;</td>
+        <td class="check">&#x2713;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+      </tr>
+      <tr>
+        <td>P2P knowledge sharing</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check" style="font-size:1.1em;"><strong>&#x2713; NEW</strong></td>
+      </tr>
+      <tr>
+        <td>P2P delegated inference</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check" style="font-size:1.1em;"><strong>&#x2713; NEW</strong></td>
+      </tr>
+      <tr>
+        <td>Trajectory/RL training</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check">&#x2713;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="cross">&#x2717;</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+      </tr>
+      <tr>
+        <td>Truly offline</td>
+        <td class="cross">&#x2717;</td>
+        <td class="partial">~</td>
+        <td class="partial">~</td>
+        <td class="partial">~</td>
+        <td class="check"><strong>&#x2713;</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: Key Learnings from Hermes -->
+<!-- ============================================================ -->
+<section>
+  <h2>Key Learnings: <span style="color:var(--nous);">Hermes Agent</span></h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Agent Loop (ReAct Pattern)</h3>
+      <ul>
+        <li><strong>Shared iteration budget</strong> across parent + child agents</li>
+        <li><strong>Tool registry</strong> &mdash; tools self-register with schema + handler</li>
+        <li><strong>Composable toolsets</strong> &mdash; "web", "terminal", "skills", etc.</li>
+        <li><strong>Context compression</strong> when context gets large</li>
+        <li><strong>Budget pressure</strong> &mdash; warns LLM at 70% / 90% of iterations</li>
+        <li><strong>Fallback model</strong> &mdash; auto-switch on rate limits</li>
+      </ul>
+
+      <h3 style="margin-top:0.6em;">Skill Creation Triggers</h3>
+      <ul>
+        <li>Complex task succeeded (5+ tool calls)</li>
+        <li>Errors were overcome</li>
+        <li>User-corrected approach worked</li>
+        <li>Non-trivial workflow discovered</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Skills Architecture</h3>
+      <pre><code>~/.hermes/skills/
+├── mlops/
+│   └── axolotl/
+│       ├── SKILL.md        # Instructions
+│       ├── references/     # Docs
+│       ├── templates/      # Output formats
+│       └── scripts/        # Helpers
+├── devops/
+│   └── deploy-k8s/        # Agent-created!
+└── .hub/                   # Hub state</code></pre>
+
+      <h3 style="margin-top:0.6em;">Progressive Disclosure</h3>
+      <pre><code>Tier 0: skills_categories() → ~100 tokens
+Tier 1: skills_list()       → ~3k tokens
+Tier 2: skill_view(name)    → full content
+Tier 3: skill_view(name, f) → reference file</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: Section — QVAC -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #0F1A14 0%, #07070A 70%)">
+  <h2>QVAC SDK<br><span class="gradient-text">Our Secret Weapon</span></h2>
+  <p>8 AI task types, fully local, P2P-native</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: QVAC Capabilities -->
+<!-- ============================================================ -->
+<section>
+  <h2>QVAC: What We Can Use</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>For the Agent Loop</h3>
+      <table>
+        <thead><tr><th>Capability</th><th>Model</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>Chat / Completion</td><td>Qwen 3 4B</td><td class="check">Battle-tested</td></tr>
+          <tr><td><strong>Tool Calling</strong></td><td><strong>Qwen 3.1 7B</strong></td><td class="check"><strong>Battle-tested</strong></td></tr>
+          <tr><td>KV Cache</td><td>Any LLM</td><td class="check">Battle-tested</td></tr>
+          <tr><td>Vision</td><td>SmolVLM 2.5B</td><td class="partial">Documented</td></tr>
+          <tr><td>Embeddings / RAG</td><td>GTE Large</td><td class="partial">Documented</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:0.6em;">Best Models for Agent Use</h3>
+      <table>
+        <thead><tr><th>Use</th><th>Model</th><th>RAM</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Tool calling</strong></td><td>Qwen 3.1 7B Q4</td><td>8 GB+</td></tr>
+          <tr><td>Fast chat</td><td>Qwen 3 600M Q4</td><td>2 GB+</td></tr>
+          <tr><td>Desktop quality</td><td>GPT-OSS 20B Q4</td><td>16 GB+</td></tr>
+          <tr><td>Code embeddings</td><td>GTE Large FP16</td><td>4 GB+</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>Supporting Capabilities</h3>
+      <table>
+        <thead><tr><th>Capability</th><th>Agent Use</th></tr></thead>
+        <tbody>
+          <tr><td>Transcription (Whisper)</td><td>Voice-to-text input</td></tr>
+          <tr><td>TTS (Piper ONNX)</td><td>Text-to-speech output</td></tr>
+          <tr><td>OCR (CRAFT)</td><td>Read images/docs</td></tr>
+          <tr><td>Translation (OPUS)</td><td>Multi-language</td></tr>
+          <tr><td><strong>Delegated Inference</strong></td><td><strong>P2P model sharing!</strong></td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box" style="margin-top:0.8em;">
+        <h3>Delegated Inference</h3>
+        <p style="margin:0; font-size:0.62em;">
+          Weak laptop? Offload inference to a more powerful peer on the Hyperswarm network.
+          <strong>Truly unstoppable AI &mdash; even on low-end hardware.</strong>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: Section — Architecture -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #151020 0%, #07070A 70%)">
+  <h2>Proposed<br><span class="gradient-text">Architecture</span></h2>
+  <p>TypeScript, local-first, P2P-native</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: Architecture Overview -->
+<!-- ============================================================ -->
+<section>
+  <h2>Architecture Overview</h2>
+
+  <div class="arch-layer" style="border-color:var(--accent-dim);">
+    <div class="layer-label">Agent Layer</div>
+    <div class="layer-items">
+      <div class="layer-item primary">Agent Loop (ReAct)</div>
+      <div class="layer-item primary">Tool Registry</div>
+      <div class="layer-item primary">Skill System</div>
+      <div class="layer-item">Memory</div>
+      <div class="layer-item">Session Store</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="layer-label">Provider Abstraction</div>
+    <div class="layer-items">
+      <div class="layer-item primary">QVAC (local)</div>
+      <div class="layer-item">Ollama (local)</div>
+      <div class="layer-item">OpenRouter (cloud)</div>
+      <div class="layer-item">Custom API</div>
+    </div>
+  </div>
+
+  <div class="arch-layer" style="border-color:var(--holepunch);">
+    <div class="layer-label" style="color:var(--holepunch);">P2P Knowledge Layer</div>
+    <div class="layer-items">
+      <div class="layer-item" style="border-color:var(--holepunch); color:var(--holepunch);">Skill Sharing (HyperDB)</div>
+      <div class="layer-item" style="border-color:var(--holepunch); color:var(--holepunch);">Feedback &amp; Tips (HyperDB)</div>
+      <div class="layer-item" style="border-color:var(--holepunch); color:var(--holepunch);">Delegated Inference (Hyperswarm)</div>
+    </div>
+  </div>
+
+  <div class="arch-layer">
+    <div class="layer-label">Local Storage</div>
+    <div class="layer-items">
+      <div class="layer-item">Sessions (SQLite)</div>
+      <div class="layer-item">Memory (MEMORY.md)</div>
+      <div class="layer-item">Trajectories (JSONL)</div>
+      <div class="layer-item">Skills (~/.unstoppable/skills/)</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: Core Tools -->
+<!-- ============================================================ -->
+<section>
+  <h2>Core Tools (MVP)</h2>
+
+  <div class="grid-2">
+    <div>
+      <table>
+        <thead><tr><th>Tool</th><th>Toolset</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>read_file</code></td><td>file</td><td>Read file contents</td></tr>
+          <tr><td><code>write_file</code></td><td>file</td><td>Write / create files</td></tr>
+          <tr><td><code>patch_file</code></td><td>file</td><td>Find &amp; replace</td></tr>
+          <tr><td><code>search_files</code></td><td>file</td><td>Search contents (rg)</td></tr>
+          <tr><td><code>glob_files</code></td><td>file</td><td>Find files by pattern</td></tr>
+          <tr><td><code>terminal</code></td><td>terminal</td><td>Shell execution</td></tr>
+          <tr><td><code>skills_list</code></td><td>skills</td><td>List skills</td></tr>
+          <tr><td><code>skill_view</code></td><td>skills</td><td>Load skill content</td></tr>
+          <tr><td><code>skill_manage</code></td><td>skills</td><td>Create/edit/delete</td></tr>
+          <tr><td><code>memory</code></td><td>memory</td><td>Persistent memory</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <table>
+        <thead><tr><th>Tool</th><th>Toolset</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr style="background:rgba(108,99,255,0.08);">
+            <td><code>p2p_share_skill</code></td><td style="color:var(--holepunch);">p2p</td><td>Share skill to network</td></tr>
+          <tr style="background:rgba(108,99,255,0.08);">
+            <td><code>p2p_search_skills</code></td><td style="color:var(--holepunch);">p2p</td><td>Search P2P skills</td></tr>
+          <tr style="background:rgba(108,99,255,0.08);">
+            <td><code>p2p_feedback</code></td><td style="color:var(--holepunch);">p2p</td><td>Rate a skill</td></tr>
+          <tr style="background:rgba(108,99,255,0.08);">
+            <td><code>delegate_inference</code></td><td style="color:var(--holepunch);">p2p</td><td>Offload to peer</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box" style="margin-top:0.8em;">
+        <p style="margin:0; font-size:0.62em;">
+          <strong>agentskills.io compatible</strong> &mdash; same SKILL.md format used by Hermes, Claude, CoPaw, and skills.sh. Our skills can be shared across ecosystems.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: Section — P2P Knowledge -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #101025 0%, #07070A 70%)">
+  <h2>P2P Knowledge<br><span class="gradient-text">Sharing</span></h2>
+  <p>The unique innovation &mdash; agents learn from each other</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: P2P Skill Sharing Flow -->
+<!-- ============================================================ -->
+<section>
+  <h2>How P2P Sharing Works</h2>
+
+  <h3>Publishing a Skill</h3>
+  <div class="flow">
+    <div class="flow-node">Agent solves<br>hard problem</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node active">Creates<br>SKILL.md</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node">User approves<br>sharing</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node" style="border-color:var(--holepunch);color:var(--holepunch);">Written to<br>HyperDB</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node" style="border-color:var(--holepunch);color:var(--holepunch);">Replicates<br>via Hyperswarm</div>
+  </div>
+
+  <h3 style="margin-top:0.8em;">Discovering &amp; Using a Skill</h3>
+  <div class="flow">
+    <div class="flow-node">Agent stuck<br>on a problem</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node" style="border-color:var(--holepunch);color:var(--holepunch);">Searches P2P<br>network</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node">Found!<br>"k8s-deploy" &#x2B50;4.2</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node active">User approves<br>install</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node">Problem<br>solved</div>
+    <div class="flow-arrow">&#x2192;</div>
+    <div class="flow-node" style="border-color:var(--warn);color:var(--warn);">Submits<br>feedback</div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:0.8em;">
+    <p style="margin:0; font-size:0.65em; text-align:center;">
+      <strong>The feedback loop:</strong> Skills get rated &#x2192; high-rated skills surface first &#x2192;
+      low-rated skills get flagged &#x2192; the network collectively curates quality.
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: P2P Data Model -->
+<!-- ============================================================ -->
+<section>
+  <h2>P2P Data Model</h2>
+
+  <div class="grid-3">
+    <div class="card card-holepunch">
+      <h3>Shared Skills</h3>
+      <pre><code>HyperDB: /skills/{hash}/
+├── SKILL.md      # Full content
+├── metadata      # name, desc, tags
+├── author        # Peer public key
+├── version       # Semver
+└── content_hash  # Integrity</code></pre>
+    </div>
+    <div class="card card-holepunch">
+      <h3>Feedback</h3>
+      <pre><code>HyperDB: /feedback/{skill}/{peer}
+├── rating     # 1-5 stars
+├── comment    # What happened
+├── context    # Task description
+├── outcome    # success/partial/fail
+└── model_used # Which model</code></pre>
+    </div>
+    <div class="card card-holepunch">
+      <h3>Troubleshooting Tips</h3>
+      <pre><code>HyperDB: /tips/{skill}/{id}
+├── title     # Short summary
+├── problem   # What went wrong
+├── solution  # How to fix
+├── platform  # macos/linux/win
+└── model     # Which model worked</code></pre>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:0.6em;">
+    <div class="card">
+      <h3>Security Model</h3>
+      <ul>
+        <li><strong>Content hashing</strong> for integrity</li>
+        <li><strong>Peer signatures</strong> on all content</li>
+        <li><strong>Security scanning</strong> (exfiltration, prompt injection)</li>
+        <li><strong>User approval required</strong> for P2P installs</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Trust Tiers</h3>
+      <ul>
+        <li><strong>Local</strong> &mdash; user-created, always trusted</li>
+        <li><strong>Verified Peer</strong> &mdash; known good actors</li>
+        <li><strong>Community</strong> &mdash; rated by network</li>
+        <li><strong>Unknown</strong> &mdash; needs review</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: Section — Self-Improvement -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #1A0F1F 0%, #07070A 70%)">
+  <h2>Self-Improving<br><span class="gradient-text">Agent</span></h2>
+  <p>Learn from experience, train better models</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: The Learning Loop -->
+<!-- ============================================================ -->
+<section>
+  <h2>The Learning Loop</h2>
+
+  <div style="display:flex; flex-direction:column; align-items:center; gap:0;">
+
+    <div class="flow">
+      <div class="flow-node" style="width:180px;">1. User asks<br>a hard question</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node active" style="width:180px;">2. Agent tries,<br>hits errors</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node" style="width:180px;">3. Eventually<br>succeeds (5+ calls)</div>
+    </div>
+
+    <div style="color:var(--text-muted); font-size:0.8em; margin:6px 0;">&#x2193;</div>
+
+    <div class="flow">
+      <div class="flow-node" style="width:180px;border-color:var(--nous);color:var(--nous);">4. Creates skill<br>from trajectory</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node" style="width:180px;border-color:var(--holepunch);color:var(--holepunch);">5. Shared via<br>P2P (optional)</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node" style="width:180px;border-color:var(--warn);color:var(--warn);">6. Community<br>rates &amp; improves</div>
+    </div>
+
+    <div style="color:var(--text-muted); font-size:0.8em; margin:6px 0;">&#x2193;</div>
+
+    <div class="flow">
+      <div class="flow-node active" style="width:180px;">7. Next time:<br>skill loaded first</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node" style="width:180px;">8. Solves in 1-2<br>calls instead of 10</div>
+      <div class="flow-arrow">&#x2192;</div>
+      <div class="flow-node" style="width:240px;border-color:var(--accent);background:var(--accent-glow);">9. Trajectories train<br>better local models</div>
+    </div>
+
+  </div>
+
+  <div class="highlight-box" style="margin-top:0.6em;">
+    <p style="margin:0; font-size:0.65em; text-align:center;">
+      <strong>Flywheel effect:</strong> More users &#x2192; more skills &#x2192; more trajectories &#x2192; better models &#x2192; better skills &#x2192; more users
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: Challenges + Mitigations -->
+<!-- ============================================================ -->
+<section>
+  <h2>Small Model Challenges &amp; Mitigations</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Challenges</h3>
+      <table>
+        <thead><tr><th>Issue</th><th>Impact</th></tr></thead>
+        <tbody>
+          <tr><td>Context window (4K-32K)</td><td>Can't hold large codebases</td></tr>
+          <tr><td>Tool call accuracy</td><td>JSON parse errors</td></tr>
+          <tr><td>Multi-step reasoning</td><td>Longer chains fail</td></tr>
+          <tr><td>Multi-file editing</td><td>Loses track of changes</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>Mitigations (from Hermes)</h3>
+      <table>
+        <thead><tr><th>Strategy</th><th>Effect</th></tr></thead>
+        <tbody>
+          <tr><td><strong>JSON repair</strong></td><td>Fix malformed tool calls</td></tr>
+          <tr><td><strong>Context compression</strong></td><td>Summarize old turns</td></tr>
+          <tr><td><strong>Skills injection</strong></td><td>Model doesn't reason from scratch</td></tr>
+          <tr><td><strong>Sub-agents</strong></td><td>Fresh context per sub-task</td></tr>
+          <tr><td><strong>KV cache (QVAC)</strong></td><td>Reuse computation across turns</td></tr>
+          <tr><td><strong>Iteration budget</strong></td><td>Prevent infinite loops</td></tr>
+          <tr><td><strong>Cloud fallback</strong></td><td>Hard tasks go to bigger models</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: Section — Roadmap -->
+<!-- ============================================================ -->
+<section class="section-divider" data-background-gradient="radial-gradient(ellipse at 50% 50%, #0F1A18 0%, #07070A 70%)">
+  <h2>Implementation<br><span class="gradient-text">Roadmap</span></h2>
+  <p>From POC to fully P2P-powered agent</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: Phased Roadmap -->
+<!-- ============================================================ -->
+<section>
+  <h2>Five Phases</h2>
+
+  <div style="display:flex; flex-direction:column; gap:10px;">
+
+    <div class="arch-layer" style="border-left:3px solid var(--accent);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="layer-label">Phase 1 &mdash; Local Agent MVP</div>
+          <div style="font-size:0.6em; color:var(--text);">Agent loop + QVAC provider + file tools + terminal + basic CLI</div>
+        </div>
+        <span class="tag tag-green">2-3 weeks</span>
+      </div>
+    </div>
+
+    <div class="arch-layer" style="border-left:3px solid var(--blue);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="layer-label">Phase 2 &mdash; Skills + Memory</div>
+          <div style="font-size:0.6em; color:var(--text);">Full skill CRUD + auto-activation + memory + context compression</div>
+        </div>
+        <span class="tag tag-blue">1-2 weeks</span>
+      </div>
+    </div>
+
+    <div class="arch-layer" style="border-left:3px solid var(--holepunch);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="layer-label">Phase 3 &mdash; P2P Knowledge Sharing</div>
+          <div style="font-size:0.6em; color:var(--text);">HyperDB schema + Hyperswarm discovery + skill sharing + feedback + reputation</div>
+        </div>
+        <span class="tag tag-purple">2-3 weeks</span>
+      </div>
+    </div>
+
+    <div class="arch-layer" style="border-left:3px solid var(--nous);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="layer-label">Phase 4 &mdash; Delegated Inference + Training</div>
+          <div style="font-size:0.6em; color:var(--text);">QVAC P2P inference + trajectory saving + compression for RL</div>
+        </div>
+        <span class="tag tag-pink">2-3 weeks</span>
+      </div>
+    </div>
+
+    <div class="arch-layer" style="border-left:3px solid var(--warn);">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <div class="layer-label">Phase 5 &mdash; Polish + Integration</div>
+          <div style="font-size:0.6em; color:var(--text);">TUI interface + CLI integration + website docs + Pear Desktop wrapper</div>
+        </div>
+        <span class="tag tag-orange">1-2 weeks</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align:right; margin-top:0.5em;">
+    <span style="font-size:0.6em; color:var(--text-dim);">Total estimated: <strong style="color:var(--accent);">8-13 weeks</strong></span>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 21: Phase 1 Detail -->
+<!-- ============================================================ -->
+<section>
+  <h2>Phase 1: Local Agent MVP</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Package Structure</h3>
+      <pre><code>packages/agent/
+├── src/
+│   ├── index.ts           # CLI entry
+│   ├── agent/
+│   │   ├── loop.ts        # ReAct loop
+│   │   ├── budget.ts      # Iteration budget
+│   │   └── prompt.ts      # System prompt
+│   ├── providers/
+│   │   ├── interface.ts   # LLMProvider
+│   │   ├── qvac.ts        # QVAC SDK
+│   │   ├── ollama.ts      # Ollama
+│   │   └── openai.ts      # OpenAI-compat
+│   ├── tools/
+│   │   ├── registry.ts    # Tool registry
+│   │   ├── file.ts        # File operations
+│   │   ├── terminal.ts    # Shell execution
+│   │   └── skills.ts      # Skill tools
+│   └── state/
+│       ├── session.ts     # SQLite sessions
+│       └── memory.ts      # MEMORY.md
+└── package.json</code></pre>
+    </div>
+    <div>
+      <h3>MVP Deliverables</h3>
+      <ul>
+        <li>Agent loop with streaming responses</li>
+        <li>QVAC provider (chat + tool calling)</li>
+        <li>File tools (read, write, patch, search, glob)</li>
+        <li>Terminal tool (shell execution with safety)</li>
+        <li>Skill system (list, view, create/edit)</li>
+        <li>Session persistence (SQLite)</li>
+        <li>Basic CLI interface</li>
+      </ul>
+
+      <h3 style="margin-top:0.8em;">Key Technical Decisions</h3>
+      <ul>
+        <li><strong>TypeScript</strong> &mdash; aligns with QVAC + Hyperswarm</li>
+        <li><strong>OpenAI-compatible API</strong> for all providers</li>
+        <li><strong>Tool registry pattern</strong> from Hermes</li>
+        <li><strong>agentskills.io</strong> skill format</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 22: The Flywheel -->
+<!-- ============================================================ -->
+<section>
+  <h2>The Flywheel</h2>
+
+  <div style="display:flex; justify-content:center; margin-top:1em;">
+    <div style="position:relative; width:600px; height:400px;">
+
+      <div style="position:absolute; top:0; left:50%; transform:translateX(-50%); text-align:center;">
+        <div class="flow-node active" style="width:180px; font-size:0.65em;">More users build<br>unstoppable apps</div>
+      </div>
+
+      <div style="position:absolute; top:100px; right:0; text-align:center;">
+        <div class="flow-node" style="width:180px; font-size:0.65em; border-color:var(--nous); color:var(--nous);">More skills created<br>from experience</div>
+      </div>
+
+      <div style="position:absolute; bottom:40px; right:30px; text-align:center;">
+        <div class="flow-node" style="width:180px; font-size:0.65em; border-color:var(--holepunch); color:var(--holepunch);">Skills shared<br>via P2P</div>
+      </div>
+
+      <div style="position:absolute; bottom:40px; left:30px; text-align:center;">
+        <div class="flow-node" style="width:180px; font-size:0.65em; border-color:var(--warn); color:var(--warn);">Trajectories train<br>better local models</div>
+      </div>
+
+      <div style="position:absolute; top:100px; left:0; text-align:center;">
+        <div class="flow-node" style="width:180px; font-size:0.65em; border-color:var(--accent); color:var(--accent);">Agent gets smarter<br>at solving problems</div>
+      </div>
+
+      <!-- Arrows -->
+      <svg style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none;" viewBox="0 0 600 400">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#00D4AA" opacity="0.6"/>
+          </marker>
+        </defs>
+        <path d="M 370 50 Q 440 60 450 110" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#arrowhead)"/>
+        <path d="M 470 170 Q 490 240 460 300" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#arrowhead)"/>
+        <path d="M 370 330 Q 300 360 230 330" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#arrowhead)"/>
+        <path d="M 130 300 Q 100 240 110 170" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#arrowhead)"/>
+        <path d="M 150 110 Q 180 60 230 50" stroke="#00D4AA" stroke-width="1.5" fill="none" opacity="0.4" marker-end="url(#arrowhead)"/>
+      </svg>
+
+    </div>
+  </div>
+
+  <p style="text-align:center; font-size:0.65em; color:var(--text-dim); margin-top:0.5em;">
+    Each loop makes the next one faster. <strong>The network effect of P2P makes this compound.</strong>
+  </p>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 23: What Makes This Unique -->
+<!-- ============================================================ -->
+<section>
+  <h2>What Makes This <span class="gradient-text">Unique</span></h2>
+
+  <div class="grid-2">
+    <div class="card card-accent">
+      <span class="emoji">&#x1F6E1;&#xFE0F;</span>
+      <h3>Truly Unstoppable</h3>
+      <p>No API keys. No cloud dependency. No single point of failure. The agent works even if every cloud provider goes down.</p>
+    </div>
+    <div class="card card-accent">
+      <span class="emoji">&#x1F9E0;</span>
+      <h3>Collective Intelligence</h3>
+      <p>When one user's agent solves a hard problem, every agent on the network can learn from it. P2P skills = shared brain.</p>
+    </div>
+    <div class="card card-accent">
+      <span class="emoji">&#x1F680;</span>
+      <h3>Model Improvement Loop</h3>
+      <p>Trajectories from real usage train better local models. The more people use it, the better the models get.</p>
+    </div>
+    <div class="card card-accent">
+      <span class="emoji">&#x1F3D7;&#xFE0F;</span>
+      <h3>Full Stack Integration</h3>
+      <p>Not just an agent &mdash; it understands P2P, HyperDB, Hyperdrive, QVAC. It builds unstoppable apps with you.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE: Provider Strategy -->
+<!-- ============================================================ -->
+<section>
+  <h2>Provider Strategy: <span style="color:var(--accent);">Best Model Wins</span></h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Reality Check</h3>
+      <p style="font-size:0.65em;">QVAC ships great models for chat &amp; tool calling, but the <strong>best local coding models</strong> today are MoE architectures available via LM Studio / Ollama:</p>
+
+      <table>
+        <thead><tr><th>Model</th><th>Active</th><th>Score</th><th>tok/s</th></tr></thead>
+        <tbody>
+          <tr style="background:rgba(0,212,170,0.08);">
+            <td><strong>Qwen3-Coder-30B-A3B</strong></td><td><strong>3B</strong></td><td><strong>96</strong></td><td><strong>~90</strong></td></tr>
+          <tr><td>Qwen3-30B-A3B-Instruct</td><td>3B</td><td>94</td><td>~90</td></tr>
+          <tr><td>GPT-OSS-20B</td><td>20B</td><td>93</td><td>~83</td></tr>
+          <tr><td>Moonlight-16B-A3B</td><td>3B</td><td>91</td><td>~130</td></tr>
+          <tr><td>Qwen2.5-Coder-14B</td><td>14B</td><td>80</td><td>~10</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.55em; color:var(--text-dim);">Scores from llmfit benchmark. tok/s on Apple Silicon MLX.</p>
+    </div>
+    <div>
+      <h3>Solution: OpenAI-Compatible from Day 1</h3>
+      <p style="font-size:0.65em;">All local servers expose <code>/v1/chat/completions</code>. One HTTP client covers everything:</p>
+
+      <div class="arch-layer" style="padding:14px 20px;">
+        <div class="layer-label">Provider Priority</div>
+        <div style="font-size:0.58em;">
+          <div style="padding:4px 0;"><span style="color:var(--accent); font-weight:700;">1.</span> <strong>LM Studio / Ollama</strong> &mdash; best local coding model</div>
+          <div style="padding:4px 0;"><span style="color:var(--accent); font-weight:700;">2.</span> <strong>QVAC</strong> &mdash; P2P features (delegated inference)</div>
+          <div style="padding:4px 0;"><span style="color:var(--accent); font-weight:700;">3.</span> <strong>OpenRouter</strong> &mdash; cloud fallback</div>
+          <div style="padding:4px 0;"><span style="color:var(--accent); font-weight:700;">4.</span> <strong>Anthropic / OpenAI</strong> &mdash; direct APIs</div>
+        </div>
+      </div>
+
+      <div class="highlight-box" style="margin-top:0.6em;">
+        <h3>POC Model</h3>
+        <p style="margin:0; font-size:0.6em;">
+          <strong>Qwen3-Coder-30B-A3B</strong> via LM Studio (MLX 4-bit)<br>
+          3B active &middot; ~90 tok/s &middot; 262K context &middot; Score: 96
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE: AutoResearch -->
+<!-- ============================================================ -->
+<section>
+  <h2>AutoResearch: <span style="color:var(--nous);">Distributed P2P Research</span></h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Karpathy's Pattern (35k stars)</h3>
+      <p style="font-size:0.62em;">Agent reads <code>program.md</code> (a skill!), modifies code, runs 5-min experiments, keeps or discards based on metrics. Loops forever.</p>
+
+      <div class="flow" style="flex-direction:column; align-items:stretch; gap:4px;">
+        <div class="flow-node" style="text-align:left; font-size:0.55em; width:auto;">
+          <strong style="color:var(--accent);">1.</strong> Read <code>program.md</code> (experiment instructions)</div>
+        <div class="flow-node" style="text-align:left; font-size:0.55em; width:auto;">
+          <strong style="color:var(--accent);">2.</strong> Modify target code with an idea</div>
+        <div class="flow-node" style="text-align:left; font-size:0.55em; width:auto;">
+          <strong style="color:var(--accent);">3.</strong> Run experiment (fixed time budget)</div>
+        <div class="flow-node" style="text-align:left; font-size:0.55em; width:auto;">
+          <strong style="color:var(--accent);">4.</strong> Evaluate metric &mdash; keep or discard</div>
+        <div class="flow-node active" style="text-align:left; font-size:0.55em; width:auto;">
+          <strong>5.</strong> Repeat forever until human stops</div>
+      </div>
+
+      <p style="font-size:0.58em; color:var(--text-dim); margin-top:0.5em;">
+        Key insight: <code>program.md</code> <strong>is a skill</strong>. Humans write Markdown instructions, agent does the work.
+      </p>
+    </div>
+    <div>
+      <h3>Our P2P Extension</h3>
+
+      <div class="card card-holepunch" style="margin-bottom:12px;">
+        <h3 style="font-size:0.8em;">Distributed Autonomous Research</h3>
+        <p style="font-size:0.58em;">Multiple machines run experiments overnight. Results shared via HyperDB. No central server.</p>
+        <pre style="font-size:0.9em;"><code>User A runs experiments overnight
+      ↓
+Results → HyperDB /research/{topic}/
+      ↓
+User B discovers: "15% better config!"
+      ↓
+User B applies + runs more experiments
+      ↓
+Collective improvement via P2P</code></pre>
+      </div>
+
+      <div class="card card-tether">
+        <h3 style="font-size:0.8em;">Model Improvement Pipeline</h3>
+        <p style="font-size:0.58em;">Trajectories from real coding &#x2192; training data &#x2192; autoresearch loop &#x2192; better local models &#x2192; shared via Hyperdrive</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE: AutoResearch Applications -->
+<!-- ============================================================ -->
+<section>
+  <h2>AutoResearch: Beyond Training</h2>
+
+  <p style="font-size:0.68em; margin-bottom:0.6em;">The modify &#x2192; run &#x2192; evaluate &#x2192; keep/discard pattern works for anything measurable:</p>
+
+  <div class="grid-4">
+    <div class="card">
+      <span class="emoji">&#x1F9EA;</span>
+      <h3 style="font-size:0.78em;">Optimize Model Configs</h3>
+      <p>Test quantizations, context lengths, batch sizes. Find the fastest config for your hardware.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">&#x2705;</span>
+      <h3 style="font-size:0.78em;">Benchmark Skills</h3>
+      <p>Test if a skill works with different models. Auto-discover which model + skill combos are best.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">&#x1F527;</span>
+      <h3 style="font-size:0.78em;">Improve Code</h3>
+      <p>Agent writes code, runs tests, keeps passing changes. Autonomous refactoring + optimization.</p>
+    </div>
+    <div class="card">
+      <span class="emoji">&#x1F4CA;</span>
+      <h3 style="font-size:0.78em;">Train Better Models</h3>
+      <p>Use coding trajectories as training data. AutoResearch loop fine-tunes better local models.</p>
+    </div>
+  </div>
+
+  <div class="highlight-box" style="margin-top:0.7em;">
+    <p style="margin:0; font-size:0.68em; text-align:center;">
+      <strong>The meta-play:</strong> Our agent uses autoresearch to improve itself &mdash;
+      optimizing its own skills, model configs, and eventually training the next generation of local models.
+      All shared P2P. <em>Self-improving infrastructure.</em>
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 24: Next Steps -->
+<!-- ============================================================ -->
+<section>
+  <h2>Next Steps</h2>
+
+  <div class="grid-2">
+    <div>
+      <h3>Immediate (This Sprint)</h3>
+      <ul>
+        <li><strong>Prototype agent loop</strong> with OpenAI-compatible provider</li>
+        <li>Test with <strong>Qwen3-Coder-30B-A3B</strong> via LM Studio</li>
+        <li>Implement file tools + terminal tool</li>
+        <li>Wire up skill loading from existing agent-pack skills</li>
+        <li>Basic CLI with readline or ink</li>
+        <li>Add QVAC provider alongside OpenAI-compatible</li>
+      </ul>
+
+      <h3 style="margin-top:0.8em;">Open Decisions</h3>
+      <ul>
+        <li>Naming: "Unstoppable Agent"? "ucode"? TBD</li>
+        <li>P2P moderation strategy (phase 3)</li>
+        <li>AutoResearch integration scope (phase 4)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Resources Available</h3>
+      <ul>
+        <li><strong>17 skills</strong> already in agent-pack</li>
+        <li><strong>3 reusable components</strong> (ModelManager, ChatSession, tool-runner)</li>
+        <li><strong>50 QVAC examples</strong> in research/</li>
+        <li><strong>3 reference apps</strong> proving patterns</li>
+        <li><strong>Full QVAC SDK docs</strong> (50+ pages)</li>
+        <li><strong>Qwen3-Coder-30B-A3B</strong> runnable locally (96 score)</li>
+      </ul>
+
+      <h3 style="margin-top:0.8em;">Research Document</h3>
+      <p style="font-size:0.62em;">
+        Full analysis at:<br>
+        <code>research/local-agent/README.md</code><br>
+        <em>Hermes deep dive, CoPaw analysis, QVAC capabilities, autoresearch integration, provider strategy, P2P data model, implementation plan</em>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- SLIDE 25: Closing -->
+<!-- ============================================================ -->
+<section class="title-slide" data-background-gradient="radial-gradient(ellipse at 50% 50%, #0F1A18 0%, #07070A 70%)">
+  <h1 style="font-size:2em;">Build apps with an agent<br>that is <span class="gradient-text">unstoppable</span>.</h1>
+  <p style="font-size:0.7em; color:var(--text-dim); margin-top:1em;">
+    Local inference &middot; P2P knowledge &middot; Self-improving &middot; No API keys
+  </p>
+  <div style="margin-top:2em;">
+    <span class="tag tag-green" style="font-size:0.55em;">QVAC SDK</span>
+    <span class="tag tag-purple" style="font-size:0.55em;">Hyperswarm</span>
+    <span class="tag tag-purple" style="font-size:0.55em;">HyperDB</span>
+    <span class="tag tag-pink" style="font-size:0.55em;">Skills</span>
+    <span class="tag tag-blue" style="font-size:0.55em;">agentskills.io</span>
+    <span class="tag tag-orange" style="font-size:0.55em;">TypeScript</span>
+  </div>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  slideNumber: 'c/t',
+  width: 1280,
+  height: 720,
+  margin: 0,
+  center: false,
+  transition: 'fade',
+  transitionSpeed: 'fast',
+  backgroundTransition: 'fade',
+  controls: true,
+  controlsLayout: 'edges',
+  progress: true,
+  history: true,
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+---
+description: QVAC local AI inference in Expo mobile apps with Bare worklets.
+  Covers the runtime split, static imports, pnpm worker bundling, combined
+  addon manifests, and the validated build/validation order.
+globs:
+alwaysApply: false
+---
+
+# QVAC in Expo Mobile Apps with Bare Worklets
+
+## When to Use
+
+Use this recipe when the mobile app has:
+- A custom Bare worklet (for P2P networking and/or local-first storage)
+- QVAC local AI inference (chatbot, assistant, or any LLM feature)
+- Expo / React Native as the UI layer
+
+## The Runtime Split
+
+The most important decision: where does each concern live?
+
+| Concern | Runtime | Why |
+|---------|---------|-----|
+| P2P transport (Hyperswarm) | Bare worklet | Bare owns the networking stack |
+| Local storage (Hyperbee/Hypercore) | Bare worklet | Storage is tied to P2P replication |
+| Message replication | Bare worklet | Part of the data layer |
+| QVAC inference | Expo / React Native | Avoids bare-pack traversal of QVAC SDK surface |
+| Model loading/unloading | Expo / React Native | Managed by @qvac/sdk in the mobile runtime |
+| Assistant UX | Expo / React Native | Status, diagnostics, mention detection |
+
+### Why NOT in the Bare worklet?
+
+Putting `@qvac/sdk` into the Bare chat worklet was attempted and failed:
+- `bare-pack` had to traverse the full QVAC SDK dependency surface
+- pnpm resolution issues became much worse
+- unrelated transitive packages broke the bundle
+- the worklet became responsible for AI concerns it didn't need to own
+
+## Step-by-Step Integration
+
+### 1. Install QVAC dependencies
+
+```bash
+npm i @qvac/sdk expo-file-system expo-device
+```
+
+> `expo-device` may be required by `@qvac/sdk`. Verify for your SDK version.
+
+### 2. Add Expo plugin
+
+In `app.json`:
+```json
+{
+  "plugins": [
+    "@qvac/sdk/expo-plugin"
+  ]
+}
+```
+
+### 3. Configure pnpm for worker bundling
+
+In `.npmrc`:
+```
+public-hoist-pattern=*
+```
+
+QVAC mobile uses a generated Bare worker bundle internally. Under pnpm, `bare-pack`
+may fail to resolve transitive worker dependencies unless they're hoisted.
+
+### 4. Use static imports
+
+```ts
+import {
+  LLAMA_3_2_1B_INST_Q4_0,
+  completion,
+  deleteCache,
+  loadModel,
+  unloadModel,
+} from '@qvac/sdk'
+```
+
+Do NOT use `import('@qvac/sdk')` for the main inference path. The dynamic import
+boundary can fail with `identifier expected in declaration` in the Expo + Metro +
+Hermes setup. The reference workbench uses static imports.
+
+### 5. Create the assistant module
+
+```ts
+import {
+  LLAMA_3_2_1B_INST_Q4_0,
+  completion,
+  deleteCache,
+  loadModel,
+  unloadModel,
+} from '@qvac/sdk'
+import type { LoadModelOptions } from '@qvac/sdk'
+import { Directory, Paths } from 'expo-file-system'
+
+const SYSTEM_PROMPT = 'You are a helpful assistant. Reply concisely.'
+
+let modelId: string | null = null
+
+export async function ensureModel(
+  onProgress?: (p: { percentage: number }) => void
+): Promise<string> {
+  if (modelId) return modelId
+
+  const cacheDir = new Directory(Paths.cache, 'qvac-models')
+  cacheDir.create()
+
+  modelId = await loadModel({
+    modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+    modelType: 'llm',
+    modelConfig: {
+      ctx_size: 2048,
+      n_discarded: 200,
+    },
+    savePath: cacheDir.uri.replace('file://', ''),
+    onProgress,
+  })
+
+  return modelId
+}
+
+export async function generateReply(
+  prompt: string,
+  history: Array<{ role: string; content: string }>
+): Promise<string> {
+  const id = await ensureModel()
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.slice(-10),
+    { role: 'user', content: prompt },
+  ]
+
+  const result = await completion({
+    modelId: id,
+    history: messages,
+    stream: true,
+  })
+
+  let reply = ''
+  for await (const token of result.tokenStream) {
+    reply += token
+  }
+
+  return reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim()
+}
+
+export async function destroy(): Promise<void> {
+  if (modelId) {
+    await deleteCache({ kvCacheKey: 'assistant' })
+    await unloadModel({ modelId })
+    modelId = null
+  }
+}
+```
+
+### 6. Wire into the chat flow
+
+When the user mentions `@qvac` in a message:
+1. Detect the mention in the Expo/RN layer
+2. Call `generateReply()` with the prompt and recent history
+3. Send the reply back through the existing P2P message transport (via RPC to Bare worklet)
+
+```ts
+if (containsQvacMention(draft)) {
+  const reply = await generateReply(draft, messages)
+  await sendAssistantMessage(bareRpc, {
+    body: reply,
+    authorName: 'QVAC Assistant',
+  })
+}
+```
+
+### 7. Handle combined addon manifests
+
+When QVAC patches the linker, both QVAC and Bare worklet addons must be in
+one combined manifest. The `link-bare-addons.mjs` script should discover
+addons from both sources and write a single `addons.manifest.json`.
+
+### 8. Build and validate
+
+```bash
+pnpm install
+pnpm run build:bare
+pnpm run link:bare:addons
+pnpm run prebuild
+pnpm run ios
+```
+
+Validate in order:
+1. App boots
+2. Bare worklet starts
+3. P2P workspace join works
+4. `@qvac` mention detection works
+5. SDK import succeeds (check diagnostics)
+6. Model download starts
+7. Model loads
+8. Completion generates tokens
+9. Reply appears in chat via P2P transport
+
+## Diagnostics-First Workflow
+
+Before changing prompts, models, or backends, add diagnostics:
+
+```ts
+console.log('[qvac] config: created')
+console.log('[qvac] sdk: importing @qvac/sdk')
+console.log('[qvac] sdk: import succeeded')
+console.log('[qvac] model: loading', modelSrc)
+console.log('[qvac] model: loaded', modelId)
+console.log('[qvac] completion: starting')
+console.log('[qvac] completion: first token received')
+console.log('[qvac] completion: done, tokens=', count)
+```
+
+Surface these in the UI during development. The biggest debugging loops happen
+when the failure boundary is unknown.
+
+## Common Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `MODULE_NOT_FOUND: '@qvac/infer-base'` | pnpm worker-bundling visibility | Add `public-hoist-pattern=*` to `.npmrc` |
+| `Unable to resolve "expo-device"` | SDK version requires it | `npx expo install expo-device` |
+| `ADDON_NOT_FOUND: Cannot find addon '.'` | Manifest doesn't cover all runtimes | Generate combined addon manifest |
+| `identifier expected in declaration` | Dynamic `import('@qvac/sdk')` failed | Switch to static imports |
+| iOS addon exists but crashes at runtime | CocoaPods scripts don't copy/embed it | Patch CocoaPods support files |
+
+## Anti-Patterns
+
+1. **Do NOT import `@qvac/sdk` into the Bare worklet** — run inference in Expo/RN
+2. **Do NOT use dynamic `import('@qvac/sdk')`** for the main inference path
+3. **Do NOT chase missing modules one by one** — fix pnpm layout first
+4. **Do NOT tune prompts/models before confirming SDK import works**
+5. **Do NOT treat simulator failure as "QVAC unsupported"** — compare to reference first
+6. **Do NOT separate addon inventories per feature** — one binary, one manifest
+
+## Reference
+
+- Battle-tested in `sandbox/codex-mobile-slack-p2p-2/`
+- Reference workbench: `reference-apps/qvac-workbench-mobile/`
+- Key reference file: `contexts/qvac/features/inference/useInference.ts` (static imports)

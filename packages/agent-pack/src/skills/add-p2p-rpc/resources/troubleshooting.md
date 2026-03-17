@@ -12,7 +12,7 @@
 ## `Error: No binaries found for target 'darwin-arm64'`
 - Add `shamefully-hoist=true` to your `.npmrc` file
 - This is required for `bare-rpc` (and any package with Bare native binaries) in pnpm projects
-- After adding, run `pnpm install` again
+- After adding, run `npm install` again
 
 ## Peers never connect / discovery fails
 - Both peers MUST join with `{ server: true, client: true }` for mutual discovery

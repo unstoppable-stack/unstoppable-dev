@@ -1,6 +1,6 @@
 # QVAC (Local AI) — Content Status
 
-**6 battle-tested, 10 docs-only, 1 not covered** out of 17 items.
+**7 battle-tested, 10 docs-only, 1 not covered** out of 18 items.
 
 ---
 
@@ -16,6 +16,20 @@
 | Think tag filtering | Battle-tested |
 
 Well covered. No further work needed.
+
+---
+
+## Mobile QVAC Integration — BATTLE-TESTED
+
+| Item | Status | Agent Pack File |
+|------|--------|----------------|
+| QVAC in Expo mobile (runtime split) | Battle-tested | recipes/qvac-mobile-expo.mdc |
+
+Battle-tested via `codex-mobile-slack-p2p-2`. Key learnings:
+- QVAC runs in Expo/RN runtime, NOT in Bare worklet
+- Static imports required (no dynamic `import('@qvac/sdk')`)
+- pnpm needs `public-hoist-pattern=*` for worker bundling
+- Combined addon manifest for QVAC + Bare worklet apps
 
 ---
 

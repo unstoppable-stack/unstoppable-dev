@@ -3,11 +3,11 @@
 ## Model constant not found
 - Only use constants from `@qvac/sdk@0.7.0` — see the model guide
 - `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist
-- Use `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, or `QWEN3_0_6B_INST`
+- Use `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, or `QWEN3_600M_INST_Q4`
 
 ## Zod type errors with ToolInput
 - `@qvac/sdk` requires Zod v4, not v3
-- Run `pnpm add zod@^4` to fix
+- Run `npm i zod@^4` to fix
 
 ## Model describes tool usage in text but never actually calls tools
 - **Most common cause**: `tools: true` is NOT set in `modelConfig` at load time
@@ -63,3 +63,52 @@
 - Don't use a tool to fetch static data — put it in the system prompt
 - Keep tool count low — each additional tool reduces reliability
 - Use 7B model for best quality (`QWEN_3_1_7B_INST_Q4`)
+
+---
+
+## Mobile Expo — QVAC-Specific Errors
+
+### `MODULE_NOT_FOUND: Cannot find module '@qvac/infer-base'`
+(also `@qvac/dl-base`, `tinyld/heavy`, and similar transitive packages)
+- **Cause**: pnpm worker-bundling cannot resolve QVAC transitives
+- **Fix**: Add `public-hoist-pattern=*` to `.npmrc`
+- Do NOT chase each missing module by adding direct dependencies one at a time
+
+### `Unable to resolve "expo-device" from @qvac/sdk`
+- **Cause**: The chosen QVAC SDK version expects `expo-device` but the app doesn't declare it
+- **Fix**: `npx expo install expo-device`
+- Always align with the reference workbench's SDK version and its required companion modules
+
+### `ADDON_NOT_FOUND: Cannot find addon '.' imported from bare-type/binding.js`
+- **Cause**: Addon manifest only describes one runtime (QVAC or chat), not both
+- **Fix**: Generate a combined addon manifest that includes both Bare worklet and QVAC addons
+- Also verify CocoaPods support scripts reference the framework (see below)
+
+### `ADDON_NOT_FOUND` even though `.xcframework` exists on disk
+- **Cause**: CocoaPods support scripts don't copy/embed the framework into the `.app` bundle
+- **Fix**: Inspect and patch these files under `ios/Pods/Target Support Files/`:
+  - `react-native-bare-kit-xcframeworks.sh`
+  - `react-native-bare-kit-xcframeworks-input-files.xcfilelist`
+  - `react-native-bare-kit-xcframeworks-output-files.xcfilelist`
+  - `Pods-<AppName>-frameworks.sh`
+- The `link-bare-addons.mjs` script should handle this automatically
+
+### `identifier expected in declaration` (during QVAC inference)
+- **Cause**: Dynamic `import('@qvac/sdk')` failed in the Expo + Metro + Hermes setup
+- **Fix**: Switch the main inference path to static imports from `@qvac/sdk`
+- Compare to the reference workbench's import pattern before changing prompts or models
+- This error often looks like a parser issue but is actually an import-boundary problem
+
+### QVAC inference fails but prompt/model tweaks don't help
+- **Cause**: The failure is likely at the build/runtime level, not the prompt level
+- **Fix**: Add diagnostics at each stage before changing prompts:
+  1. Config initialization → logged?
+  2. SDK import → succeeded?
+  3. Model load → started?
+  4. Completion → first token received?
+- The decisive failures in battle testing were import path and dependency surface issues, not prompt shape
+
+### Model constant not found (mobile)
+- The installed SDK version may export different constants than documented
+- Always verify constants from the actual installed `@qvac/sdk` package exports
+- Always verify constants from the actual installed `@qvac/sdk` package exports

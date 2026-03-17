@@ -1,0 +1,259 @@
+---
+description: Autobase: multi-writer consensus for Hypercore — event sourcing over P2P
+alwaysApply: false
+---
+
+# Autobase
+
+## Overview
+
+Autobase is the **multi-writer consensus layer** for Hypercore. It takes
+multiple independent Hypercore writers, linearizes their operations into a
+single deterministic order, and produces a consistent **view** (typically a
+Hyperbee or HyperDB database). Think of it as event sourcing over P2P.
+
+Used when multiple peers (or devices, or server instances) need to write to
+the same data structure and converge to the same state.
+
+## When to Use vs When NOT to Use
+
+| Scenario | Use Autobase? | Use Instead |
+|---|---|---|
+| Multiple users editing shared data | Yes | — |
+| Multi-device sync (same user, two laptops) | Yes | — |
+| Server cluster with failover | Yes (indexers) | — |
+| Single-writer append log | No | Hypercore directly |
+| Single-writer key-value store | No | Hyperbee directly |
+| Read-only replication / mirroring | No | Corestore replication |
+
+## Installation
+
+```bash
+npm i autobase corestore hyperswarm
+```
+
+Optional for typed operations:
+```bash
+npm i hyperdispatch hyperschema
+```
+
+## Core Concepts
+
+### Writers
+Each participant has a local Hypercore (their "writer core"). They append
+operations independently, even while offline.
+
+### Linearizer
+Analyzes the causal DAG of all writers' operations and produces a single
+deterministic ordering. Operations never precede ones they reference.
+
+### Indexers
+Writers promoted to build the view. A **majority quorum** of indexers must
+be online for the signed length to advance. Indexers also ack state.
+
+### View
+The output — a derived data structure created by applying operations in
+order. Created in your `open` function, updated in your `apply` function.
+
+### Signed Length
+A checkpoint where ordering is permanently locked. Advances as a quorum of
+indexers acknowledges state. Everything before the signed length will never
+be reordered.
+
+### Acknowledgements (Acks)
+Indexers periodically append `null` values that reference the latest state
+they've seen. When a majority acks a point, the signed length advances.
+
+## Quick Start
+
+```js
+const Corestore = require('corestore')
+const Autobase = require('autobase')
+
+const store = new Corestore('./my-data')
+
+const base = new Autobase(store, null, {
+  open(store) {
+    return store.get('my-view')
+  },
+  async apply(nodes, view, host) {
+    for (const node of nodes) {
+      if (node.value === null) continue // ack node
+      const op = JSON.parse(node.value.toString())
+
+      if (op.type === 'add-writer') {
+        await host.addWriter(Buffer.from(op.key, 'hex'), { indexer: true })
+        continue
+      }
+
+      await view.append(node.value)
+    }
+  },
+  ackInterval: 5000,
+  ackThreshold: 0,
+})
+
+await base.ready()
+console.log('Autobase key:', base.key.toString('hex'))
+console.log('Is indexer:', base.isIndexer)
+```
+
+## API Reference
+
+### Constructor
+
+```js
+const base = new Autobase(store, bootstrap, opts)
+```
+
+- `store` — a Corestore instance
+- `bootstrap` — `null` for new base, or `base.key` to join an existing one
+- `opts.open(store)` — create the view data structure (called once)
+- `opts.apply(nodes, view, host)` — apply linearized operations to the view
+- `opts.close(view)` — cleanup when closing
+- `opts.ackInterval` — auto-ack timer in ms (e.g., `5000`)
+- `opts.ackThreshold` — minimum unacked ops before ack triggers (`0` = ack freely)
+- `opts.valueEncoding` — encoding for values
+- `opts.encryptionKey` — key to encrypt the base
+
+### Properties
+
+- `base.key` — primary key of the autobase
+- `base.discoveryKey` — for Hyperswarm topic joining
+- `base.view` — the derived view (created by `open`)
+- `base.isIndexer` — whether this instance builds the view
+- `base.writable` — whether this instance can append
+- `base.signedLength` — permanent checkpoint index
+
+### Methods
+
+- `await base.append(value)` — append an operation
+- `await base.update()` — fetch data and update the linearizer
+- `await base.ack()` — manually acknowledge current state (indexers only)
+- `await base.ready()` — wait for initialization
+
+### Host Calls (in `apply`)
+
+- `await host.addWriter(key, { indexer })` — add a writer/indexer
+- `await host.removeWriter(key)` — remove a writer
+- `host.removeable(key)` — check if writer can be removed
+
+### Events
+
+- `base.on('update')` — view was updated
+- `base.on('is-indexer')` — this instance became an indexer
+- `base.on('is-non-indexer')` — this instance is no longer an indexer
+- `base.on('writable')` — this instance can now write
+- `base.on('fast-forward', (to, from))` — fast-forwarded to a checkpoint
+
+### Replication
+
+```js
+const swarm = new Hyperswarm()
+swarm.join(base.discoveryKey)
+swarm.on('connection', (conn) => store.replicate(conn))
+```
+
+## Event Sourcing Pattern
+
+Autobase separates **what happened** (operations) from **current state** (view):
+
+```
+Writers (event logs)  →  Linearizer  →  apply()  →  View (database)
+```
+
+The `apply` function is your reducer. It must be **purely deterministic** —
+same operations in the same order must always produce the same view. Never
+read external state or use timestamps in `apply`.
+
+## Hyperdispatch (Typed Operations)
+
+For production apps, use Hyperdispatch + Hyperschema for typed, binary-encoded
+operations instead of raw JSON. This is the pattern used by the QVAC registry.
+
+```js
+const { encode } = schema.hyperdispatchSpec
+
+// Encode a typed operation
+const buf = encode('@my-app/put-item', { id: '123', name: 'Test' })
+await base.append(buf)
+```
+
+```js
+const { Router } = schema.hyperdispatchSpec
+const router = new Router()
+
+router.add('@my-app/put-item', async (data, ctx) => {
+  await ctx.view.put(data)
+})
+
+// In apply:
+async function apply(nodes, view, base) {
+  for (const node of nodes) {
+    await router.dispatch(node.value, { view, base })
+  }
+}
+```
+
+## Writer Bootstrap Procedure
+
+1. **Start Instance 1** (no bootstrap) — becomes sole indexer, outputs `base.key`
+2. **Start Instance 2** with bootstrap = Instance 1's `base.key`
+3. **Instance 1**: `base.append({ type: 'add-writer', key: instance2.local.key })`
+4. **Instance 2** receives `is-indexer` event — now participates in consensus
+5. Repeat for more instances. Use odd numbers (3, 5, 7) for clean quorum.
+
+## Clients (Read-Only Peers)
+
+Clients don't participate in Autobase directly. They replicate the **view
+core** and query it like a regular Hyperbee/HyperDB:
+
+```js
+const swarm = new Hyperswarm()
+swarm.join(viewDiscoveryKey)
+swarm.on('connection', (conn) => store.replicate(conn))
+
+// Query the replicated view directly
+const value = await viewBee.get('some-key')
+```
+
+## Integration with Other Modules
+
+- **Corestore**: Autobase requires a Corestore for managing writer and view cores
+- **Hyperswarm**: Replication and discovery via `base.discoveryKey`
+- **Hyperbee**: Most common view type — a B-tree built from linearized operations
+- **HyperDB**: Uses Autobase internally for multi-writer support
+- **Hyperdispatch + Hyperschema**: Typed operation encoding/routing for production
+
+## Common Pitfalls
+
+- **Non-deterministic apply**: The `apply` function must only modify the
+  `view`. Never use `Date.now()`, `Math.random()`, or external state. When
+  operations are reordered, apply is re-run — non-determinism breaks the view.
+- **Extension must be disabled**: When using Hyperbee or HyperDB as a view,
+  pass `{ extension: false }`. Autobase manages its own protocol extensions.
+- **Assuming operation order**: With multiple writers, a "create" might arrive
+  after an "update". Use idempotent upserts, not create-then-update patterns.
+- **Not waiting for indexer status**: After `addWriter`, wait for the
+  `is-indexer` event before the new instance writes.
+- **Even number of indexers**: Use odd numbers (3, 5, 7) for clean majority
+  quorum. With 2 indexers, losing 1 means no quorum.
+- **Forgetting ackInterval**: Without acks, the signed length never advances
+  and peers can't fast-forward. Set `ackInterval: 5000` for production.
+
+## Key Properties
+
+| Property | Behavior |
+|---|---|
+| Consistency | Eventually consistent (CAP: AP) |
+| Ordering | Causal — operations never precede their references |
+| Partition tolerance | Writers operate offline, merge on reconnect |
+| Checkpoints | Majority quorum locks ordering via signed length |
+| Reordering | Possible before signed length, permanent after |
+
+## Resources
+
+- npm: `autobase@7.27.3`
+- GitHub: https://github.com/holepunchto/autobase
+- Hyperdispatch: https://github.com/holepunchto/hyperdispatch
+- Hyperschema: https://github.com/holepunchto/hyperschema

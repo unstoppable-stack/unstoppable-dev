@@ -4,7 +4,7 @@
 
 `@qvac/sdk` depends on Zod v4 internally. Install `zod@^4` (not v3):
 ```bash
-pnpm add zod@^4
+npm i zod@^4
 ```
 If you have Zod v3 installed, `ToolInput` types will produce confusing TypeScript errors.
 

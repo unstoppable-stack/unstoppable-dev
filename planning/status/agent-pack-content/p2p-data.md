@@ -83,7 +83,7 @@ be validated by the P2P File Sync reference app (see planning/roadmap/reference-
 |------|--------|-------|
 | Schema definition | Docs only | From official docs |
 | Queries | Docs only | — |
-| Multi-writer | Not covered | Key differentiator from Hyperbee |
+| Multi-writer (Autobase) | Documented | modules/autobase.mdc, skills/add-multi-writer-sync |
 | Auto-replication | Docs only | — |
 | Indexes | Not covered | — |
 

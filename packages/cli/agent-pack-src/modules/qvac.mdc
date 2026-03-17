@@ -14,7 +14,7 @@ models, runs inference, streams tokens, and manages model lifecycle.
 ## Version Notes
 
 - Latest npm: `@qvac/sdk@0.7.0` (verified 2026-03-06).
-- Reference apps (workbench, qvac-health) currently on `^0.6.1`.
+- Reference apps (workbench, qvac-health) originally on `^0.6.1`, migrating to `^0.7.0`.
 - SDK uses file-based configuration since 0.5.0 (see Configuration section).
 
 ## Installation
@@ -92,7 +92,7 @@ await unloadModel({ modelId });
 | General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
 | Code generation                 | _No explicit `CODER_\*` constants in 0.7.0\_                   | Use Qwen instruct models or check newer SDKs.         |
 | Highest quality (desktop)       | `GPT_OSS_20B_INST_Q4_K_M`                                      | ~12GB, desktop only. Non-standard tool call format.   |
-| Mobile/small footprint          | `QWEN3_0_6B_INST` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
+| Mobile/small footprint          | `QWEN3_600M_INST_Q4` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
 | Multimodal (vision/video)       | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
 | Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
 | Speech-to-text                  | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
@@ -100,7 +100,7 @@ await unloadModel({ modelId });
 
 Verified model constants exported by `@qvac/sdk@0.7.0` (subset):
 `LLAMA_3_2_1B_INST_Q4_0`, `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`,
-`QWEN3_0_6B_INST`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
+`QWEN3_600M_INST_Q4`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
 `QWEN_3_8B_INST_Q4_K_M`, `GPT_OSS_20B_INST_Q4_K_M`,
 `SALAMANDRATA_2B_INST_Q8`, `SMOLVLM2_2_500M_MULTIMODAL_Q8_0`,
 `MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0`, `GTE_LARGE_FP16`,
@@ -186,7 +186,7 @@ const modelId = await loadModel({
 
 ## Qwen 3 `<think>` Token Handling
 
-Qwen 3 models (`QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, `QWEN3_0_6B_INST`)
+Qwen 3 models (`QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, `QWEN3_600M_INST_Q4`)
 emit `<think>...</think>` blocks for internal reasoning before generating their
 response.
 

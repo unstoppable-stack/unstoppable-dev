@@ -140,5 +140,22 @@ setInterval(() => {
 - **`discovery.flushed()` !== `swarm.flush()`.** The first means "DHT announcement sent"; the second means "all pending connection attempts resolved". Use both for reliable init.
 - Add `.peer2/` to `.gitignore`.
 
+## Critical Rules
+- **Use separate storage directories per peer** — two peers sharing the same Hypercore/Hyperbee storage corrupt each other. The `test-peer2.sh` script handles this with `.peer2/`.
+- **Clean up storage between test runs** — stale storage from previous runs causes confusing state. Delete `.peer2/` and any test storage dirs before re-testing.
+- **Don't use production discovery keys for testing** — generate fresh topic keys for test sessions. Colliding with real peers on the public DHT causes unexpected connections.
+- **Don't symlink `node_modules` between Pear instances** — `pear-electron` assumes exclusive access. Symlinks cause `ERR_INVALID_CONFIG`.
+- **Always run the local DHT bootstrap for same-machine tests** — without it, peers on the same machine will never discover each other via the public DHT.
+- **Kill all test processes when done** — leftover DHT bootstrap nodes, swarms, and Pear instances consume ports and memory. Check with `ps aux | grep pear`.
+
+## Validation
+1. Local DHT bootstrap starts (`dht-bootstrap.js` prints "running on 127.0.0.1:40838")
+2. First peer starts and announces on the local DHT
+3. Second peer starts in a separate directory (`.peer2/`) without `ERR_INVALID_CONFIG`
+4. Both peers discover each other (connection count > 0 within ~3 seconds)
+5. Data replicates between peers (write on peer 1, read on peer 2)
+6. Cleanup doesn't leave orphan processes (`ps aux | grep -E 'pear|dht-bootstrap'` shows nothing after stopping)
+7. `.peer2/` is in `.gitignore`
+
 ## Deep Dive
 - Full test scripts and templates: read `resources/full-setup.md`

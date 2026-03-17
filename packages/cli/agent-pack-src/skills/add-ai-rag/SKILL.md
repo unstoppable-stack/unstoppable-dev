@@ -25,7 +25,7 @@ description: Add local embeddings and RAG (Retrieval-Augmented Generation)
 
 1. **Install dependencies**:
    ```bash
-   pnpm add @qvac/sdk better-sqlite3
+   npm i @qvac/sdk better-sqlite3
    ```
 
 2. **Load an embedding model**:
@@ -123,6 +123,24 @@ Combine with `add-file-storage` (Hyperdrive) for P2P document sharing:
 - P2P wiki with AI-powered Q&A
 - Document assistant (ask questions about PDFs, code, etc.)
 - Customer support bot over local documentation
+
+## Critical Rules
+- **Chunk before embedding** — never embed entire documents at once. Split into 500-1000 token chunks with overlap for context continuity.
+- **Chunk size affects quality** — too small loses context, too large dilutes relevance. Experiment with your data.
+- **Verify embedding model is loaded before querying** — calling `embed()` before `loadModel()` resolves silently fails or throws cryptic errors.
+- **Use SQLite for vector storage on mobile** — `better-sqlite3` doesn't work in Bare/Expo; use a compatible SQLite binding.
+- **Don't mix embedding dimensions** — if you re-index with a different model, drop and recreate the vector table. Mismatched dimensions produce garbage similarity scores.
+- **Don't skip re-indexing on document changes** — stale embeddings return outdated or wrong results.
+- **Don't load all rows for search at scale** — the naive `SELECT * FROM documents` approach breaks past ~10K rows. Add approximate nearest-neighbor indexing or pagination.
+
+## Validation
+1. Embedding model loads without errors (`loadModel` with `modelType: 'embedding'` resolves)
+2. `embed()` returns a vector of the expected dimension for a sample string
+3. Documents are chunked and inserted into SQLite (verify row count matches expected chunks)
+4. Search query returns results sorted by relevance (top result should be semantically closest)
+5. RAG-generated answers reference the correct context (not hallucinated content)
+6. Re-indexing after document change produces updated search results
+7. On mobile/Bare: SQLite binding loads and vector table is accessible
 
 ## Key Gotchas
 - Embedding models are separate from LLM models — load both

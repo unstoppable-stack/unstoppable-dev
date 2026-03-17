@@ -409,10 +409,28 @@ to use the same core key, and the Vault's copy will replicate back.
 - [ ] Selective sync for Hyperdrives
 - [ ] Notifications
 
-### Phase 4: Multi-Device
-- [ ] Vault-to-Vault sync
-- [ ] Device linking
-- [ ] Conflict resolution (if any)
+### Phase 4: Multi-Device (Autobase)
+
+The multi-device phase introduces the classic multi-writer problem: two Vault
+instances on different devices independently registering apps, modifying
+settings, and managing storage. **Autobase** is the right tool for this.
+
+- [ ] Migrate Vault registry from bare Hyperbee to **Autobase** with Hyperbee view
+- [ ] Each Vault instance becomes a writer+indexer in the Autobase
+- [ ] Device linking via `addWriter` (share Vault base key + local writer key)
+- [ ] Use `ackInterval` for convergence between devices
+- [ ] Conflict handling via idempotent upserts in the `apply` function
+- [ ] No separate "conflict resolution" needed — Autobase's linearizer handles ordering
+
+**Why Autobase for Phase 4:**
+- Both Vaults can write independently (offline-first)
+- The causal DAG linearizer produces a consistent registry on both devices
+- The same Hyperswarm replication already used in Phase 1-2 carries Autobase data
+- Reference apps (`qvac-workbench-desktop`) already use this exact pattern for
+  cross-device sync of projects, threads, and settings
+
+**Not needed in Phase 1-3:** The Vault is a single writer (one device, read-only
+mirror). Adding Autobase prematurely adds complexity without benefit.
 
 ### Phase 5: Transition to Cloud
 - [ ] Same protocol, hosted by Tether

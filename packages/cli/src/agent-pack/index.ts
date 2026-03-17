@@ -152,9 +152,9 @@ This is an Unstoppable Stack project using the ${options.template} template.
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
 
 ## Commands
-- \`pnpm dev\` - Start development
-- \`pnpm build\` - Build for production
-- \`pnpm test\` - Run tests
+- \`npm run dev\` - Start development
+- \`npm run build\` - Build for production
+- \`npm test\` - Run tests
 
 ## Project Structure
 \`\`\`
@@ -176,6 +176,14 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 3. **Get user confirmation** before writing any code
 4. **Create each app** with its own folder and README
 
+## Available Agents
+
+Delegate to specialized agents for domain-specific tasks:
+
+- \`@p2p-expert\` — P2P patterns, Hypercore, HyperDB, Hyperswarm, Hyperdrive
+- \`@ai-expert\` — QVAC local AI inference, model selection, tool calling
+- \`@planner\` — Implementation plans and architecture decisions
+
 ## Available Skills
 
 Use these slash commands for guided implementation:
@@ -193,6 +201,7 @@ ${content.skills.map((s: any) => {
 - **Offline AI**: Local inference via QVAC, no API calls needed
 
 For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
+For specialized agents, see \`.claude/agents/\`.
 `
 
   await writeFile(join(options.outputDir, 'CLAUDE.md'), claudeMd)
@@ -235,18 +244,29 @@ For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
     files.push(`.claude/rules/${core.id}.md`)
   }
 
-  // 5. Write ALL module docs as path-scoped rules
+  // 5. Write ALL module docs as path-scoped rules (each module gets its own paths)
+  const claudeModulePaths: Record<string, string[]> = {
+    hyperdb: ['src/data/**/*.ts', 'src/db/**/*.ts'],
+    hyperdrive: ['src/files/**/*.ts', 'src/storage/**/*.ts'],
+    hyperswarm: ['src/p2p/**/*.ts', 'src/network/**/*.ts'],
+    hypercore: ['src/data/**/*.ts', 'src/p2p/**/*.ts'],
+    hyperbee: ['src/data/**/*.ts', 'src/db/**/*.ts'],
+    hyperdht: ['src/p2p/**/*.ts', 'src/network/**/*.ts'],
+    corestore: ['src/data/**/*.ts'],
+    qvac: ['src/ai/**/*.ts', 'src/inference/**/*.ts'],
+    wdk: ['src/wallet/**/*.ts', 'src/payments/**/*.ts'],
+    pear: ['index.js', 'index.html', 'src/ui/**/*.ts', 'src/components/**/*.tsx'],
+    bare: ['src/**/*.ts', 'worker/**/*.ts', 'bare/**/*.js'],
+    'expo-bare': ['app/**/*.tsx', 'bare/**/*.js', 'src/**/*.ts'],
+  }
+
   for (const mod of content.modules) {
     const body = stripFrontmatter(mod.content)
+    const paths = claudeModulePaths[mod.id] || ['src/**/*.ts']
+    const pathLines = paths.map(p => `  - "${p}"`).join('\n')
     const pathScoped = `---
 paths:
-  - "src/p2p/**/*.ts"
-  - "src/data/**/*.ts"
-  - "src/ai/**/*.ts"
-  - "src/wallet/**/*.ts"
-  - "src/ui/**/*.ts"
-  - "src/components/**/*.ts"
-  - "src/components/**/*.tsx"
+${pathLines}
 ---
 
 ${body}
@@ -271,6 +291,94 @@ ${body}
       }
     }
   }
+
+  // 7. Write custom subagents (.claude/agents/)
+  const agentsDir = join(claudeDir, 'agents')
+  await mkdir(agentsDir, { recursive: true })
+
+  await writeFile(join(agentsDir, 'p2p-expert.md'), `# P2P Expert Agent
+
+You are an expert in P2P application development with the Holepunch stack.
+
+## Your Knowledge
+- Hypercore append-only logs and replication
+- HyperDB distributed database with schemas
+- Hyperswarm P2P networking and discovery
+- Hyperdrive P2P filesystem
+- Pear desktop and terminal runtime
+
+## Key Patterns
+- Always await \`db.ready()\` / \`core.ready()\`
+- Handle peer disconnection gracefully
+- Use proper replication patterns (replicate both sides, await swarm.flush())
+- Manage Hyperswarm topics correctly
+- Use Corestore for multi-core management
+- Don't block on peer discovery — read local data first
+
+## When to Use
+The user should delegate to you for P2P data sync, connection debugging, replication setup, or peer discovery issues.
+`)
+  files.push('.claude/agents/p2p-expert.md')
+
+  await writeFile(join(agentsDir, 'ai-expert.md'), `# AI Expert Agent
+
+You are an expert in local AI inference with QVAC.
+
+## Your Knowledge
+- QVAC SDK setup, model loading, streaming
+- Model selection (Llama 3.2 for chat, Qwen 3 for tool calling)
+- Tool calling with Zod schemas (no refinements)
+- KV cache for multi-turn conversations
+- Memory management and context overflow
+- Mobile considerations (static imports, Expo runtime)
+
+## Key Patterns
+- Use streaming for responsive UX
+- Always \`unloadModel()\` when done
+- Use \`kvCache: sessionId\` for multi-turn conversations
+- Use Qwen models for tool calling (\`tools: true\` in modelConfig)
+- Validate constraints in handlers, not Zod schemas
+
+## When to Use
+The user should delegate to you for model setup, inference debugging, tool calling patterns, or performance optimization.
+`)
+  files.push('.claude/agents/ai-expert.md')
+
+  await writeFile(join(agentsDir, 'planner.md'), `# Planning Agent
+
+Help create clear, actionable implementation plans in \`planning/\`.
+
+## Process
+1. Understand the goal — What are we building?
+2. Identify modules — Which stack modules will this use?
+3. Break into phases — Logical implementation steps
+4. Document patterns — Which skills/recipes apply?
+5. Write the plan — Create markdown in \`planning/\`
+
+## Plan Template
+
+\`\`\`markdown
+# Feature: [Name]
+
+## Goal
+[Clear description]
+
+## Modules Required
+- [Module]: [Why]
+
+## Implementation Steps
+### Phase 1: [Name]
+- [ ] Step 1
+- [ ] Step 2
+
+## Skills to Use
+- [/skill-name]: [Why]
+
+## Testing Strategy
+[How to verify]
+\`\`\`
+`)
+  files.push('.claude/agents/planner.md')
 
   return { filesWritten: files, warnings: [] }
 }
@@ -297,9 +405,9 @@ alwaysApply: true
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
 
 ## Commands
-- \`pnpm dev\` - Start development
-- \`pnpm build\` - Build for production
-- \`pnpm test\` - Run tests
+- \`npm run dev\` - Start development
+- \`npm run build\` - Build for production
+- \`npm test\` - Run tests
 
 ## Project Structure
 \`\`\`
@@ -440,7 +548,7 @@ globs: ["src/ai/**/*.ts", "src/inference/**/*.ts"]
 
 ## Model Selection
 - General chat: LLAMA_3_2 family
-- Tool calling: QWEN_2_5 family (1.7B+ recommended)
+- Tool calling: QWEN_3 family (3B+ recommended)
 - Mobile: 1B variants
 - Desktop quality: 3B or 7B variants
 
@@ -529,9 +637,9 @@ async function buildOpenCode(
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
 
 ## Commands
-- \`pnpm dev\` - Start development
-- \`pnpm build\` - Build for production
-- \`pnpm test\` - Run tests
+- \`npm run dev\` - Start development
+- \`npm run build\` - Build for production
+- \`npm test\` - Run tests
 
 ## Before Building
 
@@ -697,10 +805,18 @@ async function buildCodex(
 ): Promise<BuildResult> {
   const files: string[] = []
 
-  const codexDir = join(options.outputDir, '.codex')
-  await mkdir(join(codexDir, 'skills'), { recursive: true })
+  // Codex uses AGENTS.md as its primary config. It auto-discovers AGENTS.md
+  // files in subdirectories. No .codex/ config files needed.
 
-  // 1. Build AGENTS.md (Codex's equivalent of CLAUDE.md)
+  // 1. Build comprehensive root AGENTS.md
+  // Codex can't progressively load skills, so we inline more context here.
+  const coreContent = content.core.map((c: any) => stripFrontmatter(c.content)).join('\n\n---\n\n')
+
+  const skillList = content.skills.map((s: any) => {
+    const { data } = parseFrontmatter(s.skillMd)
+    return `- **${s.id}** — ${data.description || s.id}`
+  }).join('\n')
+
   let agentsMd = `# ${options.projectName}
 
 ## Overview
@@ -709,17 +825,18 @@ This is an Unstoppable Stack project using the ${options.template} template.
 Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
 
 ## Commands
-- \`pnpm dev\` - Start development
-- \`pnpm build\` - Build for production
-- \`pnpm test\` - Run tests
+- \`npm run dev\` - Start development
+- \`npm run build\` - Build for production
+- \`npm test\` - Run tests
 
 ## Project Structure
 \`\`\`
 ├── planning/         # Architecture decisions & feature plans
 ├── src/              # Application source code
 │   ├── app/          # Application logic
-│   ├── p2p/          # P2P networking
-│   ├── data/         # Database/storage
+│   ├── p2p/          # P2P networking (see src/p2p/AGENTS.md)
+│   ├── data/         # Database/storage (see src/data/AGENTS.md)
+│   ├── ai/           # AI inference (see src/ai/AGENTS.md)
 │   └── ui/           # UI components
 └── README.md
 \`\`\`
@@ -728,26 +845,14 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 
 **You MUST follow this process:**
 
-1. **Ask the pre-implementation checklist questions** (see architecture skill)
+1. **Ask the pre-implementation checklist questions** (see Core Principles below)
 2. **Propose an architecture** listing all apps to be created
 3. **Get user confirmation** before writing any code
 4. **Create each app** with its own folder and README
 
-## Available Skills
+## Available Implementation Guides
 
-Skills provide guided implementation for common patterns. Check \`.codex/skills/\` for details:
-
-${content.skills.map((s: any) => {
-    const { data } = parseFrontmatter(s.skillMd)
-    return `- **${s.id}** — ${data.description || s.id}`
-  }).join('\n')}
-
-## Key Patterns
-
-- **Local-first**: Always write locally first, sync is opportunistic
-- **P2P**: No central servers — data lives on user devices
-- **Privacy**: Users control their data
-- **Offline AI**: Local inference via QVAC, no API calls needed
+${skillList}
 
 ## P2P Development Rules
 
@@ -755,9 +860,11 @@ ${content.skills.map((s: any) => {
 - Handle peer disconnection gracefully (\`conn.on('close')\`, \`conn.on('error')\`)
 - Use Hyperswarm topics for discoverability
 - Replicate data structures over connections
+- Use \`swarm.flush()\` before reading on the consumer side
 - Don't store large blobs in HyperDB (use Hyperdrive)
 - Don't hardcode discovery keys
 - Don't forget to close connections on cleanup
+- Don't block app startup waiting for peers — read local data first
 
 ## QVAC (Local AI) Rules
 
@@ -765,64 +872,58 @@ ${content.skills.map((s: any) => {
 - Use \`onProgress\` callback for download UX
 - Use \`kvCache: sessionId\` for multi-turn conversations
 - Set \`tools: true\` in \`modelConfig\` when using tool-calling models
-- Use streaming for responsive UX
+- Use streaming (\`stream: true\`) for responsive UX
 - Don't run multiple models simultaneously (memory)
+- Don't use Zod refinements (\`.integer()\`, \`.min()\`) in ToolInput schemas
 
-For detailed module docs and patterns, see the skills in \`.codex/skills/\`.
+---
+
+## Core Principles
+
+${coreContent}
+
+---
+
+See directory-scoped \`AGENTS.md\` files in \`src/p2p/\`, \`src/data/\`, and \`src/ai/\` for module-specific guidance.
 `
 
   await writeFile(join(options.outputDir, 'AGENTS.md'), agentsMd)
   files.push('AGENTS.md')
 
-  // 2. Build .codex/config.toml
-  const skillConfigs = content.skills.map((s: any) =>
-    `[[skills.config]]\npath = ".codex/skills/${s.id}"\nenabled = true`
-  ).join('\n\n')
-
-  const configToml = `# Codex project configuration for ${options.projectName}
-# See: https://developers.openai.com/codex/config-reference
-
-approval_policy = "on-request"
-sandbox_mode = "workspace-write"
-
-${skillConfigs}
-`
-
-  await writeFile(join(codexDir, 'config.toml'), configToml)
-  files.push('.codex/config.toml')
-
-  // 3. Write core docs as AGENTS.md files in subdirectories
-  // Codex supports nested AGENTS.md discovery, so we place core docs
-  // in .codex/ where they supplement the root AGENTS.md
-  const coreDir = join(codexDir, 'docs')
-  await mkdir(coreDir, { recursive: true })
-
-  for (const core of content.core) {
-    await writeFile(join(coreDir, `${core.id}.md`), stripFrontmatter(core.content))
-    files.push(`.codex/docs/${core.id}.md`)
-  }
-
-  // 4. Write ALL module docs alongside core docs
-  for (const mod of content.modules) {
-    await writeFile(join(coreDir, `module-${mod.id}.md`), stripFrontmatter(mod.content))
-    files.push(`.codex/docs/module-${mod.id}.md`)
-  }
-
-  // 5. Write ALL skills with resources (same structure as Claude)
-  for (const skill of content.skills) {
-    const skillDir = join(codexDir, 'skills', skill.id)
-    await mkdir(skillDir, { recursive: true })
-    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
-    files.push(`.codex/skills/${skill.id}/SKILL.md`)
-
-    if (skill.resources.length > 0) {
-      const resDir = join(skillDir, 'resources')
-      await mkdir(resDir, { recursive: true })
-      for (const res of skill.resources) {
-        await writeFile(join(resDir, res.name), res.content)
-        files.push(`.codex/skills/${skill.id}/resources/${res.name}`)
-      }
+  // 2. Create directory-scoped AGENTS.md files for auto-discovery
+  // Codex finds these automatically when working in these directories.
+  const scopedDirs: Record<string, { modules: string[], description: string }> = {
+    'src/p2p': {
+      modules: ['hyperswarm', 'hypercore', 'hyperdht', 'corestore'],
+      description: 'P2P Networking'
+    },
+    'src/data': {
+      modules: ['hyperdb', 'hyperbee', 'hyperdrive'],
+      description: 'Data & Storage'
+    },
+    'src/ai': {
+      modules: ['qvac'],
+      description: 'AI Inference'
+    },
+    'src/wallet': {
+      modules: ['wdk'],
+      description: 'Wallet & Payments'
     }
+  }
+
+  for (const [dir, config] of Object.entries(scopedDirs)) {
+    const dirModules = content.modules.filter((m: any) => config.modules.includes(m.id))
+    if (dirModules.length === 0) continue
+
+    const moduleContent = dirModules.map((m: any) => stripFrontmatter(m.content)).join('\n\n---\n\n')
+    const dirAgentsMd = `# ${config.description}
+
+${moduleContent}
+`
+    const fullDir = join(options.outputDir, dir)
+    await mkdir(fullDir, { recursive: true })
+    await writeFile(join(fullDir, 'AGENTS.md'), dirAgentsMd)
+    files.push(`${dir}/AGENTS.md`)
   }
 
   return { filesWritten: files, warnings: [] }

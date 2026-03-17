@@ -124,9 +124,9 @@ function printSummary(result: any) {
   console.log(chalk.bold('  Next steps:'))
   console.log(chalk.cyan(`    cd ${result.projectName}`))
   if (!result.installed) {
-    console.log(chalk.cyan('    pnpm install'))
+    console.log(chalk.cyan('    npm install'))
   }
-  console.log(chalk.cyan('    pnpm dev'))
+  console.log(chalk.cyan('    npm run dev'))
   console.log()
 }
 
