@@ -4,7 +4,8 @@
   "description": "Scaffold apps with the Unstoppable Stack - P2P, local AI, and crypto payments",
   "type": "module",
   "bin": {
-    "create-unstoppable-app": "./dist/index.js"
+    "create-unstoppable-app": "./dist/index.js",
+    "us": "./dist/scaffold-cli.js"
   },
   "files": [
     "dist",
@@ -12,8 +13,8 @@
     "agent-pack-src"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts",
-    "dev": "tsup src/index.ts --format esm --watch",
+    "build": "tsup src/index.ts src/scaffold-cli.ts --format esm --dts",
+    "dev": "tsup src/index.ts src/scaffold-cli.ts --format esm --watch",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit"
   },
