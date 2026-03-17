@@ -15,7 +15,8 @@ description: Add local AI inference using QVAC SDK with streaming chat,
 
 ## Prerequisites
 - `@qvac/sdk` (`^0.7.0`) and `zod` (`^4.0.0`) installed
-- Supported runtime: Node.js, Bare, or physical device for Expo
+- Supported runtime: Node.js, Bare, or Expo mobile (native dev build required)
+- Verify model constants against the installed SDK version before coding
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
 > (browser context). It MUST run in a **worker process** started via `pear-run`.
@@ -23,19 +24,24 @@ description: Add local AI inference using QVAC SDK with streaming chat,
 > See the `setup-pear-desktop` skill → `resources/worker-pattern.md` for the
 > full worker bridge implementation.
 
-## Included Components
+> **CRITICAL — Expo Mobile Apps with Bare Worklets:** `@qvac/sdk` MUST run in
+> the **Expo/React Native runtime**, NOT inside the Bare worklet. If the app
+> has a custom Bare worklet for P2P/storage, keep QVAC separate. The assistant
+> reply is sent back through the P2P message transport via RPC.
+> See the `setup-mobile-app` skill and the `qvac-mobile-expo` recipe for the
+> full architecture.
 
-Your project includes battle-tested components in `src/ai/`:
+## Reference Components (Optional)
 
-- **`src/ai/model-manager.ts`** — Load/unload models with progress, context config, memory cleanup
-- **`src/ai/chat-session.ts`** — Streaming chat with KV cache, history trimming, `<think>` filtering
-- **`src/ai/tool-runner.ts`** — Tool-calling loop with Zod schemas and error handling
+The agent-pack includes reusable component files in `components/ai/` that wrap common
+patterns (model lifecycle, chat sessions, tool runner). You can copy them into your
+project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is easier.
 
 ## Steps
 
 1. **Install dependencies**:
    ```bash
-   pnpm add @qvac/sdk zod@^4
+   npm i @qvac/sdk zod@^4
    ```
    > **IMPORTANT**: Install Zod v4 (not v3) — `@qvac/sdk` depends on Zod v4 internally.
 
@@ -48,34 +54,67 @@ Your project includes battle-tested components in `src/ai/`:
    | Tool calling (small) | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` | ~1GB |
    | General chat (small) | `LLAMA_3_2_1B_INST_Q4_0` | ~1GB |
    | General chat (quality) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
-   | Mobile (tiny) | `QWEN3_0_6B_INST` | ~0.5GB |
+   | Mobile (tiny) | `QWEN3_600M_INST_Q4` | ~0.5GB |
 
    > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.7.0`. The SDK exports Qwen 3 models.
 
-3. **Use the included components**:
+3. **Use `@qvac/sdk` directly** — this is the actual npm package API:
    ```ts
-   import { ModelManager } from './ai/model-manager.js'
-   import { ChatSession } from './ai/chat-session.js'
+   import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'
    ```
 
-4. **Wire into your app**:
+4. **Wire into your app** — complete working example:
    ```ts
-   const model = new ModelManager({
-     onProgress: (p) => console.log(`${p.percentage.toFixed(1)}%`),
-   })
-   await model.load()
+   import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'
+   import * as readline from 'readline'
 
-   const chat = new ChatSession({
-     modelId: model.id,
-     systemPrompt: 'You are a helpful assistant.',
-     sessionId: 'main',
-   })
+   async function main() {
+     // Load model (downloads on first use)
+     console.log('Loading model...')
+     const modelId = await loadModel({
+       modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+       modelType: 'llm',
+       modelConfig: { ctx_size: 2048, n_discarded: 200 },
+       onProgress: (p) => process.stdout.write(`\r${p.percentage.toFixed(1)}%`),
+     })
+     console.log('\nModel ready!')
 
-   for await (const token of chat.send('Hello!')) {
-     process.stdout.write(token)
+     const history: Array<{ role: string; content: string }> = []
+     const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+
+     const ask = () => rl.question('You: ', async (input) => {
+       if (input.trim().toLowerCase() === 'exit') {
+         await unloadModel(modelId)
+         rl.close()
+         return
+       }
+
+       history.push({ role: 'user', content: input })
+
+       const { tokenStream } = await completion({
+         modelId,
+         history,
+         systemPrompt: 'You are a helpful assistant.',
+         stream: true,
+         kvCache: 'main',
+       })
+
+       let reply = ''
+       process.stdout.write('AI: ')
+       for await (const token of tokenStream) {
+         const text = typeof token === 'string' ? token : token.text ?? ''
+         process.stdout.write(text)
+         reply += text
+       }
+       console.log()
+
+       history.push({ role: 'assistant', content: reply })
+       ask()
+     })
+     ask()
    }
 
-   await model.destroy()  // always cleanup
+   main().catch(console.error)
    ```
 
 ---
@@ -173,6 +212,63 @@ Small local models need **different prompting** than cloud APIs:
   - 3B: Adequate tool calling, good structured output
   - 7B: Reliable tool calling, complex reasoning, best overall quality
 
+---
+
+## Mobile Expo with QVAC
+
+When adding QVAC to an Expo mobile app (especially one with a Bare worklet),
+follow these additional rules.
+
+### Runtime Placement
+
+- QVAC inference runs in **Expo/React Native**, not the Bare worklet
+- The Bare worklet owns P2P transport and local-first storage only
+- Assistant replies are sent back through the existing message transport via RPC
+
+### Static Imports Required
+
+For the main inference path in Expo mobile, use static imports:
+
+```ts
+import { LLAMA_3_2_1B_INST_Q4_0, completion, loadModel, unloadModel } from '@qvac/sdk'
+```
+
+Do NOT use `import('@qvac/sdk')` (dynamic import). In the Expo + Metro + Hermes
+setup, lazy imports can fail with `identifier expected in declaration`. The
+reference workbench uses static imports for its main inference path.
+
+### Simulator Guidance
+
+- Physical device is the primary validation target for QVAC inference
+- But do NOT assume simulator failure means QVAC is unsupported
+- First compare: SDK version, import strategy, plugin path, dependency surface
+- The reference workbench ran on simulator after reference alignment
+
+### Diagnostics-First Workflow
+
+Before changing prompts, models, CPU/GPU flags, or retry logic, expose
+diagnostics for each stage:
+
+1. Config initialization
+2. SDK import success/failure
+3. Model load progress and result
+4. Completion start/stream/end
+5. Any error with the exact failure boundary
+
+This is a **required workflow**, not an optional tip. The biggest Phase 2
+debugging loops happened because the failure boundary was unknown.
+
+### Version Alignment
+
+Before debugging, compare the app to a known-good reference:
+1. Check the reference workbench SDK version
+2. Match it if the reference is known-good
+3. Install companion Expo modules the SDK version expects (e.g., `expo-device`)
+
+See the `qvac-mobile-expo` recipe for the complete integration pattern.
+
+---
+
 ## Key Gotchas
 
 - Model downloads can be large (0.5-4GB); use `onProgress` for UX
@@ -186,6 +282,8 @@ Small local models need **different prompting** than cloud APIs:
 - Filter `<tool_call>` blocks from visible token output
 - 1B models are unreliable for tool calling; use 3B+ minimum
 - Install `zod@^4`, not v3
+- On Expo mobile: use static imports, not dynamic `import('@qvac/sdk')`
+- On Expo mobile: do NOT put `@qvac/sdk` in the Bare worklet
 
 ## Deep Dive
 - Model selection guide: read `resources/model-guide.md`
@@ -193,3 +291,4 @@ Small local models need **different prompting** than cloud APIs:
 - Tool calling with token filtering and JSON repair: read `resources/tool-calling-example.md`
 - Schema best practices: read `resources/schema-guide.md`
 - Troubleshooting: read `resources/troubleshooting.md`
+- Mobile QVAC integration: read recipe `qvac-mobile-expo`

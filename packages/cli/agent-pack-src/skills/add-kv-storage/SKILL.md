@@ -26,7 +26,7 @@ description: Add Hyperbee key-value storage with offline-first patterns and
 
 1. **Install dependencies**:
    ```bash
-   pnpm add hypercore hyperbee hyperswarm
+   npm i hypercore hyperbee hyperswarm
    ```
 
 2. **Create local store** in `src/data/store.ts`:
@@ -66,6 +66,24 @@ swarm.join(core.discoveryKey)
 - Use `core.findingPeers()` + `swarm.flush()` to coordinate initial sync
 - Call `core.update({ wait: true })` to wait for remote data
 - Use `db.watch()` for real-time change notifications
+
+## Critical Rules
+- **Always `await db.ready()`** before any put/get/del operations — Hyperbee is not usable until the underlying Hypercore is initialized
+- **Don't store large blobs in Hyperbee** — it's optimized for small key-value pairs. Use Hyperdrive (`add-file-storage`) for files and binary data
+- **Write locally first, sync later** — never block user actions on peer connections. The local-first pattern means writes succeed even offline
+- **Don't mix HyperDB and Hyperbee patterns** — they are different libraries with different APIs. Hyperbee is a B-tree on a single Hypercore; HyperDB is a multi-writer structured database
+- **Use `keyEncoding` and `valueEncoding`** — always set `{ keyEncoding: 'utf-8', valueEncoding: 'json' }` to avoid raw buffer handling
+- **Replicate the `core`, not the `db`** — `core.replicate(conn)` is the correct call. Hyperbee has no `replicate()` method
+- **Don't forget `core.findingPeers()`** — coordinate with swarm to avoid reading stale data on startup
+
+## Validation
+1. [ ] `npm i hypercore hyperbee hyperswarm` installs without errors
+2. [ ] `await db.ready()` resolves and `db.put('key', { value: 1 })` succeeds
+3. [ ] `await db.get('key')` returns the stored value with correct encoding
+4. [ ] Data persists across restarts: kill the process, restart, `db.get('key')` still returns the value
+5. [ ] Replication syncs entries: writer puts data, reader joins swarm and reads the same entries
+6. [ ] `db.del('key')` removes the entry and subsequent `db.get('key')` returns `null`
+7. [ ] `db.watch()` fires on remote updates during live replication
 
 ## Deep Dive
 - Full example with live sync: read `resources/full-example.md`

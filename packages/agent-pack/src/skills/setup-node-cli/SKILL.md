@@ -7,6 +7,9 @@ description: Scaffold a Node.js CLI application with P2P and AI capabilities.
 
 # Setup Node.js CLI App
 
+> **Preferred**: Run `us create -p node-cli -n <name> -f <features>` first.
+> This skill documents the details if you need to customize beyond what the scaffold provides.
+
 ## When to Use
 - User wants a simple terminal tool or script
 - User mentions "CLI", "command line", "terminal app", "Node.js app"
@@ -99,13 +102,13 @@ my-cli/
 5. **Add capabilities** as needed:
    ```bash
    # P2P networking
-   pnpm add hyperswarm
+   npm i hyperswarm
 
    # Key-value storage
-   pnpm add hypercore hyperbee
+   npm i hypercore hyperbee
 
    # Local AI
-   pnpm add @qvac/sdk zod@^4
+   npm i @qvac/sdk zod@^4
    ```
 
 6. **Run in development**:
@@ -125,6 +128,22 @@ my-cli/
 
 **Choose Node.js CLI** for the fastest path. **Choose Pear Terminal** if you
 need P2P distribution or plan to run alongside Pear desktop apps.
+
+## Critical Rules
+- **Always handle SIGINT for cleanup** — P2P swarms, database handles, and AI models must be closed on exit. Without cleanup, orphan DHT announcements linger and storage files can corrupt.
+- **Use `tsx` for development, not `ts-node`** — `ts-node` has ESM compatibility issues with Hyperswarm and QVAC. `tsx` handles ESM natively.
+- **Handle storage paths correctly** — use absolute paths or resolve relative to a known base. Relative paths break when the CLI is invoked from different directories.
+- **Don't use `process.exit()` without cleanup** — always destroy swarm, close databases, and unload models before exiting. Use the SIGINT handler pattern from the Steps section.
+- **Don't ignore unhandled rejections** — P2P operations fail silently. Add `process.on('unhandledRejection', ...)` during development.
+- **Pin dependency versions** — Hyperswarm and QVAC minor versions can introduce breaking changes. Use exact versions in `package.json`.
+
+## Validation
+1. CLI starts without errors (`pnpm dev` or `tsx src/index.ts` runs clean)
+2. Commands execute and produce expected output
+3. SIGINT (Ctrl+C) triggers cleanup — swarm destroyed, DB closed, no orphan processes
+4. Data persists across restarts (re-running the CLI reads previously stored data)
+5. Storage directory is created in the expected location (not a random relative path)
+6. P2P operations work (if using Hyperswarm: peers connect, data replicates)
 
 ## Key Gotchas
 - Use `tsx` for development (TypeScript execution without build)

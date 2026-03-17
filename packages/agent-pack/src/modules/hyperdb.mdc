@@ -43,9 +43,21 @@ console.log(maf)
 - `db.find(collectionOrIndex, query, [options])`
 - `db.flush()`
 
+## Multi-Writer Support
+
+HyperDB's multi-writer capability is powered by **Autobase** under the hood.
+When multiple peers need to write to the same HyperDB, Autobase linearizes
+their independent writes into a consistent view.
+
+For direct Autobase usage (custom multi-writer apps, server clusters, or
+apps needing fine-grained control over the consensus layer), see:
+- Module: `modules/autobase.mdc`
+- Skill: `add-multi-writer-sync`
+
 ## Integration with Other Modules
 - For P2P mode, use Hyperbee + Hypercore replication over Hyperswarm.
 - Hypercore discovery key can be used to connect peers to the same DB state.
+- For multi-writer, Autobase manages the consensus layer — see `modules/autobase.mdc`.
 
 ## Common Patterns
 ```js

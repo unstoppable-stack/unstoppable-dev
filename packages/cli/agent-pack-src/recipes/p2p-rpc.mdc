@@ -30,7 +30,7 @@ The raw `bare-rpc` API uses:
 Always use the `createRPCServer` / `createRPCClient` wrapper pattern.
 
 ```bash
-pnpm add hyperswarm bare-rpc
+npm i hyperswarm bare-rpc
 ```
 
 ### Step 1: Create RPC wrapper (recommended)
@@ -157,8 +157,8 @@ If you only need fire-and-forget JSON messages, use newline-delimited JSON frami
 
 ### Problem: `Error: No binaries found for target 'darwin-arm64'`
 
-**Symptoms**: Runtime error after successful `pnpm install`.
-**Solution**: Add `shamefully-hoist=true` to `.npmrc`, then `pnpm install` again.
+**Symptoms**: Runtime error after successful `npm install`.
+**Solution**: If using pnpm, add `shamefully-hoist=true` to `.npmrc`, then `pnpm install` again.
 
 ### Problem: Peers never connect
 

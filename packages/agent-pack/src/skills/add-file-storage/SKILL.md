@@ -24,7 +24,7 @@ description: Add P2P file storage and sharing using Hyperdrive with local
 
 1. **Install dependencies**:
    ```bash
-   pnpm add hyperdrive corestore hyperswarm localdrive
+   npm i hyperdrive corestore hyperswarm localdrive
    ```
 
 2. **Create drive module** in `src/files/drive.ts`:
@@ -59,6 +59,25 @@ swarm.join(drive.discoveryKey)
 - Use `localdrive` + `mirror-drive` for filesystem mirroring
 - Writer must keep seeding for readers to receive updates
 - Call `await drive.ready()` before any operations
+
+## Critical Rules
+- **Use Hyperdrive for files, not HyperDB or Hyperbee** — Hyperdrive is purpose-built for file storage with streaming, metadata, and directory structure
+- **Handle large files with streaming** — use `drive.createReadStream()` / `drive.createWriteStream()` instead of `drive.put()` for files that may be large
+- **Use `localdrive` for filesystem import/export** — pair with `mirror-drive` to mirror between local filesystem and Hyperdrive
+- **Replicate `store` not `drive`** — always call `store.replicate(conn)`, not `drive.replicate()`. Corestore handles multiplexed replication
+- **Always `await drive.ready()`** before any operations — accessing `drive.key` or `drive.discoveryKey` before ready returns `null`
+- **Writer must keep seeding** — readers can only download while the writer (or another seeder) is online and connected
+- **Don't forget to close the drive** — call `drive.close()` and `store.close()` on shutdown to flush pending writes
+
+## Validation
+1. [ ] `npm i hyperdrive corestore hyperswarm localdrive` installs without errors
+2. [ ] `await drive.ready()` resolves and `drive.key` is a valid 32-byte buffer
+3. [ ] Put a file: `await drive.put('/hello.txt', Buffer.from('world'))` succeeds
+4. [ ] Get a file: `await drive.get('/hello.txt')` returns the correct content
+5. [ ] List directory: `await drive.list('/')` returns entries including `/hello.txt`
+6. [ ] Replication works: writer puts files, reader joins swarm with writer's key and reads the files
+7. [ ] Streaming works: `drive.createReadStream('/large.bin')` delivers data in chunks
+8. [ ] Mirror works: `localdrive` + `mirror-drive` syncs a local folder to/from the Hyperdrive
 
 ## Deep Dive
 - Full writer/reader example: read `resources/full-example.md`

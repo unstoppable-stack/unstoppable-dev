@@ -123,6 +123,22 @@ my-service/
 - **Node.js CLI**: You just want a simple tool distributed via npm. No need for
   Pear's distribution model.
 
+## Critical Rules
+- **No UI/renderer** — this is all Bare runtime. Don't import browser APIs, DOM, React, or `pear-electron`. There is no window.
+- **No worker bridge needed** — unlike Pear Desktop, native modules (Hyperswarm, QVAC, etc.) run directly in the main process. Don't create a worker.
+- **`pear.type` must be `"terminal"`** — using `"desktop"` causes Pear to look for a renderer and crash. Double-check `package.json`.
+- **Use `Pear.teardown()` for cleanup, not `process.on('exit')`** — the Bare runtime lifecycle is different from Node.js. `process.on('exit')` may not fire.
+- **Don't use Node.js built-ins** — no `Buffer`, no `TextEncoder`, no `crypto`, no `node:*` imports. Use `b4a`, `bare-encoding`, `bare-crypto`, and `bare-*` equivalents.
+- **Don't forget to install `bare-*` modules** — they are NOT built-in. Missing them produces `MODULE_NOT_FOUND`.
+
+## Validation
+1. `pear run -d .` starts without errors
+2. Console output appears in the terminal (stdout works)
+3. P2P connections establish (if using Hyperswarm: peers discover each other)
+4. Data operations work (if using Hyperbee/HyperDB: reads and writes succeed)
+5. `Pear.teardown()` callback executes on exit (cleanup message appears)
+6. No `MODULE_NOT_FOUND` errors for `bare-*` dependencies
+
 ## Key Gotchas
 - No `TextEncoder` in Bare — use `charCodeAt()` or `bare-encoding`
 - No `Buffer` global — use `Uint8Array` or `b4a`

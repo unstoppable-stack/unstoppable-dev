@@ -24,7 +24,7 @@ description: Add a structured P2P database using HyperDB with schema
 
 1. **Install dependencies**:
    ```bash
-   pnpm add hyperdb corestore hyperswarm
+   npm i hyperdb corestore hyperswarm
    ```
 
 2. **Define your schema** in `src/data/schema.ts`:
@@ -99,6 +99,32 @@ description: Add a structured P2P database using HyperDB with schema
 - Multi-writer means conflicts can occur — HyperDB uses causal ordering
 - Schema changes require careful migration planning
 - Don't store large blobs in HyperDB — use Hyperdrive (`add-file-storage`) instead
+
+## Critical Rules
+- **Define schema before any operations** — HyperDB requires a schema upfront. Adding fields later requires migration
+- **Don't mix HyperDB with Hyperbee patterns** — they have incompatible APIs. HyperDB uses `put(record)` with schema fields; Hyperbee uses `put(key, value)` pairs
+- **Use indexes for queries** — querying without indexes scans all records. Define indexes in the schema for any field you'll query on
+- **Replicate `store` not `db`** — always call `store.replicate(conn)`. HyperDB has no `replicate()` method
+- **Don't store large blobs** — use Hyperdrive (`add-file-storage`) for files and binary data. HyperDB is for structured records
+- **Handle multi-writer conflicts** — HyperDB uses causal ordering, but concurrent writes to the same record can produce multiple heads. Design your data model for conflict-free merges when possible
+- **Always `await db.ready()`** — accessing the database before it's ready throws or returns undefined
+
+## Validation
+1. [ ] `npm i hyperdb corestore hyperswarm` installs without errors
+2. [ ] Schema is defined and `await db.ready()` resolves
+3. [ ] Insert works: `await db.put({ id: '1', title: 'Test', createdAt: Date.now() })` succeeds
+4. [ ] Query works: `await db.get('1')` returns the inserted record
+5. [ ] Index query works: `await db.find({ title: 'Test' })` returns matching records
+6. [ ] Update works: putting a record with the same `id` updates it
+7. [ ] Delete works: `await db.del('1')` removes the record
+8. [ ] Replication syncs: writer inserts records, reader joins swarm and reads the same records
+
+## Troubleshooting
+- **`db.ready()` hangs or throws** — ensure the Corestore path is writable and not locked by another process
+- **Queries return empty results** — check that the field is defined in the schema and has an index. Unindexed queries may not work as expected
+- **Schema mismatch errors** — all peers must use the exact same schema definition. Mismatched schemas cause replication failures
+- **Multi-writer conflicts** — use `db.heads()` or similar to inspect conflicting values. Design your app to handle multiple concurrent values
+- **Data doesn't replicate** — ensure you're replicating the `store`, not the `db`. Check that both peers use `store.replicate(conn)`
 
 > **Status**: Docs only. HyperDB documentation is based on official Holepunch
 > docs. Not yet validated with a battle-tested reference app. Multi-writer

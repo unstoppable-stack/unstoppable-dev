@@ -24,7 +24,7 @@ description: Add QVAC multimodal vision for local image analysis. Use when
 
 1. **Install QVAC** (if not already):
    ```bash
-   pnpm add @qvac/sdk
+   npm i @qvac/sdk
    ```
 
 2. **Load a vision-capable model**:
@@ -70,6 +70,22 @@ description: Add QVAC multimodal vision for local image analysis. Use when
 - Document analysis
 - Accessibility (describe images for visually impaired users)
 - Quality inspection
+
+## Critical Rules
+- **Multimodal model required** — standard LLMs cannot process images. You must load a vision-capable model (check QVAC docs for supported multimodal models).
+- **Image must be base64 or file path** — passing raw buffers or URLs won't work. Convert to `data:image/jpeg;base64,...` format.
+- **Model size matters more for vision** — vision tasks need larger models than text-only. Small models produce vague or incorrect descriptions.
+- **Don't skip image resizing** — sending full-resolution photos (4000x3000+) wastes memory and slows inference. Resize to ~1024px max dimension before encoding.
+- **Don't assume format support** — verify the model handles your image format (JPEG/PNG). Some models struggle with transparency or unusual color spaces.
+- **Context window is consumed by image tokens** — images use significant context. Leave room for the text prompt and response.
+
+## Validation
+1. Vision-capable model loads successfully (`loadModel` resolves without error)
+2. Image file reads and converts to valid base64 string
+3. `completion()` with image content returns a response (not an error or empty string)
+4. Response accurately describes the image content (test with a known image)
+5. Different image formats (JPEG, PNG) are processed correctly
+6. On mobile: model fits in available RAM and inference completes within acceptable time
 
 ## Key Gotchas
 - Vision models are larger than text-only models — check RAM requirements

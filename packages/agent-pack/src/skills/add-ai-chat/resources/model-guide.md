@@ -10,7 +10,7 @@ These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 |----------|--------|------|----------|
 | `QWEN_3_1_7B_INST_Q4` | Qwen 3 | ~4GB | Tool calling, structured output, quality chat |
 | `QWEN_3_4B_INST_Q4_K_M` | Qwen 3 | ~2.5GB | Tool calling, good quality at lower cost |
-| `QWEN3_0_6B_INST` | Qwen 3 | ~0.5GB | Mobile, tiny footprint (limited reasoning) |
+| `QWEN3_600M_INST_Q4` | Qwen 3 | ~0.5GB | Mobile, tiny footprint (limited reasoning) |
 | `LLAMA_3_2_1B_INST_Q4_0` | Llama 3.2 | ~1GB | General chat, fast startup |
 | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` | Llama 3.2 | ~1GB | Tool calling (tuned, but less reliable than Qwen 3B+) |
 | `SALAMANDRATA_2B_INST_Q8` | Salamandra | ~2GB | Higher quality chat |
@@ -36,7 +36,7 @@ These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 import {
   QWEN_3_1_7B_INST_Q4,
   QWEN_3_4B_INST_Q4_K_M,
-  QWEN3_0_6B_INST,
+  QWEN3_600M_INST_Q4,
   LLAMA_3_2_1B_INST_Q4_0,
   LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K,
   SALAMANDRATA_2B_INST_Q8,
@@ -47,7 +47,7 @@ import {
 ## Decision Tree
 
 - **Tool calling needed?** → `QWEN_3_1_7B_INST_Q4` (best) or `QWEN_3_4B_INST_Q4_K_M` (lighter)
-- **Mobile app?** → `QWEN3_0_6B_INST` (tiny) or `LLAMA_3_2_1B_INST_Q4_0` (small)
+- **Mobile app?** → `QWEN3_600M_INST_Q4` (tiny) or `LLAMA_3_2_1B_INST_Q4_0` (small)
 - **Desktop general chat?** → `SALAMANDRATA_2B_INST_Q8` (quality) or `LLAMA_3_2_1B_INST_Q4_0` (fast)
 - **Quality matters most?** → `GPT_OSS_20B_INST_Q4_K_M` (desktop) or `QWEN_3_1_7B_INST_Q4` (balanced)
 - **Minimum viable tool calling?** → `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` (but 3B+ is more reliable)

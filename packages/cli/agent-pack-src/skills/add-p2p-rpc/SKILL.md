@@ -39,7 +39,7 @@ low-level for application code.
 
 1. **Install dependencies**:
    ```bash
-   pnpm add hyperswarm bare-rpc
+   npm i hyperswarm bare-rpc
    ```
 
 2. **Add `.npmrc`** (required for bare native binaries in pnpm):
@@ -213,6 +213,26 @@ await discovery.flushed()
 - Always destroy the socket (not the RPC) on close/error — `rpc.destroy()` does NOT exist
 - Use `method` (not `type`) in the envelope to avoid field collisions with payload data
 - Create a new RPC server/client per peer connection (not shared globally)
+
+## Critical Rules
+- **Never use raw `bare-rpc` directly** — it has no `register()`, no `request(string)`, no `rpc.destroy()`. Always use the wrapper pattern above
+- **`rpc.request()` takes a numeric command ID** — passing a string method name silently fails or throws. The wrapper handles this for you
+- **Never call `rpc.destroy()`** — it does not exist. Destroy the underlying `socket` instead
+- **Always set request timeouts** — P2P peers can disappear at any time. Default to 10s, adjust per use case
+- **One RPC instance per connection** — do NOT reuse a single RPC across multiple peer sockets
+- **Use `method` not `type` in the envelope** — payload data often has its own `type` field, causing routing collisions (real bug)
+- **Don't forget `.npmrc`** — `shamefully-hoist=true` is required for bare native binaries in pnpm projects
+- **Never assume both peers are always online** — handle the case where a request is made but the peer has already disconnected
+
+## Validation
+1. [ ] `npm i hyperswarm bare-rpc` installs without errors and `.npmrc` has `shamefully-hoist=true`
+2. [ ] RPC server starts: `createRPCServer(socket, { handlers })` does not throw
+3. [ ] RPC client connects: `createRPCClient(socket)` creates a working client
+4. [ ] Request/response works: `client.request('ping')` returns expected response from server handler
+5. [ ] Streaming works: `client.stream('method')` yields chunks from server `streamHandlers`
+6. [ ] Unknown method returns error: requesting an unregistered method returns `{ type: 'error' }`
+7. [ ] Timeout fires: a request to a stalled/disconnected peer rejects after timeout
+8. [ ] Cleanup works: destroying the socket cleans up RPC on both sides without hanging
 
 ## Deep Dive
 - Full example with wrapper code and types: read `resources/full-example.md`

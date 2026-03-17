@@ -7,6 +7,9 @@ description: Scaffold a Pear Desktop app with React, styled-components,
 
 # Pear Desktop App
 
+> **Preferred**: Run `us create -p pear-desktop -n <name> -f <features>` first.
+> This skill documents the details if you need to customize beyond what the scaffold provides.
+
 ## When to Use
 - User wants to build a desktop application
 - User mentions "desktop app", "GUI", "window", "visual UI", "Pear desktop"
@@ -365,6 +368,15 @@ You must seed it.
 
 > Without `pear seed`, remote machines will get `ERR_INVALID_MANIFEST` — there's
 > no source on the network to download from.
+
+## Validation
+1. App window opens with correct background color and title bar controls (`<pear-ctrl>`)
+2. Worker starts — `workerReady` message is received by the renderer (check console)
+3. RPC/pipe communication works — UI sends a message, worker responds (round-trip completes)
+4. P2P discovery finds peers (if using Hyperswarm: connection count > 0 with a second peer)
+5. Data persists across restarts (close app, reopen, previously stored data is still there)
+6. Build completes without errors (`bun run build` — both `src/` and `worker/` compile)
+7. Dev mode runs all watchers and Pear concurrently (`bun run dev` starts without crashing)
 
 ## Deep Dive
 - Complete working example with theme + components: read `resources/full-example.md`
