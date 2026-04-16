@@ -22,7 +22,7 @@ alwaysApply: true
    **Agent Pack Architecture** (`planning/status/agent-pack-architecture/`)
    - `README.md` — Skill system, builders, auto-activation, hooks
 
-   **Unstoppable Vault** (`planning/status/vault/`)
+   **Unstoppable Node** (`planning/status/node/`)
    - `README.md` — Phases, services, what it validates
 
    **Website** (`planning/status/website/`)
@@ -30,7 +30,7 @@ alwaysApply: true
 
 3. **Reference detailed planning docs** when needed:
    - Agent Pack: `planning/features/agent-pack.md`
-   - Vault: `planning/features/vault.md` + `planning/features/vault-technical.md`
+   - Node: `planning/features/node.md` + `planning/features/node-technical.md`
    - Website: `planning/features/website.md`
    - Long-term coverage: `planning/roadmap/`
 
@@ -49,7 +49,7 @@ alwaysApply: true
 ## Priority Order
 
 1. **Mobile support (Expo Bare)** — biggest platform gap
-2. **Vault Phase 1** — validates 7 items at once
+2. **Node Phase 1** — validates 7 items at once
 3. **QVAC capabilities** — extends what apps can do
 5. **P2P advanced modules** — collaborative + secure apps
 6. **Website** — public face

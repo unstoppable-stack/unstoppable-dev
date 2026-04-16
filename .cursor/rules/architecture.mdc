@@ -13,7 +13,7 @@ unstoppable-stack/
 ├── .cursor/rules/               # Cursor rules (this directory)
 ├── packages/
 │   ├── website/                 # unstoppable.dev - Next.js site
-│   ├── cli/                     # create-unstoppable-app CLI
+│   ├── cli/                     # `us` CLI (init, scaffold, doctor, research)
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
@@ -52,9 +52,10 @@ unstoppable-stack/
 ### CLI (packages/cli)
 - **Language**: TypeScript
 - **Framework**: Commander.js + Inquirer (prompts)
-- **Package Name**: `create-unstoppable-app`
+- **Binary**: `us` (subcommands: `init`, `scaffold`, `doctor`, `research`)
+- **Entry point**: `src/us.ts`
+- **Build**: `tsup src/us.ts --format esm`
 - **Distribution**: npm
-- **Build**: tsup (ESM output)
 
 ### Agent Pack (packages/agent-pack)
 - Portable format that generates tool-specific configs

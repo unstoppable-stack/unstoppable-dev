@@ -60,14 +60,14 @@ pnpm --filter website dev # Run website locally
 
 ## Testing the CLI
 
-The user has `create-unstoppable-app` installed globally as an npm package.
+The user has `us` installed globally as an npm package.
 When testing CLI changes:
 
-1. Build the CLI: `cd packages/cli && npx tsup src/index.ts --format esm`
+1. Build the CLI: `cd packages/cli && npx tsup src/us.ts --format esm`
 2. Install globally: `npm install -g .` (from `packages/cli/`)
-3. Test by running: `create-unstoppable-app` (the globally installed command)
+3. Test by running: `us init` or `us doctor` (the globally installed command)
 
-**Never** run the CLI directly via `node dist/index.js`. Always rebuild and reinstall the global package so the user can test with the real `create-unstoppable-app` command.
+**Never** run the CLI directly via `node dist/us.js`. Always rebuild and reinstall the global package so the user can test with the real `us` command.
 
 ## Development Phases
 

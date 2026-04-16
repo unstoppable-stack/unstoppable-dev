@@ -1,5 +1,5 @@
 ---
-description: Guidelines for developing the create-unstoppable-app CLI package
+description: Guidelines for developing the `us` CLI package
 globs: ["packages/cli/**/*.ts"]
 ---
 
@@ -7,22 +7,35 @@ globs: ["packages/cli/**/*.ts"]
 
 ## Overview
 
-The CLI (`create-unstoppable-app`) scaffolds new projects with the Unstoppable Stack. It prompts users for project name and AI assistant, then generates the project with tool-specific agent configurations.
+The CLI (`us`) is the main developer tool for the Unstoppable Stack. It has subcommands for project setup, scaffolding, environment checks, and research experiments.
+
+### Commands
+- `us init [project-name]` — Interactive project setup (prompts for name + AI assistant)
+- `us scaffold app -p <platform> -n <name> [-f features]` — Scaffold a specific app
+- `us scaffold list-platforms` / `list-features` — Discover available options
+- `us doctor [-p platform]` — Check development environment
+- `us research run|list|status|scaffold-test` — Automated testing & experiments
 
 ## Key Files
 
-- `packages/cli/src/index.ts` — CLI entry point, Commander.js setup, interactive prompts
-- `packages/cli/src/constants.ts` — Assistants definitions
-- `packages/cli/src/scaffold.ts` — Project scaffolding logic (generate project, process package.json, install deps)
+- `packages/cli/src/us.ts` — CLI entry point, Commander.js setup, registers subcommands
+- `packages/cli/src/commands/init.ts` — `us init` (interactive project creation)
+- `packages/cli/src/commands/scaffold.ts` — `us scaffold` (platform-specific app generation)
+- `packages/cli/src/commands/doctor.ts` — `us doctor` (environment checks)
+- `packages/cli/src/commands/research.ts` — `us research` (experiment runner)
+- `packages/cli/src/constants.ts` — Assistants and templates definitions
+- `packages/cli/src/scaffold.ts` — Project scaffolding logic
 - `packages/cli/src/agent-pack/index.ts` — Agent pack builder (generates Claude/Cursor/OpenCode configs)
-- `packages/cli/agent-pack-src/` — Content bundled with CLI (synced from agent-pack via sync script)
+- `packages/cli/agent-pack-src/` — Content bundled with CLI (synced from agent-pack)
 
 ## Build & Test
 
 ```bash
 cd packages/cli
-npx tsup src/index.ts --format esm --dts   # Build
-node dist/index.js                           # Run locally
+npx tsup src/us.ts --format esm     # Build
+npm install -g .                      # Install globally
+us init                               # Test interactively
+us doctor                             # Test env check
 ```
 
 ## Agent Pack Builder (v2)
@@ -62,4 +75,4 @@ The `buildAgentPack()` function in `src/agent-pack/index.ts` loads content from 
 3. Add skill → module mapping in `skillModuleMap` in `src/agent-pack/index.ts`
 4. Update `skill-rules.json` with keywords for auto-activation
 5. Sync to CLI: `cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/`
-6. Rebuild: `cd packages/cli && npx tsup src/index.ts --format esm --dts`
+6. Rebuild: `cd packages/cli && npx tsup src/us.ts --format esm`

@@ -3,6 +3,7 @@
 **/build/
 **/.next
 **/out
+.pnpm-store/
 
 
 # Sandbox test apps (agent-accessible but not committed)

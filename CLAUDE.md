@@ -18,7 +18,7 @@ unstoppable-stack/
 ├── .cursor/rules/               # Project context (Cursor)
 ├── packages/
 │   ├── website/                 # unstoppable.dev - Next.js site
-│   ├── cli/                     # create-unstoppable-app CLI
+│   ├── cli/                     # `us` CLI (init, scaffold, doctor, research)
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions
 │       ├── cursor/              # Cursor rules and commands
@@ -41,7 +41,7 @@ unstoppable-stack/
 └── planning/                    # All planning, roadmap, status, and presentations
     ├── vision/                  # Strategy and product direction
     ├── roadmap/                 # Coverage tracking (54 items, 5 categories)
-    ├── features/                # Deep planning per feature (vault, website, etc.)
+    ├── features/                # Deep planning per feature (node, website, etc.)
     ├── status/                  # Sprint-level tracking and priorities
     └── presentations/            # Pitch decks grouped by date+name
 ```
@@ -94,7 +94,8 @@ unstoppable-stack/
 ### CLI (packages/cli)
 - **Language**: TypeScript
 - **Framework**: Commander.js + Inquirer (prompts)
-- **Package Name**: `create-unstoppable-app`
+- **Binary**: `us` (subcommands: `init`, `scaffold`, `doctor`, `research`)
+- **Build**: `tsup src/us.ts --format esm`
 - **Distribution**: npm
 
 ### Agent Pack (packages/agent-pack) — v2
@@ -153,7 +154,7 @@ sandbox/
 ├── coffee-assistant/         # Battle-tested: P2P + AI + RPC (Node.js CLI)
 ├── coffee-assistant-ui/      # Battle-tested: Pear Desktop + React + Worker
 ├── slack-p2p-copy/           # Battle-tested: P2P messaging
-└── <cli-test-builds>/        # Future: scaffolded with create-unstoppable-app
+└── <cli-test-builds>/        # Future: scaffolded with `us init` / `us scaffold`
 ```
 
 The battle-tested apps contain `fixes/` folders and planning notes — these are the primary source of validated patterns for the agent pack. CLI test builds should include a `FEEDBACK.md`.
@@ -162,16 +163,27 @@ The battle-tested apps contain `fixes/` folders and planning notes — these are
 
 ## CLI Specification
 
+The CLI binary is `us` with subcommands.
+
 ### Installation
 ```bash
-npm create unstoppable-app@latest
-# or
-npx create-unstoppable-app
-# or
-pnpm create unstoppable-app
+npm install -g @unstoppable-stack/cli
 ```
 
-### Interactive Flow
+### Commands
+```bash
+us init [project-name]          # Interactive project setup (prompts for name + AI assistant)
+us scaffold app -p <platform> -n <name> [-f features]  # Scaffold a specific app
+us scaffold list-platforms       # List available platforms
+us scaffold list-features        # List available features
+us doctor                        # Check development environment
+us doctor -p expo-mobile         # Check for a specific platform
+us research run <experiment-id>  # Run a research experiment
+us research list                 # List available experiments
+us research scaffold-test        # Quick scaffold validation
+```
+
+### Interactive Flow (`us init`)
 ```
 ? What is your project name? my-app
 ? Select your AI assistant:
