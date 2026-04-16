@@ -20,7 +20,9 @@ The Unstoppable Stack is a toolchain that lets you **build apps using P2P protoc
 Run one command. Open your AI editor. Describe what you want. Get a working app.
 
 ```bash
-npx create-unstoppable-app
+npx @unstoppable-stack/cli init
+# or if installed globally:
+us init
 ```
 
 Your AI assistant (Claude, Cursor, OpenCode, or Codex) gets pre-loaded with battle-tested knowledge about the entire stack — so it actually builds things that work.
@@ -53,7 +55,7 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 
 ```bash
 # Scaffold a new project
-npx create-unstoppable-app
+us init
 
 # Follow the prompts
 ? Project name: my-app
@@ -115,7 +117,7 @@ The same knowledge base generates configs for:
 ```
 unstoppable-stack/
 ├── packages/
-│   ├── cli/              # create-unstoppable-app — scaffolds projects
+│   ├── cli/              # `us` CLI — init, scaffold, doctor, research
 │   ├── agent-pack/       # AI knowledge base (source of truth)
 │   ├── website/          # unstoppable.dev — Next.js site
 │   └── templates/        # Project scaffolds (starter)
@@ -144,13 +146,13 @@ cd unstoppable-dev
 pnpm install
 
 # Build the CLI
-pnpm --filter create-unstoppable-app build
+pnpm --filter cli build
 
 # Run the website locally
 pnpm --filter website dev
 
-# Link the CLI globally for testing
-cd packages/cli && npm link
+# Install the CLI globally for testing
+cd packages/cli && npm install -g .
 ```
 
 ### Editing the Agent Pack
@@ -162,7 +164,7 @@ All agent pack content lives in `packages/agent-pack/src/`. After making changes
 rsync -av --delete packages/agent-pack/src/ packages/cli/agent-pack-src/
 
 # Rebuild CLI
-pnpm --filter create-unstoppable-app build
+pnpm --filter cli build
 ```
 
 ## Validated Patterns
