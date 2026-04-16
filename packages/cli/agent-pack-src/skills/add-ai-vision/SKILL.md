@@ -1,8 +1,9 @@
 ---
 name: add-ai-vision
-description: Add QVAC multimodal vision for local image analysis. Use when
-  the user wants to analyze images, identify objects, or extract information
-  from photos using a local model. Builds on add-ai-chat.
+description: QVAC multimodal vision for local image analysis.
+when_to_use: User wants to analyze images, identify objects, or extract information from photos using a local model. Builds on add-ai-chat.
+paths: ["src/ai/**", "src/vision/**"]
+version: "2026-04-14"
 ---
 
 # Add AI Vision (QVAC Multimodal)
@@ -13,7 +14,7 @@ description: Add QVAC multimodal vision for local image analysis. Use when
 - User needs to extract text, identify objects, or describe images
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.7.0`) installed
+- `@qvac/sdk` (`^0.8.0`) installed
 - A multimodal vision model loaded
 - Familiarity with `add-ai-chat` (model loading, completion API)
 

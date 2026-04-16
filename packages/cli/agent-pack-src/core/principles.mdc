@@ -39,7 +39,7 @@ Ask: "Which AI model and use case?"
 | General chat | `LLAMA_3_2_1B_INST_Q4_0` or `SALAMANDRATA_2B_INST_Q8` |
 | Mobile (tiny) | `QWEN3_600M_INST_Q4` |
 
-> **Note**: `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.7.0`. Use Qwen 3 models. 1B models are unreliable for tool calling; use 3B+ minimum.
+> **Note**: `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.8.0`. Use Qwen 3 models. 1B models are unreliable for tool calling; use 3B+ minimum.
 
 ### 5. Data Storage
 Ask: "What data persistence do you need?"
@@ -101,6 +101,60 @@ Present this to the user and wait for approval:
 ```
 
 Only proceed with implementation after receiving explicit confirmation.
+
+---
+
+## App Scaffolding (MANDATORY)
+
+**Always use `us scaffold` to create each app** unless you have a specific, justified reason not to (e.g., the platform isn't supported yet, or the user explicitly asks for a custom setup).
+
+### Available Commands
+
+```bash
+# Scaffold a new app
+us scaffold app -p <platform> -n <name> [-f features]
+
+# See what's available
+us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
+us scaffold list-features    # p2p, kv-storage, qvac, autobase
+```
+
+### Examples
+
+```bash
+# Desktop P2P app with local AI
+us scaffold app -p pear-desktop -n my-desktop -f p2p,qvac
+
+# Mobile app with P2P and storage
+us scaffold app -p expo-mobile -n my-mobile -f p2p,kv-storage
+
+# Node.js CLI tool with P2P
+us scaffold app -p node-cli -n my-server -f p2p,kv-storage
+```
+
+### Multi-App Projects
+
+If the architecture has more than one app (e.g., server + desktop + mobile), you MUST:
+
+1. **Create a root folder structure** with a shared workspace layout:
+   ```
+   my-project/
+   ├── apps/
+   │   ├── desktop/    ← us scaffold app -p pear-desktop -n desktop -o apps/desktop
+   │   ├── mobile/     ← us scaffold app -p expo-mobile -n mobile -o apps/mobile
+   │   └── server/     ← us scaffold app -p node-cli -n server -o apps/server
+   ├── packages/
+   │   └── shared/     ← shared types, utils, protocols
+   ├── package.json    ← workspace root
+   └── README.md
+   ```
+2. **Scaffold each app individually** using `us scaffold app` with the `-o` flag to place it in the correct subfolder
+3. **Create a `packages/shared/` folder** if apps share types, protocols, or utilities
+4. **Wire up the workspace** root `package.json` with workspaces pointing to `apps/*` and `packages/*`
+
+### Why This Matters
+
+The scaffold templates include battle-tested boilerplate, correct dependency versions, proper Bare/Pear/Expo configuration, and known workarounds for platform bugs. Writing this from scratch is error-prone and wastes time.
 
 ---
 

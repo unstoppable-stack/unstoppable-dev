@@ -6,6 +6,7 @@ const footerLinks = {
     { label: "Getting Started", href: "/getting-started" },
     { label: "Documentation", href: "/docs" },
     { label: "Showcase", href: "/showcase" },
+    { label: "Roadmap", href: "/roadmap" },
   ],
   stack: [
     { label: "Holepunch", href: "https://holepunch.to/", external: true },

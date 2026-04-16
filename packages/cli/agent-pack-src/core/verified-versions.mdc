@@ -64,7 +64,7 @@ installing it, you'll get `MODULE_NOT_FOUND`.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@qvac/sdk` | `^0.7.0` | Local AI inference SDK |
+| `@qvac/sdk` | `^0.8.0` | Local AI inference SDK |
 | `zod` | `^4.0.0` | Schema validation for tool definitions |
 
 ## UI (React + styled-components)
@@ -187,7 +187,7 @@ worker for P2P and/or AI operations:
 
 ```json
 "dependencies": {
-  "@qvac/sdk": "^0.7.0",
+  "@qvac/sdk": "^0.8.0",
   "zod": "^4.0.0"
 }
 ```

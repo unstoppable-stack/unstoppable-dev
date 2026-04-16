@@ -1,8 +1,9 @@
 ---
 name: setup-local-testing
-description: Set up same-machine P2P testing with local DHT bootstrap,
-  second peer scripts, and debugging tools. Use when the user says peers
-  don't connect or wants to test P2P locally.
+description: Same-machine P2P testing with local DHT bootstrap and debugging.
+when_to_use: User says peers don't connect, wants to test P2P locally on one machine, or needs a local DHT bootstrap node.
+paths: ["dht-bootstrap.js", "test/**", "scripts/**"]
+version: "2026-04-14"
 ---
 
 # P2P Dev Testing

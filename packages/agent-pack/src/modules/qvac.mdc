@@ -13,8 +13,8 @@ models, runs inference, streams tokens, and manages model lifecycle.
 
 ## Version Notes
 
-- Latest npm: `@qvac/sdk@0.7.0` (verified 2026-03-06).
-- Reference apps (workbench, qvac-health) originally on `^0.6.1`, migrating to `^0.7.0`.
+- Latest npm: `@qvac/sdk@0.8.0` (verified 2026-03-20).
+- Reference apps (workbench, qvac-health) originally on `^0.6.1`, migrating to `^0.8.0`.
 - SDK uses file-based configuration since 0.5.0 (see Configuration section).
 
 ## Installation
@@ -90,7 +90,7 @@ await unloadModel({ modelId });
 | Tool calling / function calling | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` or `QWEN_3_1_7B_INST_Q4` | Tool-calling tuned model or strong structured output. |
 | General chat (small)            | `LLAMA_3_2_1B_INST_Q4_0`                                       | Small footprint, fast startup.                        |
 | General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
-| Code generation                 | _No explicit `CODER_\*` constants in 0.7.0\_                   | Use Qwen instruct models or check newer SDKs.         |
+| Code generation                 | _No explicit `CODER_\*` constants in 0.8.0\_                   | Use Qwen instruct models or check newer SDKs.         |
 | Highest quality (desktop)       | `GPT_OSS_20B_INST_Q4_K_M`                                      | ~12GB, desktop only. Non-standard tool call format.   |
 | Mobile/small footprint          | `QWEN3_600M_INST_Q4` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
 | Multimodal (vision/video)       | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
@@ -98,7 +98,7 @@ await unloadModel({ modelId });
 | Speech-to-text                  | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
 | Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | NMT models for specific language pairs.               |
 
-Verified model constants exported by `@qvac/sdk@0.7.0` (subset):
+Verified model constants exported by `@qvac/sdk@0.8.0` (subset):
 `LLAMA_3_2_1B_INST_Q4_0`, `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`,
 `QWEN3_600M_INST_Q4`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
 `QWEN_3_8B_INST_Q4_K_M`, `GPT_OSS_20B_INST_Q4_K_M`,
@@ -108,7 +108,7 @@ Verified model constants exported by `@qvac/sdk@0.7.0` (subset):
 `VAD_SILERO_5_1_2`, `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`.
 
 > **Note**: If a model constant is not listed here, treat it as unverified for
-> 0.7.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
+> 0.8.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
 
 ## Context Window Limits
 

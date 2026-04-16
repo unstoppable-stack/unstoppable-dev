@@ -1,8 +1,9 @@
 ---
 name: add-encrypted-channels
-description: Add encrypted P2P messaging using SecretStream and Protomux
-  multiplexed channels. Use when the user needs end-to-end encryption or
-  multiple protocols on a single connection. Requires add-p2p-networking first.
+description: Encrypted P2P messaging with SecretStream and Protomux channels.
+when_to_use: User needs end-to-end encrypted messaging or multiplexed protocols on a single P2P connection.
+paths: ["src/p2p/**", "src/messaging/**"]
+version: "2026-04-14"
 ---
 
 # Secure P2P Communication

@@ -1,7 +1,7 @@
 # QVAC Chat App — Troubleshooting
 
 ## Model constant not found
-- Only use constants from `@qvac/sdk@0.7.0` — see the model guide
+- Only use constants from `@qvac/sdk@0.8.0` — see the model guide
 - `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist
 - Use `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, or `QWEN3_600M_INST_Q4`
 

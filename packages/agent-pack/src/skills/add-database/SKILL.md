@@ -1,8 +1,9 @@
 ---
 name: add-database
-description: Add a structured P2P database using HyperDB with schema
-  definitions, indexes, and multi-writer support. Use when the user needs
-  a collaborative database that syncs between peers.
+description: Structured P2P database with HyperDB — schemas, indexes, multi-writer.
+when_to_use: User needs a collaborative database with schema definitions, indexed queries, and multi-writer sync between peers.
+paths: ["src/data/**", "src/db/**"]
+version: "2026-04-14"
 ---
 
 # Add Database (HyperDB)

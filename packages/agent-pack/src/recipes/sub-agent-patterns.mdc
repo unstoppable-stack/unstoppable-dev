@@ -1,0 +1,235 @@
+---
+description: "Recipe: sub-agent and specialist patterns — read-only explorer, planner, verifier, and custom agents"
+alwaysApply: false
+---
+
+# Recipe: Sub-Agent and Specialist Patterns
+
+## Problem
+
+Complex tasks benefit from delegating subtasks to specialized agents with
+constrained capabilities. A "read everything, write nothing" explorer
+prevents accidental mutations during research. A planner produces
+architecture before code. A verifier adversarially checks implementation.
+
+This recipe documents battle-tested patterns for structuring specialist
+sub-agents in AI-assisted development workflows.
+
+## When to Use
+
+- Breaking a large task into research → plan → implement → verify phases
+- Delegating code exploration to a fast, read-only agent
+- Verifying non-trivial changes before committing
+- Building custom specialist agents for project-specific workflows
+
+## Pattern 1: Read-Only Explorer
+
+A fast, read-only agent that searches the codebase without modifying it.
+Use before editing to understand existing patterns, find related code, or
+map dependencies.
+
+### Contract
+
+```markdown
+You are a read-only code exploration agent.
+
+STRICT RULES — NO EXCEPTIONS:
+- Do NOT write, edit, create, move, copy, or delete any files
+- Do NOT use file redirects (>, >>), heredocs, or tee to write content
+- Do NOT install packages or modify dependencies
+- Do NOT create temporary files or scripts
+- Bash is allowed ONLY for: ls, find, grep, cat, head, tail, wc, git log/diff/status/blame
+
+APPROACH:
+- Search broadly first, then narrow down
+- Run multiple searches in parallel when possible
+- Return findings as structured text — file paths, line ranges, and explanations
+```
+
+### Tool Configuration
+
+```yaml
+tools: ["Read", "Grep", "Glob", "Shell"]
+disallowed_tools: ["Edit", "Write", "Delete"]
+model: fast  # Use the cheapest/fastest model — exploration is high-volume
+```
+
+### Routing Hint (whenToUse)
+
+> Use the explorer for quick searches, "how does X work?", "where is Y
+> defined?", or "find all files related to Z". For thorough multi-file
+> investigations, pass thoroughness level: quick / medium / very thorough.
+
+### Example Invocation
+
+```
+Explore the codebase to understand how worker communication works
+in Pear Desktop apps. Find all files that use Pear.worker.pipe()
+or pear-run, and summarize the message flow.
+```
+
+## Pattern 2: Implementation Planner
+
+A read-only agent that produces an architecture plan before any code is
+written. Explores the codebase, identifies patterns, designs the approach,
+and outputs a step-by-step implementation plan.
+
+### Contract
+
+```markdown
+You are an implementation planning agent. Your job is to explore the
+codebase and produce a detailed implementation plan.
+
+RULES:
+- Same read-only rules as the explorer — NO file mutations
+- Do NOT write code — only describe what code should be written
+- Do NOT skip the exploration phase — always read existing code first
+
+PROCESS:
+1. Understand the requirements fully
+2. Explore existing patterns in the codebase (imports, file structure, naming)
+3. Identify 2-3 possible approaches with trade-offs
+4. Recommend one approach with justification
+5. Output a step-by-step plan with:
+   - Files to create or modify (with paths)
+   - Key interfaces/types to define
+   - Dependencies to add
+   - "Critical Files for Implementation" — the 3-5 most important existing
+     files the implementer must read before starting
+```
+
+### Tool Configuration
+
+```yaml
+tools: ["Read", "Grep", "Glob", "Shell"]
+disallowed_tools: ["Edit", "Write", "Delete"]
+model: inherit  # Use the same model as the parent — planning needs reasoning
+```
+
+### Routing Hint
+
+> Use the planner for implementation strategy, architecture decisions, or
+> when you need to understand trade-offs before writing code. Pass the full
+> task description and any constraints.
+
+## Pattern 3: Adversarial Verifier
+
+An agent that tries to **break** the implementation after changes are made.
+It does not fix issues — it reports them with evidence.
+
+### Contract
+
+```markdown
+You are a verification agent. Your job is to find bugs, regressions, and
+missed requirements in the implementation.
+
+RULES:
+- Do NOT fix issues — only report them
+- Do NOT modify project files
+- You MAY write ephemeral test scripts under /tmp or $TMPDIR
+- You MAY run the app, tests, or linter to gather evidence
+
+APPROACH:
+1. Read the task description and understand what was supposed to change
+2. Read all changed files (use git diff if available)
+3. For each change, try to break it:
+   - Missing error handling?
+   - Edge cases not covered?
+   - Type errors or runtime failures?
+   - Does it match the original requirements?
+4. Run tests if available: npm test, vitest, etc.
+5. Check for common issues per stack:
+   - Frontend: missing imports, broken routes, accessibility
+   - API/backend: unvalidated input, missing auth, race conditions
+   - CLI: missing help text, error messages, exit codes
+   - P2P: no peer disconnection handling, missing cleanup, no timeout
+   - Mobile: missing native rebuild, hoisting issues
+
+OUTPUT FORMAT:
+For each issue found:
+  **Issue:** [description]
+  **File:** [path:line]
+  **Command run:** [what you ran]
+  **Output observed:** [what you saw]
+  **Severity:** HIGH / MEDIUM / LOW
+
+VERDICT: PASS | FAIL | PARTIAL
+- PASS: All requirements met, no issues found
+- FAIL: Critical issues that must be fixed
+- PARTIAL: Works but has non-blocking concerns
+```
+
+### Tool Configuration
+
+```yaml
+tools: ["Read", "Grep", "Glob", "Shell"]
+disallowed_tools: ["Edit", "Write", "Delete"]
+model: inherit
+```
+
+### Routing Hint
+
+> Use the verifier after non-trivial changes (3+ files, API/backend/infra,
+> anything involving P2P or AI). Pass: original task, files changed, and
+> the approach taken.
+
+## Pattern 4: Custom Project Specialist (User-Defined)
+
+For project-specific needs, define agents as markdown files in your project.
+Place them in `.agents/` or `.claude/agents/` at the project root.
+
+### Example: Database Migration Specialist
+
+```markdown
+# .agents/db-migration.md
+
+---
+name: db-migration
+description: Run and verify HyperDB schema migrations
+tools: ["Read", "Shell", "Grep"]
+disallowed_tools: ["Write", "Edit"]
+---
+
+You are a database migration specialist for this project.
+
+When asked to run a migration:
+1. Read the migration file in src/data/migrations/
+2. Check the current schema version in the database
+3. Run the migration: node src/data/migrate.ts
+4. Verify the new schema by reading test fixtures
+5. Report: migration version, tables changed, row counts
+```
+
+## Best Practices
+
+### Context Management
+
+- **Skip project context for scouts:** Read-only agents that only search
+  don't need the full project rules loaded. If your tool supports it,
+  mark specialist agents to skip heavy context injection.
+- **Limit max turns:** Set a turn limit for sub-agents to prevent runaway
+  loops. 10-20 turns is typical for exploration, 5-10 for verification.
+
+### Security
+
+- **Never nest sub-agents recursively.** An explorer should not spawn
+  another explorer.
+- **Disallow dangerous tools explicitly.** Even if the contract says
+  "read-only", enforce it via tool allowlists.
+- **Review custom agents in code review.** User-defined `.agents/*.md`
+  files have the same power as code — treat them accordingly.
+
+### When NOT to Use Sub-Agents
+
+- **Simple tasks.** If you can grep + read + edit in 3 steps, do it
+  directly. Sub-agents add overhead.
+- **Single-file edits.** No need for exploration if you know exactly
+  what to change.
+- **When the model is already in context.** If the conversation already
+  explored the area, don't re-explore in a sub-agent.
+
+## References
+
+- Unstoppable Agent architecture: `packages/agent/README.md`
+- Skill system: `packages/agent-pack/src/skills/`
+- Inspiration: Production agent code patterns (tools, routing, orchestration)

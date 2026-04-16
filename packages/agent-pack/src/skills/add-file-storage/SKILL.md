@@ -1,8 +1,9 @@
 ---
 name: add-file-storage
-description: Add P2P file storage and sharing using Hyperdrive with local
-  filesystem mirroring. Use when the user needs to store, share, or sync
-  files between peers.
+description: P2P file storage and sharing using Hyperdrive.
+when_to_use: User wants to store, share, or sync files between peers using a P2P filesystem with local mirroring.
+paths: ["src/files/**", "src/storage/**"]
+version: "2026-04-14"
 ---
 
 # Add File Storage (Hyperdrive)

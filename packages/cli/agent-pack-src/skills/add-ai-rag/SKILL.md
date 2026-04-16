@@ -1,8 +1,9 @@
 ---
 name: add-ai-rag
-description: Add local embeddings and RAG (Retrieval-Augmented Generation)
-  using QVAC with SQLite vector search. Use when the user wants semantic
-  search, knowledge bases, or context-aware AI over local documents.
+description: Local embeddings and RAG with QVAC and SQLite vector search.
+when_to_use: User wants semantic search, knowledge bases, or context-aware AI over local documents using embeddings.
+paths: ["src/ai/**", "src/search/**"]
+version: "2026-04-14"
 ---
 
 # Add AI RAG (QVAC Embeddings + Search)
@@ -14,7 +15,7 @@ description: Add local embeddings and RAG (Retrieval-Augmented Generation)
 - User wants to index and query local files
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.7.0`) installed
+- `@qvac/sdk` (`^0.8.0`) installed
 - An LLM for generation (see `add-ai-chat`)
 - An embedding model for vectorization
 

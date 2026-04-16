@@ -1,9 +1,9 @@
 ---
 name: add-ai-chat
-description: Add local AI inference using QVAC SDK with streaming chat,
-  context management, and optional tool calling. Use when the user wants
-  to add AI capabilities — chatbot, assistant, function calling, or any
-  LLM-powered feature. This is the core AI skill.
+description: Local AI inference with QVAC SDK — streaming, context, tool calling.
+when_to_use: User wants AI capabilities (chatbot, assistant, function calling, LLM inference) running locally without cloud APIs.
+paths: ["src/ai/**", "src/inference/**"]
+version: "2026-04-14"
 ---
 
 # Add AI Chat (QVAC)
@@ -14,7 +14,7 @@ description: Add local AI inference using QVAC SDK with streaming chat,
 - User needs offline AI capabilities without cloud APIs
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.7.0`) and `zod` (`^4.0.0`) installed
+- `@qvac/sdk` (`^0.8.0`) and `zod` (`^4.0.0`) installed
 - Supported runtime: Node.js, Bare, or Expo mobile (native dev build required)
 - Verify model constants against the installed SDK version before coding
 
@@ -45,7 +45,7 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    ```
    > **IMPORTANT**: Install Zod v4 (not v3) — `@qvac/sdk` depends on Zod v4 internally.
 
-2. **Choose the right model** (verified constants from `@qvac/sdk@0.7.0`):
+2. **Choose the right model** (verified constants from `@qvac/sdk@0.8.0`):
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
@@ -56,7 +56,7 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    | General chat (quality) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
    | Mobile (tiny) | `QWEN3_600M_INST_Q4` | ~0.5GB |
 
-   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.7.0`. The SDK exports Qwen 3 models.
+   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.8.0`. The SDK exports Qwen 3 models.
 
 3. **Use `@qvac/sdk` directly** — this is the actual npm package API:
    ```ts

@@ -1,8 +1,9 @@
 ---
 name: setup-pear-terminal
-description: Scaffold a Pear Terminal app — a headless P2P service with no UI.
-  Use when the user wants a background daemon, CLI tool, or backend engine
-  that runs on the Pear/Bare runtime with P2P distribution.
+description: Headless Pear Terminal app — background daemon or CLI with P2P.
+when_to_use: User wants a headless P2P service, background daemon, or CLI tool running on the Pear/Bare runtime.
+paths: []
+version: "2026-04-14"
 ---
 
 # Setup Pear Terminal App

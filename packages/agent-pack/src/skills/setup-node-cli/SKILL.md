@@ -1,24 +1,38 @@
 ---
 name: setup-node-cli
-description: Scaffold a Node.js CLI application with P2P and AI capabilities.
-  Use when the user wants a simple terminal tool or script without Pear
-  distribution. The simplest and fastest path to a working app.
+description: Node.js CLI application with P2P and AI capabilities.
+when_to_use: User is customizing a Node.js CLI app beyond what the scaffold provides, or needs Node-specific patterns.
+paths: ["src/index.ts", "src/**/*.ts"]
+version: "2026-04-14"
 ---
 
 # Setup Node.js CLI App
 
-> **Preferred**: Run `us create -p node-cli -n <name> -f <features>` first.
-> This skill documents the details if you need to customize beyond what the scaffold provides.
+> **Start with the scaffold:** `us scaffold app -p node-cli -n <name> -f <features>`
+>
+> The scaffold generates a validated TypeScript project with correct dependencies, type declarations
+> for untyped P2P modules, and feature-specific managers. This skill covers customization and advanced patterns.
 
-## When to Use
-- User wants a simple terminal tool or script
-- User mentions "CLI", "command line", "terminal app", "Node.js app"
-- User doesn't need P2P distribution (pear:// links)
-- User wants the simplest possible setup
+## What the Scaffold Handles (do NOT redo manually)
+
+The `us scaffold app -p node-cli` command generates:
+
+- `package.json` with correct dependency versions and `@types/node`
+- `tsconfig.json` with strict mode, ES2022, NodeNext resolution
+- `src/index.ts` with graceful startup/shutdown and feature initialization
+- `src/types.d.ts` with `declare module` for untyped P2P libraries (hyperswarm, corestore, etc.)
+- Feature-specific managers (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`, `autobase-manager.ts`)
+
+All feature combinations (p2p, kv-storage, qvac, autobase, and their combos) are validated to typecheck and run.
+
+## When to Read This Skill
+- You already scaffolded and need to **add custom commands or features**
+- You need to **understand the architecture** for a Node.js P2P app
+- You want to compare **Node.js CLI vs Pear Terminal** tradeoffs
 
 ## Prerequisites
 - Node.js 20+ with ESM support
-- pnpm (or npm/bun)
+- npm (preferred) or bun
 
 ## Architecture Overview
 

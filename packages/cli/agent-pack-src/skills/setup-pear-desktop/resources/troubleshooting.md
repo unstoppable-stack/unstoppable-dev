@@ -327,6 +327,45 @@ Or in CSS:
 }
 ```
 
+## Monorepo / Workspace Issues
+
+### `MODULE_NOT_FOUND` for every dependency (workspace hoisting)
+
+**Cause**: The Pear Desktop app is an npm/pnpm workspace member. All dependencies
+are hoisted to the monorepo root `node_modules/`. Bare runtime resolves modules
+relative to the project directory, not the workspace root — so it can't find anything.
+
+**Fix**: Pear Desktop apps must have their own independent `node_modules/`:
+1. Remove the app from the root `package.json` workspaces array
+2. Run `npm install` (or `bun install`) inside the Pear app directory directly
+3. Shared TypeScript packages can remain in workspaces — only Pear apps need exclusion
+
+Example — if your monorepo has:
+```json
+{ "workspaces": ["packages/*", "apps/*"] }
+```
+
+And your Pear app is at `apps/my-pear-app/`, change to:
+```json
+{ "workspaces": ["packages/*"] }
+```
+
+Then install dependencies locally:
+```bash
+cd apps/my-pear-app && npm install
+```
+
+### `ERR_INVALID_CONFIG: pear.pre did not respond with configuration data in time`
+
+**Cause**: The `pear-electron/pre` script uses `require('localdrive')` and other
+dependencies. When these are hoisted to the workspace root, the pre-script can't
+find them and times out.
+
+**Fix**: Same as above — remove the Pear app from workspaces so it has its own
+local `node_modules/`.
+
+---
+
 ## Getting Help
 
 - Pear documentation: https://docs.pears.com/

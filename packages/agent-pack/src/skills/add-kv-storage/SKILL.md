@@ -1,8 +1,9 @@
 ---
 name: add-kv-storage
-description: Add Hyperbee key-value storage with offline-first patterns and
-  automatic P2P sync. Use when the user needs simple persistent storage that
-  works offline and syncs when peers are available.
+description: Hyperbee key-value storage with offline-first sync.
+when_to_use: User needs simple persistent key-value storage that works offline and syncs when peers connect. For structured data, use add-database.
+paths: ["src/data/**", "src/store/**"]
+version: "2026-04-14"
 ---
 
 # Add KV Storage (Hyperbee)

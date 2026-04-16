@@ -16,12 +16,16 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   if (has(opts, 'qvac')) files.push(aiManager())
   if (has(opts, 'autobase')) files.push(autobaseManager())
 
+  const untypedModules = collectUntypedModules(opts)
+  if (untypedModules.length > 0) files.push(typeDeclarations(untypedModules))
+
   return files
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
   const deps: Record<string, string> = {}
   const devDeps: Record<string, string> = {
+    '@types/node': '^20.0.0',
     typescript: '^5.0.0',
     tsx: '^4.0.0',
   }
@@ -43,7 +47,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'qvac')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.7.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.8.0' })
   }
 
   if (has(opts, 'autobase')) {
@@ -230,6 +234,27 @@ export async function setupAI() {
 }
 `
   }
+}
+
+const UNTYPED_MODULES: Record<string, string[]> = {
+  p2p: ['hyperswarm', 'corestore', 'hypercore-crypto'],
+  'kv-storage': ['hyperbee', 'corestore'],
+  autobase: ['autobase', 'corestore', 'hyperbee', 'hyperswarm'],
+}
+
+function collectUntypedModules(opts: GeneratorOptions): string[] {
+  const modules = new Set<string>()
+  for (const feature of opts.features) {
+    for (const mod of UNTYPED_MODULES[feature] ?? []) {
+      modules.add(mod)
+    }
+  }
+  return [...modules]
+}
+
+function typeDeclarations(modules: string[]): GeneratedFile {
+  const decls = modules.map((m) => `declare module '${m}'`).join('\n')
+  return { path: 'src/types.d.ts', content: decls + '\n' }
 }
 
 function autobaseManager(): GeneratedFile {

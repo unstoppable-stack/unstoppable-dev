@@ -1,8 +1,9 @@
 ---
 name: add-p2p-networking
-description: Add Hyperswarm peer discovery and connection management to an
-  existing app. The foundation for all P2P features — add this before
-  add-p2p-rpc, add-p2p-sync, or add-encrypted-channels.
+description: Hyperswarm peer discovery and connection management.
+when_to_use: User wants P2P connectivity — peer discovery, swarm networking, or the foundation for RPC/sync/encryption.
+paths: ["src/p2p/**"]
+version: "2026-04-14"
 ---
 
 # Add P2P Networking
