@@ -1,0 +1,1310 @@
+{
+  "experimentId": "scaffold-expo-mobile",
+  "startedAt": "2026-03-19T17:33:23.422Z",
+  "iterations": [
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "bare",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "",
+        "features_slug": "bare"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-bare",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 104,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile  -o /tmp/us-research-scaffold-expo-mobile-bare",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-bare\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 110,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npx expo prebuild\n\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 794 packages, and audited 795 packages in 37s\n\n56 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 37216,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 181,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 756,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] [RNDeps] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')\nnote: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'EXConstants' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 46423,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 16s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 16560,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941705384.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 11,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941705384.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941705398.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 4,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941705398.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-bare",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5995,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "p2p",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f p2p",
+        "features_slug": "p2p"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f p2p -o /tmp/us-research-scaffold-expo-mobile-p2p",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-p2p\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"p2p\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\",\n    \"bare/index.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 186,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npm run build:bare && npx expo prebuild\n\n\n> test-mobile@0.1.0 build:bare\n> npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --out bare/app.bundle.js bare/index.js\n\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 810 packages, and audited 811 packages in 30s\n\n56 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 29691,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 21,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 214,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 824,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "warning: Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking \"Based on dependency analysis\" in the script phase. (in target 'hermes-engine' from project 'Pods')\nnote: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 29437,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 16s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 16354,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941788157.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 6,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941788157.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941788164.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 4,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941788164.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4913,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "qvac",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f qvac",
+        "features_slug": "qvac"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3435,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f qvac -o /tmp/us-research-scaffold-expo-mobile-qvac",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-qvac\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"qvac\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 186,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npx expo prebuild\n\n[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] Added OpenCL exclusion to existing packagingOptions block\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 973 packages, and audited 974 packages in 1m\n\n60 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 68637,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 19,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 209,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] OpenCL exclusion already exists in build.gradle\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 2491,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'EXConstants' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 38426,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 33s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 33751,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941940262.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 12,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941940262.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941940274.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 4,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773941940274.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 6691,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "kv-storage",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f kv-storage",
+        "features_slug": "kv-storage"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 6,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f kv-storage -o /tmp/us-research-scaffold-expo-mobile-kv-storage",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-kv-storage\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"kv-storage\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 191,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npx expo prebuild\n\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 794 packages, and audited 795 packages in 39s\n\n56 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 38827,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 210,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 761,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 2,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] [RNDeps] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')\nnote: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'EXConstants' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 29158,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 15s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 16134,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942032305.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 10,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942032305.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942032314.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 3,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942032314.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5722,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "p2p,qvac",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f p2p,qvac",
+        "features_slug": "p2p-qvac"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3657,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f p2p,qvac -o /tmp/us-research-scaffold-expo-mobile-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-p2p-qvac\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"p2p\",\n    \"qvac\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\",\n    \"bare/index.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 188,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npm run build:bare && npx expo prebuild\n\n\n> test-mobile@0.1.0 build:bare\n> npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --out bare/app.bundle.js bare/index.js\n\n[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] Added OpenCL exclusion to existing packagingOptions block\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 973 packages, and audited 974 packages in 1m\n\n60 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 70547,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 221,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] OpenCL exclusion already exists in build.gradle\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 2457,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'EXConstants' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 39023,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 34s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 34483,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942188663.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 12,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942188663.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942188674.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 4,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942188674.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 7389,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "p2p,kv-storage",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f p2p,kv-storage",
+        "features_slug": "p2p-kv-storage"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 6,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f p2p,kv-storage -o /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-p2p-kv-storage\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"p2p\",\n    \"kv-storage\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\",\n    \"bare/index.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 203,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npm run build:bare && npx expo prebuild\n\n\n> test-mobile@0.1.0 build:bare\n> npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --out bare/app.bundle.js bare/index.js\n\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 810 packages, and audited 811 packages in 27s\n\n56 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 27081,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 225,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 779,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 2,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] [RNDeps] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')\nnote: Run script build phase '[CP-User] [RN]Check FBReactNativeSpec' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'React-RCTFBReactNativeSpec' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 30519,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 15s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 16167,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942271094.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 5,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942271094.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942271098.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 4,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942271098.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5266,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    },
+    {
+      "iteration": 1,
+      "variant": {
+        "features": "p2p,kv-storage,qvac",
+        "experiment_id": "scaffold-expo-mobile",
+        "id": "scaffold-expo-mobile",
+        "features_flag": "-f p2p,kv-storage,qvac",
+        "features_slug": "p2p-kv-storage-qvac"
+      },
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3309,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p expo-mobile -n test-mobile -f p2p,kv-storage,qvac -o /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage-qvac",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-mobile\",\n  \"projectPath\": \"/tmp/us-research-scaffold-expo-mobile-p2p-kv-storage-qvac\",\n  \"platform\": \"expo-mobile\",\n  \"features\": [\n    \"p2p\",\n    \"kv-storage\",\n    \"qvac\"\n  ],\n  \"filesCreated\": [\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"app.json\",\n    \"metro.config.js\",\n    \"mocks/empty.js\",\n    \"app/_layout.tsx\",\n    \"app/index.tsx\",\n    \"plugins/withAndroidNdkVersion.js\",\n    \"plugins/withAndroidArchitecture.js\",\n    \"bare/index.js\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run ios  # or: npm run android\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 180,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\n> test-mobile@0.1.0 postinstall\n> npm run build:bare && npx expo prebuild\n\n\n> test-mobile@0.1.0 build:bare\n> npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --out bare/app.bundle.js bare/index.js\n\n[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] Added OpenCL exclusion to existing packagingOptions block\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n- Installing CocoaPods...\n✔ Installed CocoaPods\n\nadded 973 packages, and audited 974 packages in 1m\n\n60 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 79834,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 21,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "app-json-valid",
+          "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "metro-config-valid",
+          "command": "node -e \"require('./metro.config.js')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 216,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "expo-prebuild",
+          "command": "npx expo prebuild --no-install",
+          "exitCode": 0,
+          "stdout": "[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Creating native directories (./ios and ./android)\n✔ Created native directories | reusing /android, /ios\n- Updating package.json\n✔ Updated package.json | no changes\n- Running prebuild\n[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a\n- Running prebuild\n[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n[withOpenCL] OpenCL exclusion already exists in build.gradle\n- Running prebuild\n[withAndroidNdkVersion] Set NDK version to 29.0.14206865\n- Running prebuild\n- Running prebuild\n🕚 QVAC: No config found, generating default bundle (all plugins)...\n- Running prebuild\n✅ QVAC: Patched android/link.mjs for manifest-aware linking\n- Running prebuild\n✅ QVAC: Patched ios/link.mjs for manifest-aware linking\n- Running prebuild\n🫡 QVAC: Mobile bundle generated\n- Running prebuild\n✔ Finished prebuild\n",
+          "stderr": "",
+          "duration": 2498,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-dir-created",
+          "command": "test -d ios",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-dir-created",
+          "command": "test -d android",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 2,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "ios-build",
+          "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'testmobile' from project 'testmobile')\nnote: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase \"Based on dependency analysis\" is unchecked. (in target 'EXConstants' from project 'Pods')\n** BUILD SUCCEEDED **\n\n",
+          "stderr": "",
+          "duration": 40259,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCEEDED"
+          }
+        },
+        {
+          "name": "android-build",
+          "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+          "exitCode": 0,
+          "stdout": "\nFor more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\n\nBUILD SUCCESSFUL in 33s\n277 actionable tasks: 277 executed\n",
+          "stderr": "",
+          "duration": 34332,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "BUILD SUCCESSFUL"
+          }
+        },
+        {
+          "name": "ios-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942437043.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 5,
+          "passed": false,
+          "error": "Command failed: maestro test --platform ios /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942437043.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "android-maestro-smoke",
+          "command": "maestro test /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942437049.yaml",
+          "exitCode": 127,
+          "stdout": "",
+          "stderr": "/bin/sh: maestro: command not found\n",
+          "duration": 3,
+          "passed": false,
+          "error": "Command failed: maestro test --platform android /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-maestro-1773942437049.yaml",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-expo-mobile-p2p-kv-storage-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5940,
+          "passed": true
+        }
+      ],
+      "allPassed": true
+    }
+  ],
+  "finalStatus": "passed",
+  "variant": {
+    "features": "p2p,kv-storage,qvac",
+    "experiment_id": "scaffold-expo-mobile",
+    "id": "scaffold-expo-mobile",
+    "features_flag": "-f p2p,kv-storage,qvac",
+    "features_slug": "p2p-kv-storage-qvac"
+  },
+  "completedAt": "2026-03-19T17:47:22.993Z"
+}

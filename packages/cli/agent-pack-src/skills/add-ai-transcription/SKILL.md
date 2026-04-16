@@ -1,8 +1,9 @@
 ---
 name: add-ai-transcription
-description: Add local audio transcription using QVAC Whisper models. Use
-  when the user wants speech-to-text, voice notes, or meeting transcription
-  running entirely on-device.
+description: Local audio transcription using QVAC Whisper models.
+when_to_use: User wants speech-to-text, voice notes, or meeting transcription running entirely on-device.
+paths: ["src/ai/**", "src/audio/**"]
+version: "2026-04-14"
 ---
 
 # Add AI Transcription (QVAC Whisper)
@@ -13,7 +14,7 @@ description: Add local audio transcription using QVAC Whisper models. Use
 - User needs to process audio files or record from microphone
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.7.0`) installed
+- `@qvac/sdk` (`^0.8.0`) installed
 - A Whisper model available
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.

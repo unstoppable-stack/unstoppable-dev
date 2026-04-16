@@ -1,13 +1,15 @@
 # Website (unstoppable.dev)
 
-**Goal:** Developer-facing site with polished landing, getting started, docs, showcase.
+**Goal:** Developer-facing site with polished landing, getting started, docs, roadmap, showcase.
 
-**Current state:** Next.js app exists with base pages and components. Needs polish.
+**Current state:** All major pages complete. Landing, Getting Started, Docs, and Roadmap fully built with Node/Search/Agent coverage. Showcase is a placeholder.
 
 **Key files:**
 - `packages/website/src/app/page.tsx` — Landing
 - `packages/website/src/app/getting-started/page.tsx` — Guide
 - `packages/website/src/app/docs/page.tsx` — Docs
+- `packages/website/src/app/roadmap/page.tsx` — Roadmap
+- `packages/website/src/app/showcase/page.tsx` — Showcase
 - `planning/features/website.md` — Wireframes + design tokens
 
 ---
@@ -16,10 +18,11 @@
 
 | Page | Exists | Status |
 |------|--------|--------|
-| Landing (`/`) | Yes | Needs hero, Powered By, How It Works sections |
-| Getting Started (`/getting-started`) | Yes | Needs full content |
-| Docs (`/docs`) | Yes | Needs module sub-pages |
-| Showcase (`/showcase`) | Yes | Placeholder — "coming soon" |
+| Landing (`/`) | Yes | Complete — hero, value pillars (4), powered by, how it works (4 steps), modules grid, Node architecture, ecosystem, CTA |
+| Getting Started (`/getting-started`) | Yes | Complete — prerequisites, install, scaffold (platforms + features), vibe-code, connect to Node, what's next |
+| Docs (`/docs`) | Yes | Complete — products (Node, Search, Agent), modules (P2P, Data, AI, Mobile), quick links |
+| Roadmap (`/roadmap`) | Yes | Complete — workstreams, phases timeline, Node architecture, stack coverage with progress bars |
+| Showcase (`/showcase`) | Yes | Placeholder — "coming soon" with GitHub submission link |
 
 ---
 
@@ -27,19 +30,18 @@
 
 | # | Task | Details | Effort |
 |---|------|---------|--------|
-| 1 | **Landing hero** | Terminal install command, bold copy, CTA buttons | Medium |
-| 2 | **Powered By section** | Holepunch + Tether logos, 4 tech cards | Medium |
-| 3 | **How It Works section** | 3-step flow with visual cards | Small |
-| 4 | **Getting Started content** | Full guide: prerequisites → install → scaffold → run | Medium |
-| 5 | **Docs module stubs** | Sub-page per module, placeholder content OK | Medium |
+| 1 | **Logo assets** | Real Holepunch + Tether logos instead of letter placeholders | Small |
+| 2 | **SEO / meta tags** | Open Graph images, Twitter cards | Small |
+| 3 | **Showcase content** | Populate with reference apps once stable | Medium |
+| 4 | **Per-module doc pages** | Deep docs per module when agent pack content matures | Large |
 
 ---
 
 ## Blocked / Dependencies
 
 - Logo assets needed (Holepunch, Tether, Pear, QVAC, WDK)
-- Full module docs deferred until agent pack content is mature
-- Showcase depends on real apps
+- Per-module deep docs deferred until agent pack content is mature
+- Showcase depends on real community apps
 
 ---
 
@@ -47,6 +49,11 @@
 
 | Date | Task |
 |------|------|
+| 2026-03-27 | Docs page: products section (Node, Search, Agent), expanded modules (Hypercore, Corestore, SecretStream, Hyperbee), fixed quick links |
+| 2026-03-27 | Getting Started: platforms + features, `us scaffold` command, Step 4 (Connect to Node), Codex added |
+| 2026-03-27 | Landing: 4th value pillar (Node), Step 4 (Connect to Node), Node architecture section with 4 services, ecosystem cards, Node typing prompts |
+| 2026-03-27 | Roadmap page: workstreams, phases timeline, Node architecture, coverage progress bars |
+| 2026-03-27 | Navbar + footer: Roadmap link added |
 | 2026-02 | Website planning doc with wireframes |
 | 2026-02 | Next.js app scaffolded (App Router, Tailwind, shadcn/ui) |
 | 2026-02 | Components: navbar, footer, code-block, typing-prompt |

@@ -1,20 +1,36 @@
 ---
 name: setup-pear-desktop
-description: Scaffold a Pear Desktop app with React, styled-components,
-  worker pattern, and SWC build pipeline. Use when the user wants to build
-  a desktop GUI application with P2P, storage, or AI capabilities.
+description: Pear Desktop app with worker pattern and P2P/AI capabilities.
+when_to_use: User is customizing a Pear Desktop app beyond what the scaffold provides, or debugging worker/bridge issues.
+paths: ["index.html", "index.js", "worker.js", "app/**"]
+version: "2026-04-14"
 ---
 
 # Pear Desktop App
 
-> **Preferred**: Run `us create -p pear-desktop -n <name> -f <features>` first.
-> This skill documents the details if you need to customize beyond what the scaffold provides.
+> **Start with the scaffold:** `us scaffold app -p pear-desktop -n <name> -f <features>`
+>
+> The scaffold generates a working Pear Desktop project with the correct `pear` config, worker bridge,
+> and feature initialization. This skill covers customization, advanced patterns, and debugging.
 
-## When to Use
-- User wants to build a desktop application
-- User mentions "desktop app", "GUI", "window", "visual UI", "Pear desktop"
-- User wants a graphical interface for their P2P/AI/data app
-- User is building something that needs a window with UI elements
+## What the Scaffold Handles (do NOT redo manually)
+
+The `us scaffold app -p pear-desktop` command generates:
+
+- `package.json` with `pear` config block (type, gui, routes, unrouted)
+- `index.html` with `<pear-ctrl>`, title bar, and script loading
+- `index.js` with worker bridge (JSON pipe communication)
+- `worker.js` with feature-specific initialization (P2P, storage, AI)
+- `app/index.js` with status display UI
+
+**Do NOT recreate these files manually.** Scaffold first, then customize.
+
+## When to Read This Skill
+
+- You already scaffolded and need to **add React, styled-components, or SWC builds**
+- You need the **full React + worker architecture** (the scaffold generates a simpler vanilla JS version)
+- You need to **debug worker communication** or build issues
+- You need to understand **distribution** (pear stage / seed / release)
 
 ## Prerequisites
 - `pear` CLI installed globally (`npm i -g pear`)
@@ -165,7 +181,7 @@ bootstrap (not `app.ts`).
 
    **Adding AI** (add to `dependencies`):
    ```json
-   "@qvac/sdk": "^0.7.0",
+   "@qvac/sdk": "^0.8.0",
    "zod": "^4.0.0"
    ```
 
@@ -319,6 +335,13 @@ bootstrap (not `app.ts`).
 - **`<pear-ctrl>`** provides native window controls — always include
 - **`-webkit-app-region: drag`** on the title bar div makes it draggable
 - **No `localhost`** — Pear serves files from disk via bridge, not a dev server
+
+### Monorepo / Workspace Gotcha
+- **Pear Desktop apps must NOT be npm/pnpm workspace members** — Bare runtime
+  resolves modules relative to the project directory. Hoisted dependencies cause
+  `MODULE_NOT_FOUND` for every package and `pear-electron/pre` timeout.
+- Exclude Pear apps from workspaces and run `npm install` inside the app directory.
+- See `resources/troubleshooting.md` for detailed fix steps.
 
 ### Bare Runtime
 - **No `TextEncoder`** — use `charCodeAt()` or `bare-encoding`

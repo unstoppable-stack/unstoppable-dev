@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document specifies how the `create-unstoppable-app` CLI uses the agent pack to generate tool-specific configurations during project scaffolding.
+This document specifies how the `us` CLI uses the agent pack to generate tool-specific configurations during project scaffolding.
 
 ---
 
@@ -10,7 +10,7 @@ This document specifies how the `create-unstoppable-app` CLI uses the agent pack
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  npx create-unstoppable-app my-app                          │
+│  us init my-app                                              │
 ├─────────────────────────────────────────────────────────────┤
 │  1. Project name: my-app                                    │
 │  2. AI Assistant: [Claude Code | Cursor | OpenCode | None]  │

@@ -1,0 +1,103 @@
+{
+  "id": "scaffold-expo-mobile",
+  "name": "Expo Mobile Scaffold Validation",
+  "description": "Verify that scaffolded Expo mobile projects install, prebuild, build for iOS/Android, and launch on simulator/emulator",
+  "variants": [
+    {
+      "name": "features",
+      "values": ["bare", "p2p", "qvac", "kv-storage", "p2p,qvac", "p2p,kv-storage", "p2p,kv-storage,qvac"]
+    }
+  ],
+  "workDir": "/tmp/us-research-{{experiment_id}}-{{features_slug}}",
+  "setup": [
+    {
+      "name": "clean",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "optional": true
+    },
+    {
+      "name": "scaffold",
+      "command": "us scaffold app -p expo-mobile -n test-mobile {{features_flag}} -o /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "timeout": 10000
+    },
+    {
+      "name": "npm-install",
+      "command": "npm install",
+      "timeout": 180000
+    }
+  ],
+  "measure": [
+    {
+      "name": "package-json-valid",
+      "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "app-json-valid",
+      "command": "node -e \"const a = require('./app.json'); if (!a.expo) throw new Error('missing expo')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "metro-config-valid",
+      "command": "node -e \"require('./metro.config.js')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "expo-prebuild",
+      "command": "npx expo prebuild --no-install",
+      "timeout": 120000,
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "ios-dir-created",
+      "command": "test -d ios",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "android-dir-created",
+      "command": "test -d android",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "ios-build",
+      "command": "cd ios && xcodebuild -workspace *.xcworkspace -scheme testmobile -configuration Debug -sdk iphonesimulator -arch arm64 build 2>&1 | tail -5",
+      "timeout": 300000,
+      "successCriteria": { "type": "stdout-contains", "pattern": "BUILD SUCCEEDED" }
+    },
+    {
+      "name": "android-build",
+      "command": "cd android && ./gradlew assembleDebug 2>&1 | tail -5",
+      "timeout": 300000,
+      "successCriteria": { "type": "stdout-contains", "pattern": "BUILD SUCCESSFUL" }
+    },
+    {
+      "name": "ios-maestro-smoke",
+      "mode": "maestro",
+      "appId": "com.unstoppable.testmobile",
+      "assertVisible": ["test-mobile", "Unstoppable Stack"],
+      "device": "ios",
+      "timeout": 60000,
+      "optional": true
+    },
+    {
+      "name": "android-maestro-smoke",
+      "mode": "maestro",
+      "appId": "com.unstoppable.testmobile",
+      "assertVisible": ["test-mobile", "Unstoppable Stack"],
+      "device": "android",
+      "timeout": 60000,
+      "optional": true
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "remove-project",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}"
+    }
+  ],
+  "changeable": [
+    "packages/cli/src/generators/expo-mobile.ts",
+    "packages/cli/src/generators/common.ts"
+  ],
+  "maxIterations": 5
+}

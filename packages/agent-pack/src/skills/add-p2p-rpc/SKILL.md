@@ -1,8 +1,9 @@
 ---
 name: add-p2p-rpc
-description: Add request/response RPC over P2P connections using bare-rpc.
-  Use when the user needs structured request/response communication between
-  peers. Requires add-p2p-networking first.
+description: Request/response RPC over P2P connections using bare-rpc.
+when_to_use: User needs structured request/response communication between P2P peers, or mentions RPC or remote procedure calls.
+paths: ["src/p2p/**", "src/rpc/**"]
+version: "2026-04-14"
 ---
 
 # P2P RPC

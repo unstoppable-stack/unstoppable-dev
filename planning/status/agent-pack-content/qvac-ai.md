@@ -117,7 +117,7 @@ Battle-tested via `codex-mobile-slack-p2p-2`. Key learnings:
 | Delegated inference to remote | Docs only | QVAC docs `sdk/delegated-inference.mdx` |
 | Blind relays | Not covered | `qvac-examples/download-with-blind-relays.ts` |
 
-Key for Vault (AI Provider service) and subscription model.
+Key for Node (AI Provider service) and subscription model.
 
 ---
 

@@ -67,7 +67,7 @@ breakthrough app for understanding the renderer vs worker architecture.
 
 | Component | Status |
 |-----------|--------|
-| CLI (`create-unstoppable-app`) | Working — scaffolds for Claude, Cursor, OpenCode |
+| CLI (`us` / `@unstoppable-stack/cli`) | Working — scaffolds for Claude, Cursor, OpenCode |
 | Cursor builder | Fixed — includes skill resources as `.mdc` files |
 | Claude builder | Working — skills with resources in `.claude/skills/` |
 | OpenCode builder | Working — skills with resources + specialized agents |

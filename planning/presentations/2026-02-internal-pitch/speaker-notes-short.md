@@ -78,15 +78,15 @@
 
 ---
 
-## Slide 11 — Unstoppable Vault (~45s)
+## Slide 11 — Unstoppable Node (~45s)
 
-"Now for the opportunity. The Unstoppable Vault is a desktop app that syncs with any app built with our stack. Three services: data sync for Hyperbees and HyperDBs, file sync for Hyperdrives, and — this is the exciting one — an AI provider. Your desktop runs a 7B model. Your phone app delegates inference to it over P2P. If the Vault is offline, the phone falls back to its own smaller model automatically. This is already built into QVAC — startQVACProvider on one side, loadModel with delegate on the other."
+"Now for the opportunity. The Unstoppable Node is a desktop app that syncs with any app built with our stack. Three services: data sync for Hyperbees and HyperDBs, file sync for Hyperdrives, and — this is the exciting one — an AI provider. Your desktop runs a 7B model. Your phone app delegates inference to it over P2P. If the Node is offline, the phone falls back to its own smaller model automatically. This is already built into QVAC — startQVACProvider on one side, loadModel with delegate on the other."
 
 ---
 
-## Slide 12 — Vault → Cloud (~30s)
+## Slide 12 — Node → Cloud (~30s)
 
-"And here's the key insight. The Vault and the Cloud use the exact same protocol. Your Vault is free — your desktop, your GPU, your storage. The Cloud is a subscription — Tether-hosted, H100 GPUs, 70B+ models, always on. The app code is identical. You literally just swap a topic and a key. Users start free with their Vault, upgrade to Cloud naturally when they need more power."
+"And here's the key insight. The Node and the Cloud use the exact same protocol. Your Node is free — your desktop, your GPU, your storage. The Cloud is a subscription — Tether-hosted, H100 GPUs, 70B+ models, always on. The app code is identical. You literally just swap a topic and a key. Users start free with their Node, upgrade to Cloud naturally when they need more power."
 
 ---
 
@@ -98,7 +98,7 @@
 
 ## Slide 14 — Phases (~20s)
 
-"Phase 1 — the toolchain — is done. The CLI, agent pack, and website work today. Phase 2 is the Vault — designed and ready to build. Phase 3 is local-first Auth across apps. Phase 4 is the Cloud and subscriptions. Each phase unlocks the next."
+"Phase 1 — the toolchain — is done. The CLI, agent pack, and website work today. Phase 2 is the Node — designed and ready to build. Phase 3 is local-first Auth across apps. Phase 4 is the Cloud and subscriptions. Each phase unlocks the next."
 
 ---
 
@@ -106,7 +106,7 @@
 
 "This is where it all comes together. Imagine a factory of apps — each one built by independent developers using our toolchain. Coffee apps, chat apps, note-taking, voice — whatever they want. Every app has Holepunch P2P, QVAC AI, and WDK Wallet baked in. They deploy to Pear, or the App Store, or the Play Store."
 
-"Users download these apps and connect to their personal Unstoppable Vault — free, running on their desktop, backing up their data, seeding their files, running AI inference. When they need more power — bigger models, always-on storage — they upgrade to the Unstoppable Cloud. Same identity through Unstoppable Auth. Same protocol. Just more horsepower."
+"Users download these apps and connect to their personal Unstoppable Node — free, running on their desktop, backing up their data, seeding their files, running AI inference. When they need more power — bigger models, always-on storage — they upgrade to the Unstoppable Cloud. Same identity through Unstoppable Auth. Same protocol. Just more horsepower."
 
 "Subscriptions flow in USDt through WDK. Builders get revenue share. The more apps built with our stack, the more users, the more USDt flows. Everyone wins."
 
@@ -114,7 +114,7 @@
 
 ## Slide 16 — The Ask (~20s)
 
-"What I'm looking for: continue building 7 reference apps to get to 81% coverage. Build the Vault — it bridges directly to Cloud and validates 7 stack gaps at once. Collaborate with Holepunch on docs and Auth. And launch the public beta at unstoppable.dev."
+"What I'm looking for: continue building 7 reference apps to get to 81% coverage. Build the Node — it bridges directly to Cloud and validates 7 stack gaps at once. Collaborate with Holepunch on docs and Auth. And launch the public beta at unstoppable.dev."
 
 ---
 
@@ -122,7 +122,7 @@
 
 "Let me show you. One prompt to plan, one prompt to build."
 
-[Run npx create-unstoppable-app live or show video]
+[Run us init live or show video]
 
 "That's the unstoppable stack. Questions?"
 
@@ -141,8 +141,8 @@ A: They will — if people build with our stack. That's a chicken-and-egg proble
 **Q: How is this different from just writing good prompts?**
 A: A good prompt helps once. The agent pack helps every developer, every time, automatically. It's infrastructure, not a workaround.
 
-**Q: Why focus on the Vault instead of going straight to Cloud?**
-A: The Vault validates the exact protocols the Cloud will use, but without needing hosting infrastructure. It also gives users an immediate free option, which drives adoption.
+**Q: Why focus on the Node instead of going straight to Cloud?**
+A: The Node validates the exact protocols the Cloud will use, but without needing hosting infrastructure. It also gives users an immediate free option, which drives adoption.
 
 **Q: What about WDK — you have 0% coverage?**
-A: That's intentional for now. WDK gets validated when we build payments into the Vault/Cloud flow. It's a Phase 4 item but the integration surface is well understood.
+A: That's intentional for now. WDK gets validated when we build payments into the Node/Cloud flow. It's a Phase 4 item but the integration surface is well understood.

@@ -1,38 +1,45 @@
 ---
 name: setup-mobile-app
-description: Scaffold an Expo mobile app with Bare runtime worklet for P2P
-  and AI capabilities. Use when the user wants a mobile app (iOS/Android)
-  with local AI inference or P2P networking via react-native-bare-kit.
+description: Expo mobile app with Bare runtime worklet for P2P and AI.
+when_to_use: User is customizing an Expo mobile app with Bare worklet backend, or debugging mobile build/runtime issues.
+paths: ["app.json", "app/**", "bare/**"]
+version: "2026-04-14"
 ---
 
 # Setup Mobile App (Expo + Bare)
 
-> **Preferred**: Run `us create -p expo-mobile -n <name> -f <features>` first.
-> This skill documents the details if you need to customize beyond what the scaffold provides.
+> **Start with the scaffold:** `us scaffold app -p expo-mobile -n <name> -f <features>`
+>
+> The scaffold generates a validated, buildable project for all feature combinations.
+> This skill documents what to do **after** scaffolding — customization, debugging, and advanced patterns.
 
-## When to Use
-- User wants to build a mobile app (iOS or Android)
-- User mentions "mobile", "React Native", "Expo", "iOS", "Android"
-- User needs P2P or local AI on mobile
+## What the Scaffold Handles (do NOT redo manually)
+
+The `us scaffold app -p expo-mobile` command generates all of this correctly:
+
+- `package.json` with pinned dependency versions (`bare-pack@^1.5.1`, `@qvac/cli@^0.1.2`, `expo-build-properties@~1.0.9`)
+- `app.json` with Expo plugins in the correct order, memory entitlements, and NDK config
+- `metro.config.js` with native module mocking (sodium-native, hyperswarm, etc.)
+- Custom Expo plugins (`withAndroidNdkVersion.js`, `withAndroidArchitecture.js`)
+- `postinstall` script automating bare-pack + expo prebuild
+- `bare/index.js` worklet with RPC server (when P2P is selected)
+- `mocks/empty.js` for Metro resolution
+- Correct `overrides` for dependency conflicts
+
+**Do NOT recreate these files manually.** If you need to change something, scaffold first, then modify.
+
+## When to Read This Skill
+
+- You already scaffolded and need to **add screens, features, or custom logic**
+- You need to **debug a build failure** after modifying the scaffolded project
+- You need to understand **why** the scaffold generates things a certain way
+- You need **pnpm-specific setup** (the scaffold uses npm)
 
 ## Prerequisites
 - Node.js 20+
 - Expo CLI (`npx expo`) — Expo SDK 54+
 - Xcode (for iOS) or Android Studio (for Android)
 - A native dev build is **required** — Expo Go cannot host BareKit or QVAC
-
-## Before You Start (Checklist)
-
-Run through this before writing any code:
-
-1. **Decide the app type** — QVAC-only, P2P-only, or P2P+AI combined?
-2. Verify the actual `react-native-bare-kit` API from the installed package exports
-3. P2P apps need a **Bare worklet**; QVAC-only apps do NOT need one
-4. Decide whether routing is needed for v1 (if not, skip expo-router)
-5. Plan a `postinstall` script to automate bare-pack + prebuild
-6. Decide the absolute app storage path strategy before adding Hypercore/HyperDB/QVAC
-7. Check if your package manager needs special handling (pnpm needs `.npmrc` + custom linker)
-8. Separate "simulator unsupported for QVAC inference" from "simulator unsupported for Bare worklets"
 
 ## Architecture Overview
 
@@ -553,7 +560,9 @@ import { Paths, Directory } from 'expo-file-system'
 function getStorageDirectory(): string {
   const docsDir = Paths.document
   const appDir = new Directory(docsDir, 'my-app-storage')
-  appDir.create()
+  if (!appDir.exists) {
+    appDir.create()
+  }
   return appDir.uri.replace('file://', '')
 }
 ```
@@ -702,6 +711,17 @@ Run these checks in order after completing the setup:
 9. Clean rebuild works: `npm run ios:clean`
 
 ## Troubleshooting
+
+### `FileAlreadyExistsException` on `Directory.create()`
+Expo FileSystem's `Directory.create()` throws if the directory already exists.
+**Always** guard with an existence check:
+```tsx
+if (!appDir.exists) {
+  appDir.create()
+}
+```
+Never call `appDir.create()` unconditionally — it works on first launch but
+crashes on every subsequent launch.
 
 ### `isEdgeToEdge is not a function`
 Router/native-stack startup mismatch. For single-screen v1 apps, remove Expo

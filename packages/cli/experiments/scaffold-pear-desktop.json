@@ -1,0 +1,80 @@
+{
+  "id": "scaffold-pear-desktop",
+  "name": "Pear Desktop Scaffold Validation",
+  "description": "Verify that scaffolded Pear Desktop projects install, have valid JS, and the app launches without crashing",
+  "variants": [
+    {
+      "name": "features",
+      "values": ["bare", "p2p", "kv-storage", "qvac", "autobase", "p2p,qvac", "p2p,kv-storage", "p2p,kv-storage,qvac,autobase"]
+    }
+  ],
+  "workDir": "/tmp/us-research-{{experiment_id}}-{{features_slug}}",
+  "setup": [
+    {
+      "name": "clean",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "optional": true
+    },
+    {
+      "name": "scaffold",
+      "command": "us scaffold app -p pear-desktop -n test-pear {{features_flag}} -o /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "timeout": 10000
+    },
+    {
+      "name": "npm-install",
+      "command": "npm install",
+      "timeout": 120000
+    }
+  ],
+  "measure": [
+    {
+      "name": "package-json-valid",
+      "command": "node -e \"import { readFileSync } from 'fs'; const p = JSON.parse(readFileSync('./package.json','utf-8')); if (!p.name || !p.pear || !p.pear.pre || !p.pear.routes || !p.pear.unrouted) throw new Error('missing pear config fields')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "pear-deps-present",
+      "command": "node -e \"import { readFileSync } from 'fs'; const p = JSON.parse(readFileSync('./package.json','utf-8')); const d = p.dependencies; if (!d['pear-electron'] || !d['pear-bridge'] || !d['pear-run']) throw new Error('missing pear-electron/pear-bridge/pear-run')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "required-files-exist",
+      "command": "test -f index.html && test -f index.js && test -f worker.js && test -f app/bridge.js && test -f app/index.js",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "index-js-syntax",
+      "command": "node --input-type=module --check index.js",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "bridge-js-syntax",
+      "command": "node --input-type=module --check app/bridge.js",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "app-js-syntax",
+      "command": "node --input-type=module --check app/index.js",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "pear-runtime-smoke",
+      "mode": "spawn",
+      "command": "pear run -d .",
+      "expectedOutput": ["workerReady"],
+      "timeout": 30000,
+      "optional": true
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "remove-project",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}"
+    }
+  ],
+  "changeable": [
+    "packages/cli/src/generators/pear-desktop.ts",
+    "packages/cli/src/generators/common.ts"
+  ],
+  "maxIterations": 3
+}

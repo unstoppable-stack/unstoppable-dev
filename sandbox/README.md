@@ -14,7 +14,7 @@ Internal apps built for testing, validation, and learning. This folder is **giti
 
 ### CLI test builds
 
-Apps scaffolded with `create-unstoppable-app` for testing the CLI and agent pack. Each should include a `FEEDBACK.md`:
+Apps scaffolded with `us init` for testing the CLI and agent pack. Each should include a `FEEDBACK.md`:
 
 ```
 sandbox/

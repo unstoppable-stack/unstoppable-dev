@@ -1,8 +1,9 @@
 ---
 name: add-multi-writer-sync
-description: Add multi-writer data sync using Autobase. Use when multiple
-  peers or devices need to write to the same database and converge to
-  consistent state. Requires add-p2p-networking first.
+description: Multi-writer data sync using Autobase for convergent state.
+when_to_use: Multiple peers or devices need to write to the same database and converge. Requires add-p2p-networking.
+paths: ["src/p2p/**", "src/data/**"]
+version: "2026-04-14"
 ---
 
 # Add Multi-Writer Sync (Autobase)

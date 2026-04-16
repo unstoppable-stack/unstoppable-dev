@@ -9,9 +9,11 @@ const prompts = [
   "a crypto payment gateway with self-custody",
   "a collaborative notes app with P2P sync",
   "a private health tracker with on-device AI",
-  "a decentralized marketplace with crypto payments",
+  "a mobile app that syncs with my Unstoppable Node",
   "a P2P video call app with end-to-end encryption",
   "a local-first todo app that syncs across devices",
+  "an AI agent that searches the web without API keys",
+  "a photo backup app that seeds to my Node over P2P",
   "an AI-powered translator that never phones home",
 ];
 

@@ -55,8 +55,8 @@ Core operations covered. Advanced features low priority.
 
 ### Next Up
 
-The **Vault build** will battle-test all Corestore patterns. See
-[04-unstoppable-vault/](../04-unstoppable-vault/README.md).
+The **Node build** will battle-test all Corestore patterns. See
+[04-unstoppable-node/](../04-unstoppable-node/README.md).
 
 ---
 
@@ -72,7 +72,7 @@ The **Vault build** will battle-test all Corestore patterns. See
 
 ### Next Up
 
-The **Vault build** (File Sync service) will battle-test Hyperdrive. Can also
+The **Node build** (File Sync service) will battle-test Hyperdrive. Can also
 be validated by the P2P File Sync reference app (see planning/roadmap/reference-apps.md).
 
 ---

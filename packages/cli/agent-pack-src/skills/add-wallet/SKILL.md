@@ -1,8 +1,9 @@
 ---
 name: add-wallet
-description: Add crypto wallet and payment capabilities using Tether WDK.
-  Use when the user needs send/receive payments, balance queries, or
-  transaction history in their app.
+description: Crypto wallet and payment capabilities using Tether WDK.
+when_to_use: User wants send/receive payments, balance queries, or transaction history with self-custodial wallets.
+paths: ["src/wallet/**", "src/payments/**"]
+version: "2026-04-14"
 ---
 
 # Wallet Integration

@@ -1,0 +1,65 @@
+{
+  "id": "scaffold-node-cli",
+  "name": "Node CLI Scaffold Validation",
+  "description": "Verify that scaffolded Node.js CLI projects install, type-check, and run for all feature combinations",
+  "variants": [
+    {
+      "name": "features",
+      "values": ["bare", "p2p", "kv-storage", "qvac", "autobase", "p2p,qvac", "p2p,kv-storage", "p2p,kv-storage,qvac,autobase"]
+    }
+  ],
+  "workDir": "/tmp/us-research-{{experiment_id}}-{{features_slug}}",
+  "setup": [
+    {
+      "name": "clean",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "optional": true
+    },
+    {
+      "name": "scaffold",
+      "command": "us scaffold app -p node-cli -n test-node {{features_flag}} -o /tmp/us-research-{{experiment_id}}-{{features_slug}}",
+      "timeout": 10000
+    },
+    {
+      "name": "npm-install",
+      "command": "npm install",
+      "timeout": 120000
+    }
+  ],
+  "measure": [
+    {
+      "name": "package-json-valid",
+      "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "typecheck",
+      "command": "npx tsc --noEmit",
+      "timeout": 60000,
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "entry-exists",
+      "command": "test -f src/index.ts",
+      "successCriteria": { "type": "exit-code", "expected": 0 }
+    },
+    {
+      "name": "runtime-smoke",
+      "mode": "spawn",
+      "command": "npx tsx src/index.ts",
+      "expectedOutput": ["Starting test-node...", "is running"],
+      "timeout": 15000
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "remove-project",
+      "command": "rm -rf /tmp/us-research-{{experiment_id}}-{{features_slug}}"
+    }
+  ],
+  "changeable": [
+    "packages/cli/src/generators/node-cli.ts",
+    "packages/cli/src/generators/common.ts"
+  ],
+  "maxIterations": 3
+}

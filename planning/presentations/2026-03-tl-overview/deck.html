@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Unstoppable Stack — Overview</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/black.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --accent: #00D4AA;
+    --accent2: #6C63FF;
+    --surface: #12121A;
+    --border: #1E1E2C;
+    --text: #E8E8F0;
+    --dim: #6B6B80;
+    --code-bg: #0C0C12;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .reveal {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+  }
+  .reveal .slides { text-align: left; }
+  .reveal .slides section {
+    padding: 28px 52px 32px;
+    height: 100%;
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .reveal h1 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 800;
+    font-size: 1.7em;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin: 0 0 6px 0;
+    text-align: left;
+    color: var(--text);
+  }
+  .reveal h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 1.15em;
+    letter-spacing: -0.02em;
+    margin: 0 0 10px 0;
+    text-align: left;
+    color: var(--text);
+  }
+
+  .tagline {
+    font-size: 0.48em;
+    color: var(--dim);
+    font-weight: 400;
+    margin-bottom: 14px;
+    line-height: 1.4;
+  }
+
+  .cols { display: flex; gap: 14px; flex: 1; min-height: 0; }
+  .col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+  .label {
+    font-size: 0.34em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 5px;
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+  }
+
+  .term {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.38em;
+    line-height: 1.5;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    color: var(--dim);
+    white-space: pre;
+    overflow: hidden;
+  }
+  .term .p { color: var(--accent); font-weight: 500; }
+  .term .c { color: var(--text); }
+  .term .g { color: #4ADE80; }
+  .term .h { color: var(--accent); }
+  .term .d { color: #42424D; }
+
+  .steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+  }
+  .step-n {
+    font-size: 0.3em;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 1px;
+  }
+  .step-t {
+    font-size: 0.42em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .step-d {
+    font-size: 0.34em;
+    color: var(--dim);
+    line-height: 1.4;
+  }
+
+  .diagram {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.36em;
+    line-height: 1.4;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    white-space: pre;
+    color: var(--dim);
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+  }
+  .diagram .h { color: var(--accent); font-weight: 600; }
+  .diagram .h2 { color: var(--accent2); }
+  .diagram .w { color: var(--text); font-weight: 500; }
+  .diagram .bx { color: #2A2A3A; }
+
+  .srow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2.5px 0;
+    font-size: 0.38em;
+    border-bottom: 1px solid var(--border);
+  }
+  .srow:last-child { border-bottom: none; }
+  .srow-n { color: var(--text); font-weight: 500; }
+  .badge {
+    display: inline-block;
+    font-size: 0.8em;
+    padding: 1px 7px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .bg { background: rgba(74,222,128,0.12); color: #4ADE80; }
+  .by { background: rgba(250,204,21,0.12); color: #FACC15; }
+  .bb { background: rgba(96,165,250,0.12); color: #60A5FA; }
+
+  .foot {
+    position: absolute;
+    bottom: 10px;
+    left: 52px;
+    right: 52px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.32em;
+    color: #33334A;
+  }
+
+  .reveal .slide-number { display: none; }
+  .reveal .progress { height: 2px; }
+  .reveal .progress span { background: var(--accent); }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- SLIDE 1 — The Product -->
+<section>
+  <h1>The Unstoppable Stack</h1>
+  <p class="tagline">Toolchain to scaffold and vibe-code P2P apps with local AI.
+  <span style="color:var(--accent2)">Holepunch</span> + <span style="color:var(--accent)">Tether</span> stack.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-n">1. SCAFFOLD</div>
+      <div class="step-t">us init &amp; us scaffold</div>
+      <div class="step-d">Pick platform (Pear Desktop, Expo Mobile, Node CLI), features (P2P, KV, AI, multi-writer), and AI assistant.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">2. VIBE-CODE</div>
+      <div class="step-t">Agent Pack</div>
+      <div class="step-d">Rules &amp; recipes injected into Claude, Cursor, OpenCode, or Codex. The AI knows P2P patterns, QVAC, the full stack.</div>
+    </div>
+    <div class="step">
+      <div class="step-n">3. RUN</div>
+      <div class="step-t">Unstoppable Node</div>
+      <div class="step-d">Personal sync hub. Replicates data, seeds files, delegates AI. Apps pair automatically over Hyperswarm.</div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="col">
+      <div class="label">Init → vibe-code with AI</div>
+      <div class="term" style="flex:1; font-size:0.34em; line-height:1.45;"><span class="p">$</span> <span class="c">us init my-app</span>
+  <span class="d">? AI assistant:</span> <span class="c">Cursor</span>     <span class="d">? Template:</span> <span class="c">Blank Project</span>
+  <span class="g">✓</span> Project created at <span class="h">./my-app</span>
+  <span class="g">✓</span> Agent pack configured <span class="h">(.cursor/rules/)</span>
+
+<span class="d">User:</span> <span class="c">Build me a P2P chat app for desktop with local storage</span>
+
+<span class="d">Agent:</span> I'll scaffold a Pear Desktop app with P2P and KV features.
+
+  <span class="p">$</span> <span class="c">us scaffold app -p pear-desktop -n chat -f p2p,kv-storage</span>
+    <span class="g">✓</span> Generated 9 files for <span class="h">pear-desktop</span>
+
+<span class="d">Agent:</span> Setting up Hyperswarm for peer discovery and Hyperbee
+  for message storage. Adding the worker bridge + React UI…
+
+  <span class="g">✓</span> Created <span class="h">src/p2p/swarm.js</span>     <span class="g">✓</span> Created <span class="h">src/data/store.js</span>
+  <span class="g">✓</span> Created <span class="h">src/ui/ChatView.jsx</span>  <span class="g">✓</span> Created <span class="h">src/worker.js</span></div>
+    </div>
+    <div class="col">
+      <div class="label">Unstoppable Node</div>
+      <div class="term" style="flex:1"><span class="p">$</span> <span class="c">unstoppable-node start</span>
+  <span class="h">Unstoppable Node</span>
+  Storage: ~/.unstoppable-node
+
+  <span class="g">✓</span> Node is running
+    Waiting for apps to connect...
+
+  <span class="g">✓</span> Paired with <span class="h">Chat App</span> (chat-app)
+  <span class="g">✓</span> Registered <span class="h">chat-app</span>: 2 core(s)
+
+  <span class="d">── Status ──</span>
+  <span class="h">Chat App</span>  Cores: 2 | Entries: 1,203 | Peers: 3</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>The Unstoppable Stack</span>
+    <span>March 2026</span>
+  </div>
+</section>
+
+<!-- SLIDE 2 — Architecture -->
+<section>
+  <h2>Architecture</h2>
+
+  <div class="cols">
+    <div class="col" style="flex: 1.15;">
+      <div class="label">How the pieces connect</div>
+      <div class="diagram"><span class="w">Developer</span>
+  │
+  ├─ <span class="h">us init</span> / <span class="h">us scaffold</span>       → scaffolded project
+  │    └─ <span class="h">Agent Pack</span> injected    → .cursor/rules, CLAUDE.md …
+  │
+  ├─ <span class="h">AI Assistant</span> builds app   → Claude / Cursor / OpenCode / Codex
+  │    └─ knows P2P patterns, QVAC, stack recipes
+  │
+  └─ App connects to <span class="h">Unstoppable Node</span>
+       │
+       ▼
+<span class="bx">┌──────────────────────────────────────────────────────┐</span>
+<span class="bx">│</span>  <span class="w">Unstoppable Node</span>                                   <span class="bx">│</span>
+<span class="bx">│</span>                                                      <span class="bx">│</span>
+<span class="bx">│</span>  <span class="h">Data Sync</span>      <span class="h">File Sync</span>     <span class="h">AI Provider</span>    <span class="h2">Search</span> <span class="bx">│</span>
+<span class="bx">│</span>  Hyperbee       Hyperdrive    QVAC 7B        HyperDB<span class="bx">│</span>
+<span class="bx">│</span>  Hypercore      Mirror        delegation     Tavily <span class="bx">│</span>
+<span class="bx">│</span>                                                      <span class="bx">│</span>
+<span class="bx">│</span>  Apps pair via Hyperswarm · data replicates auto     <span class="bx">│</span>
+<span class="bx">└──────────────────────────────────────────────────────┘</span>
+       │
+       <span class="dim">same protocol → scales to hosted cloud later</span></div>
+    </div>
+
+    <div class="col" style="flex: 0.55;">
+      <div class="label">Monorepo</div>
+      <div class="term" style="margin-bottom: 6px;"><span class="h">packages/</span>
+  <span class="c">cli/</span>          <span class="d">`us` command</span>
+  <span class="c">node/</span>         <span class="d">sync daemon</span>
+  <span class="c">node-client/</span>  <span class="d">app SDK</span>
+  <span class="c">agent/</span>        <span class="d">local AI agent</span>
+  <span class="c">agent-pack/</span>   <span class="d">AI rules + recipes</span>
+  <span class="c">website/</span>      <span class="d">unstoppable.dev</span></div>
+
+      <div class="label">Status</div>
+      <div class="panel" style="margin-bottom: 6px;">
+        <div class="srow">
+          <span class="srow-n">CLI + Agent Pack</span>
+          <span class="badge bg">shipped</span>
+        </div>
+        <div class="srow">
+          <span class="srow-n">Unstoppable Agent</span>
+          <span class="badge bg">phase 2</span>
+        </div>
+        <div class="srow">
+          <span class="srow-n">Node — pairing &amp; replication</span>
+          <span class="badge by">built</span>
+        </div>
+        <div class="srow">
+          <span class="srow-n">Node — search service</span>
+          <span class="badge bb">in progress</span>
+        </div>
+        <div class="srow">
+          <span class="srow-n">Website</span>
+          <span class="badge by">scaffolded</span>
+        </div>
+      </div>
+
+      <div class="label">Scaffold targets</div>
+      <div class="panel" style="font-size: 0.36em; color: var(--dim); line-height: 1.6;">
+        <span style="color:var(--text);font-weight:500;">Pear Desktop</span> · <span style="color:var(--text);font-weight:500;">Expo Mobile</span> · <span style="color:var(--text);font-weight:500;">Node CLI</span><br>
+        Features: P2P, KV Storage, Local AI, Multi-writer
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>The Unstoppable Stack</span>
+    <span>March 2026</span>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+Reveal.initialize({
+  hash: true,
+  controls: true,
+  progress: true,
+  center: false,
+  width: 1280,
+  height: 720,
+  margin: 0,
+  transition: 'fade',
+  transitionSpeed: 'fast'
+});
+</script>
+</body>
+</html>

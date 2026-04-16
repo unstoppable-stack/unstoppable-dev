@@ -6,42 +6,45 @@ import {
   FolderOpen,
   Bot,
   Sparkles,
+  Server,
+  Database,
+  HardDrive,
+  Cpu,
+  Search,
 } from "lucide-react";
 import { CodeBlock } from "@/components/code-block";
 
 export const metadata = {
   title: "Getting Started — Unstoppable Stack",
   description:
-    "Install the CLI, scaffold your first app, and start building with AI-powered P2P development.",
+    "Install the CLI, scaffold your first app, connect to your Unstoppable Node, and start building with AI-powered P2P development.",
 };
 
 const prerequisites = [
   "Node.js 20+ (LTS recommended)",
   "pnpm, npm, or yarn",
-  "An AI coding assistant (Claude Code, Cursor, or OpenCode) — optional but recommended",
+  "An AI coding assistant (Claude Code, Cursor, OpenCode, or Codex) — optional but recommended",
 ];
 
 const assistants = [
   { name: "Claude Code", description: "Claude's terminal-based coding agent" },
   { name: "Cursor", description: "AI-first code editor with rules & commands" },
   { name: "OpenCode", description: "Open source AI coding agent" },
+  { name: "Codex", description: "OpenAI terminal coding agent" },
   { name: "None", description: "Skip AI assistant configuration" },
 ];
 
-const templates = [
-  {
-    name: "Blank",
-    description: "Pear + Bare minimal starter. A clean slate to build anything.",
-  },
-  {
-    name: "P2P Sync",
-    description: "HyperDB + Hyperswarm. Synced data across peers out of the box.",
-  },
-  {
-    name: "QVAC AI",
-    description:
-      "QVAC SDK integrated. Run local AI inference from day one.",
-  },
+const platforms = [
+  { name: "Pear Desktop", description: "Desktop P2P app with React UI and worker bridge" },
+  { name: "Expo Mobile", description: "React Native + Bare runtime for iOS & Android" },
+  { name: "Node CLI", description: "Terminal app on Bare runtime, no UI" },
+];
+
+const features = [
+  { name: "p2p", description: "Hyperswarm networking for peer discovery" },
+  { name: "kv-storage", description: "Hyperbee key-value database" },
+  { name: "local-ai", description: "QVAC SDK for on-device inference" },
+  { name: "multi-writer", description: "Autobase for collaborative data" },
 ];
 
 export default function GettingStartedPage() {
@@ -91,21 +94,21 @@ export default function GettingStartedPage() {
           </div>
 
           <p className="text-text-secondary mb-6">
-            Run the create command with your preferred package manager:
+            Install the CLI and run the init command:
           </p>
 
           <div className="space-y-3">
-            <CodeBlock code="npx create-unstoppable-app" />
+            <CodeBlock code="npm install -g @unstoppable-stack/cli && us init" />
             <div className="flex items-center gap-4 text-xs text-text-muted">
-              <span>Or with pnpm:</span>
+              <span>Or run directly:</span>
               <code className="rounded bg-surface px-2 py-1 font-mono">
-                pnpm dlx create-unstoppable-app
+                npx @unstoppable-stack/cli init
               </code>
             </div>
           </div>
         </section>
 
-        {/* Step 2: Interactive Flow */}
+        {/* Step 2: Scaffold */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
@@ -118,10 +121,47 @@ export default function GettingStartedPage() {
           </div>
 
           <p className="text-text-secondary mb-6">
-            The CLI walks you through an interactive setup:
+            Use <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-accent">us scaffold</code> to
+            generate a full app with your choice of platform and features:
           </p>
 
-          {/* Terminal mockup */}
+          <div className="space-y-3 mb-8">
+            <CodeBlock code="us scaffold app -p pear-desktop -n my-chat -f p2p,kv-storage" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-text-primary">Platforms</h3>
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                {platforms.map((p, i) => (
+                  <div key={p.name} className={`px-4 py-3 flex items-start gap-3 ${i > 0 ? "border-t border-border" : ""}`}>
+                    <span className="text-accent font-mono text-xs mt-0.5">▸</span>
+                    <div>
+                      <span className="text-sm font-medium">{p.name}</span>
+                      <p className="text-xs text-text-muted">{p.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold mb-3 text-text-primary">Features</h3>
+              <div className="rounded-xl border border-border bg-surface overflow-hidden">
+                {features.map((f, i) => (
+                  <div key={f.name} className={`px-4 py-3 flex items-start gap-3 ${i > 0 ? "border-t border-border" : ""}`}>
+                    <code className="text-accent font-mono text-xs mt-0.5">{f.name}</code>
+                    <p className="text-xs text-text-muted">{f.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive init flow */}
+          <p className="text-text-secondary mb-4">
+            Or use the interactive flow to be guided through the setup:
+          </p>
+
           <div className="rounded-xl border border-border bg-surface overflow-hidden mb-8">
             <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-light">
               <div className="flex gap-1.5">
@@ -129,7 +169,7 @@ export default function GettingStartedPage() {
                 <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
                 <div className="h-3 w-3 rounded-full bg-[#28c840]" />
               </div>
-              <span className="text-xs text-text-muted ml-2 font-mono">terminal</span>
+              <span className="text-xs text-text-muted ml-2 font-mono">us init</span>
             </div>
             <div className="p-4 font-mono text-sm space-y-3 overflow-x-auto">
               <div>
@@ -150,19 +190,6 @@ export default function GettingStartedPage() {
                   </div>
                 ))}
               </div>
-              <div>
-                <span className="text-text-muted">? </span>
-                <span className="text-text-primary">Select a template:</span>
-              </div>
-              <div className="pl-4 space-y-1 text-text-secondary">
-                {templates.map((t, i) => (
-                  <div key={t.name} className={i === 0 ? "text-accent" : ""}>
-                    {i === 0 ? "❯ " : "  "}
-                    {t.name}
-                    <span className="text-text-muted"> — {t.description}</span>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -175,7 +202,11 @@ export default function GettingStartedPage() {
               <div className="text-text-secondary">Creating my-app...</div>
               <div>
                 <span className="text-accent">✓</span>{" "}
-                <span className="text-text-secondary">Scaffolded from blank template</span>
+                <span className="text-text-secondary">Scaffolded <span className="text-text-primary">pear-desktop</span> app</span>
+              </div>
+              <div>
+                <span className="text-accent">✓</span>{" "}
+                <span className="text-text-secondary">Features: <span className="text-text-primary">p2p, kv-storage</span></span>
               </div>
               <div>
                 <span className="text-accent">✓</span>{" "}
@@ -192,7 +223,7 @@ export default function GettingStartedPage() {
           </div>
         </section>
 
-        {/* Step 3: Start Building */}
+        {/* Step 3: Vibe-Code with AI */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
@@ -201,55 +232,122 @@ export default function GettingStartedPage() {
             <div>
               <div className="text-xs font-mono text-text-muted mb-0.5">Step 3</div>
               <h2 className="text-2xl font-bold tracking-tight">
-                Start Building with Your AI Assistant
+                Vibe-Code with Your AI Assistant
               </h2>
             </div>
           </div>
 
           <p className="text-text-secondary mb-6">
-            Your project comes pre-loaded with an <strong className="text-text-primary">agent pack</strong> — a
-            set of architecture rules, module documentation, and recipes tailored for your chosen AI
-            assistant. Open your project and start coding:
+            Your project comes pre-loaded with an <strong className="text-text-primary">agent pack</strong> — architecture
+            rules, module documentation, and battle-tested recipes tailored for your chosen AI assistant.
+            It knows how to wire Hyperswarm, set up Hyperbee, integrate QVAC, and connect to your Node.
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
               {
                 icon: Sparkles,
                 title: "Architecture Rules",
-                description: "Your AI knows the project structure and conventions",
+                description: "Project structure, P2P patterns, and coding conventions",
               },
               {
                 icon: FolderOpen,
                 title: "Module Docs",
-                description: "Deep knowledge of every P2P, AI, and payment module",
+                description: "Deep knowledge of Hyperswarm, HyperDB, QVAC, and more",
               },
               {
                 icon: Bot,
                 title: "Recipes & Patterns",
-                description: "Battle-tested patterns for common tasks",
+                description: "Battle-tested patterns for P2P sync, RPC, tool calling",
               },
-            ].map((feature) => (
+              {
+                icon: Server,
+                title: "Node Integration",
+                description: "Knows how to pair with and replicate through your Node",
+              },
+            ].map((feat) => (
               <div
-                key={feature.title}
+                key={feat.title}
                 className="rounded-xl border border-border bg-surface p-5"
               >
-                <feature.icon className="h-5 w-5 text-accent mb-3" />
-                <h3 className="text-sm font-semibold mb-1">{feature.title}</h3>
+                <feat.icon className="h-5 w-5 text-accent mb-3" />
+                <h3 className="text-sm font-semibold mb-1">{feat.title}</h3>
                 <p className="text-xs text-text-muted leading-relaxed">
-                  {feature.description}
+                  {feat.description}
                 </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Next Steps */}
+        {/* Step 4: Connect to Your Node */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+              <Server className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-mono text-text-muted mb-0.5">Step 4</div>
+              <h2 className="text-2xl font-bold tracking-tight">
+                Connect to Your Unstoppable Node
+              </h2>
+            </div>
+          </div>
+
+          <p className="text-text-secondary mb-6">
+            The <strong className="text-text-primary">Unstoppable Node</strong> is your personal always-on P2P hub.
+            It runs on a desktop, mini-PC, or server and provides services to every app that pairs with it over Hyperswarm.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+            {[
+              {
+                icon: Database,
+                title: "Data Sync",
+                description: "Replicates Hyperbees and Hypercores. Your data is always available.",
+              },
+              {
+                icon: HardDrive,
+                title: "File Sync",
+                description: "Seeds and mirrors Hyperdrives across your devices.",
+              },
+              {
+                icon: Cpu,
+                title: "AI Provider",
+                description: "Delegates QVAC inference. Phone asks, Node runs the model.",
+              },
+              {
+                icon: Search,
+                title: "P2P Search",
+                description: "Tavily-compatible search API — no API keys required.",
+              },
+            ].map((svc) => (
+              <div key={svc.title} className="flex items-start gap-3 rounded-xl border border-border bg-surface p-4">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-holepunch/10 text-holepunch">
+                  <svc.icon className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold mb-0.5">{svc.title}</h3>
+                  <p className="text-xs text-text-muted leading-relaxed">{svc.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface-light px-5 py-4">
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Apps discover the Node automatically over Hyperswarm. Data replicates in the background.
+              The same protocol works locally today and scales to a hosted cloud later — swap a key, nothing else changes.
+            </p>
+          </div>
+        </section>
+
+        {/* What's Next */}
         <section className="rounded-2xl border border-border bg-surface p-8 md:p-10 text-center">
           <h2 className="text-2xl font-bold tracking-tight mb-3">What&apos;s Next?</h2>
           <p className="text-text-secondary mb-6 max-w-lg mx-auto">
-            Explore the documentation to learn about each module, browse recipes for common
-            patterns, or check out what others have built.
+            Explore the documentation, see what&apos;s coming on the roadmap, or check out what others
+            have built with the stack.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
@@ -258,6 +356,12 @@ export default function GettingStartedPage() {
             >
               Read the Docs
               <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/roadmap"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-light hover:text-text-primary transition-colors"
+            >
+              View Roadmap
             </Link>
             <Link
               href="/showcase"

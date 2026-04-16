@@ -153,12 +153,12 @@ Problem: both devices can write to the same core, but Hypercore is single-writer
 
 ---
 
-## Strategy 4: Always-On Seeder (The Vault Pattern)
+## Strategy 4: Always-On Seeder (The Node Pattern)
 
 **Pattern:** A dedicated device/service keeps data available 24/7 by replicating and re-seeding.
 
 ```
-Phone (offline)            Vault (always on)           New Device
+Phone (offline)            Node (always on)           New Device
                            ┌──────────────┐
                            │ Replicated   │
       Last synced ────────►│ copy of all  │────────► Gets full data
@@ -169,15 +169,15 @@ Phone (offline)            Vault (always on)           New Device
 **Why it's needed:**
 - P2P data is only available when at least one peer holding it is online.
 - If you close your laptop, your phone can't get your data — unless someone else has it.
-- The Vault acts as a "super-peer" that's always online.
+- The Node acts as a "super-peer" that's always online.
 
 **How it works:**
-1. Apps register their cores/drives with the Vault.
-2. The Vault replicates them (read-only).
-3. The Vault stays online and serves data to any peer that requests it.
-4. When a new device joins, it can get the full history from the Vault.
+1. Apps register their cores/drives with the Node.
+2. The Node replicates them (read-only).
+3. The Node stays online and serves data to any peer that requests it.
+4. When a new device joins, it can get the full history from the Node.
 
-**This is NOT centralization** — it's "one of many possible peers." The data is still owned by the user, the protocol is still P2P, and the Vault is optional (apps work without it, just with reduced availability).
+**This is NOT centralization** — it's "one of many possible peers." The data is still owned by the user, the protocol is still P2P, and the Node is optional (apps work without it, just with reduced availability).
 
 ---
 
@@ -237,10 +237,10 @@ FULLY P2P                                                FULLY CENTRALIZED
 │ ◄──────────────────────────────────────────────────────────────────► │
 │                                                                        │
 │  Pure P2P    P2P + Seeder    P2P + Index    Hybrid     Server + cache  │
-│  (Keet)      (Vault)         (QVAC reg)    (typical)   (traditional)   │
+│  (Keet)      (Node)         (QVAC reg)    (typical)   (traditional)   │
 │                                                                        │
 │  Max privacy                                          Max availability │
 │  Min availability                                     Min privacy      │
 ```
 
-The Unstoppable Stack's sweet spot is **P2P + Seeder (Vault)** — fully P2P data ownership, but with an always-on local device (the Vault) for high availability. The Cloud offering just moves the seeder off-premises.
+The Unstoppable Stack's sweet spot is **P2P + Seeder (Node)** — fully P2P data ownership, but with an always-on local device (the Node) for high availability. The Cloud offering just moves the seeder off-premises.

@@ -119,7 +119,31 @@ payments for orders.
 
 ---
 
-## App 9: Mobile P2P App
+## App 9: P2P Search Engine (Unstoppable Search)
+
+**Primary validation:** HyperDB (multi-writer at scale), Hyperdrive (content store), QVAC (embeddings + ranking + synthesis), RPC (distributed queries), Corestore
+
+**Concept:** A P2P search engine for AI agents. Each node crawls, indexes, and
+searches locally. Indexes sync between peers via Hyperswarm. QVAC handles
+embeddings, ranking, and answer synthesis. Exposes a Tavily-compatible HTTP API
+so existing agent tooling works with zero changes.
+
+| Category | Items to validate |
+|----------|-------------------|
+| **Platform** | Bare standalone or Pear Desktop + Worker |
+| **P2P** | HyperDB (multi-writer index via Autobase), Hyperdrive (content store, sparse download), Hypercore (crawl log), Hyperswarm (topic-based discovery), Corestore (multi-core management) |
+| **QVAC** | Embeddings (text→vector), Re-ranking (cross-encoder), Answer synthesis (LLM), Content extraction |
+| **RPC** | Distributed query fan-out to peers |
+
+**Agent pack updates:** new skill: p2p-search-node, new recipes: hyperdb-search-index, qvac-embeddings-search, distributed-rpc-query, tavily-compatible-api
+
+**Effort:** Large (phased: local MVP in 1-2 weeks, P2P sync in 2-3 weeks)
+
+**Detailed planning:** `planning/features/p2p-search.md`
+
+---
+
+## App 10: Mobile P2P App
 
 **Primary validation:** Expo Bare, bare-pack, mobile lifecycle
 
@@ -144,10 +168,10 @@ After building all apps:
 | Category | Before | After |
 |----------|--------|-------|
 | Platform | 3/9 battle-tested | 7/9 (missing: Pear terminal, Electron) |
-| QVAC | 6/17 battle-tested | 14/17 (missing: delegated, sharded, advanced) |
-| P2P | 7/15 battle-tested | 14/15 (missing: HyperDHT direct) |
+| QVAC | 6/17 battle-tested | 15/17 (missing: delegated, sharded) |
+| P2P | 7/15 battle-tested | 15/15 |
 | WDK | 0/6 battle-tested | 5/6 (missing: recurring/subscriptions) |
-| **Total** | **21/54 (39%)** | **~44/54 (81%)** |
+| **Total** | **21/54 (39%)** | **~46/54 (85%)** |
 
 ---
 
@@ -161,7 +185,9 @@ After building all apps:
 | 6 | AI Knowledge Base | QVAC Vision, RAG, OCR | Needs Hyperdrive (app 3) |
 | 7 | Voice Notes | QVAC Transcription, TTS | No |
 | 8 | Payments | WDK Wallet | Depends on WDK SDK docs |
-| 9 | Mobile | Expo Bare | No (but highest effort) |
+| 9 | P2P Search Engine | HyperDB, QVAC, RPC, Hyperdrive | Benefits from apps 3+4+6 |
+| 10 | Mobile | Expo Bare | No (but highest effort) |
 
 Apps 3, 4, 5, 7 are independent. App 6 benefits from Hyperdrive (app 3).
-App 8 depends on WDK docs. App 9 is standalone but complex.
+App 8 depends on WDK docs. App 9 benefits from learnings in apps 3 (Hyperdrive),
+4 (HyperDB multi-writer), and 6 (QVAC embeddings). App 10 is standalone but complex.

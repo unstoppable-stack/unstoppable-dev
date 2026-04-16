@@ -36,8 +36,8 @@ Deep planning docs for major features and workstreams.
 |------|----------|
 | `agent-pack.md` | Agent pack v2 architecture: skills, hooks, auto-activation, researcher |
 | `website.md` | unstoppable.dev — pages, components, design tokens, partner logos |
-| `vault.md` | Unstoppable Vault — personal sync hub, 3 services, discovery protocol |
-| `vault-technical.md` | Vault technical architecture — Data Sync, File Sync, AI Provider |
+| `node.md` | Unstoppable Node — personal sync hub, 3 services, discovery protocol |
+| `node-technical.md` | Node technical architecture — Data Sync, File Sync, AI Provider |
 | `mobile-app.md` | Unstoppable Notes — mobile reference app to validate Expo Bare stack |
 
 ### Status (`status/`)
@@ -48,15 +48,18 @@ Sprint-level tracking — current priorities, next-up tasks, recently completed.
 | `README.md` | Workstream overview, coverage summary, priority order |
 | `agent-pack-content/` | Per-category status (platform, QVAC, P2P, WDK, build tooling) |
 | `agent-pack-architecture/` | Skill system, builders, auto-activation |
-| `vault/` | Vault phases and what it validates |
+| `node/` | Node phases and what it validates |
 | `website/` | Website pages, sections, components |
+
+### Technical improvements (`technical-improvements/`)
+Engineering backlog and design notes by package (`cli`, `agent-pack`, `website`, `monorepo`), with standardized **status** fields (`planning`, `reviewing`, `implemented`, `done`, etc.). Start with [`technical-improvements/README.md`](technical-improvements/README.md) and [`technical-improvements/inspiration-derived-improvements.md`](technical-improvements/inspiration-derived-improvements.md).
 
 ### Presentations (`presentations/`)
 Pitch decks and speaker materials, grouped by date and name.
 
 | Folder | Date | Description |
 |--------|------|-------------|
-| `2026-02-internal-pitch/` | Feb 2026 | Full vision pitch: agent pack, Vault, subscriptions |
+| `2026-02-internal-pitch/` | Feb 2026 | Full vision pitch: agent pack, Node, subscriptions |
 
 New presentations go in `YYYY-MM-<short-name>/` subfolders.
 
@@ -71,3 +74,4 @@ When the user asks about plans, roadmap, or priorities:
 5. **"What's the vision?"** → See `vision/overview.md`
 6. **"What's been done?"** → See `roadmap/completed.md`
 7. **"Presentation materials"** → See `presentations/` for decks grouped by date
+8. **"Technical improvements backlog"** → See `technical-improvements/README.md`

@@ -1,0 +1,291 @@
+---
+description: "Recipe: context management for long agent sessions — budgets, compaction, tool result limits"
+alwaysApply: false
+---
+
+# Recipe: Long-Context Hygiene
+
+## Problem
+
+Long agent sessions accumulate tool results, conversation history, and
+injected context until the model's context window is exhausted. Without
+active management, sessions degrade: the model loses track of early
+decisions, costs spike from re-processing stale context, and API calls
+fail with "prompt too long" errors.
+
+This recipe documents production-tested patterns for keeping agent
+sessions healthy over dozens or hundreds of turns.
+
+## When to Use
+
+- Building apps with long interactive agent sessions
+- Agent workflows that run many tools per turn (P2P + AI + storage)
+- Sessions that accumulate large tool outputs (file reads, grep results)
+- Any session lasting more than ~20 turns
+
+## Concept: Layered Pressure Relief
+
+Production agent runtimes use multiple layers, each catching different
+problems. Apply them in order from cheapest to most expensive:
+
+```
+Layer 1: Per-tool output limits     (prevent single huge results)
+    ↓
+Layer 2: Per-message aggregate cap  (prevent many parallel results)
+    ↓
+Layer 3: Micro-compact              (clear stale tool results)
+    ↓
+Layer 4: Auto-compact               (summarize old history)
+    ↓
+Layer 5: Circuit breaker            (stop if compaction keeps failing)
+```
+
+## Layer 1: Per-Tool Output Limits
+
+Cap the maximum output size for each tool. Large results (file reads,
+grep across many files) should be truncated or spilled to disk.
+
+### Pattern
+
+```typescript
+const MAX_RESULT_CHARS = 50_000
+const PREVIEW_CHARS = 2_000
+
+function limitToolResult(result: string, toolName: string): string {
+  if (result.length <= MAX_RESULT_CHARS) return result
+
+  const preview = result.slice(0, PREVIEW_CHARS)
+  return `${preview}\n\n[Result truncated — ${result.length} chars total. ` +
+    `Showing first ${PREVIEW_CHARS}. Use more specific queries to narrow results.]`
+}
+```
+
+### Guidelines
+
+| Tool type | Recommended limit | Notes |
+|-----------|------------------|-------|
+| File read | No limit (model needs full files) | But warn if > 100KB |
+| Grep/search | 50K chars | Encourage narrower queries |
+| Shell output | 50K chars | Truncate from the middle, keep head+tail |
+| Web fetch | 50K chars | Summarize with a secondary model call if needed |
+| Directory listing | 10K chars | Filter with globs instead |
+
+### Empty Results
+
+Always replace empty tool output with a descriptive message:
+
+```typescript
+if (!result || result.trim() === '') {
+  return `(${toolName} completed with no output)`
+}
+```
+
+Empty results without explanation can cause models to retry indefinitely
+or misinterpret success as failure.
+
+## Layer 2: Per-Message Aggregate Cap
+
+When multiple tools run in parallel, their combined results can exceed
+the model's effective window. Cap the total result size per assistant turn.
+
+### Pattern
+
+```typescript
+const MAX_RESULTS_PER_TURN = 200_000  // chars
+
+function enforceAggregateBudget(results: ToolResult[]): ToolResult[] {
+  let total = results.reduce((sum, r) => sum + r.content.length, 0)
+  if (total <= MAX_RESULTS_PER_TURN) return results
+
+  // Sort by size descending, truncate largest first
+  const sorted = [...results].sort((a, b) => b.content.length - a.content.length)
+  for (const result of sorted) {
+    if (total <= MAX_RESULTS_PER_TURN) break
+    const saved = result.content.length - PREVIEW_CHARS
+    result.content = result.content.slice(0, PREVIEW_CHARS) +
+      `\n[Truncated to fit context budget]`
+    total -= saved
+  }
+  return results
+}
+```
+
+### Prompt Cache Stability
+
+Once the model has seen a full tool result, don't silently shrink it on
+the next turn. Maintain a set of "frozen" decisions — results that were
+already truncated get the same truncation applied consistently. This
+preserves prompt cache hits and avoids confusing the model.
+
+## Layer 3: Micro-Compact (Time-Based Clearing)
+
+After idle periods (user went away for an hour), old tool results are
+stale — the model will re-read any files it needs. Clear the bodies of
+old "compactable" tool results while keeping the tool call structure
+intact.
+
+### Compactable Tools
+
+Tools whose results become stale quickly:
+
+- File read/write/edit
+- Grep/glob/search
+- Shell commands
+- Web fetch/search
+
+NOT compactable (the model needs these persistently):
+
+- User messages
+- Planning/todo state
+- Skill content
+
+### Pattern
+
+```typescript
+const IDLE_THRESHOLD_MINUTES = 60
+const KEEP_RECENT_RESULTS = 5
+
+function microCompact(messages: Message[], lastActivityTime: number): Message[] {
+  const idleMinutes = (Date.now() - lastActivityTime) / 60_000
+  if (idleMinutes < IDLE_THRESHOLD_MINUTES) return messages
+
+  let compactableCount = 0
+  // Walk messages newest-first, keep the last N compactable results
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (isCompactableToolResult(messages[i])) {
+      compactableCount++
+      if (compactableCount > KEEP_RECENT_RESULTS) {
+        messages[i].content = '[Old tool result cleared]'
+      }
+    }
+  }
+  return messages
+}
+```
+
+## Layer 4: Auto-Compact (Summarization)
+
+When estimated input tokens approach the context window limit, summarize
+old conversation history into a compact summary and replace it.
+
+### Thresholds
+
+```
+Context window:           200,000 tokens (example)
+Max output reserve:        20,000 tokens (for the summary itself)
+Effective window:         180,000 tokens
+Auto-compact threshold:   167,000 tokens (effective − 13K buffer)
+Warning threshold:        147,000 tokens (effective − 33K)
+Hard limit:               177,000 tokens (effective − 3K)
+```
+
+### What Compaction Produces
+
+1. **Summary of conversation:** What was discussed, decided, and built
+2. **Key file paths:** Files that were read or modified
+3. **Current state:** What's working, what's left to do
+4. **Skill state:** Which skills were loaded and used
+
+### Post-Compact Reinjection Budget
+
+After compaction, re-inject critical context within a budget:
+
+| Content | Budget |
+|---------|--------|
+| Modified files (most recent) | Max 5 files, 5K tokens each, 50K total |
+| Active skills | Max 5K tokens/skill, 25K total |
+| Tool definitions | Re-announce any deferred tools |
+
+### Circuit Breaker
+
+If auto-compaction fails 3 consecutive times (the summary itself exceeds
+the limit, or the API returns an error), stop trying. Log a warning and
+let the session continue without compaction. The user can manually
+intervene or start a new session.
+
+```typescript
+const MAX_COMPACT_FAILURES = 3
+let consecutiveFailures = 0
+
+async function autoCompactIfNeeded(messages, tokenEstimate, threshold) {
+  if (tokenEstimate < threshold) return messages
+  if (consecutiveFailures >= MAX_COMPACT_FAILURES) {
+    console.warn('Auto-compact disabled after repeated failures')
+    return messages
+  }
+
+  try {
+    const compacted = await summarizeHistory(messages)
+    consecutiveFailures = 0
+    return compacted
+  } catch (err) {
+    consecutiveFailures++
+    return messages
+  }
+}
+```
+
+## Layer 5: Deferred Tool Definitions
+
+When the system has many tools (MCP servers, large tool registries), tool
+definitions alone can consume a significant portion of the context window.
+
+### Pattern: Auto-Defer by Percentage
+
+```typescript
+const DEFER_THRESHOLD_PERCENT = 10  // % of context window
+
+function shouldDeferTools(toolDefTokens: number, contextWindow: number): boolean {
+  return toolDefTokens >= (DEFER_THRESHOLD_PERCENT / 100) * contextWindow
+}
+```
+
+When deferred, tool definitions are replaced with short names and
+descriptions. The full schema is loaded on-demand when the model invokes
+a tool or requests its definition.
+
+### Token Estimation Heuristic
+
+When a tokenizer is unavailable, use ~2.5 characters per token as a
+rough estimate for tool definition JSON.
+
+## Practical Recommendations for Unstoppable Stack Apps
+
+### P2P Apps (Hyperswarm + HyperDB)
+
+- **Swarm connection events** generate verbose output. Limit connection
+  logging to counts, not full peer details.
+- **Replication progress** should summarize (e.g., "synced 150 entries")
+  rather than listing every entry.
+
+### AI Apps (QVAC)
+
+- **Model loading progress** is high-volume. Throttle to every 10% or
+  use a single summary line.
+- **Streaming token output** should not be stored in full in the
+  conversation history — store the final result only.
+- **Tool calling results** can be large if the tool returns structured
+  data. Apply per-tool limits.
+
+### Mobile Apps (Expo + Bare)
+
+- **Build output** from `expo prebuild` or `bare-pack` is very long.
+  Capture only exit code and the last 50 lines (errors are at the end).
+- **Metro bundler warnings** accumulate fast. Filter to unique warnings.
+
+## Anti-Patterns
+
+- **Never silently drop messages.** Always replace with a summary or
+  marker so the model knows content was there.
+- **Never compact the most recent turn.** The model needs to see what
+  just happened.
+- **Never compact user messages.** They contain the task intent. Compact
+  tool results and assistant reasoning, not user instructions.
+- **Don't compact mid-session without reason.** Only when approaching
+  the threshold — premature compaction loses useful context.
+
+## References
+
+- Unstoppable Agent implementation: `packages/agent/src/`
+- Inspiration: Production compact pipeline (auto, micro, grouping, circuit breaker)
+- Token estimation: `tiktoken` (OpenAI), `@anthropic-ai/tokenizer`, or char heuristic

@@ -45,7 +45,7 @@ The agent pack provides AI assistants with knowledge about the Unstoppable Stack
 
 ```bash
 # The CLI builds agent pack during scaffold
-npx create-unstoppable-app my-app --assistant claude
+us init my-app --assistant claude
 
 # Or manually generate for a tool
 npx @unstoppable/agent-pack generate --tool cursor --modules hyperdb,qvac

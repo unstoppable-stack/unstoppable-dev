@@ -245,7 +245,7 @@ See [07-hyperblobs-and-storage-comparison.md](./07-hyperblobs-and-storage-compar
 | User profiles directory | HyperDB (rocks) + centralized API | Global search, not P2P |
 | App-local cache | HyperDB (rocks) | Fast local queries, no sync |
 | Collaborative document | Autobase + Hyperbee view | Multi-writer CRDT-like |
-| Device backup | Hyperdrive + Vault | Files mirrored to always-on peer |
+| Device backup | Hyperdrive + Node | Files mirrored to always-on peer |
 
 ---
 

@@ -60,7 +60,7 @@ apps (simpler than desktop — no renderer/worker split needed).
 
 ## 5. Validate the "Scaffold and Vibe-Code" Loop
 
-**Task:** Scaffold a fresh project with `create-unstoppable-app`, select Cursor,
+**Task:** Scaffold a fresh project with `us init`, select Cursor,
 and try to build a simple P2P chat using only the agent pack rules. Document
 what works, what fails, and what the AI assistant gets wrong.
 

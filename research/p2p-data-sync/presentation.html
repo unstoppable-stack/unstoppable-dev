@@ -289,7 +289,7 @@ td { color: var(--text); }
 <!-- SLIDE 0: Title -->
 <div class="slide slide-title active" data-slide="0">
   <h1>P2P Data Sync Deep Dive</h1>
-  <p class="subtitle">Storage strategies, sync patterns, and how to build the Unstoppable Vault</p>
+  <p class="subtitle">Storage strategies, sync patterns, and how to build the Unstoppable Node</p>
   <p style="color:var(--muted); margin-top:40px; font-size:0.95rem;">
     Use arrow keys or buttons to navigate &middot; Press <code>F</code> for fullscreen
   </p>
@@ -491,8 +491,8 @@ td { color: var(--text); }
       <td>Low — offline = gone</td><td>Maximum</td><td>Free</td><td>Keet</td>
     </tr>
     <tr>
-      <td><span class="badge badge-hybrid">Hybrid</span> P2P + Vault</td>
-      <td>High — always-on local peer</td><td>High (your HW)</td><td>Free (your HW)</td><td>Unstoppable Vault</td>
+      <td><span class="badge badge-hybrid">Hybrid</span> P2P + Node</td>
+      <td>High — always-on local peer</td><td>High (your HW)</td><td>Free (your HW)</td><td>Unstoppable Node</td>
     </tr>
     <tr>
       <td><span class="badge badge-hybrid">Hybrid</span> P2P + Cloud</td>
@@ -504,7 +504,7 @@ td { color: var(--text); }
     </tr>
   </table>
 
-  <p style="margin-top:16px;">The <span class="highlight2">Vault is the sweet spot</span>: user-controlled, high availability, no trust issues. The Cloud is just a remote Vault.</p>
+  <p style="margin-top:16px;">The <span class="highlight2">Node is the sweet spot</span>: user-controlled, high availability, no trust issues. The Cloud is just a remote Node.</p>
 </div>
 
 <!-- SLIDE 8: When Centralized -->
@@ -558,15 +558,15 @@ td { color: var(--text); }
   <p style="margin-top:12px"><strong>Pattern:</strong> The server helps you <em>find</em> things. Actual data is peer-to-peer.</p>
 </div>
 
-<!-- SLIDE 10: Vault Architecture -->
+<!-- SLIDE 10: Node Architecture -->
 <div class="slide" data-slide="10">
-  <h2>10. Vault: Protocol-Level Replication</h2>
-  <p>The Vault replicates <span class="highlight">Hypercores</span>, not app data. It doesn't need to understand your data model.</p>
+  <h2>10. Node: Protocol-Level Replication</h2>
+  <p>The Node replicates <span class="highlight">Hypercores</span>, not app data. It doesn't need to understand your data model.</p>
   <div class="two-col">
     <div>
       <h3>Three Replication Modes</h3>
       <table style="font-size: 0.9rem">
-        <tr><th>App Data</th><th>Vault Action</th></tr>
+        <tr><th>App Data</th><th>Node Action</th></tr>
         <tr><td>Hyperbee/Hypercore</td><td><code>store.get({ key })</code> + full download</td></tr>
         <tr><td>Autobase</td><td>Replicate all writer cores via Corestore</td></tr>
         <tr><td>Hyperdrive</td><td>Replicate + mirror to local FS</td></tr>
@@ -578,21 +578,21 @@ td { color: var(--text); }
         <li><strong>Read-only</strong> — never writes to app data</li>
         <li><strong>Corestore-per-app</strong> — isolation between apps</li>
         <li><strong>Full download</strong> — backup, not sparse cache</li>
-        <li><strong>Just a peer</strong> — apps don't know it's a Vault</li>
+        <li><strong>Just a peer</strong> — apps don't know it's a Node</li>
       </ul>
     </div>
   </div>
   <p style="margin-top:16px">Compatible with <strong>any app</strong> because it works at the Corestore/replication level.</p>
 </div>
 
-<!-- SLIDE 11: Vault Storage Layout -->
+<!-- SLIDE 11: Node Storage Layout -->
 <div class="slide" data-slide="11">
-  <h2>11. Vault Storage & Registration</h2>
+  <h2>11. Node Storage & Registration</h2>
   <div class="two-col">
     <div>
       <h3>Storage Layout</h3>
-      <div class="diagram">~/.unstoppable-vault/
-├── vault-store/        # Vault's own cores
+      <div class="diagram">~/.unstoppable-node/
+├── node-store/        # Node's own cores
 ├── apps/
 │   ├── coffee-app/     # Corestore per app
 │   ├── notes-app/      # Isolated storage
@@ -607,7 +607,7 @@ td { color: var(--text); }
     </div>
     <div>
       <h3>Registration Protocol</h3>
-      <pre style="font-size:0.8rem">// App → Vault
+      <pre style="font-size:0.8rem">// App → Node
 {
   type: 'register',
   appId: 'coffee-assistant',
@@ -624,15 +624,15 @@ td { color: var(--text); }
   }],
   requestAI: true
 }</pre>
-      <p>All apps join <code>unstoppable:vault:discover:v1</code> topic. Vault acks with capabilities.</p>
+      <p>All apps join <code>unstoppable:node:discover:v1</code> topic. Node acks with capabilities.</p>
     </div>
   </div>
 </div>
 
-<!-- SLIDE 12: Multi-Vault Sync -->
+<!-- SLIDE 12: Multi-Node Sync -->
 <div class="slide" data-slide="12">
-  <h2>12. Multi-Vault & Cloud Transition</h2>
-  <div class="diagram">  Laptop Vault                           Desktop Vault
+  <h2>12. Multi-Node & Cloud Transition</h2>
+  <div class="diagram">  Laptop Node                           Desktop Node
   ┌──────────────────┐                   ┌──────────────────┐
   │ • Coffee App     │◄────────────────►│ • Coffee App     │
   │ • Notes App      │   Autobase       │ • Finance App    │
@@ -642,17 +642,17 @@ td { color: var(--text); }
   └──────────────────┘                   └──────────────────┘</div>
   <div class="two-col">
     <div>
-      <h3>Vault-to-Vault Sync</h3>
+      <h3>Node-to-Node Sync</h3>
       <ul>
         <li>Registry is an Autobase (both can write)</li>
         <li>User-specific discovery topic from master key</li>
-        <li>Each Vault replicates cores/drives it doesn't have</li>
+        <li>Each Node replicates cores/drives it doesn't have</li>
       </ul>
     </div>
     <div>
-      <h3>Vault → Cloud (Same Protocol)</h3>
+      <h3>Node → Cloud (Same Protocol)</h3>
       <ul>
-        <li>Cloud is a Vault hosted by Tether</li>
+        <li>Cloud is a Node hosted by Tether</li>
         <li>Same replication protocol, same registration</li>
         <li>Apps point to different topic + key, that's it</li>
         <li>Adds: powerful GPUs, 24/7 uptime, subscription</li>
@@ -686,7 +686,7 @@ td { color: var(--text); }
     </tr>
     <tr>
       <td><span class="highlight3">Phase 4</span></td>
-      <td>Vault-to-Vault sync + export/import</td>
+      <td>Node-to-Node sync + export/import</td>
       <td>1-2 weeks</td>
       <td>Multi-device, recovery</td>
     </tr>
@@ -711,7 +711,7 @@ td { color: var(--text); }
       └── Event stream → Raw Hypercore
 
   Do I need always-on availability?
-  ├── Yes → Add Vault seeder (or Cloud)
+  ├── Yes → Add Node seeder (or Cloud)
   └── No → Pure P2P is fine
 
   Do I need global search / discovery?
@@ -721,13 +721,13 @@ td { color: var(--text); }
   Do I need multi-device write?
   ├── Yes → Per-device writer cores + Autobase (Keet pattern)
   └── No → Single Hypercore is fine</div>
-  <p style="margin-top:16px">The Vault is compatible with <strong>all</strong> these patterns because it operates at the replication layer, not the data model layer.</p>
+  <p style="margin-top:16px">The Node is compatible with <strong>all</strong> these patterns because it operates at the replication layer, not the data model layer.</p>
 </div>
 
 <!-- SLIDE 15: End -->
 <div class="slide slide-title" data-slide="15">
   <h1>Key Takeaway</h1>
-  <p class="subtitle" style="max-width:800px">The Unstoppable Vault is <em>just another peer with good uptime</em>.<br>
+  <p class="subtitle" style="max-width:800px">The Unstoppable Node is <em>just another peer with good uptime</em>.<br>
   It replicates at the Corestore level, so it's compatible with any app.<br>
   The Cloud is the same thing, hosted remotely. Apps don't need to change.</p>
   <p style="color:var(--muted); margin-top:40px; font-size:0.95rem;">

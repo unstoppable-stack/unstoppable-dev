@@ -1,95 +1,119 @@
 {
-  "description": "Maps keywords and file patterns to relevant skills for auto-activation",
+  "description": "Maps keywords, file patterns, and paths to relevant skills for auto-activation. The 'paths' field aligns with SKILL.md frontmatter 'paths' for cross-tool compatibility.",
   "rules": [
     {
+      "keywords": ["scaffold", "create", "new app", "new project", "bootstrap", "set up", "init"],
+      "files": [],
+      "skill": "scaffold-project",
+      "message": "Use `us scaffold app` to create new apps. Do not manually create project files."
+    },
+    {
       "keywords": ["desktop", "gui", "window", "pear desktop", "visual", "ui app", "desktop app", "react ui"],
-      "files": ["index.html", "src/components/**", "src/pages/**", "src/styles/**"],
+      "files": ["index.html", "index.js", "worker.js", "app/**", "src/components/**"],
       "skill": "setup-pear-desktop",
-      "message": "This is a desktop app. Consider using /setup-pear-desktop for Pear desktop setup with React + styled-components."
+      "message": "This is a desktop app. Consider /setup-pear-desktop for Pear desktop setup."
     },
     {
       "keywords": ["terminal", "daemon", "service", "background", "headless", "pear terminal"],
       "files": [],
       "skill": "setup-pear-terminal",
-      "message": "This looks like a terminal/service app. Consider using /setup-pear-terminal for a headless Pear app."
+      "message": "This looks like a terminal/service app. Consider /setup-pear-terminal for a headless Pear app."
     },
     {
       "keywords": ["mobile", "react native", "expo", "ios", "android", "phone"],
-      "files": ["app.json", "app/**", "backend/**"],
+      "files": ["app.json", "app/**", "bare/**"],
       "skill": "setup-mobile-app",
-      "message": "This is a mobile app. Consider using /setup-mobile-app for Expo + Bare setup."
+      "message": "This is a mobile app. Consider /setup-mobile-app for Expo + Bare setup."
+    },
+    {
+      "keywords": ["node cli", "node.js cli", "typescript cli"],
+      "files": ["src/index.ts"],
+      "skill": "setup-node-cli",
+      "message": "This is a Node.js CLI app. Consider /setup-node-cli for customization patterns."
     },
     {
       "keywords": ["p2p", "peer", "swarm", "discovery", "connect", "networking"],
       "files": ["src/p2p/**"],
       "skill": "add-p2p-networking",
-      "message": "This involves P2P networking. Consider using /add-p2p-networking for Hyperswarm setup."
+      "message": "This involves P2P networking. Consider /add-p2p-networking for Hyperswarm setup."
     },
     {
       "keywords": ["rpc", "remote procedure", "request response", "api between peers"],
       "files": ["src/p2p/**", "src/rpc/**"],
       "skill": "add-p2p-rpc",
-      "message": "This involves P2P RPC. Consider using /add-p2p-rpc for bare-rpc request/response patterns."
+      "message": "This involves P2P RPC. Consider /add-p2p-rpc for bare-rpc patterns."
     },
     {
       "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
       "files": ["src/p2p/**", "src/data/**"],
       "skill": "add-p2p-sync",
-      "message": "This looks like a data sync task. Consider using /add-p2p-sync for Hypercore replication."
+      "message": "This looks like a data sync task. Consider /add-p2p-sync for Hypercore replication."
+    },
+    {
+      "keywords": ["multi-writer", "collaborative", "autobase", "converge", "concurrent writes"],
+      "files": ["src/p2p/**", "src/data/**"],
+      "skill": "add-multi-writer-sync",
+      "message": "This needs multi-writer sync. Consider /add-multi-writer-sync for Autobase convergent state."
     },
     {
       "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream", "protomux"],
       "files": ["src/p2p/**", "src/messaging/**"],
       "skill": "add-encrypted-channels",
-      "message": "This involves secure messaging. Consider using /add-encrypted-channels for encrypted Protomux channels."
+      "message": "This involves secure messaging. Consider /add-encrypted-channels for encrypted Protomux channels."
     },
     {
       "keywords": ["offline", "local-first", "persist", "key-value", "hyperbee", "kv store"],
       "files": ["src/data/**", "src/store/**"],
       "skill": "add-kv-storage",
-      "message": "This is a storage pattern. Consider using /add-kv-storage for Hyperbee offline-first storage."
+      "message": "This is a storage pattern. Consider /add-kv-storage for Hyperbee offline-first storage."
     },
     {
-      "keywords": ["database", "schema", "index", "multi-writer", "hyperdb", "structured data"],
+      "keywords": ["database", "schema", "index", "hyperdb", "structured data", "queries"],
       "files": ["src/data/**", "src/db/**"],
       "skill": "add-database",
-      "message": "This involves structured data. Consider using /add-database for HyperDB with schema and indexes."
+      "message": "This involves structured data. Consider /add-database for HyperDB with schema and indexes."
     },
     {
       "keywords": ["file", "share", "upload", "download", "drive", "mirror"],
       "files": ["src/files/**", "src/storage/**"],
       "skill": "add-file-storage",
-      "message": "This involves file storage. Consider using /add-file-storage for Hyperdrive."
+      "message": "This involves file storage. Consider /add-file-storage for Hyperdrive."
     },
     {
       "keywords": ["inference", "llm", "model", "ai", "chat", "completion", "qvac", "tool calling"],
       "files": ["src/ai/**", "src/inference/**"],
       "skill": "add-ai-chat",
-      "message": "This involves AI inference. Consider using /add-ai-chat for QVAC chat, streaming, and tool calling."
+      "message": "This involves AI inference. Consider /add-ai-chat for QVAC chat and tool calling."
     },
     {
       "keywords": ["vision", "image", "photo", "multimodal", "picture"],
       "files": ["src/ai/**", "src/vision/**"],
       "skill": "add-ai-vision",
-      "message": "This involves image analysis. Consider using /add-ai-vision for QVAC multimodal vision."
+      "message": "This involves image analysis. Consider /add-ai-vision for QVAC multimodal vision."
     },
     {
       "keywords": ["transcribe", "transcription", "speech", "audio", "whisper", "voice"],
       "files": ["src/ai/**", "src/audio/**"],
       "skill": "add-ai-transcription",
-      "message": "This involves audio transcription. Consider using /add-ai-transcription for QVAC Whisper."
+      "message": "This involves audio transcription. Consider /add-ai-transcription for QVAC Whisper."
     },
     {
       "keywords": ["rag", "embedding", "vector", "search", "knowledge base", "semantic"],
       "files": ["src/ai/**", "src/search/**"],
       "skill": "add-ai-rag",
-      "message": "This involves RAG/search. Consider using /add-ai-rag for QVAC embeddings and vector search."
+      "message": "This involves RAG/search. Consider /add-ai-rag for QVAC embeddings and vector search."
     },
     {
       "keywords": ["wallet", "payment", "bitcoin", "ethereum", "token", "crypto", "transaction"],
       "files": ["src/wallet/**", "src/payments/**"],
       "skill": "add-wallet",
-      "message": "This involves payments/wallet. Consider using /add-wallet for WDK patterns."
+      "message": "This involves payments/wallet. Consider /add-wallet for WDK patterns."
+    },
+    {
+      "keywords": ["test", "local test", "same machine", "peers don't connect", "connection count 0", "dht bootstrap"],
+      "files": ["dht-bootstrap.js", "test/**", "scripts/**"],
+      "skill": "setup-local-testing",
+      "message": "This involves P2P testing. Consider /setup-local-testing for local DHT bootstrap."
     }
   ]
 }

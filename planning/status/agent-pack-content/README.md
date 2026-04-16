@@ -25,7 +25,7 @@ Research → agent pack docs → CLI output.
 ## Priority Order for Content Work
 
 1. **Platform / Runtime — Mobile** — Can't build mobile apps at all today
-2. **P2P & Data — Corestore, Hyperdrive** — Vault will validate these
+2. **P2P & Data — Corestore, Hyperdrive** — Node will validate these
 3. **QVAC — Vision, Embeddings/RAG** — High user value, existing recipes need validation
 4. **P2P & Data — HyperDB, SecretStream** — Collaborative + secure apps
 5. **QVAC — Transcription, TTS, Translation** — More capabilities

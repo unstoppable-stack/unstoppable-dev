@@ -174,7 +174,15 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 1. **Ask the pre-implementation checklist questions** (see Principles in .claude/rules/)
 2. **Propose an architecture** listing all apps to be created
 3. **Get user confirmation** before writing any code
-4. **Create each app** with its own folder and README
+4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
+5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
+
+### Scaffolding Commands
+\`\`\`bash
+us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
+us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
+us scaffold list-features    # p2p, kv-storage, qvac, autobase
+\`\`\`
 
 ## Available Agents
 
@@ -427,6 +435,15 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 1. **Ask the pre-implementation checklist questions** (see @principles rule)
 2. **Propose an architecture** listing all apps to be created
 3. **Get user confirmation** before writing any code
+4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
+5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
+
+### Scaffolding Commands
+\`\`\`bash
+us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
+us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
+us scaffold list-features    # p2p, kv-storage, qvac, autobase
+\`\`\`
 
 ## Core Principles
 
@@ -647,6 +664,15 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 1. Ask the pre-implementation checklist questions
 2. Propose an architecture listing all apps
 3. Get user confirmation before writing any code
+4. Scaffold each app using \`us scaffold app\` — do NOT write boilerplate from scratch
+5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
+
+### Scaffolding Commands
+\`\`\`bash
+us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
+us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
+us scaffold list-features    # p2p, kv-storage, qvac, autobase
+\`\`\`
 
 ## Available Agents
 ${Object.entries(config.agent).map(([name, agent]: [string, any]) => `- \`@${name}\`: ${agent.description}`).join('\n')}
@@ -848,7 +874,15 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 1. **Ask the pre-implementation checklist questions** (see Core Principles below)
 2. **Propose an architecture** listing all apps to be created
 3. **Get user confirmation** before writing any code
-4. **Create each app** with its own folder and README
+4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
+5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
+
+### Scaffolding Commands
+\`\`\`bash
+us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
+us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
+us scaffold list-features    # p2p, kv-storage, qvac, autobase
+\`\`\`
 
 ## Available Implementation Guides
 

@@ -8,7 +8,7 @@ A dev who wants to ship local-first / p2p / unstoppable apps without hand-wiring
 
 2. Click **Get Started** → installs CLI (or downloads plugin).
 
-3. Runs create-unstoppable-app (or similar).
+3. Runs us init (or similar).
 
 4. CLI asks:
 

@@ -22,7 +22,7 @@ How we turn "docs-only" knowledge into "battle-tested" knowledge.
 
 3. Sync to CLI
    ├── rsync agent-pack/src → cli/agent-pack-src
-   ├── Rebuild CLI (pnpm --filter create-unstoppable-app build)
+   ├── Rebuild CLI (pnpm --filter cli build)
    └── Verify with test scaffold
 
 4. Validate

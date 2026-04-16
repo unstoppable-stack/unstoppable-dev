@@ -110,13 +110,13 @@ Room data persists on disk (in Corestore's storage). Even if you close Keet, reo
 
 **3. Seeding via Multiple Devices**
 
-If you run Keet on both your phone and desktop, both devices replicate everything. Your desktop is effectively a "mini Vault" — it keeps your data available even when your phone is off.
+If you run Keet on both your phone and desktop, both devices replicate everything. Your desktop is effectively a "mini Node" — it keeps your data available even when your phone is off.
 
 **4. No External Backup**
 
 Keet does NOT have:
 - Cloud backup
-- A Vault-like always-on seeder
+- A Node-like always-on seeder
 - Any server-side data persistence
 
 This means: if ALL room members lose their devices (or their data is corrupted), the room's history is lost forever. This is a conscious trade-off for complete decentralization.
@@ -188,23 +188,23 @@ Don't try to share a single Hypercore key across devices. Give each device its o
 
 ### 3. Availability Is the Achilles' Heel
 
-Keet's biggest weakness is availability. If no room member is online, new members can't get the room history. The Vault directly addresses this by being an always-on participant.
+Keet's biggest weakness is availability. If no room member is online, new members can't get the room history. The Node directly addresses this by being an always-on participant.
 
-### 4. The Vault Would Transform Keet-Like Apps
+### 4. The Node Would Transform Keet-Like Apps
 
-If Keet had a Vault:
+If Keet had a Node:
 ```
 Room: Alice, Bob, Carol (all offline)
-Vault: online, has replicated all writers
+Node: online, has replicated all writers
 
-Dave joins room → connects to Vault → gets full history
+Dave joins room → connects to Node → gets full history
 ```
 
-The Vault doesn't need write access. It's a read-only replicator. It just needs the bootstrap keys and to be added as a reader to the room's Autobase.
+The Node doesn't need write access. It's a read-only replicator. It just needs the bootstrap keys and to be added as a reader to the room's Autobase.
 
 ### 5. No Centralized Fallback Is a Feature, Not a Bug
 
-Keet deliberately has no server fallback. This means true data sovereignty. For the Unstoppable Stack, the Vault and Cloud are opt-in enhancements, not requirements. Apps must work without them.
+Keet deliberately has no server fallback. This means true data sovereignty. For the Unstoppable Stack, the Node and Cloud are opt-in enhancements, not requirements. Apps must work without them.
 
 ### 6. Key-Based Identity Works
 
@@ -212,14 +212,14 @@ Keet proves that key-based identity (24-word seed phrase) is viable for a consum
 
 ---
 
-## Keet's Architecture vs Unstoppable Vault
+## Keet's Architecture vs Unstoppable Node
 
-| Aspect | Keet (Today) | With Vault |
+| Aspect | Keet (Today) | With Node |
 |--------|-------------|------------|
-| Availability | Only when peers online | 24/7 via Vault |
-| Multi-device | Per-device writers + Autobase | Same, + Vault as extra peer |
-| File sharing | Ephemeral Hyperdrives | Vault mirrors files permanently |
-| AI inference | N/A | Vault delegates via QVAC |
-| Recovery | 24-word seed only | Vault has replicated copy |
-| Search | Local only | Vault could index across apps |
-| Backup | None (by design) | Vault replicates everything |
+| Availability | Only when peers online | 24/7 via Node |
+| Multi-device | Per-device writers + Autobase | Same, + Node as extra peer |
+| File sharing | Ephemeral Hyperdrives | Node mirrors files permanently |
+| AI inference | N/A | Node delegates via QVAC |
+| Recovery | 24-word seed only | Node has replicated copy |
+| Search | Local only | Node could index across apps |
+| Backup | None (by design) | Node replicates everything |

@@ -1,0 +1,818 @@
+{
+  "experimentId": "scaffold-node-cli",
+  "startedAt": "2026-03-19T17:04:16.051Z",
+  "iterations": [
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-bare",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 41,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node  -o /tmp/us-research-scaffold-node-cli-bare",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-bare\",\n  \"platform\": \"node-cli\",\n  \"features\": [],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 113,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 6 packages, and audited 7 packages in 2s\n\n2 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 2032,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 25,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/index.ts(10,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(13,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(19,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 517,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "Starting test-node...\ntest-node is running. Press Ctrl+C to exit.\n",
+          "stderr": "",
+          "duration": 391,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-bare",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f p2p -o /tmp/us-research-scaffold-node-cli-p2p",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-p2p\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"p2p\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/swarm-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 116,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 87 packages, and audited 88 packages in 17s\n\n2 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 16736,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 21,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(2,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/index.ts(14,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(17,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(23,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/swarm-manager.ts(1,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/swarm-manager.ts(2,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/swarm-manager.ts(3,20): error TS7016: Could not find a declaration file for module 'hypercore-crypto'. '/private/tmp/us-research-scaffold-node-cli-p2p/node_modules/hypercore-crypto/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hypercore-crypto` if it exists or add a new declaration (.d.ts) file containing `declare module 'hypercore-crypto';`\nsrc/swarm-manager.ts(19,37): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 520,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "Starting test-node...\nP2P swarm started\ntest-node is running. Press Ctrl+C to exit.\n",
+          "stderr": "",
+          "duration": 2049,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 169,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f kv-storage -o /tmp/us-research-scaffold-node-cli-kv-storage",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-kv-storage\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"kv-storage\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/storage-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 110,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 78 packages, and audited 79 packages in 2s\n\n2 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 2413,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-kv-storage/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(13,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(16,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(22,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/storage-manager.ts(1,22): error TS7016: Could not find a declaration file for module 'hyperbee'. '/private/tmp/us-research-scaffold-node-cli-kv-storage/node_modules/hyperbee/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperbee` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperbee';`\n",
+          "stderr": "",
+          "duration": 522,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "Starting test-node...\nStorage ready\ntest-node is running. Press Ctrl+C to exit.\n",
+          "stderr": "",
+          "duration": 1246,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 113,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f qvac -o /tmp/us-research-scaffold-node-cli-qvac",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-qvac\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"qvac\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/ai-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 111,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 191 packages, and audited 192 packages in 39s\n\n3 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 38996,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 20,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/ai-manager.ts(17,9): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(11,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(14,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(20,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 704,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "el: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%",
+          "stderr": "[sdk:client] Model type \"llm\" is an alias and will be deprecated. Use \"llamacpp-completion\" instead.\nobjc[45429]: Class ggml_metal_heap_ptr is implemented in both /private/tmp/us-research-scaffold-node-cli-qvac/node_modules/@qvac/transcription-whispercpp/prebuilds/darwin-arm64/qvac__transcription-whispercpp.bare (0x131988b88) and /private/tmp/us-research-scaffold-node-cli-qvac/node_modules/@qvac/translation-nmtcpp/prebuilds/darwin-arm64/qvac__translation-nmtcpp.bare (0x134e4d1a0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.\n",
+          "duration": 15002,
+          "passed": false,
+          "error": "Timeout after 15000ms. Missing patterns: is running",
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 462,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-autobase",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f autobase -o /tmp/us-research-scaffold-node-cli-autobase",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-autobase\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"autobase\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/autobase-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 171,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 101 packages, and audited 102 packages in 3s\n\n2 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 2946,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 21,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/autobase-manager.ts(1,22): error TS7016: Could not find a declaration file for module 'autobase'. '/private/tmp/us-research-scaffold-node-cli-autobase/node_modules/autobase/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/autobase` if it exists or add a new declaration (.d.ts) file containing `declare module 'autobase';`\nsrc/autobase-manager.ts(2,22): error TS7016: Could not find a declaration file for module 'hyperbee'. '/private/tmp/us-research-scaffold-node-cli-autobase/node_modules/hyperbee/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperbee` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperbee';`\nsrc/autobase-manager.ts(4,65): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/autobase-manager.ts(21,34): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-autobase/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(13,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(16,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(22,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 516,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "Starting test-node...\nAutobase key: f490665569ca98e2f4d7249b1e5fb779eb427390454437a5c36ef0935f8a706e\ntest-node is running. Press Ctrl+C to exit.\n",
+          "stderr": "",
+          "duration": 1216,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-autobase",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 113,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f p2p,qvac -o /tmp/us-research-scaffold-node-cli-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-p2p-qvac\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"p2p\",\n    \"qvac\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/swarm-manager.ts\",\n    \"src/ai-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 117,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 191 packages, and audited 192 packages in 12s\n\n3 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 11905,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 54,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/ai-manager.ts(17,9): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(2,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/index.ts(17,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(21,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(27,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/swarm-manager.ts(1,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/swarm-manager.ts(2,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/swarm-manager.ts(3,20): error TS7016: Could not find a declaration file for module 'hypercore-crypto'. '/private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/hypercore-crypto/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hypercore-crypto` if it exists or add a new declaration (.d.ts) file containing `declare module 'hypercore-crypto';`\nsrc/swarm-manager.ts(19,37): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 707,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "el: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%",
+          "stderr": "[sdk:client] Model type \"llm\" is an alias and will be deprecated. Use \"llamacpp-completion\" instead.\nobjc[47488]: Class ggml_metal_heap_ptr is implemented in both /private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/@qvac/transcription-whispercpp/prebuilds/darwin-arm64/qvac__transcription-whispercpp.bare (0x1216f4b88) and /private/tmp/us-research-scaffold-node-cli-p2p-qvac/node_modules/@qvac/translation-nmtcpp/prebuilds/darwin-arm64/qvac__translation-nmtcpp.bare (0x124bb91a0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.\n[sdk:server] 🗑️ Removing incomplete cached file (expected 773025824, got 46858240): /Users/simon.iribarren/.qvac/models/f2bade0bc5cd4a8c_Llama-3.2-1B-Instruct-Q4_0.gguf\n",
+          "duration": 15002,
+          "passed": false,
+          "error": "Timeout after 15000ms. Missing patterns: is running",
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-qvac",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 565,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f p2p,kv-storage -o /tmp/us-research-scaffold-node-cli-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-p2p-kv-storage\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"p2p\",\n    \"kv-storage\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/swarm-manager.ts\",\n    \"src/storage-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 117,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 95 packages, and audited 96 packages in 2s\n\n2 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 1696,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 24,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(2,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/index.ts(17,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(20,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(26,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/storage-manager.ts(1,22): error TS7016: Could not find a declaration file for module 'hyperbee'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/hyperbee/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperbee` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperbee';`\nsrc/swarm-manager.ts(1,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/swarm-manager.ts(2,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/swarm-manager.ts(3,20): error TS7016: Could not find a declaration file for module 'hypercore-crypto'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage/node_modules/hypercore-crypto/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hypercore-crypto` if it exists or add a new declaration (.d.ts) file containing `declare module 'hypercore-crypto';`\nsrc/swarm-manager.ts(19,37): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 507,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 3,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "Starting test-node...\nP2P swarm started\nStorage ready\ntest-node is running. Press Ctrl+C to exit.\n",
+          "stderr": "",
+          "duration": 1346,
+          "passed": true,
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-kv-storage",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 152,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    },
+    {
+      "iteration": 1,
+      "setupResults": [
+        {
+          "name": "clean",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 5,
+          "passed": true
+        },
+        {
+          "name": "scaffold",
+          "command": "us scaffold app -p node-cli -n test-node -f p2p,kv-storage,qvac,autobase -o /tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase",
+          "exitCode": 0,
+          "stdout": "{\n  \"success\": true,\n  \"projectName\": \"test-node\",\n  \"projectPath\": \"/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase\",\n  \"platform\": \"node-cli\",\n  \"features\": [\n    \"p2p\",\n    \"kv-storage\",\n    \"qvac\",\n    \"autobase\"\n  ],\n  \"filesCreated\": [\n    \"tsconfig.json\",\n    \".gitignore\",\n    \"README.md\",\n    \"planning/README.md\",\n    \"package.json\",\n    \"src/index.ts\",\n    \"src/swarm-manager.ts\",\n    \"src/storage-manager.ts\",\n    \"src/ai-manager.ts\",\n    \"src/autobase-manager.ts\"\n  ],\n  \"nextSteps\": [\n    \"npm install\",\n    \"npm run dev\"\n  ]\n}\n",
+          "stderr": "",
+          "duration": 113,
+          "passed": true
+        },
+        {
+          "name": "npm-install",
+          "command": "npm install",
+          "exitCode": 0,
+          "stdout": "\nadded 196 packages, and audited 197 packages in 11s\n\n3 packages are looking for funding\n  run `npm fund` for details\n\nfound 0 vulnerabilities\n",
+          "stderr": "",
+          "duration": 11385,
+          "passed": true
+        }
+      ],
+      "measureResults": [
+        {
+          "name": "package-json-valid",
+          "command": "node -e \"const p = require('./package.json'); if (!p.name || !p.scripts) throw new Error('invalid')\"",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 19,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "typecheck",
+          "command": "npx tsc --noEmit",
+          "exitCode": 2,
+          "stdout": "src/ai-manager.ts(17,9): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/autobase-manager.ts(1,22): error TS7016: Could not find a declaration file for module 'autobase'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/autobase/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/autobase` if it exists or add a new declaration (.d.ts) file containing `declare module 'autobase';`\nsrc/autobase-manager.ts(2,22): error TS7016: Could not find a declaration file for module 'hyperbee'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/hyperbee/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperbee` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperbee';`\nsrc/autobase-manager.ts(4,65): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/autobase-manager.ts(21,34): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(1,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/index.ts(2,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/index.ts(23,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(28,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/index.ts(34,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\nsrc/storage-manager.ts(1,22): error TS7016: Could not find a declaration file for module 'hyperbee'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/hyperbee/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperbee` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperbee';`\nsrc/swarm-manager.ts(1,24): error TS7016: Could not find a declaration file for module 'hyperswarm'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/hyperswarm/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hyperswarm` if it exists or add a new declaration (.d.ts) file containing `declare module 'hyperswarm';`\nsrc/swarm-manager.ts(2,23): error TS7016: Could not find a declaration file for module 'corestore'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/corestore/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/corestore` if it exists or add a new declaration (.d.ts) file containing `declare module 'corestore';`\nsrc/swarm-manager.ts(3,20): error TS7016: Could not find a declaration file for module 'hypercore-crypto'. '/private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/hypercore-crypto/index.js' implicitly has an 'any' type.\n  Try `npm i --save-dev @types/hypercore-crypto` if it exists or add a new declaration (.d.ts) file containing `declare module 'hypercore-crypto';`\nsrc/swarm-manager.ts(19,37): error TS2580: Cannot find name 'Buffer'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.\n",
+          "stderr": "",
+          "duration": 689,
+          "passed": false,
+          "error": "Criteria failed: {\"type\":\"exit-code\",\"expected\":0}",
+          "errorCategory": "experiment",
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "entry-exists",
+          "command": "test -f src/index.ts",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 4,
+          "passed": true,
+          "criteria": {
+            "type": "exit-code",
+            "expected": 0
+          }
+        },
+        {
+          "name": "runtime-smoke",
+          "command": "npx tsx src/index.ts",
+          "exitCode": null,
+          "stdout": "el: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 4%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 5%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%\rDownloading model: 6%",
+          "stderr": "[sdk:client] Model type \"llm\" is an alias and will be deprecated. Use \"llamacpp-completion\" instead.\nobjc[49497]: Class ggml_metal_heap_ptr is implemented in both /private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/@qvac/transcription-whispercpp/prebuilds/darwin-arm64/qvac__transcription-whispercpp.bare (0x126174b88) and /private/tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase/node_modules/@qvac/translation-nmtcpp/prebuilds/darwin-arm64/qvac__translation-nmtcpp.bare (0x1296391a0). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.\n[sdk:server] 🗑️ Removing incomplete cached file (expected 773025824, got 47579136): /Users/simon.iribarren/.qvac/models/f2bade0bc5cd4a8c_Llama-3.2-1B-Instruct-Q4_0.gguf\n",
+          "duration": 15001,
+          "passed": false,
+          "error": "Timeout after 15000ms. Missing patterns: is running",
+          "criteria": {
+            "type": "stdout-contains",
+            "pattern": "Starting test-node... && is running"
+          }
+        }
+      ],
+      "cleanupResults": [
+        {
+          "name": "remove-project",
+          "command": "rm -rf /tmp/us-research-scaffold-node-cli-p2p-kv-storage-qvac-autobase",
+          "exitCode": 0,
+          "stdout": "",
+          "stderr": "",
+          "duration": 412,
+          "passed": true
+        }
+      ],
+      "allPassed": false
+    }
+  ],
+  "finalStatus": "failed",
+  "variant": {
+    "features": "p2p,kv-storage,qvac,autobase",
+    "experiment_id": "scaffold-node-cli",
+    "id": "scaffold-node-cli",
+    "features_flag": "-f p2p,kv-storage,qvac,autobase",
+    "features_slug": "p2p-kv-storage-qvac-autobase"
+  },
+  "completedAt": "2026-03-19T17:06:43.845Z"
+}

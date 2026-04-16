@@ -30,7 +30,7 @@ AWS + DevOps. With the Unstoppable Stack, you vibe-code and you're done.
 
 ## How
 
-**1. CLI** — `npx create-unstoppable-app`
+**1. CLI** — `us init` (install: `npm install -g @unstoppable-stack/cli`)
 Scaffolds a project pre-configured for your AI assistant of choice.
 
 **2. Agent Pack** — Battle-tested knowledge for AI assistants
@@ -56,29 +56,29 @@ We built the same P2P desktop app (Coffee Assistant) twice:
 
 The toolchain is Phase 1. The bigger vision:
 
-**Phase 2 — Unstoppable Vault**
+**Phase 2 — Unstoppable Node**
 A desktop app that syncs with any Unstoppable Stack app. Three services:
 - **Data Sync** — replicates Hyperbees, HyperDBs, Hypercores (always backed up)
 - **File Sync** — replicates Hyperdrives (files seeded 24/7)
 - **AI Provider** — runs powerful models (7B+) that phone/tablet apps can delegate
   to over P2P using QVAC's built-in delegation (`startQVACProvider`)
 
-The Vault is a **personal cloud**. Same Hyperswarm protocol as everything else.
+The Node is a **personal cloud**. Same Hyperswarm protocol as everything else.
 
 **Phase 3 — Unstoppable Auth**
 Local-first identity. One keypair across all unstoppable apps.
 
 **Phase 4 — Unstoppable Cloud (Subscriptions)**
-Hosted version of the Vault — same protocol, run by Tether.
+Hosted version of the Node — same protocol, run by Tether.
 
-| Free (Vault on your desktop) | Subscriber (Cloud by Tether) |
+| Free (Node on your desktop) | Subscriber (Cloud by Tether) |
 |------------------------------|------------------------------|
 | Your GPU (3B-13B models) | Tether GPUs (70B+) |
 | Local storage | Cloud-replicated, always on |
-| Files seeded when Vault is running | Files seeded 24/7 |
+| Files seeded when Node is running | Files seeded 24/7 |
 | Free | USDt subscription via WDK |
 
-**Apps don't change.** Switch from Vault to Cloud by swapping a topic + public key.
+**Apps don't change.** Switch from Node to Cloud by swapping a topic + public key.
 
 - Users subscribe via USDt (WDK)
 - Tether provides infrastructure (inference, storage, seeding)
@@ -87,7 +87,7 @@ Hosted version of the Vault — same protocol, run by Tether.
 
 ## The Flywheel
 
-Better tooling → more developers → more apps → users start with free Vault →
+Better tooling → more developers → more apps → users start with free Node →
 upgrade to paid Cloud → revenue → fund better tooling. Every payment in USDt.
 
 ## Status
@@ -95,7 +95,7 @@ upgrade to paid Cloud → revenue → fund better tooling. Every payment in USDt
 - CLI: working (scaffolds for Claude, Cursor, OpenCode)
 - Agent Pack: 39% battle-tested (21/54 items), structured roadmap to 81%
 - Website: built (landing, docs, getting started)
-- Vault: planned (technical architecture designed)
+- Node: planned (technical architecture designed)
 - 7 reference apps planned to validate the remaining stack
 
 ## Impact

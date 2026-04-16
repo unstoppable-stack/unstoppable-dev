@@ -202,7 +202,7 @@ Three components:
 ## Slide 11: The CLI
 
 ```bash
-npx create-unstoppable-app
+us init
 ```
 
 ```
@@ -398,7 +398,7 @@ Hyperbee, QVAC chat + streaming + tool calling
 
 **With the Unstoppable Stack:**
 
-1. Run `npx create-unstoppable-app`
+1. Run `us init`
 2. Open in Cursor / Claude / OpenCode
 3. Say "Build me a P2P encrypted chat with local AI"
 4. Get a working app
@@ -418,14 +418,14 @@ It's the foundation for a **platform**.
 
 ```
 Phase 1 (now)     → Toolchain: CLI + Agent Pack + Website
-Phase 2 (next)    → Unstoppable Vault: Personal sync + AI hub
+Phase 2 (next)    → Unstoppable Node: Personal sync + AI hub
 Phase 3           → Unstoppable Auth: Local-first identity
 Phase 4 (future)  → Unstoppable Cloud: Hosted services + subscriptions
 ```
 
 ---
 
-## Slide 22: Unstoppable Vault — The Bridge to Cloud
+## Slide 22: Unstoppable Node — The Bridge to Cloud
 
 Before the cloud, there's a simpler step: a desktop app that syncs with
 **any app** built with the Unstoppable Stack.
@@ -440,7 +440,7 @@ Before the cloud, there's a simpler step: a desktop app that syncs with
             │  Hyperswarm │
      ┌──────▼─────────────▼──────┐
      │                           │
-     │    Unstoppable Vault      │
+     │    Unstoppable Node      │
      │                           │
      │  Data Sync (Hyperbee,     │
      │    HyperDB, Hypercore)    │
@@ -454,7 +454,7 @@ Three services in one app:
 
 ---
 
-## Slide 23: Vault — What It Does
+## Slide 23: Node — What It Does
 
 **1. Data Sync** — Replicates your apps' Hyperbees, HyperDBs, and Hypercores.
 Your data is backed up and always available, even when the original app is closed.
@@ -464,12 +464,12 @@ Other peers can access them even when your app is offline.
 
 **3. AI Provider** — This is the exciting one.
 
-QVAC has **built-in P2P delegation**. The Vault runs `startQVACProvider()`
+QVAC has **built-in P2P delegation**. The Node runs `startQVACProvider()`
 with powerful models (7B, 13B). Your phone app calls
 `loadModel({ delegate: { topic, providerPublicKey } })`.
 
 ```
-Phone (1B model)              Desktop Vault (7B model)
+Phone (1B model)              Desktop Node (7B model)
 ┌─────────────────┐           ┌──────────────────────┐
 │                 │   P2P     │                      │
 │  "Analyze this" │──────────►│  Runs 7B model       │
@@ -480,17 +480,17 @@ Phone (1B model)              Desktop Vault (7B model)
 ```
 
 **Same API.** The app calls `completion()` exactly the same way whether
-running locally or delegated. If the Vault is offline, `fallbackToLocal: true`
+running locally or delegated. If the Node is offline, `fallbackToLocal: true`
 uses the on-device model.
 
 ---
 
-## Slide 24: From Vault to Cloud — Same Protocol
+## Slide 24: From Node to Cloud — Same Protocol
 
-The Vault is your **personal cloud**. The actual Cloud is the **hosted version**.
+The Node is your **personal cloud**. The actual Cloud is the **hosted version**.
 
 ```
-         Vault (your PC)             Cloud (Tether)
+         Node (your PC)             Cloud (Tether)
         ┌──────────────┐            ┌──────────────┐
         │ 7B model     │            │ 70B+ model   │
         │ 1 TB storage │            │ Unlimited    │
@@ -510,7 +510,7 @@ The Vault is your **personal cloud**. The actual Cloud is the **hosted version**
                    Just swap topic + key.
 ```
 
-**The app code is identical.** Users start with the free Vault.
+**The app code is identical.** Users start with the free Node.
 When they want more power, they upgrade to the Cloud subscription.
 The developer changes nothing.
 
@@ -525,7 +525,7 @@ For all of this to work across apps, users need an identity.
 - Keypair-based (no email, no password, no auth server)
 - Works across all apps built with the stack
 - Device linking and recovery
-- The Vault and Cloud know who you are across apps
+- The Node and Cloud know who you are across apps
 
 **For developers:** One line — `import { auth } from '@unstoppable/auth'`
 **For users:** One identity across all their unstoppable apps.
@@ -537,11 +537,11 @@ For all of this to work across apps, users need an identity.
 P2P apps are powerful but limited by the device.
 **Subscriptions** remove those limits:
 
-| | Free (Vault) | Subscriber (Cloud) |
+| | Free (Node) | Subscriber (Cloud) |
 |---|---|---|
 | **AI** | Your desktop GPU (3B-13B) | Tether GPUs (70B+) |
 | **Data** | Backed up locally | Cloud-replicated, always on |
-| **Files** | Seeded when Vault is running | Seeded 24/7 |
+| **Files** | Seeded when Node is running | Seeded 24/7 |
 | **Cost** | Free | USDt subscription via WDK |
 
 ---
@@ -571,7 +571,7 @@ The key insight: **app builders don't need any servers.**
 ```
 
 1. Developer builds an app using the stack (free, no servers)
-2. Users get the free Vault for local sync + AI delegation
+2. Users get the free Node for local sync + AI delegation
 3. Users who want more power subscribe to the Cloud (USDt via WDK)
 4. Tether provides the infrastructure
 5. **Revenue is shared with the app builder**
@@ -614,15 +614,15 @@ And every subscription payment flows through **USDt + WDK**.
 |-------|------|-------|
 | **Apps** | Health, Finance, AI Workbench, Community, ... | Now (devs build) |
 | **Toolchain** | CLI, Agent Pack, Website | Phase 1 (done) |
-| **Vault** | Personal sync + AI delegation hub | Phase 2 (next) |
+| **Node** | Personal sync + AI delegation hub | Phase 2 (next) |
 | **Identity** | Unstoppable Auth (local-first, cross-app) | Phase 3 |
-| **Cloud** | Hosted Vault: inference, storage, seeding | Phase 4 |
+| **Cloud** | Hosted Node: inference, storage, seeding | Phase 4 |
 | **Payments** | Subscriptions + revenue share via WDK + USDt | Phase 4 |
 | **Foundation** | Holepunch P2P + QVAC AI + WDK Wallet | Exists today |
 
 Each phase unlocks the next:
 - **Toolchain** → developers can build apps
-- **Vault** → users can sync and get better AI locally
+- **Node** → users can sync and get better AI locally
 - **Auth** → identity works across apps
 - **Cloud** → subscriptions, revenue, ecosystem
 
@@ -637,7 +637,7 @@ Each phase unlocks the next:
 - **Competitive advantage** — No other P2P stack has AI tooling, a personal
   sync hub, OR a business model for builders
 - **The AI shift** — We ride the wave instead of fighting it
-- **Progressive path** — Vault (free, local) → Cloud (paid, hosted).
+- **Progressive path** — Node (free, local) → Cloud (paid, hosted).
   Users upgrade naturally as they need more power
 - **Brand** — Tether as a developer platform, not just a stablecoin
 
@@ -647,7 +647,7 @@ Each phase unlocks the next:
 
 1. **Continue building** — 7 reference apps to validate the full stack
    (39% → 81% coverage)
-2. **Build the Vault** — Personal sync + AI delegation app, the stepping
+2. **Build the Node** — Personal sync + AI delegation app, the stepping
    stone to the Cloud
 3. **Collaboration with Holepunch** — Joint effort on docs and Auth design
 4. **Launch unstoppable.dev** — Public beta with CLI and agent pack

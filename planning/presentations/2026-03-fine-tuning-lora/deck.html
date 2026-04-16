@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fine-Tuning with LoRA — Reference</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --accent: #00D4AA;
+    --accent-dim: #00A88A;
+    --accent-glow: rgba(0,212,170,0.10);
+    --holepunch: #6C63FF;
+    --nous: #E040FB;
+    --bg: #07070A;
+    --surface: #111118;
+    --surface2: #1A1A24;
+    --surface3: #22222E;
+    --text: #EEEEF2;
+    --text-dim: #999AAA;
+    --text-muted: #666677;
+    --danger: #FF6B6B;
+    --warn: #FFD93D;
+    --blue: #4D9EFF;
+    --orange: #FF8A50;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    padding: 0 24px 120px;
+  }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    padding: 80px 0 48px;
+    border-bottom: 1px solid var(--surface3);
+    margin-bottom: 48px;
+  }
+  header .eyebrow {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+  header h1 {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  header .subtitle {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 600px;
+  }
+  header .meta {
+    margin-top: 20px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* Sections */
+  section { margin-bottom: 56px; }
+
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+    padding-top: 32px;
+  }
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 28px 0 12px;
+  }
+  h4 {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+  p.dim { color: var(--text-dim); font-size: 14px; }
+
+  strong { color: var(--accent); font-weight: 600; }
+  em { color: var(--text-dim); font-style: italic; }
+
+  /* Links */
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Lists */
+  ul, ol { margin: 0 0 16px 20px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: var(--accent); }
+
+  /* Code */
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--surface2);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.88em;
+    color: var(--accent);
+    border: 1px solid var(--surface3);
+  }
+
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 10px;
+    padding: 20px 24px;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    border: none;
+    color: var(--text);
+    font-size: 1em;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+    margin: 16px 0;
+    background: var(--surface);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--surface3);
+  }
+  th {
+    background: var(--surface2);
+    color: var(--accent);
+    font-weight: 600;
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--surface3);
+  }
+  td {
+    padding: 9px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  tr:last-child td { border-bottom: none; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+    margin: 2px 2px;
+  }
+  .tag-green { background: rgba(0,212,170,0.12); color: var(--accent); border: 1px solid rgba(0,212,170,0.25); }
+  .tag-red { background: rgba(255,107,107,0.12); color: var(--danger); border: 1px solid rgba(255,107,107,0.25); }
+  .tag-yellow { background: rgba(255,217,61,0.12); color: var(--warn); border: 1px solid rgba(255,217,61,0.25); }
+  .tag-blue { background: rgba(77,158,255,0.12); color: var(--blue); border: 1px solid rgba(77,158,255,0.25); }
+  .tag-purple { background: rgba(108,99,255,0.12); color: var(--holepunch); border: 1px solid rgba(108,99,255,0.25); }
+  .tag-pink { background: rgba(224,64,251,0.12); color: var(--nous); border: 1px solid rgba(224,64,251,0.25); }
+  .tag-dim { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--surface3); }
+
+  /* Callout boxes */
+  .callout {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout-accent {
+    background: linear-gradient(135deg, rgba(0,212,170,0.08), rgba(108,99,255,0.06));
+    border: 1px solid rgba(0,212,170,0.18);
+  }
+  .callout-warn {
+    background: rgba(255,217,61,0.06);
+    border: 1px solid rgba(255,217,61,0.15);
+  }
+  .callout-danger {
+    background: rgba(255,107,107,0.06);
+    border: 1px solid rgba(255,107,107,0.15);
+  }
+
+  /* Cards */
+  .cards { display: grid; gap: 16px; margin: 20px 0; }
+  .cards-2 { grid-template-columns: 1fr 1fr; }
+  .cards-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h3 { margin-top: 0; font-size: 16px; }
+  .card p { font-size: 14px; }
+
+  /* Flow diagrams */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 16px 0;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 14px;
+    position: relative;
+  }
+  .flow-step.highlight {
+    border-color: var(--accent-dim);
+    background: var(--accent-glow);
+  }
+  .flow-step .step-num {
+    color: var(--accent);
+    font-weight: 700;
+    margin-right: 8px;
+  }
+
+  /* Comparison: check / cross */
+  .yes { color: var(--accent); font-weight: 600; }
+  .no { color: var(--danger); }
+  .maybe { color: var(--warn); }
+
+  /* Dividers */
+  hr {
+    border: none;
+    border-top: 1px solid var(--surface3);
+    margin: 48px 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .cards-2, .cards-3 { grid-template-columns: 1fr; }
+    header h1 { font-size: 30px; }
+    h2 { font-size: 22px; }
+  }
+
+  /* TOC */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--surface3);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+  .toc h3 { margin-top: 0; }
+  .toc ol { margin-bottom: 0; }
+  .toc li { margin-bottom: 4px; font-size: 14px; }
+  .toc a { color: var(--text); }
+  .toc a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<header>
+  <div class="eyebrow">Personal Reference</div>
+  <h1>Fine-Tuning with LoRA</h1>
+  <div class="subtitle">
+    Understanding capabilities, dataset restrictions, data gathering strategies,
+    and how we could use fine-tuning in the Unstoppable Stack with QVAC SDK.
+  </div>
+  <div class="meta">March 2026 &nbsp;&middot;&nbsp; The Unstoppable Stack</div>
+</header>
+
+<!-- ============================================================ -->
+<!-- TOC -->
+<!-- ============================================================ -->
+<nav class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#demo">What the Demo Showed</a></li>
+    <li><a href="#concepts">Fine-Tuning &amp; LoRA Concepts</a></li>
+    <li><a href="#comparison">Approaches Compared</a></li>
+    <li><a href="#dataset">The Dataset</a> — format, sizes, quality rules</li>
+    <li><a href="#gathering">Gathering Training Data</a> — 4 strategies</li>
+    <li><a href="#technical">Technical Pipeline</a> — hyperparameters, hardware, llama.cpp</li>
+    <li><a href="#usecases">Unstoppable Stack Use Cases</a></li>
+    <li><a href="#flywheel">The Flywheel</a></li>
+    <li><a href="#takeaways">Key Takeaways</a></li>
+  </ol>
+</nav>
+
+<!-- ============================================================ -->
+<!-- 1. DEMO -->
+<!-- ============================================================ -->
+<section id="demo">
+  <h2>1. What the Demo Showed</h2>
+
+  <p>
+    A <strong>small model</strong> (1–3B parameters) was fine-tuned with LoRA and became
+    extremely good at specific tool calls — matching or exceeding much larger models
+    at that narrow task.
+  </p>
+
+  <div class="cards cards-3">
+    <div class="card">
+      <h3>Before Fine-Tuning</h3>
+      <p>Small model guesses tool call format. JSON errors, wrong argument names, hallucinated tools. You need a 7B+ model for reliability.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-dim); background: var(--accent-glow);">
+      <h3>After LoRA</h3>
+      <p>Same small model nails the exact tool format every time. Correct arguments, proper JSON, right tool selection. <strong>On a 1–3B model.</strong></p>
+    </div>
+    <div class="card">
+      <h3>Why It Works</h3>
+      <p>Fine-tuning doesn't teach "general intelligence." It teaches the model the <strong>exact output pattern</strong> for your specific tools.</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 2. CONCEPTS -->
+<!-- ============================================================ -->
+<section id="concepts">
+  <h2>2. Fine-Tuning &amp; LoRA Concepts</h2>
+
+  <h3>What is Fine-Tuning?</h3>
+  <p>
+    A pre-trained model has learned language from trillions of tokens.
+    Fine-tuning <strong>adjusts its behavior</strong> for a specific task by training on
+    a curated dataset of examples.
+  </p>
+  <p>
+    Think of it like: the model already knows how to speak — fine-tuning
+    teaches it <strong>how to speak in your context</strong>.
+  </p>
+
+  <h3>Three Levels of Customization</h3>
+  <table>
+    <tr><th>Level</th><th>What It Does</th><th>Training Required?</th></tr>
+    <tr><td><strong>Prompting</strong></td><td>Tell the model what to do in context</td><td>None</td></tr>
+    <tr><td><strong>RAG</strong></td><td>Give the model knowledge at query time</td><td>None (embeddings only)</td></tr>
+    <tr><td style="color:var(--accent);"><strong>Fine-Tuning</strong></td><td>Change the model's weights permanently</td><td>Yes — hours on 1 GPU</td></tr>
+  </table>
+
+  <h3>When to Fine-Tune (and When Not To)</h3>
+  <table>
+    <tr><th>Use Case</th><th>Fine-Tune?</th></tr>
+    <tr><td>Consistent output format (JSON, schemas)</td><td class="yes">Yes</td></tr>
+    <tr><td>Reliable tool calling on small models</td><td class="yes">Yes</td></tr>
+    <tr><td>Domain jargon / style</td><td class="yes">Yes</td></tr>
+    <tr><td>Replace a 7B model with a 1B model for specific tasks</td><td class="yes">Yes</td></tr>
+    <tr><td>General Q&amp;A</td><td class="no">No — use prompting</td></tr>
+    <tr><td>Access to external knowledge</td><td class="no">No — use RAG</td></tr>
+    <tr><td>Less than 500 examples available</td><td class="no">No — not enough data</td></tr>
+  </table>
+
+  <h3>What is LoRA?</h3>
+  <p>
+    <strong>Low-Rank Adaptation</strong>. Instead of updating all 7 billion parameters,
+    LoRA adds <strong>tiny adapter matrices</strong> (0.1–5% of the model size) to specific layers.
+    Only these adapters are trained. The base model stays frozen.
+  </p>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>Base Model</strong> (7B params, frozen 🔒)
+      &nbsp;+&nbsp; <strong>LoRA Adapter</strong> (4–33M params, trained ✏️)
+      &nbsp;=&nbsp; <strong>Specialized Model</strong>
+    </p>
+  </div>
+
+  <p>
+    The adapter is a <strong>small file</strong> (~50–200 MB). You can have many adapters
+    for one base model — swap them depending on the task. Like installing plugins.
+  </p>
+
+  <h3>LoRA Adapter Sizes</h3>
+  <table>
+    <tr><th>Rank (r)</th><th>Trainable Params</th><th>VRAM Needed</th><th>Adapter File Size</th></tr>
+    <tr><td>r = 8</td><td>~4M</td><td>~16 GB</td><td>~16 MB</td></tr>
+    <tr><td>r = 16</td><td>~8M</td><td>~18 GB</td><td>~32 MB</td></tr>
+    <tr><td>r = 32</td><td>~16M</td><td>~20 GB</td><td>~64 MB</td></tr>
+    <tr><td>r = 64</td><td>~33M</td><td>~24 GB</td><td>~130 MB</td></tr>
+  </table>
+
+  <h3>QLoRA — Even Less VRAM</h3>
+  <p>
+    QLoRA quantizes the base model to 4-bit <em>before</em> training.
+    Cuts memory by <strong>75%</strong>. A 7B model trains on a single consumer GPU (16 GB).
+    A 3B model trains on ~6 GB.
+  </p>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 3. COMPARISON -->
+<!-- ============================================================ -->
+<section id="comparison">
+  <h2>3. Approaches Compared</h2>
+
+  <table>
+    <tr>
+      <th></th>
+      <th>Prompting</th>
+      <th>RAG</th>
+      <th style="color:var(--accent);">LoRA Fine-Tune</th>
+      <th>Full Fine-Tune</th>
+    </tr>
+    <tr>
+      <td><strong>Training data needed</strong></td>
+      <td>0</td>
+      <td>0 (docs only)</td>
+      <td class="yes">500–5,000</td>
+      <td>10,000+</td>
+    </tr>
+    <tr>
+      <td><strong>Compute cost</strong></td>
+      <td>None</td>
+      <td>Embedding once</td>
+      <td class="yes">Hours (1 GPU)</td>
+      <td>Days (multi-GPU)</td>
+    </tr>
+    <tr>
+      <td><strong>VRAM required</strong></td>
+      <td>Inference only</td>
+      <td>Inference only</td>
+      <td class="yes">16–24 GB</td>
+      <td>80+ GB</td>
+    </tr>
+    <tr>
+      <td><strong>Output format control</strong></td>
+      <td class="maybe">~</td>
+      <td class="maybe">~</td>
+      <td class="yes">Excellent</td>
+      <td class="yes">Excellent</td>
+    </tr>
+    <tr>
+      <td><strong>Can shrink model size</strong></td>
+      <td class="no">✗</td>
+      <td class="no">✗</td>
+      <td class="yes">✓ Yes!</td>
+      <td class="yes">✓</td>
+    </tr>
+    <tr>
+      <td><strong>Base model preserved</strong></td>
+      <td class="yes">✓</td>
+      <td class="yes">✓</td>
+      <td class="yes">✓ Adapter only</td>
+      <td class="no">✗ Modified</td>
+    </tr>
+    <tr>
+      <td><strong>Multiple specializations</strong></td>
+      <td class="yes">✓</td>
+      <td class="yes">✓</td>
+      <td class="yes">✓ Hot-swap</td>
+      <td class="no">✗ Separate models</td>
+    </tr>
+    <tr>
+      <td><strong>P2P distributable</strong></td>
+      <td>—</td>
+      <td>—</td>
+      <td class="yes">✓ 50–200 MB</td>
+      <td class="no">✗ Multi-GB</td>
+    </tr>
+  </table>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>LoRA is the sweet spot</strong> for on-device fine-tuning: cheap to train,
+      small to distribute, and the base model stays untouched for general tasks.
+    </p>
+  </div>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 4. DATASET -->
+<!-- ============================================================ -->
+<section id="dataset">
+  <h2>4. The Dataset</h2>
+  <p class="dim">Quality of data is the single biggest factor in fine-tuning success.</p>
+
+  <h3>Format: JSONL with Chat Messages</h3>
+  <p>Same format QVAC already uses. One JSON object per line.</p>
+
+  <h4>Basic conversation</h4>
+  <pre><code>{"messages": [
+  {"role": "system", "content": "You are a helpful assistant."},
+  {"role": "user", "content": "What's the weather in Tokyo?"},
+  {"role": "assistant", "content": "It's 22°C and sunny in Tokyo."}
+]}</code></pre>
+
+  <h4>With tool calls (this is the important one)</h4>
+  <pre><code>{"messages": [
+  {"role": "user", "content": "Weather in Tokyo?"},
+  {"role": "assistant", "tool_calls": [
+    {"id": "call_1", "type": "function",
+     "function": {"name": "get_weather", "arguments": "{\"city\":\"Tokyo\"}"}}
+  ]},
+  {"role": "tool", "content": "22°C, sunny"},
+  {"role": "assistant", "content": "Tokyo is 22°C and sunny right now."}
+],
+"tools": [
+  {"type": "function", "function": {
+    "name": "get_weather",
+    "description": "Get current weather for a city",
+    "parameters": {"type": "object",
+      "properties": {"city": {"type": "string"}},
+      "required": ["city"]}
+  }}
+]}</code></pre>
+
+  <p class="dim">
+    Each model's chat template converts this to the right token format at training time.
+    Qwen uses <code>&lt;tool_call&gt;</code> XML tags, Llama uses <code>&lt;|python_tag|&gt;</code>, Mistral uses <code>[TOOL_CALLS]</code>.
+    You don't worry about encoding — the training pipeline handles it.
+  </p>
+
+  <h3>How Much Data Do You Need?</h3>
+
+  <table>
+    <tr><th>Size</th><th>Quality</th><th>Verdict</th></tr>
+    <tr><td>&lt; 500 examples</td><td>Model memorizes instead of generalizing</td><td><span class="tag tag-red">Avoid</span></td></tr>
+    <tr><td>500 – 1,000</td><td>Works for narrow tasks (single tool, simple patterns)</td><td><span class="tag tag-yellow">Minimum</span></td></tr>
+    <tr><td>1,000 – 5,000</td><td>Good generalization, handles edge cases, robust output</td><td><span class="tag tag-green">Sweet spot</span></td></tr>
+    <tr><td>5,000 – 10,000</td><td>Excellent for multi-tool, diverse tasks, complex reasoning</td><td><span class="tag tag-blue">Ideal</span></td></tr>
+    <tr><td>&gt; 10,000</td><td>Diminishing returns — better to improve quality</td><td><span class="tag tag-dim">Overkill</span></td></tr>
+  </table>
+
+  <div class="callout callout-accent">
+    <p><strong>100 perfect examples &gt; 10,000 sloppy ones.</strong></p>
+  </div>
+
+  <p>
+    For tool calling specifically: each tool needs <strong>50–100 diverse examples</strong> minimum.
+    10 tools = 500–1,000 just for tool selection. Add edge cases (ambiguous queries, multi-tool calls,
+    error handling, "no tool needed") and you're at 2,000–3,000.
+  </p>
+
+  <p>Always split: <strong>90% training / 10% evaluation</strong> (to detect overfitting).</p>
+
+  <h3>What Makes a Good vs Bad Dataset</h3>
+
+  <div class="cards cards-2">
+    <div class="card" style="border-color: var(--accent-dim);">
+      <h3 style="color:var(--accent);">Good Dataset</h3>
+      <ul>
+        <li><strong>Consistent formatting</strong> across all examples</li>
+        <li><strong>Diverse inputs</strong> — different phrasings, edge cases</li>
+        <li><strong>Accurate outputs</strong> — each example is a correct answer</li>
+        <li><strong>Covers failure modes</strong> — "no matching tool" examples</li>
+        <li><strong>Real-world distribution</strong> — reflects actual usage</li>
+        <li><strong>Multi-turn when needed</strong> — tool result → response</li>
+      </ul>
+    </div>
+    <div class="card" style="border-color: var(--danger);">
+      <h3 style="color:var(--danger);">Bad Dataset</h3>
+      <ul>
+        <li>Copy-paste templates with minor word changes</li>
+        <li>Contradictory examples — same input, different outputs</li>
+        <li>Missing edge cases — only "happy path"</li>
+        <li>Inconsistent formats — sometimes JSON, sometimes text</li>
+        <li>Wrong outputs — tool calls with incorrect arguments</li>
+        <li>Too narrow — all examples use the same 3 words</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Good Diversity Example</h3>
+  <pre><code>// Same tool, different phrasings:
+"What's the weather in Tokyo?"
+"Tokyo weather please"
+"How hot is it in Tokyo right now?"
+"Is it raining in Tokyo?"
+"Temperature in Tokyo, Japan"
+"Give me Tokyo forecast"
+
+// Edge cases:
+"Weather in"              → error: missing city
+"Weather in Abc123"       → error: invalid city
+"Tell me a joke"          → no tool needed (just respond)
+"Weather and horoscope"   → multi-tool call</code></pre>
+
+  <h3>Common Mistakes</h3>
+  <table>
+    <tr><th>Mistake</th><th>What Happens</th></tr>
+    <tr><td>Only happy-path examples</td><td>Model crashes on unexpected input</td></tr>
+    <tr><td>All examples start with "Please"</td><td>Model only responds to polite requests</td></tr>
+    <tr><td>Single-tool only</td><td>Model can't choose between tools</td></tr>
+    <tr><td>No "no tool needed" examples</td><td>Model forces a tool call on everything</td></tr>
+    <tr><td>Training on generated data without human review</td><td>Amplifies errors and weird patterns</td></tr>
+  </table>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 5. GATHERING DATA -->
+<!-- ============================================================ -->
+<section id="gathering">
+  <h2>5. Gathering Training Data</h2>
+  <p class="dim">Four strategies — from recording real usage to synthetic generation.</p>
+
+  <!-- Strategy 1 -->
+  <h3>Strategy 1: Record Real Conversations</h3>
+  <p class="dim">The gold standard — learn from actual usage.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> User interacts with the agent normally</div>
+    <div class="flow-step"><span class="step-num">2.</span> Log every conversation as JSONL (messages + tools)</div>
+    <div class="flow-step"><span class="step-num">3.</span> Filter: keep only <strong>successful</strong> interactions</div>
+    <div class="flow-step"><span class="step-num">4.</span> Human review for quality + correctness</div>
+    <div class="flow-step highlight"><span class="step-num">5.</span> Clean, deduplicate, split → training dataset</div>
+  </div>
+
+  <table>
+    <tr><th>Keep ✓</th><th>Discard ✗</th></tr>
+    <tr><td>Task completed successfully</td><td>Agent got stuck in a loop</td></tr>
+    <tr><td>User confirmed result was correct</td><td>User had to correct the agent</td></tr>
+    <tr><td>Tool calls returned valid results</td><td>Tool calls failed or errored</td></tr>
+    <tr><td>Concise exchange (2–6 turns)</td><td>Very long wandering conversation</td></tr>
+  </table>
+
+  <p><strong>Best for:</strong> Apps already in use with real users. Highest quality if users rate interactions.</p>
+
+  <!-- Strategy 2 -->
+  <h3>Strategy 2: Synthetic Data Generation</h3>
+  <p class="dim">Use a large model to create training data for a small one.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> Define your tools (Zod schemas, descriptions)</div>
+    <div class="flow-step"><span class="step-num">2.</span> Write 10–20 <strong>seed examples</strong> by hand</div>
+    <div class="flow-step"><span class="step-num">3.</span> Ask a strong model (70B / Claude / GPT-4) to generate variations</div>
+    <div class="flow-step"><span class="step-num">4.</span> <strong>Verify</strong>: format check + semantic check + execute tool calls</div>
+    <div class="flow-step highlight"><span class="step-num">5.</span> Human spot-check 10–20% of generated data</div>
+  </div>
+
+  <h4>Prompting the generator</h4>
+  <pre><code>Given these tool definitions:
+{tools}
+
+And these seed examples:
+{seed_examples}
+
+Generate 50 diverse user queries that would require using these tools.
+
+Requirements:
+- Vary phrasing (formal, casual, terse)
+- Include edge cases
+- Include multi-tool scenarios
+- Include "no tool needed" cases
+- Include ambiguous queries
+- Each query must be unique</code></pre>
+
+  <h4>Verification pipeline</h4>
+  <pre><code>Seed examples (20)  →  Generate (5000)
+                          ↓
+                    Format check: valid JSON? correct schema?
+                          ↓
+                    Semantic check: does the tool call match the query?
+                          ↓
+                    Execution check: do the arguments pass Zod validation?
+                          ↓
+                    Clean dataset (3000-4000 after filtering)</code></pre>
+
+  <p><strong>Available tools:</strong>
+    <span class="tag tag-pink">SynthCall</span>
+    <span class="tag tag-blue">ToolWeave</span>
+    <span class="tag tag-purple">Azure Synthesizer</span>
+    <span class="tag tag-dim">DIY with Claude/GPT</span>
+  </p>
+
+  <!-- Strategy 3 -->
+  <h3>Strategy 3: Trajectory Distillation</h3>
+  <p class="dim">The "teacher-student" pattern — a big model teaches a small one.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> <strong style="color:var(--blue);">Teacher (70B / cloud)</strong> runs your tasks with your tools</div>
+    <div class="flow-step"><span class="step-num">2.</span> Record every message exchange as JSONL trajectory</div>
+    <div class="flow-step"><span class="step-num">3.</span> Filter: keep successful trajectories, discard failures</div>
+    <div class="flow-step highlight"><span class="step-num">4.</span> <strong>Student (1–3B local)</strong> fine-tuned on these trajectories</div>
+  </div>
+
+  <p>
+    The small model doesn't need to figure out the reasoning — it just needs to learn the
+    <strong>pattern</strong> of correct tool usage. The big model already did the hard thinking.
+  </p>
+
+  <pre><code>// Run 500 coding tasks with GPT-4 / Claude
+// using your exact tool definitions:
+const tools = [
+  { name: "read_file", ... },
+  { name: "write_file", ... },
+  { name: "search_files", ... },
+  { name: "run_terminal", ... }
+];
+
+// For each task, save the full trajectory:
+// user → assistant(tool_call) → tool(result) → assistant(tool_call) → ...
+
+// Filter to 300-400 clean trajectories
+// Fine-tune Qwen 3 1B on these
+// Result: 1B model that uses YOUR tools reliably</code></pre>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>Cost efficiency:</strong> Pay for cloud inference once to generate training data.
+      Then run the fine-tuned small model locally forever. No recurring API costs.
+    </p>
+  </div>
+
+  <!-- Strategy 4 -->
+  <h3>Strategy 4: P2P Trajectory Collection</h3>
+  <p class="dim">The Unstoppable Stack advantage — community-powered datasets.</p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> User A's agent solves a task → trajectory saved locally</div>
+    <div class="flow-step"><span class="step-num">2.</span> User A rates outcome ⭐⭐⭐⭐⭐ → opts in to share</div>
+    <div class="flow-step" style="border-color:var(--holepunch);"><span class="step-num">3.</span> Trajectory (anonymized) → HyperDB via Hyperswarm</div>
+    <div class="flow-step" style="border-color:var(--holepunch);"><span class="step-num">4.</span> Users B, C, D also contribute trajectories</div>
+    <div class="flow-step highlight"><span class="step-num">5.</span> Aggregated dataset → anyone can train a better adapter</div>
+    <div class="flow-step" style="border-color:var(--accent-dim);"><span class="step-num">6.</span> Adapter shared as GGUF (~100 MB) via Hyperdrive</div>
+  </div>
+
+  <div class="cards cards-3">
+    <div class="card" style="border-left: 3px solid var(--holepunch);">
+      <h3>No Central Server</h3>
+      <p>Data never touches a company server. Users control what they share. Fully opt-in, anonymized.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--holepunch);">
+      <h3>Network Effect</h3>
+      <p>More users = more trajectories = better adapters = better agent = more users.</p>
+    </div>
+    <div class="card" style="border-left: 3px solid var(--holepunch);">
+      <h3>Adapter Distribution</h3>
+      <p>Trained adapters are tiny GGUF files. Perfect for P2P via Hyperdrive. No model registry needed.</p>
+    </div>
+  </div>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 6. TECHNICAL -->
+<!-- ============================================================ -->
+<section id="technical">
+  <h2>6. Technical Pipeline</h2>
+
+  <h3>Training Steps</h3>
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> <strong>Prepare</strong> — Curate JSONL dataset, 90/10 split</div>
+    <div class="flow-step"><span class="step-num">2.</span> <strong>Configure</strong> — Choose rank, alpha, target modules, learning rate</div>
+    <div class="flow-step"><span class="step-num">3.</span> <strong>Train</strong> — SFT with PEFT/TRL or Unsloth (2–8 hours, 1 GPU)</div>
+    <div class="flow-step"><span class="step-num">4.</span> <strong>Evaluate</strong> — Check eval loss, run test prompts</div>
+    <div class="flow-step"><span class="step-num">5.</span> <strong>Convert</strong> — Export to GGUF format for llama.cpp</div>
+    <div class="flow-step highlight"><span class="step-num">6.</span> <strong>Deploy</strong> — Load alongside base model in QVAC</div>
+  </div>
+
+  <h3>Recommended Hyperparameters</h3>
+  <table>
+    <tr><th>Parameter</th><th>Value</th><th>Notes</th></tr>
+    <tr><td>LoRA rank (r)</td><td><strong>16–32</strong></td><td>Higher = more capacity, more VRAM</td></tr>
+    <tr><td>LoRA alpha</td><td><strong>32–64</strong></td><td>Usually 2× rank</td></tr>
+    <tr><td>Target modules</td><td><code>q_proj, k_proj, v_proj, o_proj</code></td><td>Attention layers</td></tr>
+    <tr><td>Learning rate</td><td>2e-4</td><td>With cosine schedule</td></tr>
+    <tr><td>Batch size</td><td>4</td><td>+ gradient accumulation 4</td></tr>
+    <tr><td>Epochs</td><td>3</td><td>Watch eval loss — stop if it rises</td></tr>
+    <tr><td>Warmup ratio</td><td>0.1</td><td>10% of total steps</td></tr>
+    <tr><td>LR scheduler</td><td>cosine</td><td></td></tr>
+  </table>
+
+  <h3>Hardware Requirements</h3>
+  <table>
+    <tr><th>Method</th><th>Base Model</th><th>VRAM</th><th>Time (2K examples)</th></tr>
+    <tr><td><strong>QLoRA</strong></td><td>3B (4-bit)</td><td><strong>~6 GB</strong></td><td>~1 hour</td></tr>
+    <tr><td><strong>QLoRA</strong></td><td>7B (4-bit)</td><td><strong>~10 GB</strong></td><td>~2–4 hours</td></tr>
+    <tr><td>LoRA</td><td>7B (16-bit)</td><td>~18 GB</td><td>~4–8 hours</td></tr>
+  </table>
+
+  <h3>LoRA in llama.cpp (what QVAC uses)</h3>
+  <p>llama.cpp already has full LoRA support:</p>
+  <ul>
+    <li><strong>GGUF adapter format</strong> — convert any HuggingFace PEFT LoRA to GGUF</li>
+    <li><strong>Hot-swap at runtime</strong> — change adapters without reloading the model</li>
+    <li><strong>Multiple adapters simultaneously</strong> — load several, control each scale independently</li>
+    <li><strong>Scaled application</strong> — dial adapter influence from 0.0 to 1.0</li>
+    <li><strong>KV cache aware</strong> — cache keys include active adapter state</li>
+  </ul>
+
+  <h4>Server API</h4>
+  <pre><code>GET  /lora-adapters       → list loaded adapters + current scales
+POST /lora-adapters       → update adapter scales
+
+# Load model with multiple adapters pre-loaded:
+llama-server --model base.gguf \
+  --lora tool-calling.gguf \
+  --lora code-style.gguf \
+  --lora-init-without-apply    # load but don't activate yet</code></pre>
+
+  <h4>How QVAC could expose this</h4>
+  <pre><code>import { loadModel, completion } from "@qvac/sdk";
+
+const modelId = await loadModel({
+  modelSrc: QWEN_3_1B_Q4,
+  modelType: "llm",
+  modelConfig: {
+    lora: [
+      { src: "tool-calling-adapter.gguf", scale: 1.0 },
+      { src: "code-style-adapter.gguf", scale: 0.5 }
+    ]
+  }
+});
+
+// The 1B model now reliably calls tools
+const result = completion({ modelId, history, tools, stream: true });</code></pre>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>Key numbers:</strong> Base model ~700 MB (1B Q4) + adapter ~50 MB = ~750 MB total
+      for a tool-calling specialist that runs on a phone.
+    </p>
+  </div>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 7. USE CASES -->
+<!-- ============================================================ -->
+<section id="usecases">
+  <h2>7. Unstoppable Stack Use Cases</h2>
+
+  <!-- UC1 -->
+  <h3>Use Case 1: Tool Calling Specialist</h3>
+  <p class="dim">Make a tiny model reliable at YOUR app's specific tools.</p>
+
+  <p>
+    <strong>Problem:</strong> Tool calling on small models (1–3B) is unreliable.
+    JSON errors, wrong tool selection, hallucinated arguments.
+    Today you need Qwen 3.1 7B for reliable tools.
+  </p>
+  <p>
+    <strong>Solution:</strong> Fine-tune a 1–3B model on your app's exact Zod schemas.
+    The model learns the specific output format, tool names, and argument structures.
+  </p>
+
+  <table>
+    <tr><th>Metric</th><th>Before (1B base)</th><th>After LoRA</th></tr>
+    <tr><td>Tool call accuracy</td><td class="no">~40%</td><td class="yes">~95%</td></tr>
+    <tr><td>JSON parse errors</td><td class="no">~30%</td><td class="yes">&lt;2%</td></tr>
+    <tr><td>Model size</td><td>700 MB</td><td>750 MB (+adapter)</td></tr>
+    <tr><td>Speed (tok/s)</td><td>~150</td><td>~145 (minimal loss)</td></tr>
+    <tr><td>RAM needed</td><td>2 GB</td><td>2.1 GB</td></tr>
+  </table>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>Impact for QVAC apps:</strong> Tool calling on mobile devices.
+      A 1B model with a LoRA adapter runs on a phone at 150 tok/s while
+      reliably calling your app's tools. No 7B model needed.
+    </p>
+  </div>
+
+  <!-- UC2 -->
+  <h3>Use Case 2: Unstoppable Stack Coding Agent</h3>
+  <p class="dim">An agent that "knows" Pear, Hyperswarm, HyperDB, QVAC natively.</p>
+
+  <p>
+    <strong>Problem:</strong> General models don't know our stack. They put P2P modules in the renderer (crash),
+    forget <code>TextEncoder</code> polyfills in Bare, use wrong API versions.
+    Today we solve this with agent-pack rules and skills (prompt-level).
+  </p>
+  <p>
+    <strong>Fine-tuning approach:</strong> Collect coding trajectories from building real apps.
+    Fine-tune a local model on these. The model <strong>internalizes</strong> the patterns
+    instead of needing them in the prompt every time.
+  </p>
+
+  <h4>Dataset sources we already have</h4>
+  <table>
+    <tr><th>Pattern</th><th>Source</th></tr>
+    <tr><td>Worker pattern for Pear Desktop</td><td>coffee-assistant-ui</td></tr>
+    <tr><td><code>Pear.worker.pipe()</code> wiring</td><td>fixes/ folders</td></tr>
+    <tr><td>Hyperswarm topic creation</td><td>recipes</td></tr>
+    <tr><td>HyperDB multi-writer setup</td><td>skills</td></tr>
+    <tr><td>QVAC streaming + tool calls</td><td>battle-tested apps</td></tr>
+    <tr><td><code>bare-*</code> explicit installs</td><td>fixes/ folders</td></tr>
+  </table>
+
+  <div class="callout callout-accent">
+    <p>
+      <strong>The dream:</strong> A 3B local model that writes correct Pear Desktop apps
+      on first try — because it learned from hundreds of real builds.
+      No prompt engineering needed. <em>The knowledge is in the weights.</em>
+    </p>
+  </div>
+
+  <!-- UC3 -->
+  <h3>Use Case 3: P2P Adapter Sharing</h3>
+  <p class="dim">Distribute specialized models across the network.</p>
+
+  <p>
+    LoRA adapters are tiny (50–200 MB), hot-swappable, and in GGUF format.
+    Perfect for P2P distribution via Hyperdrive.
+  </p>
+
+  <div class="flow">
+    <div class="flow-step"><span class="step-num">1.</span> Developer trains a LoRA adapter</div>
+    <div class="flow-step"><span class="step-num">2.</span> Exports as GGUF (~100 MB)</div>
+    <div class="flow-step" style="border-color:var(--holepunch);"><span class="step-num">3.</span> Published to Hyperdrive</div>
+    <div class="flow-step" style="border-color:var(--holepunch);"><span class="step-num">4.</span> Peers discover via Hyperswarm</div>
+    <div class="flow-step highlight"><span class="step-num">5.</span> Hot-swap into QVAC runtime — no model reload</div>
+  </div>
+
+  <p>
+    Think of it like <strong>npm for model specializations</strong>.
+    Someone trains a "Pear Desktop" adapter. Someone else trains "QVAC RAG."
+    Browse adapters, check ratings, hot-swap into your runtime. Fully decentralized.
+  </p>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 8. FLYWHEEL -->
+<!-- ============================================================ -->
+<section id="flywheel">
+  <h2>8. The Fine-Tuning Flywheel</h2>
+
+  <div class="flow">
+    <div class="flow-step highlight"><span class="step-num">→</span> Users build apps with QVAC + tools</div>
+    <div class="flow-step"><span class="step-num">→</span> Agent trajectories saved locally</div>
+    <div class="flow-step" style="border-color:var(--holepunch);"><span class="step-num">→</span> Trajectories shared P2P (opt-in)</div>
+    <div class="flow-step" style="border-color:var(--warn);"><span class="step-num">→</span> LoRA adapters trained on aggregated data</div>
+    <div class="flow-step" style="border-color:var(--accent-dim);"><span class="step-num">→</span> Better adapters shared via Hyperdrive</div>
+    <div class="flow-step highlight"><span class="step-num">→</span> Users get better agents → build more → repeat</div>
+  </div>
+
+  <div class="callout callout-accent">
+    <p>
+      Each iteration: more users → more data → better adapters → better agents → more users.
+      <strong>P2P distribution makes this compound across the network.</strong>
+    </p>
+  </div>
+
+  <h3>Practical Roadmap</h3>
+  <table>
+    <tr><th>Phase</th><th>What</th><th>Who</th></tr>
+    <tr><td><span class="tag tag-green">1</span></td><td>QVAC ships LoRA support — <code>loadModel()</code> with adapters, hot-swap API, GGUF format</td><td>QVAC team</td></tr>
+    <tr><td><span class="tag tag-blue">2</span></td><td>First adapter: tool calling for our agent — define tools, generate 2K+ dataset, train + evaluate</td><td>Us + QVAC</td></tr>
+    <tr><td><span class="tag tag-pink">3</span></td><td>Trajectory logging in the agent — save sessions as JSONL, user ratings, export to training format</td><td>Agent work</td></tr>
+    <tr><td><span class="tag tag-purple">4</span></td><td>P2P adapter sharing — adapter registry on HyperDB, discovery via Hyperswarm, download + hot-swap</td><td>P2P work</td></tr>
+    <tr><td><span class="tag tag-yellow">5</span></td><td>Community training pipeline — aggregate P2P trajectories, AutoResearch loop, continuous improvement</td><td>Future</td></tr>
+  </table>
+</section>
+
+<hr>
+
+<!-- ============================================================ -->
+<!-- 9. TAKEAWAYS -->
+<!-- ============================================================ -->
+<section id="takeaways">
+  <h2>9. Key Takeaways</h2>
+
+  <div class="cards cards-2">
+    <div class="card" style="border-color:var(--accent-dim); background: var(--accent-glow);">
+      <h3>LoRA Makes Small Models Specialists</h3>
+      <p>A 1–3B model with a LoRA adapter can match a 7B model at specific tasks.
+         Huge for on-device, mobile, and resource-constrained deployments.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-dim); background: var(--accent-glow);">
+      <h3>Dataset Quality is Everything</h3>
+      <p>1,000–5,000 high-quality examples &gt; 50,000 sloppy ones.
+         Consistent formats, diverse inputs, real edge cases. No shortcuts.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-dim); background: var(--accent-glow);">
+      <h3>Multiple Paths to Gather Data</h3>
+      <p>Record real usage, generate synthetically, distill from big models, or collect P2P.
+         Start with synthetic + distillation, graduate to real trajectories.</p>
+    </div>
+    <div class="card" style="border-color:var(--accent-dim); background: var(--accent-glow);">
+      <h3>P2P Adapter Sharing is Our Edge</h3>
+      <p>LoRA adapters are tiny (50–200 MB). Hot-swappable. Distributable via Hyperdrive.
+         No other stack can do decentralized model specialization.</p>
+    </div>
+  </div>
+
+  <div class="callout callout-accent" style="margin-top: 24px;">
+    <p style="font-size: 18px; text-align: center;">
+      <strong>Bottom line:</strong> QVAC + LoRA = specialized AI that runs on any device,
+      gets better from community usage, and distributes peer-to-peer.
+      That's truly unstoppable AI.
+    </p>
+  </div>
+</section>
+
+</div><!-- /container -->
+</body>
+</html>

@@ -52,7 +52,7 @@ The QVAC SDK uses a registry to:
 
 **Solutions spectrum:**
 ```
-Pure P2P            Vault (local)         Cloud (hosted)
+Pure P2P            Node (local)         Cloud (hosted)
 ─────────────────────────────────────────────────────────
 • Data on device    • Desktop always on    • Server always on
 • Offline = gone    • Seeds your data      • Seeds your data
@@ -60,11 +60,11 @@ Pure P2P            Vault (local)         Cloud (hosted)
 • Max privacy       • Good privacy         • Trust provider
 ```
 
-**The Vault pattern** is the sweet spot:
+**The Node pattern** is the sweet spot:
 - It's your own device, so privacy is preserved.
 - It replicates your cores read-only — it can serve data but can't modify it.
 - From the protocol's perspective, it's just another peer.
-- Transitioning from Vault to Cloud is just changing which machine runs the seeder.
+- Transitioning from Node to Cloud is just changing which machine runs the seeder.
 
 **When you NEED always-on:**
 - Mobile apps (phones go offline constantly)
@@ -96,10 +96,10 @@ Pure P2P            Vault (local)         Cloud (hosted)
 - Accept the trade-off: lose your seed phrase, lose your identity
 
 **For the Unstoppable Stack:**
-- The Vault can store identity locally (seed phrase or key pair)
+- The Node can store identity locally (seed phrase or key pair)
 - Device linking via secure QR code exchange
 - No centralized user directory (unless you choose to add one)
-- Recovery: either backup your seed, or use Vault-to-Vault sync
+- Recovery: either backup your seed, or use Node-to-Node sync
 
 ---
 
@@ -143,12 +143,12 @@ const modelId = await loadModel({
 })
 ```
 
-This is P2P computation delegation — no server needed if you run the Vault.
+This is P2P computation delegation — no server needed if you run the Node.
 
 **When you need a server:**
 - GPU-intensive tasks that no local device can handle
 - Training (not just inference)
-- When the user doesn't have a Vault or desktop
+- When the user doesn't have a Node or desktop
 
 ---
 
@@ -160,7 +160,7 @@ Ask these questions:
 |----------|-------|------|
 | Does the user own all the data? | P2P (Hypercore) | Consider hybrid |
 | Do multiple users write? | Autobase | Single Hypercore |
-| Must data be available 24/7? | Add Vault/Cloud seeder | Pure P2P ok |
+| Must data be available 24/7? | Add Node/Cloud seeder | Pure P2P ok |
 | Need global search? | Centralized index | P2P sufficient |
 | Need user-friendly identity? | Add identity layer | Key-based ok |
 | Heavy computation? | Delegate (QVAC) or Cloud | Local ok |
@@ -176,7 +176,7 @@ Ask these questions:
 Data storage        ░░░░░░░░░░░░░░░░░░░░░░░░░█████████████  Hypercore/Hyperbee
 File storage        ░░░░░░░░░░░░░░░░░░░░░░░░░█████████████  Hyperdrive
 Multi-writer        ░░░░░░░░░░░░░░░░░░░░░░████████████████  Autobase
-Availability        ░░░░░░░░░░░░░████████████████████░░░░░  Vault (hybrid)
+Availability        ░░░░░░░░░░░░░████████████████████░░░░░  Node (hybrid)
 AI inference        ░░░░░░░░░░░░░░██████████████████░░░░░░  QVAC delegate
 Discovery           ░░░░░░░░░░████████████████████████████  Hyperswarm DHT
 Identity            ░░░░░░░░░░░░░░░░░░██████████████░░░░░░  Key-based + seed
@@ -185,4 +185,4 @@ Payments            ██████████████░░░░░░
 Search              ████████████████░░░░░░░░░░░░░░░░░░░░░░  Centralized index
 ```
 
-The stack is heavily P2P for data and files, with strategic centralization for discovery (model registry, search) and availability (Vault/Cloud).
+The stack is heavily P2P for data and files, with strategic centralization for discovery (model registry, search) and availability (Node/Cloud).

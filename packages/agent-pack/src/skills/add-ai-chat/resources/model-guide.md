@@ -1,6 +1,6 @@
 # QVAC Model Selection Guide
 
-## Verified Model Constants (`@qvac/sdk@0.7.0`)
+## Verified Model Constants (`@qvac/sdk@0.8.0`)
 
 These are the **exact import names** from `@qvac/sdk`. Only use constants listed here.
 
@@ -54,7 +54,7 @@ import {
 
 ## Important Notes
 
-> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.7.0`. The SDK exports Qwen 3 family models instead.
+> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.8.0`. The SDK exports Qwen 3 family models instead.
 
 > **GPT-OSS note**: GPT-OSS-20B emits tool calls in a non-standard format (`<|channel|>commentary to=functions.<name>`). The workbench handles this with a model-specific fallback parser. If using GPT-OSS with tool calling, implement a fallback parser for its format.
 

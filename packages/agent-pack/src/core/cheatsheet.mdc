@@ -24,7 +24,7 @@ import WDK from "@tetherto/wdk";
 - `hyperswarm` ^4.14.2 (qvac-health-dev)
 - `hyperdrive` ^13.0.2 (qvac-health-dev)
 - `corestore` ^7.6.0 (qvac-health-dev)
-- `@qvac/sdk` 0.7.0 (npm latest, verified 2026-03-06)
+- `@qvac/sdk` 0.8.0 (npm latest, verified 2026-03-20)
 - `react-native-bare-kit` ^0.11.5 (qvac-health-dev)
 - `bare-pack` ^1.5.1 (qvac-health-dev)
 - Hypercore/Hyperbee/HyperDB versions not found in local sources; verify per

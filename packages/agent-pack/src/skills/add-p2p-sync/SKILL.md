@@ -1,8 +1,9 @@
 ---
 name: add-p2p-sync
-description: Add P2P data replication between peers using Hypercore and
-  Corestore. Use when the user needs to sync an append-only log or data
-  store across devices. Requires add-p2p-networking first.
+description: Single-writer P2P data replication with Hypercore and Corestore.
+when_to_use: User wants to sync an append-only log or data store across devices. For multi-writer, use add-multi-writer-sync instead.
+paths: ["src/p2p/**", "src/data/**"]
+version: "2026-04-14"
 ---
 
 # Add P2P Data Sync

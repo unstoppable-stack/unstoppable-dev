@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autobase Explained</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-slide: #161b22;
+    --bg-code: #1c2129;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #3fb950;
+    --accent3: #d29922;
+    --accent4: #f778ba;
+    --border: #30363d;
+    --red: #f85149;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .deck {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: 4rem 6rem;
+    min-height: 100vh;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 2.8rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+
+  h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    color: var(--accent);
+  }
+
+  h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent2);
+  }
+
+  p, li {
+    font-size: 1.15rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  ul, ol {
+    margin-left: 1.5rem;
+    margin-bottom: 0.8rem;
+  }
+
+  li { margin-bottom: 0.4rem; }
+
+  .subtitle {
+    font-size: 1.4rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .highlight { color: var(--accent); font-weight: 600; }
+  .green { color: var(--accent2); }
+  .yellow { color: var(--accent3); }
+  .pink { color: var(--accent4); }
+  .red { color: var(--red); }
+
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+    overflow-x: auto;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    white-space: pre;
+    color: var(--text);
+  }
+
+  code {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    background: var(--bg-code);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.95em;
+  }
+
+  .diagram {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin: 1rem 0;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    white-space: pre;
+    color: var(--accent);
+    overflow-x: auto;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+
+  .card {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .card h3:first-child { margin-top: 0; }
+
+  .nav {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: var(--bg-slide);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+
+  .nav button:hover { background: var(--border); }
+
+  .nav .counter {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: monospace;
+  }
+
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+
+  .tag-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
+  .tag-green { background: rgba(63,185,80,0.15); color: var(--accent2); }
+  .tag-yellow { background: rgba(210,153,34,0.15); color: var(--accent3); }
+  .tag-pink { background: rgba(247,120,186,0.15); color: var(--accent4); }
+
+  .emoji { font-size: 1.3em; }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border);
+    text-align: left;
+    font-size: 1rem;
+  }
+
+  .comparison-table th {
+    background: var(--bg-code);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .step-list {
+    list-style: none;
+    margin-left: 0;
+    counter-reset: steps;
+  }
+
+  .step-list li {
+    counter-increment: steps;
+    padding: 0.6rem 0;
+    padding-left: 2.5rem;
+    position: relative;
+  }
+
+  .step-list li::before {
+    content: counter(steps);
+    position: absolute;
+    left: 0;
+    width: 1.8rem;
+    height: 1.8rem;
+    background: rgba(88,166,255,0.15);
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+
+  .small { font-size: 0.9rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active">
+  <h1>Autobase</h1>
+  <p class="subtitle">Multi-writer consensus for Hypercore</p>
+  <p style="margin-top:2rem; font-size:1.1rem; color:var(--text-muted);">
+    How QVAC's registry turns multiple independent writers<br>
+    into a single consistent database — over P2P.
+  </p>
+  <div style="margin-top:3rem; display:flex; gap:0.5rem;">
+    <span class="tag tag-blue">Holepunch</span>
+    <span class="tag tag-green">Event Sourcing</span>
+    <span class="tag tag-yellow">P2P</span>
+    <span class="tag tag-pink">Multi-Writer</span>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 2: The Problem ==================== -->
+<div class="slide">
+  <h2>The Problem: Single-Writer Hypercore</h2>
+  <p style="margin-bottom:1.5rem;">A Hypercore is an <span class="highlight">append-only log</span> that only one key holder can write to.</p>
+  <div class="diagram">
+  ┌──────────────────────────────────────────┐
+  │  Hypercore                               │
+  │                                          │
+  │  [block0] [block1] [block2] [block3] ... │
+  │                                          │
+  │  Only the key-holder can append.         │
+  │  Anyone with the public key can read.    │
+  └──────────────────────────────────────────┘</div>
+  <div class="two-col" style="margin-top:1.5rem;">
+    <div>
+      <h3 class="red">Single point of failure</h3>
+      <ul>
+        <li>Server goes down → nobody can write</li>
+        <li>Lose the key → lose write access forever</li>
+        <li>Can't safely backup a live corestore</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="green">What we need</h3>
+      <ul>
+        <li>Multiple servers that can all write</li>
+        <li>A consistent view despite concurrent writes</li>
+        <li>Resilience — 1 writer down, service stays up</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 3: Autobase in One Sentence ==================== -->
+<div class="slide">
+  <h2>Autobase in One Sentence</h2>
+  <p style="font-size:1.5rem; margin-top:2rem; margin-bottom:2rem; text-align:center; padding:2rem; background:var(--bg-code); border:1px solid var(--border); border-radius:8px;">
+    Autobase takes <span class="highlight">multiple independent Hypercore writers</span>,<br>
+    linearizes their operations into <span class="green">one consistent order</span>,<br>
+    and produces a <span class="yellow">deterministic view</span> (your database).
+  </p>
+  <p style="text-align:center; color:var(--text-muted);">Think of it as <strong>event sourcing over P2P</strong> — each writer is an event log, Autobase is the reducer.</p>
+</div>
+
+<!-- ==================== SLIDE 4: Core Concepts ==================== -->
+<div class="slide">
+  <h2>Core Concepts</h2>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h3>Writers</h3>
+        <p>Each participant has a local Hypercore (their "writer core"). They append operations to it independently.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3>Linearizer</h3>
+        <p>Takes the causal DAG of all writers and produces a single, deterministic ordering of operations.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3>Indexers</h3>
+        <p>Writers promoted to build the view. A <span class="highlight">majority quorum</span> of indexers must be online for the signed length to advance.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>Operations</h3>
+        <p>Encoded commands appended by writers: <code>put-model</code>, <code>add-indexer</code>, <code>delete-model</code>, etc.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3>View</h3>
+        <p>The output — a derived data structure (in QVAC: a HyperDB database) created by applying operations in order.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3>Signed Length</h3>
+        <p>A checkpoint where ordering is <span class="green">permanently locked</span>. Advances as indexers acknowledge state.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 5: How it Works - The DAG ==================== -->
+<div class="slide">
+  <h2>How It Works: The Causal DAG</h2>
+  <p>Each operation references the previous ones it "knows about", forming a directed acyclic graph:</p>
+  <div class="diagram">
+  Writer A:  [op1] ──→ [op3] ──────────→ [op6]
+                          ↑                  ↑
+  Writer B:        [op2] ─┘──→ [op4] ──→ [op5]─┘
+
+  ─────────────────────────────────────────────────
+  Linearized order:  op1, op2, op3, op4, op5, op6
+  ─────────────────────────────────────────────────
+
+  Rules:
+   • An operation never precedes one it references
+   • Independent operations may be reordered as new info arrives
+   • Once signed (checkpointed), order is permanent</div>
+  <p style="margin-top:1rem;">The linearizer analyzes causal references to produce an order that is <span class="highlight">eventually consistent</span> across all peers.</p>
+</div>
+
+<!-- ==================== SLIDE 6: Event Sourcing Pattern ==================== -->
+<div class="slide">
+  <h2>Event Sourcing Pattern</h2>
+  <p>Autobase separates <span class="highlight">what happened</span> (operations) from <span class="green">current state</span> (view):</p>
+  <div class="diagram">
+  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+  │  Writer 1   │   │  Writer 2   │   │  Writer 3   │
+  │  (local     │   │  (local     │   │  (local     │
+  │   core)     │   │   core)     │   │   core)     │
+  └──────┬──────┘   └──────┬──────┘   └──────┬──────┘
+         │                 │                  │
+         └────────┬────────┴──────────────────┘
+                  │
+                  ▼
+         ┌────────────────┐
+         │   Linearizer   │    Orders operations
+         │  (Causal DAG)  │    using causal refs
+         └───────┬────────┘
+                 │
+                 ▼
+         ┌────────────────┐
+         │  apply(nodes,  │    Your custom function
+         │    view, base) │    applies each op to view
+         └───────┬────────┘
+                 │
+                 ▼
+         ┌────────────────┐
+         │      View      │    The database / state
+         │   (HyperDB)    │    that clients query
+         └────────────────┘</div>
+</div>
+
+<!-- ==================== SLIDE 7: The Two Functions ==================== -->
+<div class="slide">
+  <h2>You Provide Two Functions</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3><code>open(store)</code></h3>
+      <p>Creates the view data structure. Called once.</p>
+      <pre>
+function open(store) {
+  const dbCore = store.get('db-view')
+  return new RegistryDatabase(dbCore, {
+    extension: false
+  })
+}</pre>
+      <p class="small" style="margin-top:0.5rem;">
+        The <code>store</code> is an isolated Autobase-managed Corestore.
+        <code>extension: false</code> is required for Autobase compatibility.
+      </p>
+    </div>
+    <div class="card">
+      <h3><code>apply(nodes, view, base)</code></h3>
+      <p>Applies linearized operations to the view. Called as operations arrive.</p>
+      <pre>
+async function apply(nodes, view, base) {
+  for (const node of nodes) {
+    // node.value = encoded operation
+    // Decode and route to handler
+    await router.dispatch(node.value, {
+      view,
+      base
+    })
+  }
+}</pre>
+      <p class="small" style="margin-top:0.5rem;">
+        <span class="red">Must be deterministic</span> — same inputs must always produce same outputs.
+        Only modify the <code>view</code>, never external state.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 8: Reordering ==================== -->
+<div class="slide">
+  <h2>Reordering: Why Determinism Matters</h2>
+  <p>When a causal fork is discovered, Autobase may need to <span class="yellow">reorder</span> operations:</p>
+  <div class="diagram">
+  Time 1: Writer A says [op1, op2, op3]
+  Time 2: Writer B connects — has [opX] between op1 and op2
+
+  Before:  op1 → op2 → op3
+  After:   op1 → opX → op2 → op3
+                  ↑
+           inserted here!
+
+  Autobase automatically:
+   1. Undoes op3, op2 from the view
+   2. Applies opX, op2, op3 in new order
+   3. View is rebuilt correctly</div>
+  <p style="margin-top:1rem;">This only works if <code>apply</code> is <span class="highlight">purely deterministic</span> — it must produce the exact same view given the same operations in the same order.</p>
+  <p style="margin-top:0.5rem; color:var(--text-muted);">Once operations pass the <span class="green">signed length</span> checkpoint, they're permanent and won't be reordered.</p>
+</div>
+
+<!-- ==================== SLIDE 9: Writers vs Indexers ==================== -->
+<div class="slide">
+  <h2>Writers vs. Indexers</h2>
+  <table class="comparison-table">
+    <tr>
+      <th></th>
+      <th>Writer</th>
+      <th>Indexer</th>
+    </tr>
+    <tr>
+      <td><strong>Can append operations?</strong></td>
+      <td>Yes</td>
+      <td>Yes (indexers are writers too)</td>
+    </tr>
+    <tr>
+      <td><strong>Builds the view?</strong></td>
+      <td>No</td>
+      <td>Yes</td>
+    </tr>
+    <tr>
+      <td><strong>Advances signed length?</strong></td>
+      <td>No</td>
+      <td>Yes (majority quorum required)</td>
+    </tr>
+    <tr>
+      <td><strong>Acknowledges state?</strong></td>
+      <td>No</td>
+      <td>Yes (via ack / ackInterval)</td>
+    </tr>
+    <tr>
+      <td><strong>Typical role</strong></td>
+      <td>Submitter / contributor</td>
+      <td>Server node / consensus participant</td>
+    </tr>
+  </table>
+  <p style="margin-top:1.5rem;">In the QVAC registry, all server instances are <span class="highlight">indexers</span>. Clients are read-only — they just replicate the view.</p>
+  <p style="margin-top:0.5rem; color:var(--text-muted);">Quorum = majority of indexers. With 3 indexers, you need 2 online to advance the signed length.</p>
+</div>
+
+<!-- ==================== SLIDE 10: Acknowledgements ==================== -->
+<div class="slide">
+  <h2>Acknowledgements (Acks)</h2>
+  <p>Indexers periodically "ack" — append a <code>null</code> value that references the latest state they've seen.</p>
+  <div class="diagram">
+  Indexer A:  [op1] ───→ [ack] ───→ [op4] ───→ [ack]
+                           ↑                      ↑
+  Indexer B:  [op2] ──→ [op3] ───→ [ack] ────────┘
+                                     ↑
+  Indexer C:                  [ack] ─┘
+
+  When a majority of indexers ack a point → signed length advances
+  Everything before signed length is PERMANENT (no more reordering)</div>
+  <div class="two-col" style="margin-top:1.5rem;">
+    <div>
+      <h3><code>ackInterval</code></h3>
+      <p>Auto-ack timer in milliseconds. In QVAC registry: <code>5000ms</code>. Forces convergence even when no real writes happen.</p>
+    </div>
+    <div>
+      <h3><code>ackThreshold</code></h3>
+      <p>Minimum number of unacked operations before an ack is triggered. <code>0</code> means ack freely.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 11: Full Stack ==================== -->
+<div class="slide">
+  <h2>Where Autobase Sits in the Stack</h2>
+  <div class="diagram">
+  ┌──────────────────────────────────────────────────────────┐
+  │  Application Layer                                       │
+  │                                                          │
+  │  RegistryDatabase (HyperDB)     Hyperblobs               │
+  │  Structured model catalog       Binary file storage      │
+  │  with indexed queries           split into blocks        │
+  ├──────────────────────────────────────────────────────────┤
+  │  Autobase                         ◄── THIS TALK          │
+  │  Multi-writer consensus — linearized view                │
+  ├──────────────────────────────────────────────────────────┤
+  │  Hypercore                                               │
+  │  Append-only signed log (blocks of data)                 │
+  ├──────────────────────────────────────────────────────────┤
+  │  Corestore                                               │
+  │  Manages multiple Hypercores (local disk storage)        │
+  ├──────────────────────────────────────────────────────────┤
+  │  Hyperswarm                                              │
+  │  P2P discovery + connections (DHT, NAT traversal)        │
+  ├──────────────────────────────────────────────────────────┤
+  │  BlindPeering                                            │
+  │  Relay data through always-on seeders                    │
+  └──────────────────────────────────────────────────────────┘</div>
+</div>
+
+<!-- ==================== SLIDE 12: QVAC Registry Usage ==================== -->
+<div class="slide">
+  <h2>How QVAC Registry Uses Autobase</h2>
+  <p>The registry server creates an Autobase with the <span class="highlight">Hyperdispatch</span> router pattern:</p>
+  <pre>
+this.base = new Autobase(this.store, this.autobaseBootstrap, {
+  open:  this._openAutobase.bind(this),   // Creates a RegistryDatabase view
+  apply: this._apply.bind(this),          // Routes operations via Hyperdispatch
+  close: this._closeAutobase.bind(this),
+  ackInterval: 5000,
+  ackThreshold: 0
+})</pre>
+  <h3>Defined Operations</h3>
+  <div class="two-col" style="margin-top:0.5rem;">
+    <div>
+      <ul>
+        <li><code>put-model</code> — add or update a model entry</li>
+        <li><code>put-license</code> — add a license record</li>
+        <li><code>delete-model</code> — remove a model</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li><code>add-indexer</code> — promote a writer to indexer</li>
+        <li><code>remove-indexer</code> — demote an indexer</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:1rem; color:var(--text-muted);">All operations are encoded via Hyperdispatch schemas, decoded in the <code>apply</code> handler, and routed to the correct handler function.</p>
+</div>
+
+<!-- ==================== SLIDE 13: Write Flow ==================== -->
+<div class="slide">
+  <h2>Write Flow: Adding a Model</h2>
+  <ol class="step-list">
+    <li>Admin calls <code>addModel()</code> via RPC (or directly on the server)</li>
+    <li>Server downloads the file from HuggingFace or S3 to a temp directory</li>
+    <li>File is uploaded to <span class="highlight">Hyperblobs</span> (binary storage), returning a blob pointer</li>
+    <li>Server encodes a <code>put-model</code> operation with metadata + blob pointer</li>
+    <li>Operation is appended to the local writer core: <code>base.append(encodedOp)</code></li>
+    <li>Autobase linearizer picks it up, calls <code>apply()</code></li>
+    <li>Apply handler routes to <code>view.putModel(model)</code> — written to HyperDB</li>
+    <li>Blob core is mirrored to <span class="green">blind peers</span> for 24/7 availability</li>
+  </ol>
+  <p style="margin-top:1rem; color:var(--text-muted);">From the client's perspective: they replicate the view (HyperDB) and see the new model appear.</p>
+</div>
+
+<!-- ==================== SLIDE 14: Read Flow ==================== -->
+<div class="slide">
+  <h2>Read Flow: Clients</h2>
+  <p>Clients <span class="highlight">never write</span> to the Autobase. They only replicate the <span class="green">view core</span>.</p>
+  <div class="diagram">
+  ┌──────────┐                           ┌──────────┐
+  │  Server  │                           │  Client  │
+  │ (writer/ │   Hyperswarm replication   │ (read-   │
+  │ indexer) │ ◄────────────────────────► │  only)   │
+  └────┬─────┘                           └────┬─────┘
+       │                                      │
+       ▼                                      ▼
+  Autobase view core ──────────────────► Replicated copy
+  (RegistryDatabase)                    (RegistryDatabase)
+       │
+       │  Swarm topics joined:
+       │   • base.discoveryKey    (autobase system)
+       │   • view.discoveryKey    (the database)
+       │   • rpcDiscoveryKey      (admin RPC - server only)
+       │
+       │  Client only needs:
+       │   • view.discoveryKey    (to sync the database)
+       │   • blob core keys       (to download files)</div>
+  <p style="margin-top:1rem;">The view is a regular Hypercore — clients join its discovery key on the swarm and sync it like any other core.</p>
+</div>
+
+<!-- ==================== SLIDE 15: Multi-Writer Deployment ==================== -->
+<div class="slide">
+  <h2>Multi-Writer Deployment</h2>
+  <p>For high availability, run <span class="highlight">3+ indexer instances</span>:</p>
+  <div class="diagram">
+  ┌───────────┐     ┌───────────┐     ┌───────────┐
+  │ Instance 1│     │ Instance 2│     │ Instance 3│
+  │ (indexer) │◄───►│ (indexer) │◄───►│ (indexer) │
+  │           │     │           │     │           │
+  │ writer    │     │ writer    │     │ writer    │
+  │ core A    │     │ core B    │     │ core C    │
+  └─────┬─────┘     └─────┬─────┘     └─────┬─────┘
+        │                 │                  │
+        └────────┬────────┴──────────────────┘
+                 │
+                 ▼
+          ┌────────────┐
+          │  Autobase  │  Same view produced on
+          │   View     │  all 3 instances
+          └────────────┘
+
+  • 1 instance down  → service continues normally
+  • 2 instances down → accepts writes, queues until return
+  • 1 instance lost  → rotate out, add replacement</div>
+</div>
+
+<!-- ==================== SLIDE 16: Bootstrap Procedure ==================== -->
+<div class="slide">
+  <h2>Bootstrap: Adding Writers</h2>
+  <ol class="step-list">
+    <li><strong>Start Instance 1</strong> (first ever, no bootstrap key) — becomes sole indexer, outputs its <code>base.key</code></li>
+    <li><strong>Start Instance 2</strong> with <code>--bootstrap &lt;base.key&gt;</code> — joins, outputs its <code>local.key</code></li>
+    <li><strong>On Instance 1</strong>: dispatch <code>add-indexer</code> operation with Instance 2's local key</li>
+    <li><strong>Instance 2</strong> receives <code>is-indexer</code> event — now participates in consensus</li>
+    <li>Repeat for Instance 3, 4, etc.</li>
+  </ol>
+  <pre style="margin-top:1rem;">
+// In the apply handler, add-indexer dispatches:
+await context.base.addWriter(key, { indexer: true })
+
+// The new instance listens for confirmation:
+base.on('is-indexer', () => {
+  console.log('I am now an indexer!')
+})</pre>
+  <p class="small" style="margin-top:0.5rem;">Use odd numbers of indexers (3, 5, 7) for clean majority quorum.</p>
+</div>
+
+<!-- ==================== SLIDE 17: Hyperdispatch Router ==================== -->
+<div class="slide">
+  <h2>Hyperdispatch: Typed Operation Routing</h2>
+  <p>Operations are schema-defined, encoded, and routed — not raw strings:</p>
+  <div class="two-col">
+    <div class="card">
+      <h3>Appending an operation</h3>
+      <pre>
+const { encode } = schema.hyperdispatchSpec
+
+// Encode a typed operation
+const buf = encode(
+  '@qvac-main-registry/put-model',
+  modelData
+)
+
+// Append to local writer core
+await this.base.append(buf)</pre>
+    </div>
+    <div class="card">
+      <h3>Routing in apply()</h3>
+      <pre>
+const { Router } = schema.hyperdispatchSpec
+
+const router = new Router()
+
+router.add(
+  '@qvac-main-registry/put-model',
+  async (model, ctx) => {
+    await ctx.view.putModel(model)
+  }
+)
+
+// In apply:
+for (const node of nodes) {
+  await router.dispatch(
+    node.value, { view, base }
+  )
+}</pre>
+    </div>
+  </div>
+  <p class="small" style="margin-top:1rem;">Hyperdispatch uses Hyperschema for binary encoding — compact, fast, and type-safe.</p>
+</div>
+
+<!-- ==================== SLIDE 18: Key Properties ==================== -->
+<div class="slide">
+  <h2>Key Properties of Autobase</h2>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h3 class="yellow">Eventually Consistent</h3>
+        <p>Writers append independently. The linearizer converges everyone to the same order. Different peers may temporarily see different states, but they'll converge.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3 class="green">Causal Ordering</h3>
+        <p>If op B references op A, B will always come after A. Independent operations may be reordered freely.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3 class="pink">Partition Tolerant</h3>
+        <p>Writers can operate offline. When they reconnect, their operations merge into the DAG. CAP: picks AP over C.</p>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3 class="highlight">Signed Checkpoints</h3>
+        <p>Majority quorum locks ordering. Everything before the signed length is permanent — enables fast-forward for new peers.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 19: Analogy ==================== -->
+<div class="slide">
+  <h2>Analogy: Git + Event Sourcing</h2>
+  <div class="two-col">
+    <div class="card">
+      <h3>Like Git</h3>
+      <ul>
+        <li>Multiple people commit independently</li>
+        <li>Commits reference parents (DAG)</li>
+        <li>Merging reconciles forks</li>
+        <li>History is append-only</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Unlike Git</h3>
+      <ul>
+        <li>No manual merge conflicts — automatic linearization</li>
+        <li>No "branches" — one continuous view</li>
+        <li>No central server — fully P2P</li>
+        <li>Real-time — converges as operations arrive</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:2rem;">
+    <h3>Like Event Sourcing (Redux/Kafka)</h3>
+    <ul>
+      <li>Operations (events) are the source of truth, not the current state</li>
+      <li>State (view) is derived by replaying operations in order</li>
+      <li>The <code>apply</code> function is your reducer</li>
+      <li>Reordering = replaying events in a new order → same result</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 20: Common Pitfalls ==================== -->
+<div class="slide">
+  <h2>Common Pitfalls</h2>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <h3 class="red">Non-deterministic apply</h3>
+        <pre>
+// WRONG: external state
+async apply(nodes, view) {
+  for (const n of nodes) {
+    await this.externalDb.update(n)
+  }
+}
+
+// RIGHT: only view
+async apply(nodes, view) {
+  for (const n of nodes) {
+    await view.put(n.value)
+  }
+}</pre>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3 class="red">Extension not disabled</h3>
+        <pre>
+// WRONG
+new HyperDB(core, { extension: true })
+
+// RIGHT (required for Autobase)
+new HyperDB(core, { extension: false })</pre>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3 class="red">Assuming operation order</h3>
+        <pre>
+// WRONG: user may not exist yet
+router.add('update-user', async (d) => {
+  const user = await view.get(d.id)
+  user.name = d.name // may be null!
+})
+
+// RIGHT: idempotent upsert
+router.add('set-user', async (d) => {
+  await view.put(d) // works either way
+})</pre>
+      </div>
+      <div class="card" style="margin-top:1rem;">
+        <h3 class="red">Not waiting for indexer status</h3>
+        <pre>
+// WRONG
+await svc1.addWriter(svc2.local.key)
+await svc2.putEntry(entry) // may fail!
+
+// RIGHT
+await svc1.addWriter(svc2.local.key)
+await once(svc2.base, 'is-indexer')
+await svc2.putEntry(entry)</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 21: QVAC Architecture Recap ==================== -->
+<div class="slide">
+  <h2>QVAC Registry: Putting It All Together</h2>
+  <div class="diagram">
+  ┌─ Registry Server Instance(s) ──────────────────────────────┐
+  │                                                             │
+  │  ┌──────────────┐         ┌─────────────────────────────┐  │
+  │  │ Autobase     │         │  Hyperblobs                 │  │
+  │  │              │         │  (model file binary data)   │  │
+  │  │ Writers:     │         └──────────────┬──────────────┘  │
+  │  │  • put-model │                        │                 │
+  │  │  • del-model │                        │                 │
+  │  │  • put-lic   │         ┌──────────────▼──────────────┐  │
+  │  │  • add-idx   │         │  BlindPeering               │  │
+  │  │              │         │  (relay to seeders)          │  │
+  │  │ View:        │         └─────────────────────────────┘  │
+  │  │  HyperDB     │                                          │
+  │  │  (model      │         ┌─────────────────────────────┐  │
+  │  │   catalog)   │         │  ProtomuxRPC                │  │
+  │  └──────┬───────┘         │  (admin: add/delete models) │  │
+  │         │                 └─────────────────────────────┘  │
+  └─────────┼──────────────────────────────────────────────────┘
+            │
+            │  Hyperswarm replication
+            ▼
+  ┌─ SDK Client ───────────────────────────────────────────────┐
+  │  Replicates view core → queries HyperDB                    │
+  │  Gets blob pointer → joins blob core swarm → downloads     │
+  └────────────────────────────────────────────────────────────┘</div>
+</div>
+
+<!-- ==================== SLIDE 22: Mental Model Summary ==================== -->
+<div class="slide">
+  <h2>Mental Model Summary</h2>
+  <table class="comparison-table">
+    <tr>
+      <th>Concept</th>
+      <th>Traditional DB</th>
+      <th>Autobase</th>
+    </tr>
+    <tr>
+      <td>Storage</td>
+      <td>Rows in tables</td>
+      <td>Blocks in Hypercores (append-only logs)</td>
+    </tr>
+    <tr>
+      <td>Writes</td>
+      <td>SQL INSERT/UPDATE</td>
+      <td>Append encoded operation to writer core</td>
+    </tr>
+    <tr>
+      <td>Consensus</td>
+      <td>Raft, Paxos, leader election</td>
+      <td>Causal DAG linearization + signed checkpoints</td>
+    </tr>
+    <tr>
+      <td>Replication</td>
+      <td>Primary → replica streaming</td>
+      <td>P2P via Hyperswarm (no central server)</td>
+    </tr>
+    <tr>
+      <td>Schema</td>
+      <td>SQL DDL / ORM</td>
+      <td>Hyperschema + Hyperdispatch</td>
+    </tr>
+    <tr>
+      <td>Reads</td>
+      <td>SQL SELECT</td>
+      <td>Query the view (HyperDB indexes)</td>
+    </tr>
+    <tr>
+      <td>Consistency</td>
+      <td>Strong (ACID)</td>
+      <td>Eventual (CAP: AP)</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ==================== SLIDE 23: Key Takeaways ==================== -->
+<div class="slide">
+  <h2>Key Takeaways</h2>
+  <ul style="font-size:1.2rem; line-height:2;">
+    <li><span class="highlight">Autobase</span> = multi-writer layer on top of Hypercore</li>
+    <li>Uses <span class="green">event sourcing</span>: writers append operations, linearizer orders them, apply function builds the view</li>
+    <li>Causal DAG ensures operations <span class="yellow">never precede their dependencies</span></li>
+    <li><span class="pink">Indexers</span> build the view and advance the signed length via quorum</li>
+    <li>The <code>apply</code> function must be <span class="red">deterministic</span> — same ops, same order → same view</li>
+    <li>In QVAC: Autobase sits between the <span class="highlight">writer instances</span> and the <span class="green">HyperDB model catalog</span></li>
+    <li>Clients don't touch Autobase — they replicate the <span class="yellow">view core</span> (read-only)</li>
+  </ul>
+  <p style="margin-top:2rem; color:var(--text-muted); font-size:1rem;">
+    Further reading: <code>repos/qvac/.cursor/rules/registry-server/docs/hyperdb-autobase-learnings.md</code>
+  </p>
+</div>
+
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()" id="prevBtn">← Prev</button>
+  <span class="counter" id="counter">1 / 13</span>
+  <button onclick="next()" id="nextBtn">Next →</button>
+</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide')
+  const counter = document.getElementById('counter')
+  const progress = document.getElementById('progress')
+  let current = 0
+
+  function show(n) {
+    slides[current].classList.remove('active')
+    current = Math.max(0, Math.min(n, slides.length - 1))
+    slides[current].classList.add('active')
+    counter.textContent = `${current + 1} / ${slides.length}`
+    progress.style.width = `${((current + 1) / slides.length) * 100}%`
+  }
+
+  function next() { show(current + 1) }
+  function prev() { show(current - 1) }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next() }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev() }
+    if (e.key === 'Home') { e.preventDefault(); show(0) }
+    if (e.key === 'End') { e.preventDefault(); show(slides.length - 1) }
+  })
+
+  show(0)
+</script>
+</body>
+</html>

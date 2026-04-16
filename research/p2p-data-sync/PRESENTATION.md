@@ -43,10 +43,10 @@ P2P data is only available when at least one peer is online.
 
 **Solutions:**
 1. **Pure P2P** — accept limited availability (Keet's approach)
-2. **Vault** — always-on local peer that replicates everything
+2. **Node** — always-on local peer that replicates everything
 3. **Cloud** — hosted peer with guaranteed uptime
 
-The Vault is the sweet spot: user-controlled, high availability, no trust issues.
+The Node is the sweet spot: user-controlled, high availability, no trust issues.
 
 ## 6. When You Still Need a Server
 
@@ -66,29 +66,29 @@ The QVAC model registry shows the ideal hybrid:
 - **P2P:** model file download (Hyperdrive)
 - The server helps you *find* things; actual data transfer is peer-to-peer.
 
-## 8. The Vault Operates at Protocol Level
+## 8. The Node Operates at Protocol Level
 
-The Vault replicates Hypercores, not app data. It doesn't need to understand your data model.
+The Node replicates Hypercores, not app data. It doesn't need to understand your data model.
 
 - **Single-writer cores:** `store.get({ key })` + `core.download({ start: 0, end: -1 })`
 - **Autobase:** replicate all writer cores via Corestore
 - **Hyperdrive:** replicate + optional mirror to local filesystem
 - **Compatible with any app** because it works at the Corestore level.
 
-## 9. Vault Architecture Decisions
+## 9. Node Architecture Decisions
 
 1. **Corestore-per-app** — isolation between apps
-2. **Full download** — the Vault is a backup, not a sparse cache
-3. **Read-only** — the Vault never writes to app data
-4. **Autobase registry** — for multi-Vault sync
-5. **Same protocol → Cloud** — the Vault IS the Cloud, just local
+2. **Full download** — the Node is a backup, not a sparse cache
+3. **Read-only** — the Node never writes to app data
+4. **Autobase registry** — for multi-Node sync
+5. **Same protocol → Cloud** — the Node IS the Cloud, just local
 
 ## 10. Recommended Build Order
 
 1. **Phase 1:** Manual registration + single-writer replication + dashboard
 2. **Phase 2:** Hyperdrive + auto-discovery + SDK
 3. **Phase 3:** Autobase + QVAC delegation + data browser
-4. **Phase 4:** Vault-to-Vault sync + export/import
+4. **Phase 4:** Node-to-Node sync + export/import
 5. **Phase 5:** Cloud (separate project, same protocol)
 
 ## Quick Reference: Choosing Your Stack
@@ -102,7 +102,7 @@ Do I need multi-writer?
     └── Event stream → Raw Hypercore
 
 Do I need always-on availability?
-├── Yes → Add Vault seeder
+├── Yes → Add Node seeder
 └── No → Pure P2P is fine
 
 Do I need global search/discovery?

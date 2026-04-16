@@ -6,7 +6,7 @@
 2. **The Problem** (AI fails with our stack)
 3. **The Insight** (teach the AI — Unstoppable Stack)
 4. **Proof** (journey from 50+ prompts to 2)
-5. **Strategy** (how knowledge is built, Vault, Cloud, business)
+5. **Strategy** (how knowledge is built, Node, Cloud, business)
 6. **The Ask**
 
 ---
@@ -74,7 +74,7 @@ Comparison table:
 A structured, battle-tested knowledge base that any AI assistant can use to build Holepunch + QVAC + WDK apps.
 
 ```
-npx create-unstoppable-app
+us init
 ```
 
 ---
@@ -160,7 +160,7 @@ After 7 more reference apps → **81%** battle-tested.
 
 ---
 
-## Slide 11 — The Opportunity: Unstoppable Vault
+## Slide 11 — The Opportunity: Unstoppable Node
 
 A desktop app that syncs with any Unstoppable Stack app:
 
@@ -171,16 +171,16 @@ A desktop app that syncs with any Unstoppable Stack app:
 | AI Provider   | Runs 7B+ models — phone apps delegate inference P2P   |
 
 ```
-Phone (1B model) ──── P2P delegation ────►  Desktop Vault (7B model)
+Phone (1B model) ──── P2P delegation ────►  Desktop Node (7B model)
                  ◄──── streams tokens ────
-If Vault offline → falls back to on-device model automatically
+If Node offline → falls back to on-device model automatically
 ```
 
 ---
 
-## Slide 12 — Vault → Cloud (Same Protocol)
+## Slide 12 — Node → Cloud (Same Protocol)
 
-| Vault (Free)                    | Cloud (Subscription)            |
+| Node (Free)                    | Cloud (Subscription)            |
 |---------------------------------|---------------------------------|
 | Your desktop                    | Tether-hosted                   |
 | Your GPU (7-13B models)         | H100 GPUs (70B+ models)         |
@@ -190,7 +190,7 @@ If Vault offline → falls back to on-device model automatically
 ```javascript
 // App code is identical. Just swap topic + key.
 loadModel({
-  delegate: { topic: vaultOrCloudTopic, providerPublicKey: vaultOrCloudKey }
+  delegate: { topic: nodeOrCloudTopic, providerPublicKey: nodeOrCloudKey }
 })
 ```
 
@@ -220,9 +220,9 @@ Developer                            Tether Cloud
 | # | Phase                 | Status   |
 |---|-----------------------|----------|
 | 1 | Toolchain — CLI + Agent Pack + Website | ✅ Done |
-| 2 | Vault — Personal sync hub + AI delegation | 🟣 Designed |
+| 2 | Node — Personal sync hub + AI delegation | 🟣 Designed |
 | 3 | Auth — Local-first identity across apps | Planned |
-| 4 | Cloud + Subscriptions — Hosted Vault, USDt | Vision |
+| 4 | Cloud + Subscriptions — Hosted Node, USDt | Vision |
 
 Each phase unlocks the next. The foundation exists today.
 
@@ -246,7 +246,7 @@ A factory of unstoppable apps — powered by our infrastructure.
                               │
     ┌─────────────────┐              ┌─────────────────┐
     │ Unstoppable     │  UNSTOPPABLE │ Unstoppable     │
-    │ Vault           │◄──── AUTH ──►│ Cloud           │
+    │ Node           │◄──── AUTH ──►│ Cloud           │
     │                 │  same id,    │                 │
     │ Your desktop    │  same proto  │ Tether-hosted   │
     │ Free forever    │              │ Subscription    │
@@ -259,7 +259,7 @@ A factory of unstoppable apps — powered by our infrastructure.
 
 - Builders create apps with QVAC + WDK + Holepunch inside
 - Deploy to Pear, App Store, Play Store, or Web
-- Users connect to their **Vault** (free) or upgrade to **Cloud** (subscription)
+- Users connect to their **Node** (free) or upgrade to **Cloud** (subscription)
 - **Unstoppable Auth** — same identity, same protocol across both
 - Subscriptions in USDt → revenue share back to app builders
 
@@ -268,7 +268,7 @@ A factory of unstoppable apps — powered by our infrastructure.
 ## Slide 16 — The Ask
 
 1. **Continue building** — 7 reference apps to reach 81% stack coverage
-2. **Build the Vault** — bridges to Cloud, validates 7 stack gaps at once
+2. **Build the Node** — bridges to Cloud, validates 7 stack gaps at once
 3. **Collaborate with Holepunch** — joint effort on docs + Auth
 4. **Launch unstoppable.dev** — public beta
 
@@ -279,7 +279,7 @@ A factory of unstoppable apps — powered by our infrastructure.
 > One prompt to plan. One prompt to build.
 
 ```
-npx create-unstoppable-app
+us init
 ```
 
 **That's the unstoppable stack.**

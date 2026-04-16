@@ -14,18 +14,24 @@ import {
   Wrench,
   Bot,
   ExternalLink,
+  Server,
+  Search,
+  Layers,
+  Cpu,
+  Lock,
 } from "lucide-react";
 
 export const metadata = {
   title: "Documentation — Unstoppable Stack",
   description:
-    "Learn about every module in the Unstoppable Stack — P2P networking, local AI, crypto payments, and more.",
+    "Learn about every module in the Unstoppable Stack — P2P networking, local AI, the Unstoppable Node, and more.",
 };
 
 const sections = [
   {
     title: "P2P & Runtime",
-    description: "Build serverless applications with Holepunch's P2P infrastructure",
+    description:
+      "Build serverless applications with Holepunch's P2P infrastructure",
     parent: "Holepunch",
     parentColor: "text-holepunch",
     modules: [
@@ -60,16 +66,30 @@ const sections = [
     ],
   },
   {
-    title: "Data",
-    description: "Peer-to-peer data storage and synchronization",
+    title: "Data & Storage",
+    description: "Peer-to-peer data storage, synchronization, and replication",
     parent: "Holepunch",
     parentColor: "text-holepunch",
     modules: [
       {
+        icon: Layers,
+        name: "Hypercore",
+        description:
+          "Append-only log — the foundation of the entire data stack. Every Hyperbee, Hyperdrive, and Autobase is built on Hypercores.",
+        docs: "https://docs.pears.com/building-blocks/hypercore.html",
+      },
+      {
+        icon: Database,
+        name: "Hyperbee",
+        description:
+          "Sorted key-value database built on Hypercore. B-tree based, supports range queries, and replicates efficiently over Hyperswarm.",
+        docs: "https://docs.pears.com/building-blocks/hyperbee.html",
+      },
+      {
         icon: Database,
         name: "HyperDB",
         description:
-          "P2P key-value database built on Autobase. Multi-writer, conflict-free, and replicated across peers.",
+          "Multi-writer P2P database built on Autobase. Conflict-free, collaborative, and replicated across peers.",
         docs: "https://docs.holepunch.to/",
       },
       {
@@ -78,6 +98,20 @@ const sections = [
         description:
           "P2P file system. Store and sync files across peers in real-time with a familiar filesystem API.",
         docs: "https://docs.pears.com/building-blocks/hyperdrive.html",
+      },
+      {
+        icon: Server,
+        name: "Corestore",
+        description:
+          "Manages multiple Hypercores under one storage. The foundation for the Unstoppable Node's replication engine.",
+        docs: "https://docs.pears.com/building-blocks/corestore.html",
+      },
+      {
+        icon: Lock,
+        name: "SecretStream",
+        description:
+          "Encrypted transport layer for P2P connections. Handles Noise protocol handshake and key exchange automatically.",
+        docs: "https://docs.holepunch.to/",
       },
     ],
   },
@@ -91,7 +125,7 @@ const sections = [
         icon: BrainCircuit,
         name: "QVAC SDK",
         description:
-          "Run AI models locally on any device. Cross-platform, P2P native, completely private. No cloud required.",
+          "Run AI models locally on any device. Vision, RAG, transcription, TTS — cross-platform, P2P native, completely private.",
         docs: "https://qvac.tether.io/",
       },
       {
@@ -113,10 +147,52 @@ const sections = [
         icon: Smartphone,
         name: "Expo Bare",
         description:
-          "React Native powered by the Bare runtime. Build mobile P2P apps with the same stack as desktop.",
+          "React Native powered by the Bare runtime. Build mobile P2P apps with the same stack as desktop. Pairs with the Unstoppable Node for data sync and AI inference.",
         docs: "https://docs.pears.com/guide/making-a-bare-mobile-app.html",
       },
     ],
+  },
+];
+
+const products = [
+  {
+    icon: Server,
+    name: "Unstoppable Node",
+    description:
+      "Your personal always-on P2P hub. Replicates data (Hyperbee, Hypercore), seeds files (Hyperdrive), delegates AI inference (QVAC), and powers P2P search. Apps pair automatically over Hyperswarm.",
+    features: [
+      "Data Sync — Corestore-based replication",
+      "File Sync — Hyperdrive mirroring",
+      "AI Provider — QVAC inference delegation",
+      "P2P Search — Tavily-compatible API",
+    ],
+    href: "/roadmap",
+  },
+  {
+    icon: Search,
+    name: "Unstoppable Search",
+    description:
+      "A P2P search engine for AI agents. Crawls and indexes locally with QVAC. Three-tier replication: index metadata syncs automatically, content downloads on demand, remote peers queried via RPC.",
+    features: [
+      "Tavily-compatible API — drop-in replacement",
+      "No API keys required",
+      "HyperDB index syncs between peers",
+      "Local QVAC for ranking and answers",
+    ],
+    href: "/roadmap",
+  },
+  {
+    icon: Bot,
+    name: "Unstoppable Agent",
+    description:
+      "A terminal-based AI coding assistant that runs on any OpenAI-compatible provider (LM Studio, Ollama, cloud). 19 tools, subagent orchestration, skill system, and full agent-pack integration.",
+    features: [
+      "19 tools — file, terminal, skills, knowledge, memory",
+      "Subagent orchestration with context isolation",
+      "Skill system with progressive disclosure",
+      "Permission system with glob patterns",
+    ],
+    href: "/roadmap",
   },
 ];
 
@@ -124,20 +200,20 @@ const quickLinks = [
   {
     icon: Wrench,
     title: "CLI Reference",
-    description: "Commands, flags, and configuration options",
+    description: "us init, us scaffold, us doctor — commands and flags",
     href: "/getting-started",
   },
   {
     icon: Bot,
     title: "Agent Pack",
     description: "How the AI assistant integration works",
-    href: "/docs",
+    href: "/getting-started#step-3",
   },
   {
     icon: BookOpen,
-    title: "Recipes",
-    description: "Common patterns and working examples",
-    href: "/docs",
+    title: "Roadmap",
+    description: "Development phases, coverage, and what's next",
+    href: "/roadmap",
   },
 ];
 
@@ -153,8 +229,8 @@ export default function DocsPage() {
               Documentation
             </h1>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto">
-              Everything you need to know about the Unstoppable Stack. Each module is independent
-              but composable — pick what you need.
+              Everything you need to know about the Unstoppable Stack — modules,
+              products, and how they fit together.
             </p>
           </div>
         </div>
@@ -184,11 +260,62 @@ export default function DocsPage() {
           </div>
         </section>
 
+        {/* Products */}
+        <section className="mb-16">
+          <h2 className="text-2xl font-bold tracking-tight mb-2">Products</h2>
+          <p className="text-text-secondary text-sm mb-6">
+            Higher-level products built on the Unstoppable Stack modules.
+          </p>
+
+          <div className="space-y-4">
+            {products.map((product) => (
+              <div
+                key={product.name}
+                className="group rounded-xl border border-border bg-surface p-6 transition-all hover:border-border-light hover:bg-surface-light"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                    <product.icon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold">{product.name}</h3>
+                      <Link
+                        href={product.href}
+                        className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-hover transition-colors"
+                      >
+                        Roadmap
+                        <ExternalLink className="h-3 w-3" />
+                      </Link>
+                    </div>
+                    <p className="text-sm text-text-secondary leading-relaxed mb-3">
+                      {product.description}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                      {product.features.map((feat) => (
+                        <div
+                          key={feat}
+                          className="flex items-center gap-2 text-xs text-text-muted"
+                        >
+                          <span className="h-1 w-1 rounded-full bg-accent shrink-0" />
+                          {feat}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Module Sections */}
         {sections.map((section) => (
           <section key={section.title} className="mb-16">
             <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-2xl font-bold tracking-tight">{section.title}</h2>
+              <h2 className="text-2xl font-bold tracking-tight">
+                {section.title}
+              </h2>
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
                   section.parent === "Holepunch"
@@ -199,7 +326,9 @@ export default function DocsPage() {
                 {section.parent}
               </span>
             </div>
-            <p className="text-text-secondary text-sm mb-6">{section.description}</p>
+            <p className="text-text-secondary text-sm mb-6">
+              {section.description}
+            </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {section.modules.map((mod) => (
@@ -242,18 +371,29 @@ export default function DocsPage() {
         {/* Coming Soon */}
         <section className="rounded-2xl border border-border bg-surface p-8 md:p-10 text-center">
           <BookOpen className="h-8 w-8 text-text-muted mx-auto mb-4" />
-          <h2 className="text-2xl font-bold tracking-tight mb-3">More Documentation Coming</h2>
+          <h2 className="text-2xl font-bold tracking-tight mb-3">
+            More Documentation Coming
+          </h2>
           <p className="text-text-secondary mb-6 max-w-lg mx-auto">
-            We&apos;re working on detailed guides, tutorials, and API references for each module. Full
-            per-module docs with code examples, pitfalls, and best practices are on the way.
+            We&apos;re working on detailed guides, tutorials, and API references
+            for each module. Per-module docs with code examples, pitfalls, and
+            best practices are on the way.
           </p>
-          <Link
-            href="/getting-started"
-            className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-semibold text-background transition-all hover:bg-accent-hover"
-          >
-            Get Started Now
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/getting-started"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 text-sm font-semibold text-background transition-all hover:bg-accent-hover"
+            >
+              Get Started Now
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/roadmap"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-text-secondary hover:bg-surface-light hover:text-text-primary transition-colors"
+            >
+              View Roadmap
+            </Link>
+          </div>
         </section>
       </div>
     </div>

@@ -158,46 +158,46 @@ them verbatim.
   foundation. But the real vision is much bigger."
 - Four phases now. Don't explain yet — just set up the next slides.
 
-## Slide 22: Unstoppable Vault — The Bridge to Cloud
+## Slide 22: Unstoppable Node — The Bridge to Cloud
 - This is a NEW concept since last time. Take a moment to set it up.
 - "Before we go to the cloud, there's a smarter first step."
-- "The Vault is a desktop app that syncs with ALL your unstoppable apps.
+- "The Node is a desktop app that syncs with ALL your unstoppable apps.
   It replicates your data, seeds your files, and — this is the key —
   runs powerful AI models that your other devices can delegate to."
-- Let the diagram speak. Three apps → one Vault.
+- Let the diagram speak. Three apps → one Node.
 - "Think of it as your personal server. Except it's just a Pear desktop app."
 
-## Slide 23: Vault — What It Does
+## Slide 23: Node — What It Does
 - Walk through the three services. Spend most time on AI delegation.
 - "Data sync — straightforward. Your Hyperbees and databases get
-  replicated to the Vault. Always backed up."
+  replicated to the Node. Always backed up."
 - "File sync — your Hyperdrives are mirrored. Files are available even
   when the original app is closed."
 - "AI Provider — this is where it gets exciting."
 - Explain the phone→desktop delegation with enthusiasm:
 - "Your phone runs a 1B or 3B model. Good, but limited. Your desktop
   has a GPU and 32 gigs of RAM. It can run a 7B or 13B model."
-- "With QVAC's built-in delegation, your phone app just says 'hey Vault,
-  run this for me.' The Vault runs the big model and streams tokens back
+- "With QVAC's built-in delegation, your phone app just says 'hey Node,
+  run this for me.' The Node runs the big model and streams tokens back
   over P2P. Same API. The app doesn't even know the difference."
-- "And if the Vault is offline? `fallbackToLocal: true` — it just uses
+- "And if the Node is offline? `fallbackToLocal: true` — it just uses
   the on-device model. No crash, no error."
 
-## Slide 24: From Vault to Cloud — Same Protocol
+## Slide 24: From Node to Cloud — Same Protocol
 - THIS is the strategic slide. Make the connection crystal clear.
-- "The Vault runs on your desktop. The Cloud runs on Tether's servers.
+- "The Node runs on your desktop. The Cloud runs on Tether's servers.
   But the protocol is identical."
-- "An app connects to the Vault with a topic and a public key. It connects
+- "An app connects to the Node with a topic and a public key. It connects
   to the Cloud with... a different topic and public key. That's it."
 - "The app code doesn't change. Not one line."
-- "So we build the Vault first — it's free, it's local, users love it.
+- "So we build the Node first — it's free, it's local, users love it.
   Then we offer the Cloud — same thing but always on, bigger models,
   unlimited storage. Users upgrade naturally."
 - "We don't have to convince anyone to switch to a cloud product.
   They're already using the protocol."
 
 ## Slide 25: Unstoppable Auth
-- Quicker now — the Vault set up the context.
+- Quicker now — the Node set up the context.
 - "For all of this to work across apps, users need an identity."
 - "Keypair-based. No email, no password, no auth server. One identity
   across all their unstoppable apps."
@@ -205,8 +205,8 @@ them verbatim.
   no one controls it except the user."
 
 ## Slide 26: Unstoppable Subscriptions
-- Business model slide. Connect to the Vault → Cloud progression.
-- "Free tier: the Vault. Your desktop GPU, your storage, your network."
+- Business model slide. Connect to the Node → Cloud progression.
+- "Free tier: the Node. Your desktop GPU, your storage, your network."
 - "Paid tier: the Cloud. Tether's GPUs, unlimited storage, always on."
 - "The upgrade path is natural. Users start free, hit the limits of
   their device, and subscribe for more power."
@@ -224,19 +224,19 @@ them verbatim.
 ## Slide 28: The Flywheel
 - Quick visual. Walk the loop.
 - "Better tools → more developers → more apps → users start with the
-  free Vault → upgrade to the paid Cloud → revenue → fund better tools."
+  free Node → upgrade to the paid Cloud → revenue → fund better tools."
 - "Every payment in USDt."
 
 ## Slide 29: The Full Stack Vision
 - Zoom out. Show all layers with phases.
-- "Phase 1 is done — the toolchain works. Phase 2 is the Vault.
+- "Phase 1 is done — the toolchain works. Phase 2 is the Node.
   Phase 3 is auth. Phase 4 is the Cloud and subscriptions."
 - "Each phase unlocks the next. And the foundation — Holepunch,
   QVAC, WDK — exists today."
 
 ## Slide 30: Why This Matters for Tether
 - Speak business. Be confident.
-- Hit the progressive path: "Vault is free and builds the user base.
+- Hit the progressive path: "Node is free and builds the user base.
   Cloud is paid and generates revenue. It's a natural funnel."
 - "No one else has this. No AI-native P2P toolkit, no personal sync hub,
   no built-in business model for builders. We'd be first."
@@ -244,7 +244,7 @@ them verbatim.
 ## Slide 31: The Ask
 - Be specific. Six items.
 - "7 more reference apps to get from 39% to 81% coverage."
-- "Build the Vault — it validates 7 agent pack gaps in one app AND
+- "Build the Node — it validates 7 agent pack gaps in one app AND
   creates the protocol for the Cloud."
 - "Launch publicly. Collaborate with Holepunch. Start exploring the
   subscription model."

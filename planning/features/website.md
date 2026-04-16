@@ -28,7 +28,7 @@
 │  No servers. No gatekeepers.                │
 │                                             │
 │  ┌─────────────────────────────────────┐    │
-│  │ $ npm create unstoppable-app@latest │    │
+│  │ $ npm install -g @unstoppable-stack/cli │    │
 │  └─────────────────────────────────────┘    │
 │  [Get Started]  [View on GitHub]            │
 │                                             │
@@ -71,7 +71,7 @@
 
 ### 2. Getting Started (`/getting-started`)
 - Prerequisites (Node.js 20+)
-- Install CLI: `npm create unstoppable-app@latest`
+- Install CLI: `npm install -g @unstoppable-stack/cli`
 - Interactive flow walkthrough (choose AI assistant)
 - Terminal output preview
 - "Next steps" — open editor, start building

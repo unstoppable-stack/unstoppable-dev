@@ -14,6 +14,9 @@ import {
   Smartphone,
   Network,
   ExternalLink,
+  Server,
+  Search,
+  Cpu,
 } from "lucide-react";
 import { CodeBlock } from "@/components/code-block";
 import { TypingPrompt } from "@/components/typing-prompt";
@@ -28,10 +31,16 @@ const valuePillars = [
       "No servers, no infrastructure costs. Your app runs on user devices and syncs peer-to-peer through Holepunch's battle-tested stack.",
   },
   {
+    icon: Server,
+    title: "Your Personal Node",
+    description:
+      "The Unstoppable Node is your always-on P2P hub — syncs data, seeds files, runs local AI, and powers search. Apps pair automatically over Hyperswarm.",
+  },
+  {
     icon: BrainCircuit,
     title: "Local AI, Total Privacy",
     description:
-      "Run inference models directly on-device with QVAC. Your users' data never leaves their machine. No cloud dependency.",
+      "Run inference models directly on-device with QVAC. Delegate heavy workloads to your Node. Your data never leaves your network.",
   },
   {
     icon: Wallet,
@@ -75,21 +84,29 @@ const steps = [
     icon: Terminal,
     title: "Install the CLI",
     description: "One command to get started. Works with npm, pnpm, or yarn.",
-    code: "npx create-unstoppable-app",
+    code: "us init",
   },
   {
     number: "02",
     icon: Layers,
     title: "Scaffold Your App",
     description:
-      "Choose your template, pick your modules (P2P, AI, payments), and select your AI assistant.",
+      "Pick your platform (Pear Desktop, Expo Mobile, Node CLI), choose features (P2P, AI, KV storage), and select your AI assistant.",
+    code: "us scaffold app -p pear-desktop -f p2p,kv-storage",
   },
   {
     number: "03",
     icon: Bot,
     title: "Vibe-Code with AI",
     description:
-      "Your project comes pre-loaded with an agent pack — architecture rules, recipes, and patterns for Claude, Cursor, or OpenCode.",
+      "Your project comes pre-loaded with an agent pack — architecture rules, recipes, and patterns for Claude, Cursor, OpenCode, or Codex.",
+  },
+  {
+    number: "04",
+    icon: Server,
+    title: "Connect to Your Node",
+    description:
+      "Your app auto-pairs with the Unstoppable Node over Hyperswarm. Data replicates, files sync, AI inference delegates — all P2P, zero config.",
   },
 ];
 
@@ -176,13 +193,13 @@ export default function Home() {
             </h1>
 
             <p className="text-lg md:text-xl text-text-secondary max-w-2xl mx-auto mb-10 leading-relaxed">
-              Use your favorite AI assistant to build apps with P2P communication,
+              Scaffold P2P apps with your favorite AI assistant. Sync data, run local AI,
               <br className="hidden sm:block" />
-              local AI inference, and crypto payments. No servers. No gatekeepers.
+              and power search through your personal Unstoppable Node. No servers. No gatekeepers.
             </p>
 
             <div className="max-w-lg mx-auto mb-10">
-              <CodeBlock code="npx create-unstoppable-app" />
+              <CodeBlock code="npm i -g @unstoppable-stack/cli && us init" />
             </div>
 
             <div className="mb-12">
@@ -244,7 +261,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {valuePillars.map((pillar) => (
               <div
                 key={pillar.title}
@@ -351,12 +368,12 @@ export default function Home() {
               From Zero to Unstoppable
             </h2>
             <p className="text-text-secondary max-w-2xl mx-auto">
-              Three steps. One CLI. Your app is scaffolded with P2P wiring, AI agent instructions,
-              and everything you need to start building.
+              Four steps. One CLI. Your app is scaffolded with P2P wiring, AI agent instructions,
+              and a personal Node that keeps everything synced.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {steps.map((step) => (
               <div key={step.number} className="relative">
                 <div className="text-6xl font-black text-border/50 mb-4 font-mono">
@@ -428,6 +445,108 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── The Unstoppable Node ── */}
+      <section className="py-20 md:py-28 border-t border-border">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+              The Unstoppable Node
+            </h2>
+            <p className="text-text-secondary max-w-2xl mx-auto">
+              Your personal always-on P2P hub. It runs on a desktop, mini-PC, or server and
+              provides four services to every app that connects.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {[
+              {
+                icon: Database,
+                title: "Data Sync",
+                description: "Replicates Hyperbees and Hypercores. Corestore-based. Your data is always available, even when your phone isn\u2019t.",
+              },
+              {
+                icon: HardDrive,
+                title: "File Sync",
+                description: "Seeds and mirrors Hyperdrives. Photos, documents, backups \u2014 all synced P2P across your devices.",
+              },
+              {
+                icon: Cpu,
+                title: "AI Provider",
+                description: "Delegates QVAC inference over P2P. Your phone sends a prompt, the Node runs a 7B model, and streams tokens back.",
+              },
+              {
+                icon: Search,
+                title: "P2P Search",
+                description: "Crawls, indexes, and searches locally. Tavily-compatible API for AI agents. No API keys, no cloud dependency.",
+              },
+            ].map((svc) => (
+              <div
+                key={svc.title}
+                className="group rounded-xl border border-border bg-surface p-6 transition-all hover:border-border-light hover:bg-surface-light"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-holepunch/10 text-holepunch mb-4 transition-colors group-hover:bg-holepunch/15">
+                  <svc.icon className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-semibold mb-2">{svc.title}</h3>
+                <p className="text-xs text-text-muted leading-relaxed">{svc.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface-light px-6 py-5 text-center mb-12">
+            <p className="text-sm text-text-secondary leading-relaxed max-w-2xl mx-auto">
+              Apps pair with the Node over Hyperswarm. Data replicates automatically.
+              The same protocol scales to a hosted cloud later — swap a key, nothing else changes.
+            </p>
+          </div>
+
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold mb-2">Plus the Ecosystem</h3>
+            <p className="text-sm text-text-muted max-w-lg mx-auto">
+              Beyond the Node, the stack includes a local coding agent and a P2P search engine.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            <div className="group rounded-xl border border-border bg-surface p-6 transition-all hover:border-border-light hover:bg-surface-light">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Bot className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-semibold">Unstoppable Agent</h3>
+              </div>
+              <p className="text-xs text-text-muted leading-relaxed">
+                A terminal-based AI coding assistant with 19 tools, subagent orchestration, and
+                a skill system. Runs on any OpenAI-compatible provider — LM Studio, Ollama, or cloud.
+              </p>
+            </div>
+            <div className="group rounded-xl border border-border bg-surface p-6 transition-all hover:border-border-light hover:bg-surface-light">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Search className="h-5 w-5" />
+                </div>
+                <h3 className="text-base font-semibold">Unstoppable Search</h3>
+              </div>
+              <p className="text-xs text-text-muted leading-relaxed">
+                A P2P search engine that crawls and indexes locally with QVAC. Three-tier replication:
+                metadata syncs automatically, content on demand, remote queries via RPC.
+              </p>
+            </div>
+          </div>
+
+          <div className="text-center mt-10">
+            <Link
+              href="/roadmap"
+              className="inline-flex items-center gap-2 text-sm text-accent hover:text-accent-hover transition-colors"
+            >
+              See the full roadmap
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
