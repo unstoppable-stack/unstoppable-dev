@@ -1,10 +1,21 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-04-14
+> **Last updated:** 2026-04-15
 
 ---
 
 ## Recently Completed
+
+- **2026-04-15**: **Scaffold E2E testing + feature simplification** — `packages/cli/`
+  - Feature flags simplified: `p2p`, `kv-storage`, `autobase` removed (P2P+KV now base infra, autobase becomes a skill); `qvac` renamed to `local-ai`; new `wallet` flag added as stub
+  - QVAC mock mode (`QVAC_MOCK=1` / `EXPO_PUBLIC_QVAC_MOCK=1` / RPC init flag) across all three generators — enables E2E testing without loading models
+  - New worker harness (`e2e/worker-harness.js`) — spawns generated Pear Desktop `worker.js` in plain Node via injected `Pear` global, enabling NDJSON round-trip testing without Electron
+  - Rewritten `e2e/test-scaffold.ts` — 3 platforms × levels 1–5, new variant matrix (bare / local-ai / wallet / local-ai+wallet), Node CLI spawn+stdout assertions, Desktop worker spawn tests with mock chat round-trip
+  - Maestro flow generator — base KV round-trip (save/fetch) always, mock-gated AI chat flow
+  - GitHub Actions workflow (`.github/workflows/cli.yml`) — unit / scaffold-smoke matrix / desktop-worker-smoke / nightly iOS build
+  - Bonus fix: Expo Mobile generator was missing `corestore` + `hyperbee` deps (needed by the Bare worklet), causing `bare-pack` postinstall to fail. Added both.
+  - **Verified locally:** 7/7 CI-safe variants pass (desktop 4/4, node-cli 3/3, mobile install 1/1)
+  - Full plan: [`planning/features/scaffold-e2e-testing.md`](../features/scaffold-e2e-testing.md)
 
 - **2026-04-14**: **Agent UI/UX + core improvements (inspiration + pi-mono derived)** — `packages/agent/`
   - **PI-AGENT-002**: Typed event bus with lifecycle events (turn, tool, message, compaction, session)

@@ -13,13 +13,9 @@ function fileMap(opts: GeneratorOptions) {
 
 const ALL_COMBOS: { name: string; features: Feature[] }[] = [
   { name: 'bare', features: [] },
-  { name: 'p2p', features: ['p2p'] },
-  { name: 'qvac', features: ['qvac'] },
-  { name: 'kv-storage', features: ['kv-storage'] },
-  { name: 'autobase', features: ['autobase'] },
-  { name: 'p2p+qvac', features: ['p2p', 'qvac'] },
-  { name: 'p2p+kv', features: ['p2p', 'kv-storage'] },
-  { name: 'p2p+kv+qvac+autobase', features: ['p2p', 'kv-storage', 'qvac', 'autobase'] },
+  { name: 'local-ai', features: ['local-ai'] },
+  { name: 'wallet', features: ['wallet'] },
+  { name: 'local-ai+wallet', features: ['local-ai', 'wallet'] },
 ]
 
 describe('pear-desktop generator', () => {
@@ -74,6 +70,15 @@ describe('pear-desktop generator', () => {
         expect(pkg.dependencies['pear-run']).toBeDefined()
       })
 
+      it(`${combo.name}: includes base P2P + KV deps (always-on)`, () => {
+        const files = fileMap(make(combo.features))
+        const pkg = JSON.parse(files['package.json'])
+        expect(pkg.dependencies.hyperswarm).toBeDefined()
+        expect(pkg.dependencies.corestore).toBeDefined()
+        expect(pkg.dependencies.hyperbee).toBeDefined()
+        expect(pkg.dependencies['hypercore-crypto']).toBeDefined()
+      })
+
       it(`${combo.name}: dev script uses -d flag (not --dev)`, () => {
         const files = fileMap(make(combo.features))
         const pkg = JSON.parse(files['package.json'])
@@ -118,25 +123,28 @@ describe('pear-desktop generator', () => {
         const files = fileMap(make(combo.features))
         expect(files['worker.js']).not.toContain('require(')
       })
+
+      it(`${combo.name}: always imports base P2P + KV modules`, () => {
+        const worker = fileMap(make(combo.features))['worker.js']
+        expect(worker).toContain("import Corestore from 'corestore'")
+        expect(worker).toContain("import Hyperswarm from 'hyperswarm'")
+        expect(worker).toContain("import Hyperbee from 'hyperbee'")
+        expect(worker).toContain("import crypto from 'hypercore-crypto'")
+      })
     }
 
-    it('p2p: uses ESM import for Hyperswarm and Corestore', () => {
-      const files = fileMap(make(['p2p']))
-      expect(files['worker.js']).toContain("import Corestore from 'corestore'")
-      expect(files['worker.js']).toContain("import Hyperswarm from 'hyperswarm'")
-      expect(files['worker.js']).toContain("import crypto from 'hypercore-crypto'")
+    it('local-ai: uses ESM import for @qvac/sdk and supports QVAC_MOCK', () => {
+      const worker = fileMap(make(['local-ai']))['worker.js']
+      expect(worker).toContain("from '@qvac/sdk'")
+      expect(worker).not.toContain("require('@qvac/sdk')")
+      expect(worker).toContain('QVAC_MOCK')
+      expect(worker).toContain('MOCK_AI')
+      expect(worker).toContain("'mock-model'")
     })
 
-    it('kv-storage: uses ESM import for Hyperbee', () => {
-      const files = fileMap(make(['kv-storage']))
-      expect(files['worker.js']).toContain("import Hyperbee from 'hyperbee'")
-      expect(files['worker.js']).toContain("import Corestore from 'corestore'")
-    })
-
-    it('qvac: uses ESM import for @qvac/sdk', () => {
-      const files = fileMap(make(['qvac']))
-      expect(files['worker.js']).toContain("from '@qvac/sdk'")
-      expect(files['worker.js']).not.toContain("require('@qvac/sdk')")
+    it('bare variant: does NOT import @qvac/sdk', () => {
+      const worker = fileMap(make([]))['worker.js']
+      expect(worker).not.toContain('@qvac/sdk')
     })
 
     it('uses Pear.worker.pipe() for communication', () => {
@@ -145,8 +153,7 @@ describe('pear-desktop generator', () => {
     })
 
     it('sends workerReady before slow init', () => {
-      const files = fileMap(make(['p2p']))
-      const worker = files['worker.js']
+      const worker = fileMap(make())['worker.js']
       const readyIndex = worker.indexOf("send({ type: 'workerReady' })")
       expect(readyIndex).toBeGreaterThan(-1)
       const initIndex = worker.indexOf('async function init()')
@@ -207,7 +214,9 @@ describe('pear-desktop generator', () => {
 
     it('does NOT use window.addEventListener for worker messages', () => {
       const files = fileMap(make())
-      expect(files['app/index.js']).not.toContain("window.addEventListener('worker-message'")
+      expect(files['app/index.js']).not.toContain(
+        "window.addEventListener('worker-message'",
+      )
     })
 
     it('does NOT use window.sendToWorker', () => {
@@ -219,44 +228,56 @@ describe('pear-desktop generator', () => {
       const files = fileMap(make())
       expect(files['app/index.js']).toContain('test-app')
     })
+
+    it('always renders base P2P + KV sections (no feature flags)', () => {
+      const app = fileMap(make())['app/index.js']
+      expect(app).toContain('data-testid="p2p-section"')
+      expect(app).toContain('data-testid="kv-section"')
+      expect(app).toContain('data-testid="kv-save-btn"')
+      expect(app).toContain('data-testid="kv-fetch-btn"')
+    })
   })
 
-  describe('feature-specific dependencies', () => {
-    it('p2p: includes hyperswarm, corestore, hypercore-crypto', () => {
-      const pkg = JSON.parse(fileMap(make(['p2p']))['package.json'])
-      expect(pkg.dependencies.hyperswarm).toBeDefined()
-      expect(pkg.dependencies.corestore).toBeDefined()
-      expect(pkg.dependencies['hypercore-crypto']).toBeDefined()
-    })
-
-    it('kv-storage: includes hyperbee, corestore', () => {
-      const pkg = JSON.parse(fileMap(make(['kv-storage']))['package.json'])
-      expect(pkg.dependencies.hyperbee).toBeDefined()
-      expect(pkg.dependencies.corestore).toBeDefined()
-    })
-
-    it('qvac: includes @qvac/sdk', () => {
-      const pkg = JSON.parse(fileMap(make(['qvac']))['package.json'])
+  describe('feature-specific behaviour', () => {
+    it('local-ai: includes @qvac/sdk and AI section', () => {
+      const files = fileMap(make(['local-ai']))
+      const pkg = JSON.parse(files['package.json'])
       expect(pkg.dependencies['@qvac/sdk']).toBeDefined()
+      expect(files['app/index.js']).toContain('data-testid="ai-section"')
+      expect(files['app/index.js']).toContain('data-testid="load-ai-btn"')
+      expect(files['app/index.js']).toContain('data-testid="chat-input"')
+      expect(files['app/index.js']).toContain('data-testid="chat-send-btn"')
     })
 
-    it('autobase: includes autobase, corestore, hyperswarm, hyperbee', () => {
-      const pkg = JSON.parse(fileMap(make(['autobase']))['package.json'])
-      expect(pkg.dependencies.autobase).toBeDefined()
-      expect(pkg.dependencies.corestore).toBeDefined()
-      expect(pkg.dependencies.hyperswarm).toBeDefined()
-      expect(pkg.dependencies.hyperbee).toBeDefined()
+    it('wallet: includes wallet section stub', () => {
+      const files = fileMap(make(['wallet']))
+      expect(files['app/index.js']).toContain('data-testid="wallet-section"')
+      expect(files['worker.js']).toContain("service: 'wallet'")
     })
 
-    it('bare: only has pear-electron, pear-bridge, pear-run, bare-rpc', () => {
+    it('bare variant: only has pear + base P2P/KV deps, no @qvac/sdk', () => {
       const pkg = JSON.parse(fileMap(make([]))['package.json'])
       const depKeys = Object.keys(pkg.dependencies)
       expect(depKeys).toEqual(
-        expect.arrayContaining(['pear-electron', 'pear-bridge', 'pear-run', 'bare-rpc']),
+        expect.arrayContaining([
+          'pear-electron',
+          'pear-bridge',
+          'pear-run',
+          'bare-rpc',
+          'hyperswarm',
+          'corestore',
+          'hyperbee',
+        ]),
       )
-      expect(depKeys).not.toContain('hyperswarm')
       expect(depKeys).not.toContain('@qvac/sdk')
       expect(depKeys).not.toContain('autobase')
+    })
+
+    it('no variant pulls autobase (flag removed)', () => {
+      for (const combo of ALL_COMBOS) {
+        const pkg = JSON.parse(fileMap(make(combo.features))['package.json'])
+        expect(pkg.dependencies.autobase).toBeUndefined()
+      }
     })
   })
 })

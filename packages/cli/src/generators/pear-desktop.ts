@@ -23,35 +23,15 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'pear-bridge': '^1.2.4',
     'pear-run': '^1.0.7',
     'bare-rpc': '^1.1.0',
+    hyperswarm: '^4.16.0',
+    corestore: '^7.6.0',
+    hyperbee: '^2.22.0',
+    b4a: '^1.7.3',
+    'hypercore-crypto': '^3.4.0',
   }
 
-  if (has(opts, 'p2p')) {
-    Object.assign(deps, {
-      hyperswarm: '^4.16.0',
-      corestore: '^7.6.0',
-      b4a: '^1.7.3',
-      'hypercore-crypto': '^3.4.0',
-    })
-  }
-
-  if (has(opts, 'kv-storage')) {
-    Object.assign(deps, {
-      hyperbee: '^2.22.0',
-      corestore: '^7.6.0',
-    })
-  }
-
-  if (has(opts, 'qvac')) {
+  if (has(opts, 'local-ai')) {
     Object.assign(deps, { '@qvac/sdk': '^0.8.0' })
-  }
-
-  if (has(opts, 'autobase')) {
-    Object.assign(deps, {
-      autobase: '^7.27.0',
-      corestore: '^7.6.0',
-      hyperswarm: '^4.16.0',
-      hyperbee: '^2.22.0',
-    })
   }
 
   const unrouted = ['/worker.js']
@@ -143,46 +123,49 @@ Pear.teardown(() => pipe.destroy())
 }
 
 function workerJs(opts: GeneratorOptions): GeneratedFile {
-  const imports: string[] = []
-  const initCode: string[] = []
-  const commandHandlers: string[] = []
-  const cleanupCode: string[] = []
+  // Base (always-on) imports: P2P + KV storage
+  const imports: string[] = [
+    `import Corestore from 'corestore'`,
+    `import Hyperswarm from 'hyperswarm'`,
+    `import Hyperbee from 'hyperbee'`,
+    `import crypto from 'hypercore-crypto'`,
+  ]
 
-  if (has(opts, 'p2p') || has(opts, 'kv-storage') || has(opts, 'autobase')) {
-    imports.push(`import Corestore from 'corestore'`)
-    initCode.push(`  const store = new Corestore(storagePath)`)
-  }
+  // Module-scope state — declared outside init() so handleCommand and cleanup
+  // can reach them after init() completes.
+  const moduleState: string[] = [
+    `let store = null`,
+    `let swarm = null`,
+    `let db = null`,
+  ]
 
-  if (has(opts, 'p2p')) {
-    imports.push(`import Hyperswarm from 'hyperswarm'`)
-    imports.push(`import crypto from 'hypercore-crypto'`)
-    initCode.push(`
-  const swarm = new Hyperswarm()
+  const initCode: string[] = [
+    `  store = new Corestore(storagePath)`,
+    `
+  swarm = new Hyperswarm()
   swarm.on('connection', (conn) => {
     store.replicate(conn)
     conn.on('error', () => {})
   })
-  send({ type: 'status', service: 'p2p', status: 'ready' })`)
-    cleanupCode.push(`  if (swarm) await swarm.destroy()`)
+  send({ type: 'status', service: 'p2p', status: 'ready' })`,
+    `
+  const core = store.get({ name: 'main-db' })
+  db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+  await db.ready()
+  send({ type: 'status', service: 'storage', status: 'ready' })`,
+  ]
 
-    commandHandlers.push(`
+  const cleanupCode: string[] = [`  if (swarm) await swarm.destroy()`]
+
+  const commandHandlers: string[] = [
+    `
     case 'join-topic': {
       const topic = crypto.discoveryKey(Buffer.from(msg.topic))
       swarm.join(topic, { server: true, client: true })
       send({ type: 'joined', topic: msg.topic })
       break
-    }`)
-  }
-
-  if (has(opts, 'kv-storage')) {
-    imports.push(`import Hyperbee from 'hyperbee'`)
-    initCode.push(`
-  const core = store.get({ name: 'main-db' })
-  const db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
-  await db.ready()
-  send({ type: 'status', service: 'storage', status: 'ready' })`)
-
-    commandHandlers.push(`
+    }`,
+    `
     case 'db-put': {
       await db.put(msg.key, msg.value)
       send({ type: 'db-put-ok', key: msg.key })
@@ -192,33 +175,69 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
       const entry = await db.get(msg.key)
       send({ type: 'db-get-ok', key: msg.key, value: entry?.value ?? null })
       break
-    }`)
-  }
+    }`,
+  ]
 
-  if (has(opts, 'qvac')) {
-    imports.push(`import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'`)
+  if (has(opts, 'local-ai')) {
+    imports.push(
+      `import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'`,
+    )
+    moduleState.push(`let modelId = null`)
+    // QVAC_MOCK is checked at module load (not inside init) so handleCommand
+    // can use it too.
+    moduleState.push(`const MOCK_AI = process.env.QVAC_MOCK === '1'`)
     initCode.push(`
-  let modelId = null
-  try {
-    modelId = await loadModel({
-      modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-      modelType: 'llm',
-      onProgress: (p) => send({ type: 'model-progress', ...p }),
-    })
-    send({ type: 'status', service: 'ai', status: 'ready', modelId })
-  } catch (err) {
-    send({ type: 'status', service: 'ai', status: 'error', error: err.message })
-  }`)
-    cleanupCode.push(`  if (modelId) await unloadModel({ modelId })`)
+  if (MOCK_AI) {
+    await new Promise((r) => setTimeout(r, 100))
+    modelId = 'mock-model'
+    send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
+  } else {
+    try {
+      modelId = await loadModel({
+        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+        modelType: 'llm',
+        onProgress: (p) => send({ type: 'model-progress', ...p }),
+      })
+      send({ type: 'status', service: 'ai', status: 'ready', modelId })
+    } catch (err) {
+      send({ type: 'status', service: 'ai', status: 'error', error: err.message })
+    }
+  }
+  `)
+    cleanupCode.push(
+      `  if (modelId && modelId !== 'mock-model') await unloadModel({ modelId })`,
+    )
 
     commandHandlers.push(`
     case 'chat': {
       if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded' }); break }
+      if (MOCK_AI) {
+        const last = msg.history[msg.history.length - 1]
+        const reply = \`Mock: \${last?.content ?? '(empty)'}\`
+        for (const ch of reply) {
+          send({ type: 'chat-token', token: ch })
+          await new Promise((r) => setTimeout(r, 5))
+        }
+        send({ type: 'chat-done' })
+        break
+      }
       const result = completion({ modelId, history: msg.history, stream: true })
       for await (const token of result.tokenStream) {
         send({ type: 'chat-token', token })
       }
       send({ type: 'chat-done' })
+      break
+    }`)
+  }
+
+  if (has(opts, 'wallet')) {
+    initCode.push(`
+  // Wallet stub — WDK integration deferred. See 'add-wallet' skill.
+  send({ type: 'status', service: 'wallet', status: 'ready', stub: true })`)
+
+    commandHandlers.push(`
+    case 'wallet-balance': {
+      send({ type: 'wallet-balance-ok', balance: 0, stub: true })
       break
     }`)
   }
@@ -230,6 +249,9 @@ ${imports.join('\n')}
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
+
+// Module-scope state (populated during init, used by handleCommand + cleanup)
+${moduleState.join('\n')}
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')
@@ -332,23 +354,21 @@ export const workerReady = new Promise((resolve, reject) => {
 }
 
 function appComponent(opts: GeneratorOptions): GeneratedFile {
-  const hasP2p = has(opts, 'p2p')
-  const hasKv = has(opts, 'kv-storage')
-  const hasQvac = has(opts, 'qvac')
+  const hasQvac = has(opts, 'local-ai')
+  const hasWallet = has(opts, 'wallet')
 
   // Build the sections HTML that gets injected at startup
   const sectionHtml: string[] = []
 
-  if (hasP2p) {
-    sectionHtml.push(`
+  // P2P section — always shown (base infrastructure)
+  sectionHtml.push(`
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>`)
-  }
 
-  if (hasKv) {
-    sectionHtml.push(`
+  // KV Storage section — always shown (base infrastructure)
+  sectionHtml.push(`
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
         <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
@@ -358,6 +378,14 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
         </div>
         <p id="kv-result" class="result" style="display:none" data-testid="kv-result"></p>
+      </section>`)
+
+  if (hasWallet) {
+    sectionHtml.push(`
+      <section data-testid="wallet-section" class="card">
+        <h2 class="card-title">Wallet</h2>
+        <p class="mono" id="wallet-status">⏳ Starting...</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px">WDK integration coming soon</p>
       </section>`)
   }
 
@@ -398,8 +426,8 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   // Build the JS event-handler block per feature
   const featureHandlers: string[] = []
 
-  if (hasKv) {
-    featureHandlers.push(`
+  // KV Storage — always wired (base feature)
+  featureHandlers.push(`
   // KV Storage — in-worker Hyperbee via bridge
   document.getElementById('kv-save').addEventListener('click', () => {
     const key = document.getElementById('kv-key').value.trim()
@@ -413,7 +441,6 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     if (!key) return
     sendToWorker({ type: 'db-get', key })
   })`)
-  }
 
   if (hasQvac) {
     featureHandlers.push(`
@@ -465,21 +492,26 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       setText('worker-status', '✅ Ready')
     }`]
 
-  if (hasP2p) {
-    msgCases.push(`
+  // P2P status — always wired (base feature)
+  msgCases.push(`
     if (msg.type === 'status' && msg.service === 'p2p') {
       setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
     }`)
-  }
 
-  if (hasKv) {
-    msgCases.push(`
+  // KV Storage result — always wired (base feature)
+  msgCases.push(`
     if (msg.type === 'db-put-ok') {
       showResult('kv-result', 'Saved "' + msg.key + '"')
     }
     if (msg.type === 'db-get-ok') {
       const val = msg.value
       showResult('kv-result', val !== null ? '"' + msg.key + '" → ' + JSON.stringify(val) : '"' + msg.key + '" not found')
+    }`)
+
+  if (hasWallet) {
+    msgCases.push(`
+    if (msg.type === 'status' && msg.service === 'wallet') {
+      setText('wallet-status', '✅ Ready (stub)')
     }`)
   }
 

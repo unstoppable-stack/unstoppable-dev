@@ -19,7 +19,7 @@ export class P2PServer {
   private sessionTopic: Buffer | null = null
   private keypair: { publicKey: Buffer; secretKey: Buffer }
   private onPaired: ((deviceName: string) => void) | null = null
-  private bootstrap?: string[]
+  private bootstrap?: Array<{ host: string; port: number }>
 
   constructor(opts?: P2PServerOptions) {
     this.bootstrap = opts?.bootstrap

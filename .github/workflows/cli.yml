@@ -1,0 +1,203 @@
+name: CLI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/cli/**'
+      - '.github/workflows/cli.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/cli/**'
+      - '.github/workflows/cli.yml'
+  schedule:
+    # Nightly at 03:00 UTC — runs ios-build-nightly job
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: packages/cli
+
+jobs:
+  # Fast feedback — unit tests for all generators (runs in ~40s)
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install deps (root)
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: TypeScript check
+        run: pnpm typecheck
+      - name: Unit tests (vitest)
+        run: pnpm test
+      - name: Build CLI
+        run: pnpm build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-dist
+          path: packages/cli/dist
+
+  # Scaffold smoke tests — lightweight "scaffold works" validation for each
+  # platform. No model loading, no simulator, no Xcode — just verify the
+  # generator output installs and (for node-cli) can actually spawn.
+  # All platforms run in parallel on Ubuntu for speed.
+  scaffold-smoke:
+    name: Scaffold smoke (${{ matrix.platform }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: unit
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Desktop: level 3 = scaffold + npm install + structural file check.
+          # Does NOT run worker.js (that would need Corestore to write to disk;
+          # works fine locally but better kept off the hot CI path).
+          - platform: pear-desktop
+            script: test:e2e:ci:desktop
+          # Mobile: level 2 = scaffold + npm install only. Full iOS build
+          # requires Xcode which is macOS-only; covered by the nightly job below.
+          - platform: expo-mobile
+            script: test:e2e:ci:mobile
+          # Node CLI: level 3 = scaffold + install + spawn + stdout assertion.
+          # Uses QVAC_MOCK=1 for the local-ai variant so no model download.
+          - platform: node-cli
+            script: test:e2e:ci:cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install deps (root)
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: Build CLI
+        run: pnpm build
+      - name: Run scaffold smoke tests
+        run: pnpm ${{ matrix.script }}
+        env:
+          QVAC_MOCK: '1'
+      - name: Upload E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaffold-report-${{ matrix.platform }}
+          path: /tmp/us-e2e-scaffold/report-*.json
+          if-no-files-found: ignore
+
+  # Aggregated "scaffold everything" job — runs the full all-platforms suite
+  # sequentially on one runner with a unified report. Serves as the release
+  # gate: if this job is green, every scaffold combo works end-to-end.
+  # Slower than the parallel matrix above but produces the single
+  # cross-platform summary that humans can read at a glance.
+  scaffold-all:
+    name: Scaffold all platforms (aggregate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install deps (root)
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: Build CLI
+        run: pnpm build
+      - name: Run all platforms (aggregated)
+        # Desktop L4 (worker spawn), Node CLI L3 (spawn+stdout), Mobile L2
+        # (scaffold + install — xcodebuild is gated on macOS runners).
+        run: pnpm test:e2e:ci
+      - name: Upload aggregated report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scaffold-all-report
+          path: /tmp/us-e2e-scaffold/report-*.json
+          if-no-files-found: ignore
+
+  # Pear Desktop worker spawn — Level 4. Runs the generated worker.js via the
+  # harness and asserts NDJSON events (init, P2P ready, KV round-trip, mock
+  # chat). Runs on macOS because some Pear native deps only build there.
+  desktop-worker-smoke:
+    name: Desktop worker spawn (macOS)
+    runs-on: macos-14
+    timeout-minutes: 30
+    needs: unit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install deps (root)
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: Build CLI
+        run: pnpm build
+      - name: Worker spawn test (all variants)
+        run: pnpm test:e2e:desktop
+        env:
+          QVAC_MOCK: '1'
+      - name: Upload E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-worker-report
+          path: /tmp/us-e2e-scaffold/report-*.json
+          if-no-files-found: ignore
+
+  # Nightly iOS build — too expensive for every PR. Runs on a schedule and
+  # on manual dispatch. Builds the mobile app for the iOS Simulator and
+  # boots it (level 4). Maestro UI tests (level 5) are deferred until
+  # self-hosted mac runners or flaky macOS-14 proves stable enough.
+  ios-build-nightly:
+    name: iOS build (nightly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install deps (root)
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+      - name: Build CLI
+        run: pnpm build
+      - name: iOS build test
+        run: pnpm test:e2e:mobile -- --level 3
+        env:
+          QVAC_MOCK: '1'
+      - name: Upload E2E report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-report
+          path: /tmp/us-e2e-scaffold/report-*.json
+          if-no-files-found: ignore

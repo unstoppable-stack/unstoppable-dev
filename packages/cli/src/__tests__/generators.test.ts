@@ -14,12 +14,7 @@ function fileMap(opts: GeneratorOptions) {
 describe('expo-mobile generator', () => {
   const ALL_COMBOS: { name: string; features: Feature[] }[] = [
     { name: 'bare', features: [] },
-    { name: 'p2p', features: ['p2p'] },
-    { name: 'qvac', features: ['qvac'] },
-    { name: 'kv-storage', features: ['kv-storage'] },
-    { name: 'p2p+qvac', features: ['p2p', 'qvac'] },
-    { name: 'p2p+kv', features: ['p2p', 'kv-storage'] },
-    { name: 'p2p+kv+qvac', features: ['p2p', 'kv-storage', 'qvac'] },
+    { name: 'local-ai', features: ['local-ai'] },
   ]
 
   describe('generates valid file sets', () => {
@@ -36,6 +31,12 @@ describe('expo-mobile generator', () => {
         expect(files['plugins/withAndroidArchitecture.js']).toBeDefined()
       })
 
+      it(`${combo.name}: always generates worklet files (P2P is base)`, () => {
+        const files = fileMap(make(combo.features))
+        expect(files['bare/index.js']).toBeDefined()
+        expect(files['src/contexts/WorkletContext.tsx']).toBeDefined()
+      })
+
       it(`${combo.name}: no duplicate file paths`, () => {
         const allFiles = generateExpoMobile(make(combo.features))
         const paths = allFiles.map((f) => f.path)
@@ -47,8 +48,21 @@ describe('expo-mobile generator', () => {
         const pkg = JSON.parse(files['package.json'])
         expect(pkg.name).toBe('test-app')
         expect(pkg.scripts).toBeDefined()
-        expect(pkg.scripts.postinstall).toBeDefined()
+        expect(pkg.scripts.prebuild).toBeDefined()
         expect(pkg.dependencies).toBeDefined()
+      })
+
+      it(`${combo.name}: package.json includes base P2P + worklet deps`, () => {
+        const files = fileMap(make(combo.features))
+        const pkg = JSON.parse(files['package.json'])
+        expect(pkg.dependencies['react-native-bare-kit']).toBeDefined()
+        expect(pkg.dependencies['bare-rpc']).toBeDefined()
+        expect(pkg.dependencies['bare-pack']).toBeDefined()
+        expect(pkg.scripts['build:bare']).toBeDefined()
+        // bare-pack runs before `start`/`ios`/`android`, not at postinstall,
+        // so `npm install` doesn't depend on the worklet's dep graph resolving.
+        expect(pkg.scripts.prebuild).toContain('build:bare')
+        expect(pkg.scripts.prestart).toContain('build:bare')
       })
 
       it(`${combo.name}: app.json has expo config`, () => {
@@ -58,114 +72,125 @@ describe('expo-mobile generator', () => {
         expect(app.expo.plugins).toBeDefined()
         expect(app.expo.ios.entitlements).toBeDefined()
       })
-    }
-  })
 
-  describe('P2P feature generates WorkletContext', () => {
-    const P2P_COMBOS = ALL_COMBOS.filter((c) => c.features.includes('p2p'))
-    const NON_P2P = ALL_COMBOS.filter((c) => !c.features.includes('p2p'))
-
-    for (const combo of P2P_COMBOS) {
-      it(`${combo.name}: generates WorkletContext.tsx`, () => {
-        const files = fileMap(make(combo.features))
-        expect(files['src/contexts/WorkletContext.tsx']).toBeDefined()
-      })
-
-      it(`${combo.name}: generates bare/index.js`, () => {
-        const files = fileMap(make(combo.features))
-        expect(files['bare/index.js']).toBeDefined()
-      })
-
-      it(`${combo.name}: WorkletContext guards Directory.create() with exists check`, () => {
-        const files = fileMap(make(combo.features))
-        const ctx = files['src/contexts/WorkletContext.tsx']
-        expect(ctx).toContain('if (!appDir.exists)')
-        expect(ctx).toContain('appDir.create()')
-
-        const createIndex = ctx.indexOf('appDir.create()')
-        const guardIndex = ctx.indexOf('if (!appDir.exists)')
-        expect(guardIndex).toBeLessThan(createIndex)
-      })
-
-      it(`${combo.name}: WorkletContext exports WorkletProvider and useWorklet`, () => {
-        const files = fileMap(make(combo.features))
-        const ctx = files['src/contexts/WorkletContext.tsx']
-        expect(ctx).toContain('export function WorkletProvider')
-        expect(ctx).toContain('export function useWorklet')
-      })
-
-      it(`${combo.name}: layout wraps with WorkletProvider`, () => {
+      it(`${combo.name}: layout always wraps with WorkletProvider`, () => {
         const files = fileMap(make(combo.features))
         const layout = files['app/_layout.tsx']
         expect(layout).toContain('WorkletProvider')
         expect(layout).toContain("from '../src/contexts/WorkletContext'")
       })
-
-      it(`${combo.name}: index uses useWorklet hook`, () => {
-        const files = fileMap(make(combo.features))
-        const index = files['app/index.tsx']
-        expect(index).toContain('useWorklet')
-        expect(index).not.toContain("require('react-native-bare-kit')")
-      })
-
-      it(`${combo.name}: package.json includes P2P dependencies`, () => {
-        const files = fileMap(make(combo.features))
-        const pkg = JSON.parse(files['package.json'])
-        expect(pkg.dependencies['bare-rpc']).toBeDefined()
-        expect(pkg.scripts['build:bare']).toBeDefined()
-        expect(pkg.scripts.postinstall).toContain('build:bare')
-      })
-    }
-
-    for (const combo of NON_P2P) {
-      it(`${combo.name}: does NOT generate WorkletContext`, () => {
-        const files = fileMap(make(combo.features))
-        expect(files['src/contexts/WorkletContext.tsx']).toBeUndefined()
-      })
-
-      it(`${combo.name}: does NOT generate bare worklet`, () => {
-        const files = fileMap(make(combo.features))
-        expect(files['bare/index.js']).toBeUndefined()
-      })
-
-      it(`${combo.name}: layout does NOT use WorkletProvider`, () => {
-        const files = fileMap(make(combo.features))
-        expect(files['app/_layout.tsx']).not.toContain('WorkletProvider')
-      })
     }
   })
 
-  describe('QVAC feature', () => {
+  describe('base features (always present)', () => {
+    it('index uses useWorklet hook', () => {
+      const files = fileMap(make([]))
+      const index = files['app/index.tsx']
+      expect(index).toContain('useWorklet')
+      expect(index).not.toContain("require('react-native-bare-kit')")
+    })
+
+    it('index shows P2P and KV sections without any feature flags', () => {
+      const files = fileMap(make([]))
+      const index = files['app/index.tsx']
+      expect(index).toContain('testID="p2p-section"')
+      expect(index).toContain('testID="kv-section"')
+      expect(index).toContain('testID="kv-save-btn"')
+      expect(index).toContain('testID="kv-fetch-btn"')
+    })
+
+    it('KV handlers go through the worklet via RPC', () => {
+      const files = fileMap(make([]))
+      const index = files['app/index.tsx']
+      expect(index).toContain('rpcRequest(5,')
+      expect(index).toContain('rpcRequest(6,')
+    })
+
+    it('WorkletContext guards Directory.create() with exists check', () => {
+      const files = fileMap(make([]))
+      const ctx = files['src/contexts/WorkletContext.tsx']
+      expect(ctx).toContain('if (!appDir.exists)')
+      expect(ctx).toContain('appDir.create()')
+
+      const createIndex = ctx.indexOf('appDir.create()')
+      const guardIndex = ctx.indexOf('if (!appDir.exists)')
+      expect(guardIndex).toBeLessThan(createIndex)
+    })
+
+    it('WorkletContext passes mock flag via EXPO_PUBLIC_QVAC_MOCK env', () => {
+      const files = fileMap(make([]))
+      const ctx = files['src/contexts/WorkletContext.tsx']
+      expect(ctx).toContain('EXPO_PUBLIC_QVAC_MOCK')
+      expect(ctx).toContain('mock')
+    })
+
+    it('bare worklet supports base KV commands 5 and 6', () => {
+      const files = fileMap(make([]))
+      const bare = files['bare/index.js']
+      expect(bare).toContain('case 5:')
+      expect(bare).toContain('case 6:')
+      expect(bare).toContain('Hyperbee')
+      expect(bare).toContain('Corestore')
+    })
+  })
+
+  describe('local-ai feature', () => {
     it('includes @qvac/sdk dependency', () => {
-      const files = fileMap(make(['qvac']))
+      const files = fileMap(make(['local-ai']))
       const pkg = JSON.parse(files['package.json'])
       expect(pkg.dependencies['@qvac/sdk']).toBeDefined()
       expect(pkg.dependencies['expo-device']).toBeDefined()
     })
 
     it('includes expo plugin in app.json', () => {
-      const files = fileMap(make(['qvac']))
+      const files = fileMap(make(['local-ai']))
       const app = JSON.parse(files['app.json'])
       const plugins = app.expo.plugins as any[]
       expect(plugins).toContain('@qvac/sdk/expo-plugin')
     })
 
-    it('index shows QVAC status', () => {
-      const files = fileMap(make(['qvac']))
-      expect(files['app/index.tsx']).toContain('qvacStatus')
+    it('index shows AI section with Load Assistant button', () => {
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain('testID="ai-section"')
+      expect(index).toContain('testID="load-ai-btn"')
+      expect(index).toContain('testID="chat-input"')
+      expect(index).toContain('testID="chat-send-btn"')
+    })
+
+    it('bare worklet supports mock mode for load-model and chat', () => {
+      const files = fileMap(make(['local-ai']))
+      const bare = files['bare/index.js']
+      expect(bare).toContain('mockMode')
+      expect(bare).toContain("modelId = 'mock-model'")
+      expect(bare).toContain('Mock:')
+    })
+  })
+
+  describe('bare variant (no optional features)', () => {
+    it('does NOT include QVAC sdk', () => {
+      const files = fileMap(make([]))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.dependencies['@qvac/sdk']).toBeUndefined()
+    })
+
+    it('does NOT show AI section', () => {
+      const files = fileMap(make([]))
+      const index = files['app/index.tsx']
+      expect(index).not.toContain('testID="ai-section"')
     })
   })
 
   describe('storage directory naming', () => {
     it('uses project name in storage directory', () => {
-      const files = fileMap(make(['p2p']))
+      const files = fileMap(make([]))
       const ctx = files['src/contexts/WorkletContext.tsx']
       expect(ctx).toContain("'test-app-storage'")
     })
 
     it('different project names produce different storage dirs', () => {
-      const a = generateExpoMobile({ projectName: 'alpha', platform: 'expo-mobile', features: ['p2p'] })
-      const b = generateExpoMobile({ projectName: 'beta', platform: 'expo-mobile', features: ['p2p'] })
+      const a = generateExpoMobile({ projectName: 'alpha', platform: 'expo-mobile', features: [] })
+      const b = generateExpoMobile({ projectName: 'beta', platform: 'expo-mobile', features: [] })
       const ctxA = a.find((f) => f.path.includes('WorkletContext'))!.content
       const ctxB = b.find((f) => f.path.includes('WorkletContext'))!.content
       expect(ctxA).toContain("'alpha-storage'")

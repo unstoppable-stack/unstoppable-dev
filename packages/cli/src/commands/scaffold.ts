@@ -15,7 +15,7 @@ export function registerScaffoldCommand(program: Command) {
     .description('Scaffold a new application')
     .requiredOption('-p, --platform <platform>', `Platform: ${PLATFORMS.map((p) => p.id).join(', ')}`)
     .requiredOption('-n, --name <name>', 'Project name')
-    .option('-f, --features <features>', 'Comma-separated features: p2p, kv-storage, qvac, autobase', '')
+    .option('-f, --features <features>', `Comma-separated features: ${FEATURES.map((f) => f.id).join(', ')}`, '')
     .option('-o, --output <dir>', 'Output directory (default: ./<name>)')
     .option('--force', 'Overwrite existing output directory')
     .action(async (options) => {

@@ -55,28 +55,6 @@ export function generateTestMatrix(): TestCase[] {
       })
     }
 
-    // Interesting combos
-    const p2p = availableFeatures.find((f) => f.id === 'p2p')
-    const qvac = availableFeatures.find((f) => f.id === 'qvac')
-    const kv = availableFeatures.find((f) => f.id === 'kv-storage')
-    const autobase = availableFeatures.find((f) => f.id === 'autobase')
-
-    if (p2p && qvac) {
-      cases.push({
-        platform: platform.id,
-        features: ['p2p', 'qvac'],
-        label: `${platform.id} + p2p,qvac`,
-      })
-    }
-
-    if (p2p && kv) {
-      cases.push({
-        platform: platform.id,
-        features: ['p2p', 'kv-storage'],
-        label: `${platform.id} + p2p,kv-storage`,
-      })
-    }
-
     // All features available for this platform
     const allFeatureIds = availableFeatures.map((f) => f.id)
     if (allFeatureIds.length > 1) {
@@ -173,8 +151,8 @@ async function runSingleTest(tc: TestCase, baseDir: string, depth: TestDepth): P
       if (!existsSync(join(outputDir, 'mocks', 'empty.js'))) throw new Error('mocks/empty.js not found')
       if (!existsSync(join(outputDir, 'plugins', 'withAndroidNdkVersion.js'))) throw new Error('plugin not found')
       if (!existsSync(join(outputDir, 'app', '_layout.tsx'))) throw new Error('app/_layout.tsx not found')
-      if (tc.features.includes('p2p') && !existsSync(join(outputDir, 'bare', 'index.js'))) {
-        throw new Error('bare/index.js not found (p2p selected)')
+      if (!existsSync(join(outputDir, 'bare', 'index.js'))) {
+        throw new Error('bare/index.js not found (expo-mobile always needs worklet)')
       }
     }
 

@@ -18,9 +18,19 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:integration": "vitest run src/remote/__tests__/p2p-integration.test.ts",
     "test:e2e": "npx tsx e2e/test-scaffold.ts",
-    "test:e2e:build-only": "npx tsx e2e/test-scaffold.ts --level 3",
-    "test:e2e:p2p": "npx tsx e2e/test-scaffold.ts --variant p2p"
+    "test:e2e:all": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all",
+    "test:e2e:all:full": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all --level-expo-mobile 5",
+    "test:e2e:mobile": "npx tsx e2e/test-scaffold.ts --platform expo-mobile",
+    "test:e2e:mobile:mock": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform expo-mobile",
+    "test:e2e:desktop": "npx tsx e2e/test-scaffold.ts --platform pear-desktop",
+    "test:e2e:cli": "npx tsx e2e/test-scaffold.ts --platform node-cli",
+    "test:e2e:smoke": "npx tsx e2e/test-scaffold.ts --platform node-cli --level 2",
+    "test:e2e:ci": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all --level-expo-mobile 2",
+    "test:e2e:ci:desktop": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform pear-desktop --level 3",
+    "test:e2e:ci:mobile": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform expo-mobile --level 2",
+    "test:e2e:ci:cli": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform node-cli --level 3"
   },
   "dependencies": {
     "@extractus/article-extractor": "^8.0.0",
