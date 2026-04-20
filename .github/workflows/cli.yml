@@ -34,8 +34,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install deps (root)
-        working-directory: .
+      - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: TypeScript check
         run: pnpm typecheck
@@ -83,8 +82,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install deps (root)
-        working-directory: .
+      - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
         run: pnpm build
@@ -118,8 +116,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install deps (root)
-        working-directory: .
+      - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
         run: pnpm build
@@ -151,8 +148,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install deps (root)
-        working-directory: .
+      - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
         run: pnpm build
@@ -185,8 +181,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
-      - name: Install deps (root)
-        working-directory: .
+      - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
         run: pnpm build
