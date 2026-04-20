@@ -82,6 +82,11 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+      - name: Configure npm auth (optional — unlocks @qvac restricted deps)
+        if: env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
@@ -116,6 +121,11 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+      - name: Configure npm auth (optional — unlocks @qvac restricted deps)
+        if: env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
@@ -148,6 +158,11 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+      - name: Configure npm auth (optional — unlocks @qvac restricted deps)
+        if: env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
@@ -181,6 +196,11 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+      - name: Configure npm auth (optional — unlocks @qvac restricted deps)
+        if: env.NPM_TOKEN != ''
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
