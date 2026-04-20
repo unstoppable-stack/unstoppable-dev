@@ -1023,12 +1023,26 @@ function variantsForPlatform(platform: Platform): Variant[] {
 
 async function runPlatform(
   platform: Platform,
-  opts: { level: number; skipBuild: boolean; variantFilter: string | null },
+  opts: {
+    level: number
+    skipBuild: boolean
+    variantFilter: string | null
+    // Per-variant skip list, e.g. ["expo-mobile/local-ai"]. Used by CI to
+    // exclude combos that need restricted package access or other credentials
+    // that aren't configured in the current environment.
+    skipPairs: Set<string>
+  },
 ): Promise<VariantResult[]> {
   const allVariants = variantsForPlatform(platform)
-  const variants = opts.variantFilter
+  const filtered = opts.variantFilter
     ? allVariants.filter((v) => v.name === opts.variantFilter)
     : allVariants
+  const variants = filtered.filter((v) => !opts.skipPairs.has(`${platform}/${v.name}`))
+
+  const skipped = filtered.filter((v) => opts.skipPairs.has(`${platform}/${v.name}`))
+  for (const v of skipped) {
+    log(`○ Skipping ${platform}/${v.name} (--skip-variant)`)
+  }
 
   if (variants.length === 0) {
     log(
@@ -1091,7 +1105,11 @@ function printAggregateSummary(
         if (s.skipped) continue
         if (s.passed) continue // only show failed steps in aggregate view
         console.log(`      ✗ ${s.name}`)
-        if (s.error) console.log(`        ${s.error.split('\n')[0].slice(0, 120)}`)
+        if (s.error) {
+          for (const line of s.error.split('\n').slice(0, 40)) {
+            console.log(`        ${line}`)
+          }
+        }
       }
     }
   }
@@ -1131,6 +1149,15 @@ async function main() {
     ? args[args.indexOf('--variant') + 1]
     : null
 
+  // Collect every `--skip-variant <platform>/<variant>` pair. Can be passed
+  // multiple times; each excludes one combo from the run.
+  const skipPairs = new Set<string>()
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--skip-variant' && i + 1 < args.length) {
+      skipPairs.add(args[i + 1])
+    }
+  }
+
   const skipBuild = args.includes('--skip-build')
 
   const levelsByPlatform: Record<string, number> = {}
@@ -1168,6 +1195,7 @@ async function main() {
         level,
         skipBuild,
         variantFilter,
+        skipPairs,
       })
       allResults.push(...results)
     } catch (err: any) {
@@ -1199,7 +1227,11 @@ async function main() {
         if (s.skipped) continue
         const si = s.passed ? '  ✓' : '  ✗'
         console.log(`    ${si} ${s.name}`)
-        if (s.error) console.log(`      ${s.error.split('\n')[0].slice(0, 100)}`)
+        if (s.error) {
+          for (const line of s.error.split('\n').slice(0, 40)) {
+            console.log(`      ${line}`)
+          }
+        }
       }
     }
     const passed = allResults.filter((r) => r.passed).length

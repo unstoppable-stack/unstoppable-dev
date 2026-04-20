@@ -27,9 +27,9 @@
     "test:e2e:desktop": "npx tsx e2e/test-scaffold.ts --platform pear-desktop",
     "test:e2e:cli": "npx tsx e2e/test-scaffold.ts --platform node-cli",
     "test:e2e:smoke": "npx tsx e2e/test-scaffold.ts --platform node-cli --level 2",
-    "test:e2e:ci": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all --level-expo-mobile 2",
+    "test:e2e:ci": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all --level-expo-mobile 2 --skip-variant expo-mobile/local-ai",
     "test:e2e:ci:desktop": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform pear-desktop --level 3",
-    "test:e2e:ci:mobile": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform expo-mobile --level 2",
+    "test:e2e:ci:mobile": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform expo-mobile --level 2 --skip-variant expo-mobile/local-ai",
     "test:e2e:ci:cli": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform node-cli --level 3"
   },
   "dependencies": {
