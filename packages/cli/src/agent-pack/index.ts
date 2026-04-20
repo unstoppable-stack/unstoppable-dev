@@ -181,7 +181,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # p2p, kv-storage, qvac, autobase
+us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -442,7 +442,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # p2p, kv-storage, qvac, autobase
+us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
 \`\`\`
 
 ## Core Principles
@@ -671,7 +671,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # p2p, kv-storage, qvac, autobase
+us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -881,7 +881,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # p2p, kv-storage, qvac, autobase
+us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Implementation Guides

@@ -44,14 +44,19 @@ export function gitignore(): GeneratedFile {
 }
 
 export function readme(opts: GeneratorOptions): GeneratedFile {
-  const features = opts.features.map(f => {
+  const baseFeatures = [
+    '- **P2P Networking** — Hyperswarm for peer discovery and connections',
+    '- **KV Storage** — Hyperbee for persistent local key-value data',
+  ]
+  const optionalFeatures = opts.features.map((f) => {
     switch (f) {
-      case 'p2p': return '- **P2P Networking** — Hyperswarm for peer discovery and connections'
-      case 'kv-storage': return '- **KV Storage** — Hyperbee for persistent key-value data'
-      case 'qvac': return '- **Local AI** — QVAC SDK for offline inference'
-      case 'autobase': return '- **Multi-writer Sync** — Autobase for collaborative data'
+      case 'local-ai':
+        return '- **Local AI** — QVAC SDK for offline inference with streaming chat'
+      case 'wallet':
+        return '- **Wallet** — WDK wallet integration (stub — coming soon)'
     }
-  }).join('\n')
+  })
+  const features = [...baseFeatures, ...optionalFeatures].join('\n')
 
   const platformName = {
     'pear-desktop': 'Pear Desktop',

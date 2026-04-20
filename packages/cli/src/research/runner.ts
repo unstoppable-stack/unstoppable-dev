@@ -261,7 +261,12 @@ export async function runExperiment(
   }
 
   for (const variantVars of variantCombos) {
-    const vars = { ...baseVars, ...variantVars, experiment_id: experiment.id, id: experiment.id }
+    const vars: Record<string, string> = {
+      ...baseVars,
+      ...variantVars,
+      experiment_id: experiment.id,
+      id: experiment.id,
+    }
 
     // Derived variables
     const rawFeatures = vars.features ?? ''

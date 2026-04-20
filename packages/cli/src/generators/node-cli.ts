@@ -1,6 +1,17 @@
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import { has, tsconfig, gitignore, readme, planningReadme } from './common.js'
 
+/**
+ * Node CLI generator.
+ *
+ * Base infrastructure (always included):
+ *   - Hyperswarm + Corestore (P2P networking)
+ *   - Hyperbee (local KV storage)
+ *
+ * Optional features:
+ *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
+ *   - wallet    → WDK stub
+ */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
     tsconfig(),
@@ -9,110 +20,87 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
     planningReadme(),
     packageJson(opts),
     entryPoint(opts),
+    swarmManager(),
+    storageManager(),
   ]
 
-  if (has(opts, 'p2p')) files.push(swarmManager())
-  if (has(opts, 'kv-storage')) files.push(storageManager())
-  if (has(opts, 'qvac')) files.push(aiManager())
-  if (has(opts, 'autobase')) files.push(autobaseManager())
+  if (has(opts, 'local-ai')) files.push(aiManager())
+  if (has(opts, 'wallet')) files.push(walletStub())
 
-  const untypedModules = collectUntypedModules(opts)
-  if (untypedModules.length > 0) files.push(typeDeclarations(untypedModules))
+  files.push(typeDeclarations(opts))
 
   return files
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  const deps: Record<string, string> = {}
+  const deps: Record<string, string> = {
+    hyperswarm: '^4.16.0',
+    corestore: '^7.6.0',
+    hyperbee: '^2.22.0',
+    b4a: '^1.7.3',
+    'hypercore-crypto': '^3.4.0',
+  }
+
   const devDeps: Record<string, string> = {
     '@types/node': '^20.0.0',
     typescript: '^5.0.0',
     tsx: '^4.0.0',
   }
 
-  if (has(opts, 'p2p')) {
-    Object.assign(deps, {
-      hyperswarm: '^4.16.0',
-      corestore: '^7.6.0',
-      b4a: '^1.7.3',
-      'hypercore-crypto': '^3.4.0',
-    })
-  }
-
-  if (has(opts, 'kv-storage')) {
-    Object.assign(deps, {
-      hyperbee: '^2.22.0',
-      corestore: '^7.6.0',
-    })
-  }
-
-  if (has(opts, 'qvac')) {
+  if (has(opts, 'local-ai')) {
     Object.assign(deps, { '@qvac/sdk': '^0.8.0' })
-  }
-
-  if (has(opts, 'autobase')) {
-    Object.assign(deps, {
-      autobase: '^7.27.0',
-      corestore: '^7.6.0',
-      hyperswarm: '^4.16.0',
-      hyperbee: '^2.22.0',
-    })
   }
 
   return {
     path: 'package.json',
-    content: JSON.stringify({
-      name: opts.projectName,
-      version: '0.1.0',
-      private: true,
-      type: 'module',
-      scripts: {
-        dev: 'tsx watch src/index.ts',
-        build: 'tsc',
-        start: 'node dist/index.js',
+    content: JSON.stringify(
+      {
+        name: opts.projectName,
+        version: '0.1.0',
+        private: true,
+        type: 'module',
+        scripts: {
+          dev: 'tsx watch src/index.ts',
+          build: 'tsc',
+          start: 'node dist/index.js',
+        },
+        dependencies: deps,
+        devDependencies: devDeps,
       },
-      dependencies: deps,
-      devDependencies: devDeps,
-    }, null, 2),
+      null,
+      2,
+    ),
   }
 }
 
 function entryPoint(opts: GeneratorOptions): GeneratedFile {
-  const imports: string[] = []
-  const initCalls: string[] = []
-  const cleanupCalls: string[] = []
+  const imports: string[] = [
+    `import Corestore from 'corestore'`,
+    `import { createSwarm } from './swarm-manager.js'`,
+    `import { createStorage } from './storage-manager.js'`,
+  ]
 
-  if (has(opts, 'p2p') || has(opts, 'kv-storage') || has(opts, 'autobase')) {
-    imports.push(`import Corestore from 'corestore'`)
-    initCalls.push(`const store = new Corestore('./storage')`)
-  }
+  const initCalls: string[] = [
+    `const store = new Corestore('./storage')`,
+    `const swarm = createSwarm(store)`,
+    `console.log('P2P swarm started')`,
+    `const db = await createStorage(store)`,
+    `console.log('Storage ready')`,
+  ]
 
-  if (has(opts, 'p2p')) {
-    imports.push(`import Hyperswarm from 'hyperswarm'`)
-    imports.push(`import { createSwarm } from './swarm-manager.js'`)
-    initCalls.push(`const swarm = createSwarm(store)`)
-    initCalls.push(`console.log('P2P swarm started')`)
-    cleanupCalls.push(`await swarm.destroy()`)
-  }
+  const cleanupCalls: string[] = [`await swarm.destroy()`]
 
-  if (has(opts, 'kv-storage')) {
-    imports.push(`import { createStorage } from './storage-manager.js'`)
-    initCalls.push(`const db = await createStorage(store)`)
-    initCalls.push(`console.log('Storage ready')`)
-  }
-
-  if (has(opts, 'qvac')) {
+  if (has(opts, 'local-ai')) {
     imports.push(`import { setupAI } from './ai-manager.js'`)
     initCalls.push(`const ai = await setupAI()`)
     initCalls.push(`console.log('AI ready')`)
     cleanupCalls.push(`await ai.cleanup()`)
   }
 
-  if (has(opts, 'autobase')) {
-    imports.push(`import { createAutobase } from './autobase-manager.js'`)
-    initCalls.push(`const base = await createAutobase(store)`)
-    initCalls.push(`console.log('Autobase key:', base.key.toString('hex'))`)
-    cleanupCalls.push(`await base.close()`)
+  if (has(opts, 'wallet')) {
+    imports.push(`import { setupWallet } from './wallet.js'`)
+    initCalls.push(`const wallet = await setupWallet()`)
+    initCalls.push(`console.log('Wallet ready (stub)')`)
   }
 
   return {
@@ -122,13 +110,13 @@ function entryPoint(opts: GeneratorOptions): GeneratedFile {
 async function main() {
   console.log('Starting ${opts.projectName}...')
 
-${initCalls.map(c => '  ' + c).join('\n')}
+${initCalls.map((c) => '  ' + c).join('\n')}
 
   console.log('${opts.projectName} is running. Press Ctrl+C to exit.')
 
   process.on('SIGINT', async () => {
     console.log('\\nShutting down...')
-${cleanupCalls.map(c => '    ' + c).join('\n')}
+${cleanupCalls.map((c) => '    ' + c).join('\n')}
     process.exit(0)
   })
 }
@@ -137,7 +125,7 @@ main().catch((err) => {
   console.error('Fatal error:', err)
   process.exit(1)
 })
-`
+`,
   }
 }
 
@@ -145,7 +133,6 @@ function swarmManager(): GeneratedFile {
   return {
     path: 'src/swarm-manager.ts',
     content: `import Hyperswarm from 'hyperswarm'
-import Corestore from 'corestore'
 import crypto from 'hypercore-crypto'
 
 export function createSwarm(store: any) {
@@ -166,7 +153,7 @@ export function joinTopic(swarm: any, topicName: string) {
   const discovery = swarm.join(topic, { server: true, client: true })
   return discovery
 }
-`
+`,
   }
 }
 
@@ -184,30 +171,62 @@ export async function createStorage(store: any) {
   await db.ready()
   return db
 }
-`
+`,
   }
 }
 
 function aiManager(): GeneratedFile {
   return {
     path: 'src/ai-manager.ts',
-    content: `import {
+    content: `/**
+ * AI manager using QVAC SDK.
+ *
+ * Set QVAC_MOCK=1 in the environment to use a stub implementation that
+ * echoes input back — useful for E2E tests where loading a real model
+ * is impractical.
+ */
+import {
   loadModel,
   completion,
   unloadModel,
   LLAMA_3_2_1B_INST_Q4_0,
 } from '@qvac/sdk'
 
+const MOCK_MODE = process.env.QVAC_MOCK === '1'
+
 let modelId: string | null = null
 
 export async function setupAI() {
+  if (MOCK_MODE) {
+    console.log('AI mock mode enabled — skipping model load')
+    modelId = 'mock-model'
+    return {
+      async chat(message: string) {
+        return {
+          async *tokenStream() {
+            const reply = \`Mock: \${message}\`
+            for (const ch of reply) {
+              yield ch
+              await new Promise((r) => setTimeout(r, 5))
+            }
+          },
+        }
+      },
+      async cleanup() {
+        modelId = null
+      },
+    }
+  }
+
   console.log('Loading AI model...')
   modelId = await loadModel({
     modelSrc: LLAMA_3_2_1B_INST_Q4_0,
     modelType: 'llm',
     onProgress: (progress: any) => {
       if (progress.percentage) {
-        process.stdout.write(\`\\rDownloading model: \${Math.round(progress.percentage)}%\`)
+        process.stdout.write(
+          \`\\rDownloading model: \${Math.round(progress.percentage)}%\`,
+        )
       }
     },
   })
@@ -225,80 +244,48 @@ export async function setupAI() {
     },
 
     async cleanup() {
-      if (modelId) {
+      if (modelId && modelId !== 'mock-model') {
         await unloadModel({ modelId })
-        modelId = null
       }
+      modelId = null
     },
   }
 }
-`
+`,
   }
 }
 
-const UNTYPED_MODULES: Record<string, string[]> = {
-  p2p: ['hyperswarm', 'corestore', 'hypercore-crypto'],
-  'kv-storage': ['hyperbee', 'corestore'],
-  autobase: ['autobase', 'corestore', 'hyperbee', 'hyperswarm'],
-}
-
-function collectUntypedModules(opts: GeneratorOptions): string[] {
-  const modules = new Set<string>()
-  for (const feature of opts.features) {
-    for (const mod of UNTYPED_MODULES[feature] ?? []) {
-      modules.add(mod)
-    }
-  }
-  return [...modules]
-}
-
-function typeDeclarations(modules: string[]): GeneratedFile {
-  const decls = modules.map((m) => `declare module '${m}'`).join('\n')
-  return { path: 'src/types.d.ts', content: decls + '\n' }
-}
-
-function autobaseManager(): GeneratedFile {
+function walletStub(): GeneratedFile {
   return {
-    path: 'src/autobase-manager.ts',
-    content: `import Autobase from 'autobase'
-import Hyperbee from 'hyperbee'
-
-export async function createAutobase(store: any, bootstrapKey?: Buffer) {
-  const base = new Autobase(store, bootstrapKey || null, {
-    open(store: any) {
-      return new Hyperbee(store.get('view'), {
-        keyEncoding: 'utf-8',
-        valueEncoding: 'json',
-        extension: false,
-      })
+    path: 'src/wallet.ts',
+    content: `/**
+ * Wallet integration — stub.
+ *
+ * The WDK SDK is not yet battle-tested as part of the Unstoppable Stack.
+ * This file is a placeholder; see the \`add-wallet\` agent skill for
+ * guided integration once WDK is ready.
+ */
+export async function setupWallet() {
+  return {
+    address: 'stub-address',
+    async getBalance() {
+      return 0
     },
-
-    async apply(nodes: any[], view: any, host: any) {
-      for (const node of nodes) {
-        if (node.value === null) continue
-        const op = JSON.parse(node.value.toString())
-
-        switch (op.type) {
-          case 'add-writer':
-            await host.addWriter(Buffer.from(op.key, 'hex'), { indexer: !!op.indexer })
-            break
-          case 'put':
-            await view.put(op.key, op.value)
-            break
-          case 'del':
-            await view.del(op.key)
-            break
-        }
-      }
-    },
-
-    ackInterval: 5000,
-    ackThreshold: 0,
-  })
-
-  await base.ready()
-  return base
-}
-`
   }
+}
+`,
+  }
+}
+
+const UNTYPED_MODULES = [
+  'hyperswarm',
+  'corestore',
+  'hyperbee',
+  'hypercore-crypto',
+  'b4a',
+]
+
+function typeDeclarations(_opts: GeneratorOptions): GeneratedFile {
+  const decls = UNTYPED_MODULES.map((m) => `declare module '${m}'`).join('\n')
+  return { path: 'src/types.d.ts', content: decls + '\n' }
 }

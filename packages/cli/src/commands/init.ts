@@ -126,6 +126,6 @@ function printSummary(result: any) {
   console.log(accent('    npm run dev'))
   console.log()
   console.log(muted('  Scaffold an app inside your project:'))
-  console.log(muted('    us scaffold app -p expo-mobile -n my-app -f p2p,qvac'))
+  console.log(muted('    us scaffold app -p expo-mobile -n my-app -f local-ai'))
   console.log()
 }

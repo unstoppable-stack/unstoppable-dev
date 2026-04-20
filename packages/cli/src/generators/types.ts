@@ -1,10 +1,18 @@
 export type Platform = 'pear-desktop' | 'expo-mobile' | 'node-cli'
 
+/**
+ * High-level, user-facing features.
+ *
+ * Base infrastructure (P2P networking via Hyperswarm + Corestore and local KV
+ * storage via Hyperbee) is always included — every Unstoppable app needs it
+ * and making them optional creates a misleading UX.
+ *
+ * Specialized patterns like Autobase (multi-writer sync) are handled via
+ * agent-pack skills, not scaffold flags.
+ */
 export type Feature =
-  | 'p2p'        // Hyperswarm + Corestore
-  | 'kv-storage' // Hyperbee
-  | 'qvac'       // Local AI inference
-  | 'autobase'   // Multi-writer sync
+  | 'local-ai' // QVAC SDK + streaming chat UI
+  | 'wallet'   // WDK wallet (stub — WDK not yet validated)
 
 export interface GeneratorOptions {
   projectName: string
@@ -20,14 +28,22 @@ export interface GeneratedFile {
 export type Generator = (opts: GeneratorOptions) => GeneratedFile[]
 
 export const PLATFORMS: { id: Platform; name: string; description: string }[] = [
-  { id: 'pear-desktop', name: 'Pear Desktop', description: 'P2P desktop app with worker bridge + React UI' },
-  { id: 'expo-mobile', name: 'Expo Mobile', description: 'iOS/Android with optional Bare worklet' },
+  { id: 'pear-desktop', name: 'Pear Desktop', description: 'P2P desktop app with worker bridge + HTML UI' },
+  { id: 'expo-mobile', name: 'Expo Mobile', description: 'iOS/Android with Bare worklet for native P2P' },
   { id: 'node-cli', name: 'Node.js CLI', description: 'P2P-enabled command line tool' },
 ]
 
 export const FEATURES: { id: Feature; name: string; description: string; platforms: Platform[] }[] = [
-  { id: 'p2p', name: 'P2P Networking', description: 'Hyperswarm + Corestore', platforms: ['pear-desktop', 'expo-mobile', 'node-cli'] },
-  { id: 'kv-storage', name: 'KV Storage', description: 'Hyperbee key-value database', platforms: ['pear-desktop', 'expo-mobile', 'node-cli'] },
-  { id: 'qvac', name: 'Local AI', description: 'QVAC SDK for local inference', platforms: ['pear-desktop', 'expo-mobile', 'node-cli'] },
-  { id: 'autobase', name: 'Multi-writer Sync', description: 'Autobase for collaborative data', platforms: ['pear-desktop', 'node-cli'] },
+  {
+    id: 'local-ai',
+    name: 'Local AI',
+    description: 'QVAC SDK for offline inference with streaming chat UI',
+    platforms: ['pear-desktop', 'expo-mobile', 'node-cli'],
+  },
+  {
+    id: 'wallet',
+    name: 'Wallet',
+    description: 'WDK wallet integration (stub — coming soon)',
+    platforms: ['pear-desktop', 'node-cli'],
+  },
 ]
