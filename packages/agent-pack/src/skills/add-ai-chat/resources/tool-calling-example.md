@@ -280,15 +280,20 @@ await unloadModel({ modelId })
 ```
 loadModel() config:           completion() params:
 ├── modelSrc                  ├── modelId
-├── modelType: 'llm'         ├── history
+├── modelType: 'llm'          ├── history
 ├── modelConfig:              ├── stream: true
 │   ├── ctx_size              ├── tools (definitions)
-│   ├── n_discarded           └── kvCache (session key)
-│   └── tools: true
-└── onProgress
+│   ├── n_discarded           ├── mcp (optional)
+│   ├── system_prompt         ├── kvCache (session key)
+│   └── tools: true           └── generationParams:
+└── onProgress                     ├── temp, top_p, top_k
+                                   ├── predict
+                                   └── seed, penalties
 ```
 
-**`completion()` does NOT accept `modelConfig`.**
+**`completion()` does NOT accept `modelConfig`.** Sampling params go in
+`generationParams` (strict, no extra keys). Tool handlers are dispatched with
+`.invoke()` — `.call()` was renamed in 0.9.
 
 ## Key Patterns Summary
 

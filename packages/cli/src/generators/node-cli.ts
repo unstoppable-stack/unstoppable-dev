@@ -11,6 +11,8 @@ import { has, tsconfig, gitignore, readme, planningReadme } from './common.js'
  * Optional features:
  *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
  *   - wallet    → WDK stub
+ *   - node-sync → register cores with the local Unstoppable Node for
+ *                 replication + backup via @unstoppable/node-client
  */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -26,6 +28,7 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
 
   if (has(opts, 'local-ai')) files.push(aiManager())
   if (has(opts, 'wallet')) files.push(walletStub())
+  if (has(opts, 'node-sync')) files.push(nodeSyncManager(opts))
 
   files.push(typeDeclarations(opts))
 
@@ -48,7 +51,15 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.8.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.9.0' })
+  }
+
+  if (has(opts, 'node-sync')) {
+    // The client library ships from this repo (packages/node-client). Once
+    // published the version range below will resolve from npm; until then
+    // `us init` with this feature expects the user to have either
+    // `npm link`ed the package locally or added a private registry.
+    Object.assign(deps, { '@unstoppable/node-client': '^0.1.0' })
   }
 
   return {
@@ -101,6 +112,14 @@ function entryPoint(opts: GeneratorOptions): GeneratedFile {
     imports.push(`import { setupWallet } from './wallet.js'`)
     initCalls.push(`const wallet = await setupWallet()`)
     initCalls.push(`console.log('Wallet ready (stub)')`)
+  }
+
+  if (has(opts, 'node-sync')) {
+    imports.push(`import { setupNodeSync } from './node-sync.js'`)
+    // Run in background so a missing/offline Node doesn't block startup.
+    // The helper logs its own progress and reconnection hints.
+    initCalls.push(`const nodeSync = setupNodeSync({ db })`)
+    cleanupCalls.push(`await nodeSync.close()`)
   }
 
   return {
@@ -255,6 +274,65 @@ export async function setupAI() {
   }
 }
 
+function nodeSyncManager(opts: GeneratorOptions): GeneratedFile {
+  return {
+    path: 'src/node-sync.ts',
+    content: `/**
+ * Unstoppable Node sync.
+ *
+ * Connects this app to the local Unstoppable Node (if one is running) so the
+ * Node replicates and backs up the app's Hyperbee. The app keeps working
+ * normally whether or not the Node is reachable — this is best-effort.
+ *
+ * Start the Node separately:   npx unstoppable-node
+ *
+ * To add more cores or drives later, call setupNodeSync with them in the
+ * \`cores\` / \`drives\` arrays.
+ */
+import { connectToNode } from '@unstoppable/node-client'
+
+interface NodeSyncOpts {
+  db: any // Hyperbee — we just need its \`core.key\` to register for replication
+}
+
+export function setupNodeSync({ db }: NodeSyncOpts) {
+  let client: any = null
+  let closed = false
+
+  async function connect() {
+    try {
+      client = await connectToNode({
+        appId: '${opts.projectName}',
+        appName: '${opts.projectName}',
+        cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+        timeout: 5_000,
+      })
+      console.log('Connected to Unstoppable Node — replication enabled')
+      client.on('disconnected', () => {
+        if (!closed) {
+          console.log('Node disconnected; will retry on next restart')
+        }
+      })
+    } catch (err: any) {
+      console.log(\`No Unstoppable Node found (\${err.message})\`)
+      console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
+    }
+  }
+
+  // Fire-and-forget — app doesn't block on this
+  connect()
+
+  return {
+    async close() {
+      closed = true
+      if (client) await client.close()
+    },
+  }
+}
+`,
+  }
+}
+
 function walletStub(): GeneratedFile {
   return {
     path: 'src/wallet.ts',
@@ -285,7 +363,9 @@ const UNTYPED_MODULES = [
   'b4a',
 ]
 
-function typeDeclarations(_opts: GeneratorOptions): GeneratedFile {
-  const decls = UNTYPED_MODULES.map((m) => `declare module '${m}'`).join('\n')
+function typeDeclarations(opts: GeneratorOptions): GeneratedFile {
+  const modules = [...UNTYPED_MODULES]
+  if (has(opts, 'node-sync')) modules.push('@unstoppable/node-client')
+  const decls = modules.map((m) => `declare module '${m}'`).join('\n')
   return { path: 'src/types.d.ts', content: decls + '\n' }
 }

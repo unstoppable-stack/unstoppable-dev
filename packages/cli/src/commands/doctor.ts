@@ -2,95 +2,270 @@ import { Command } from 'commander'
 import { execSync } from 'child_process'
 import chalk from 'chalk'
 
+/**
+ * us doctor
+ *
+ * Validates that the developer's machine has the tools required to scaffold
+ * and run unstoppable stack apps. Each check is scoped to one or more
+ * platforms; when `--platform <p>` is passed we only report checks relevant
+ * to that platform (so CI/sandbox machines don't get dinged for missing
+ * Xcode when they only target Node CLI).
+ *
+ * A check may include a `minVersion` (parsed as semver major.minor) — if the
+ * parsed runtime version is below that, the check is demoted to a warning
+ * even when the binary is found. This catches the common "Node 18 looks
+ * fine but Bare needs 20" footgun.
+ */
+
+type Platform = 'pear-desktop' | 'node-cli' | 'expo-mobile'
+
 interface Check {
   name: string
   command: string
-  versionPattern?: RegExp
   required: boolean
-  platforms?: string[]
+  // Platforms this check is meaningful for. Empty = always relevant.
+  platforms?: Platform[]
+  // Regex matching the binary's `--version` output. First capture group is
+  // the version string. Without it we just report the raw output.
+  versionPattern?: RegExp
+  // Minimum version as `[major, minor]`. The parsed version must be >= this.
+  minVersion?: [number, number]
+  // Actionable one-liner the user can run to install/fix this.
   hint?: string
 }
 
+// Platforms that exist in the CLI today. Keep in sync with
+// `src/generators/index.ts`.
+const ALL_PLATFORMS: Platform[] = ['pear-desktop', 'node-cli', 'expo-mobile']
+
 const CHECKS: Check[] = [
+  // --- Core toolchain (everyone needs these) ---
   {
     name: 'Node.js',
     command: 'node --version',
-    versionPattern: /v(\d+)\./,
     required: true,
-    hint: 'Install Node.js 20+ from https://nodejs.org',
+    versionPattern: /v(\d+\.\d+)/,
+    minVersion: [20, 0],
+    hint: 'Install Node.js 20+ LTS from https://nodejs.org',
   },
   {
     name: 'npm',
     command: 'npm --version',
     required: true,
-    hint: 'Comes with Node.js',
+    versionPattern: /(\d+\.\d+)/,
+    minVersion: [9, 0],
+    hint: 'Comes with Node.js. `npm install -g npm@latest` to update.',
   },
   {
     name: 'git',
     command: 'git --version',
     required: true,
+    versionPattern: /(\d+\.\d+)/,
     hint: 'Install git from https://git-scm.com',
   },
+
+  // --- Pear desktop ---
   {
     name: 'Pear CLI',
     command: 'pear --version',
     required: false,
-    platforms: ['pear-desktop', 'pear-terminal'],
+    platforms: ['pear-desktop'],
+    versionPattern: /(\d+\.\d+\.\d+)/,
     hint: 'npm i -g pear && export PATH="$HOME/Library/Application Support/pear/bin:$PATH"',
   },
+
+  // --- Expo mobile ---
   {
-    name: 'Expo CLI',
-    command: 'npx expo --version',
-    required: false,
-    platforms: ['expo-mobile'],
-    hint: 'Included via npx — requires expo in your project deps',
-  },
-  {
-    name: 'Xcode (xcrun)',
+    name: 'Xcode command-line tools',
     command: 'xcrun --version',
     required: false,
     platforms: ['expo-mobile'],
-    hint: 'Install Xcode from the Mac App Store',
+    versionPattern: /(\d+(?:\.\d+)?)/,
+    hint: 'Install Xcode from the Mac App Store, then `xcode-select --install`.',
+  },
+  {
+    name: 'iOS Simulator',
+    command: 'xcrun simctl list devices available | grep -q "iPhone"',
+    required: false,
+    platforms: ['expo-mobile'],
+    hint: 'Open Xcode → Settings → Platforms and install an iOS runtime.',
   },
   {
     name: 'CocoaPods',
     command: 'pod --version',
     required: false,
     platforms: ['expo-mobile'],
+    versionPattern: /(\d+\.\d+)/,
     hint: 'sudo gem install cocoapods',
   },
   {
-    name: 'TypeScript',
-    command: 'npx tsc --version',
+    name: 'Maestro (mobile E2E)',
+    command: 'maestro --version',
     required: false,
-    hint: 'npm i -g typescript',
+    platforms: ['expo-mobile'],
+    versionPattern: /(\d+\.\d+)/,
+    hint: 'curl -Ls "https://get.maestro.mobile.dev" | bash',
+  },
+
+  // --- Unstoppable Node (optional, enables P2P sync/backup for scaffolded apps) ---
+  {
+    name: 'Unstoppable Node',
+    // `unstoppable-node help` exits 0 and prints a banner; we parse the
+    // fixed "Unstoppable Node" string rather than a version number because
+    // the daemon doesn't ship `--version` yet.
+    command: 'unstoppable-node help',
+    required: false,
+    versionPattern: /(Unstoppable Node)/,
+    hint:
+      'Optional. Install with `npm i -g unstoppable-node` (or `npm link` from packages/node) to enable ' +
+      '`node-sync` feature in scaffolded apps.',
+  },
+
+  // --- Nice-to-haves (not platform-scoped) ---
+  {
+    name: 'TypeScript',
+    // Try a globally-installed tsc first (fast), fall back to npx with
+    // --no-install so we never trigger a surprise download during `doctor`.
+    command: 'tsc --version 2>/dev/null || npx --no-install tsc --version',
+    required: false,
+    versionPattern: /Version (\d+\.\d+)/,
+    hint: 'npm i -g typescript (optional — tsc comes via scaffolded projects)',
   },
 ]
+
+interface Result {
+  name: string
+  ok: boolean
+  version?: string
+  // True when the binary was found but below minVersion. UX: yellow warning
+  // instead of green check.
+  outdated?: boolean
+  platforms?: Platform[]
+  required: boolean
+  hint?: string
+}
+
+export function parseVersion(output: string, pattern: RegExp): string | null {
+  const m = output.match(pattern)
+  return m ? (m[1] ?? m[0]) : null
+}
+
+export function compareVersion(
+  versionStr: string,
+  min: [number, number],
+): boolean {
+  const m = versionStr.match(/(\d+)\.(\d+)/)
+  if (!m) return true
+  const major = parseInt(m[1]!, 10)
+  const minor = parseInt(m[2]!, 10)
+  if (major > min[0]) return true
+  if (major < min[0]) return false
+  return minor >= min[1]
+}
+
+function runCheck(check: Check): Result {
+  try {
+    const output = execSync(check.command, {
+      stdio: 'pipe',
+      timeout: 10_000,
+      shell: '/bin/bash',
+    })
+      .toString()
+      .trim()
+
+    // Some checks are shell expressions (e.g. `grep -q`) that exit 0 on
+    // success with no stdout — treat empty output as a bare pass.
+    const version = check.versionPattern
+      ? parseVersion(output, check.versionPattern)
+      : output || null
+
+    let outdated = false
+    if (check.minVersion && version) {
+      outdated = !compareVersion(version, check.minVersion)
+    }
+
+    return {
+      name: check.name,
+      ok: !outdated,
+      version: version ?? undefined,
+      outdated,
+      platforms: check.platforms,
+      required: check.required,
+      hint: outdated ? check.hint : undefined,
+    }
+  } catch {
+    return {
+      name: check.name,
+      ok: false,
+      platforms: check.platforms,
+      required: check.required,
+      hint: check.hint,
+    }
+  }
+}
+
+function summariseReadiness(results: Result[]): Record<Platform, boolean> {
+  const ready: Record<Platform, boolean> = {
+    'pear-desktop': true,
+    'node-cli': true,
+    'expo-mobile': true,
+  }
+  for (const r of results) {
+    if (r.ok) continue
+    // Core (platform-less) failures hit every platform; platform-scoped
+    // failures only matter when required.
+    const platforms = r.platforms ?? ALL_PLATFORMS
+    if (r.required) {
+      for (const p of platforms) ready[p] = false
+    }
+    // Platform-scoped optional misses still count against that platform
+    // (you can't `expo run:ios` without Xcode, even though Xcode is
+    // technically "optional" at the toolchain level).
+    if (!r.required && r.platforms) {
+      for (const p of r.platforms) ready[p] = false
+    }
+  }
+  return ready
+}
 
 export function registerDoctorCommand(program: Command) {
   program
     .command('doctor')
     .description('Check your development environment')
-    .option('-p, --platform <platform>', 'Check for a specific platform')
+    .option(
+      '-p, --platform <platform>',
+      'Only check tools needed for this platform (pear-desktop | node-cli | expo-mobile)',
+    )
     .option('--json', 'Output as JSON')
     .action(async (options) => {
-      const results: { name: string; ok: boolean; version?: string; hint?: string; required: boolean }[] = []
-
-      for (const check of CHECKS) {
-        if (options.platform && check.platforms && !check.platforms.includes(options.platform)) {
-          continue
-        }
-
-        try {
-          const output = execSync(check.command, { stdio: 'pipe', timeout: 10000 }).toString().trim()
-          results.push({ name: check.name, ok: true, version: output, required: check.required })
-        } catch {
-          results.push({ name: check.name, ok: false, hint: check.hint, required: check.required })
-        }
+      const platformFilter = options.platform as Platform | undefined
+      if (platformFilter && !ALL_PLATFORMS.includes(platformFilter)) {
+        console.error(
+          `Unknown platform "${platformFilter}". Expected one of: ${ALL_PLATFORMS.join(', ')}`,
+        )
+        process.exit(2)
       }
 
+      const scoped = CHECKS.filter((c) => {
+        if (!platformFilter) return true
+        if (!c.platforms) return true // core check
+        return c.platforms.includes(platformFilter)
+      })
+
+      const results = scoped.map(runCheck)
+      const readiness = summariseReadiness(results)
+
       if (options.json) {
-        console.log(JSON.stringify(results, null, 2))
+        console.log(
+          JSON.stringify(
+            {
+              results,
+              readiness,
+            },
+            null,
+            2,
+          ),
+        )
         return
       }
 
@@ -99,9 +274,20 @@ export function registerDoctorCommand(program: Command) {
       console.log()
 
       for (const r of results) {
-        const icon = r.ok ? chalk.green('  +') : r.required ? chalk.red('  x') : chalk.yellow('  -')
-        const version = r.ok && r.version ? chalk.gray(` (${r.version})`) : ''
-        const status = r.ok ? '' : r.required ? chalk.red(' REQUIRED') : chalk.yellow(' optional')
+        const icon = r.ok
+          ? chalk.green('  +')
+          : r.outdated
+            ? chalk.yellow('  !')
+            : r.required
+              ? chalk.red('  x')
+              : chalk.yellow('  -')
+        const version = r.version ? chalk.gray(` (${r.version})`) : ''
+        let status = ''
+        if (!r.ok) {
+          if (r.outdated) status = chalk.yellow(' OUTDATED')
+          else if (r.required) status = chalk.red(' REQUIRED')
+          else status = chalk.yellow(' optional')
+        }
         console.log(`${icon} ${r.name}${version}${status}`)
         if (!r.ok && r.hint) {
           console.log(chalk.gray(`      ${r.hint}`))
@@ -110,9 +296,26 @@ export function registerDoctorCommand(program: Command) {
 
       console.log()
 
-      const failed = results.filter((r) => !r.ok && r.required)
-      if (failed.length > 0) {
-        console.log(chalk.red(`  ${failed.length} required tool(s) missing`))
+      // Platform readiness summary — only when not filtering (otherwise the
+      // single-platform result is implicit in the individual check lines).
+      if (!platformFilter) {
+        console.log(chalk.bold('  Platform readiness'))
+        for (const p of ALL_PLATFORMS) {
+          const ok = readiness[p]
+          const icon = ok ? chalk.green('  +') : chalk.yellow('  -')
+          console.log(`${icon} ${p}${ok ? '' : chalk.gray('   missing tools above')}`)
+        }
+        console.log()
+      }
+
+      const requiredMissing = results.filter((r) => !r.ok && r.required && !r.outdated)
+      const outdatedRequired = results.filter((r) => r.outdated && r.required)
+
+      if (requiredMissing.length > 0) {
+        console.log(chalk.red(`  ${requiredMissing.length} required tool(s) missing`))
+        process.exit(1)
+      } else if (outdatedRequired.length > 0) {
+        console.log(chalk.yellow(`  ${outdatedRequired.length} required tool(s) outdated`))
         process.exit(1)
       } else {
         console.log(chalk.green('  All required tools found'))

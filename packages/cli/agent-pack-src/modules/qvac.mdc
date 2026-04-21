@@ -1,5 +1,5 @@
 ---
-description: QVAC SDK: local AI model inference for chat, vision, transcription, and tool calling
+description: QVAC SDK: local AI model inference for chat, vision, transcription, translation, TTS, OCR, RAG, tool calling, image generation, and custom plugins.
 alwaysApply: false
 ---
 
@@ -7,43 +7,80 @@ alwaysApply: false
 
 ## Overview
 
-QVAC SDK provides local AI inference across Node.js, Bare, and Expo, backed by
-Bare-native inference engines. It exposes a function-based JS API that loads
-models, runs inference, streams tokens, and manages model lifecycle.
+QVAC SDK (`@qvac/sdk`) provides local AI inference across Node.js, Bare, and
+Expo, backed by Bare-native inference engines. It exposes a function-based JS
+API that loads models, runs inference, streams tokens, manages model lifecycle,
+and now supports custom plugins, an OpenAI-compatible HTTP server, image
+generation, fine-tuning, and workspace-based RAG.
 
 ## Version Notes
 
-- Latest npm: `@qvac/sdk@0.8.0` (verified 2026-03-20).
-- Reference apps (workbench, qvac-health) originally on `^0.6.1`, migrating to `^0.8.0`.
-- SDK uses file-based configuration since 0.5.0 (see Configuration section).
+- Latest npm: `@qvac/sdk@0.9.0` (verified 2026-04-20).
+- Companion CLI: `@qvac/cli@^0.1` provides `qvac serve openai` (HTTP server)
+  and `qvac bundle sdk` (tree-shaken Bare worker bundler).
+- Minimum runtimes: Node.js ≥ 22.17, Bare ≥ 1.24, Expo ≥ 54.
+- Reference apps (workbench, qvac-health) in the process of migrating from
+  `^0.6.1`/`^0.8.0` to `^0.9.0`.
+- File-based configuration (`qvac.config.*`) since 0.5.0 — see Configuration.
+
+### 0.5 → 0.9 migration cheatsheet
+
+| Change | Before | After |
+|--------|--------|-------|
+| Config | `await setConfig({...})` | Create `qvac.config.json` |
+| Health check | `await ping()` | `await heartbeat()` (supports `delegate`) |
+| Logging stream | `loggingStream({ modelId })` | `loggingStream({ id })` |
+| Global log level | `setGlobalLogLevel(...)` | `"loggerLevel"` in config |
+| Tool handler dispatch | `await call.call()` | `await call.invoke()` |
+| Sampling params | in `modelConfig` at load | `generationParams` in `completion()` |
+| Multimodal input | base64 `image_url` | `attachments: [{ path }]` on history message |
+| RAG | single flat embeddings store | workspace-scoped (`ragIngest`, `ragSearch`, etc.) |
 
 ## Installation
 
 ```bash
 npm install @qvac/sdk
+# Optional: CLI for HTTP server + SDK bundling
+npm install -D @qvac/cli
 ```
 
 ## Configuration
 
-Since SDK 0.5.0, QVAC uses file-based configuration instead of `setConfig()`.
-Create a config file in your project root:
+Create `qvac.config.json` (or `.js` / `.ts` with `QvacConfig` type) at the
+project root. Config is loaded once during SDK initialization and is immutable
+for the lifetime of the instance.
 
 ```json
-// qvac.config.json
 {
-  "cacheDirectory": "/custom/cache/path",
-  "swarmRelays": ["relay-key-1", "relay-key-2"]
+  "cacheDirectory": "/absolute/path/to/.qvac/models",
+  "loggerLevel": "info",
+  "loggerConsoleOutput": true,
+  "swarmRelays": ["relay-key-1", "relay-key-2"],
+  "httpDownloadConcurrency": 3,
+  "plugins": ["llm-llamacpp", "embed-llamacpp"],
+  "deviceDefaults": [
+    {
+      "name": "Samsung force CPU",
+      "match": { "platform": "android", "deviceBrand": "samsung" },
+      "defaults": { "llm": { "device": "cpu" } }
+    }
+  ],
+  "serve": {
+    "models": {
+      "my-llm": {
+        "model": "QWEN3_600M_INST_Q4",
+        "default": true,
+        "preload": true,
+        "config": { "ctx_size": 8192, "tools": true }
+      }
+    }
+  }
 }
 ```
 
-Config resolution order:
-1. `QVAC_CONFIG_PATH` environment variable (explicit path)
-2. Project root auto-discovery (`qvac.config.{ts,js,json}`)
-3. SDK defaults
-
-Supported formats: `.json`, `.js` (`export default`), `.ts` (typed `QvacConfig`).
-
-> **Migration**: Remove all `setConfig()` calls — they no longer exist.
+Resolution order: `QVAC_CONFIG_PATH` env var → project root auto-discovery →
+SDK defaults. Config is **required** when using the HTTP server; optional for
+SDK-only use.
 
 ## Quick Start
 
@@ -75,13 +112,20 @@ await unloadModel({ modelId });
 
 ## Core Concepts
 
-- Bare worker: non-Bare runtimes spawn a Bare worker on first SDK call.
-- Model registry: models can be loaded from local paths, HTTP URLs, or
-  Hyperdrive (`pear://`).
-- Streaming: `completion()` and `translate()` return `tokenStream` async
-  generators.
-- KV cache: `kvCache: true` auto-generates a cache key; a string key pins a
+- **Bare worker singleton**: non-Bare runtimes spawn one Bare worker lazily on
+  first SDK call. One worker per application, not per model. `close()`
+  explicitly tears it down.
+- **Model registry**: constants like `LLAMA_3_2_1B_INST_Q4_0` map to preconfigured
+  model sources. You can also pass local paths, HTTP(S) URLs, Hyperdrive
+  (`pear://`) URLs, or registry URLs.
+- **Streaming**: `completion()` and `translate()` return `tokenStream` async
+  generators plus parallel `toolCallStream` for live tool calls.
+- **Plugin system**: each built-in model type (llm, whisper, parakeet, embeddings,
+  nmt, tts, ocr) ships as a plugin. Tree-shake via `qvac.config.plugins` or add
+  your own with `definePlugin()`.
+- **KV cache**: `kvCache: true` auto-generates a cache key; a string key pins a
   session. When a cache exists, only the last message is sent to the model.
+  Cache files live at `{kvCacheKey}/{modelId}/{configHash}.bin`.
 
 ## Model Selection Guide
 
@@ -90,25 +134,21 @@ await unloadModel({ modelId });
 | Tool calling / function calling | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` or `QWEN_3_1_7B_INST_Q4` | Tool-calling tuned model or strong structured output. |
 | General chat (small)            | `LLAMA_3_2_1B_INST_Q4_0`                                       | Small footprint, fast startup.                        |
 | General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
-| Code generation                 | _No explicit `CODER_\*` constants in 0.8.0\_                   | Use Qwen instruct models or check newer SDKs.         |
 | Highest quality (desktop)       | `GPT_OSS_20B_INST_Q4_K_M`                                      | ~12GB, desktop only. Non-standard tool call format.   |
-| Mobile/small footprint          | `QWEN3_600M_INST_Q4` or `LLAMA_3_2_1B_INST_Q4_0`                  | Smaller GGUFs fit mobile storage/ram budgets.         |
-| Multimodal (vision/video)       | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
+| Mobile/small footprint          | `QWEN3_600M_INST_Q4` or `LLAMA_3_2_1B_INST_Q4_0`                | Smaller GGUFs fit mobile storage/ram budgets.         |
+| Multimodal (vision)             | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
 | Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
-| Speech-to-text                  | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
-| Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | NMT models for specific language pairs.               |
+| Speech-to-text (Whisper)        | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
+| Speech-to-text (Parakeet)       | NVIDIA Parakeet TDT/CTC/Sortformer                             | Lower latency option vs Whisper.                      |
+| Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | Opus / IndicTrans / Bergamot engines available.       |
+| Image generation                | FLUX2-Klein (diffusion)                                        | Local text-to-image.                                  |
+| TTS                             | Supertonic or Chatterbox engines                               | Voice synthesis with optional cloning.                |
 
-Verified model constants exported by `@qvac/sdk@0.8.0` (subset):
-`LLAMA_3_2_1B_INST_Q4_0`, `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K`,
-`QWEN3_600M_INST_Q4`, `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`,
-`QWEN_3_8B_INST_Q4_K_M`, `GPT_OSS_20B_INST_Q4_K_M`,
-`SALAMANDRATA_2B_INST_Q8`, `SMOLVLM2_2_500M_MULTIMODAL_Q8_0`,
-`MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0`, `GTE_LARGE_FP16`,
-`EMBEDDINGGEMMA_300M_Q4_0`, `WHISPER_LARGE_V3_TURBO`, `WHISPER_TINY`,
-`VAD_SILERO_5_1_2`, `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`.
-
-> **Note**: If a model constant is not listed here, treat it as unverified for
-> 0.8.0 and prefer explicit `modelSrc` strings or check newer SDK exports.
+Use `modelRegistryList()`, `modelRegistrySearch()`, and `modelRegistryGetModel()`
+to enumerate models at runtime; use `getModelByName()`, `getModelBySrc()`, or
+`getModelByPath()` to resolve metadata for a known model. Treat any constant not
+listed above as unverified for 0.9.0 and prefer explicit `modelSrc` strings or
+the registry API.
 
 ## Context Window Limits
 
@@ -121,39 +161,122 @@ or external docs for exact limits.
 
 ## API Reference
 
-- `loadModel({ modelSrc, modelType, modelConfig?, onProgress? }): Promise<string>` —
-  loads a model and returns `modelId`. `modelConfig` accepts `ctx_size`,
-  `n_discarded`, `tools: true`, and other llama.cpp params.
-  - **`tools: true`**: Always set this for tool-calling models. Activates the model's
-    native tool-calling template. The model can still generate free text — it is NOT
-    constrained to JSON-only output. Without it, tools silently don't work.
-- `completion({ modelId, history, stream, tools?, kvCache? })` — returns
-  `{ tokenStream, toolCallStream, toolCalls, stats, text }`.
-  **Does NOT accept `modelConfig`** — set that at load time.
-  - `tokenStream`: `AsyncIterable<string>` — streaming tokens
-  - `toolCallStream`: `AsyncIterable<{ type: 'toolCall', call: {...} }>` — real-time tool call events
-  - `toolCalls`: `Promise<ToolCall[]>` — all parsed tool calls
-  - `stats`: `Promise<{ timeToFirstToken, tokensPerSecond, cacheTokens }>` — performance metrics
-  - `text`: `Promise<string>` — full response text
-  - Process `tokenStream` and `toolCallStream` in **parallel** via `Promise.all`
-- `downloadAsset({ assetSrc, seed, onProgress })` downloads without loading.
-- `deleteCache({ kvCacheKey | all })` removes KV caches.
-  ```ts
-  import { deleteCache } from '@qvac/sdk'
-  await deleteCache({ kvCacheKey: sessionId })
-  ```
-- `embed`, `translate`, `transcribe`, `textToSpeech`, `ocr` for modality tasks.
-- `ragChunk`, `ragSaveEmbeddings`, `ragSearch`, `ragCloseWorkspace` for RAG.
-- `getModelInfo()` for registry metadata.
-- `loggingStream()` for model/SDK logs.
-- `startQVACProvider()` / `stopQVACProvider()` for delegated inference.
+### Lifecycle
+
+- `loadModel({ modelSrc, modelType, modelConfig?, seed?, delegate?, onProgress?, logger? })`
+  — loads a model and returns `modelId`. Overload: pass `{ modelId, modelType, modelConfig }`
+  to hot-reload config on an already-loaded model (Whisper only in 0.9).
+- `unloadModel({ modelId })` — release a single model.
+- `close()` — shut down the worker and RPC client.
+- `heartbeat({ delegate? })` — health probe; replaces `ping()` as of 0.8.1.
+  With `delegate`, probes a remote provider before load.
+- `downloadAsset({ assetSrc, seed?, onProgress? })` — download without loading.
+- `cancel({ operation, modelId?, downloadKey?, delegate? })` — cancel an active
+  inference, download, or delegated operation.
+- `deleteCache({ all | kvCacheKey, modelId? })` — remove KV cache files.
+
+### Inference
+
+- `completion({ modelId, history, stream?, tools?, mcp?, kvCache?, generationParams? })`
+  returns `{ tokenStream, toolCallStream, toolCalls, stats, text }`.
+  - `history[].attachments: [{ path }]` attaches images/media for multimodal
+    models — **does not use base64 data URLs**.
+  - `tools` accepts Zod-schema `ToolInput[]` (with optional `handler`) or full
+    JSON-schema `Tool[]`.
+  - `mcp: [{ client, includeResources? }]` integrates MCP (Model Context Protocol)
+    clients as tools. The MCP client is duck-typed — `listTools`, `callTool`,
+    and optional `listResources`, `readResource`.
+  - `generationParams` is strict: `temp`, `top_p`, `top_k`, `predict`, `seed`,
+    `frequency_penalty`, `presence_penalty`, `repeat_penalty`. No extra keys
+    allowed. **Do not put these in `modelConfig`**.
+  - `kvCache: true` → auto key; `kvCache: "session-id"` → manual key.
+  - `toolCalls` resolves to `ToolCallWithCall[]`. When a handler is provided,
+    each entry exposes `await toolCall.invoke()` (**renamed from `.call()` in 0.9**).
+- `embed({ modelId, text })` — `text: string` → `number[]`; `text: string[]` →
+  `number[][]`. Batch size defaults to 1024.
+- `transcribe({ modelId, audio })` / `transcribeStream({ modelId, audio })` —
+  speech-to-text.
+- `translate({ modelId, text, ... })` — NMT over Opus / Bergamot / IndicTrans.
+- `textToSpeech({ modelId, text })` — TTS via Chatterbox or Supertonic engines.
+- `ocr({ modelId, image })` — extract text from images.
+
+### RAG (workspace-based in 0.9)
+
+All RAG functions accept an optional `workspace: string` (defaults to
+`"default"`). Workspaces give you isolated per-topic stores.
+
+- `ragIngest({ modelId, documents, workspace?, chunkOpts?, onProgress? })` —
+  full pipeline: chunk → embed → save. Creates the workspace if missing.
+- `ragSearch({ modelId, query, topK?, workspace? })` — returns `[{ id, content, score }]`.
+- `ragChunk({ documents, chunkOpts })` + `embed()` + `ragSaveEmbeddings({ documents, workspace? })`
+  — segregated flow when you want control over each step.
+- `ragReindex({ workspace?, onProgress? })` — rebalance HyperDB centroids with
+  k-means. Needs ≥16 docs by default.
+- `ragDeleteEmbeddings({ ids, workspace? })` — remove specific docs.
+- `ragListWorkspaces()` — `[{ name, open }]`.
+- `ragCloseWorkspace({ workspace?, deleteOnClose? })` — release Corestore/DB
+  handles (data remains on disk unless `deleteOnClose: true`).
+- `ragDeleteWorkspace({ workspace })` — permanently delete a closed workspace.
+
+### Model registry
+
+- `modelRegistryList()` / `modelRegistrySearch({ query })` /
+  `modelRegistryGetModel({ name })` — enumerate / search the distributed
+  model registry.
+- `getModelByName({ name })` / `getModelBySrc({ src })` / `getModelByPath({ path })`
+  — resolve a model constant / source / local path to its descriptor.
+- `getModelInfo({ modelId })` — metadata for a loaded model.
+
+### Plugin system
+
+- `definePlugin({ modelType, displayName, addonPackage, createModel, handlers, ... })`
+  — define a custom model type. Each handler uses `defineHandler({ requestSchema,
+  responseSchema, streaming, handler })` with Zod schemas.
+- `invokePlugin({ modelId, handler, params })` / `invokePluginStream(...)` —
+  call a custom plugin handler. `invokePluginStream` yields chunks until a
+  `done` frame.
+- Register plugins in `qvac.config.plugins` (array of specifiers). Built-in
+  plugins: `llm-llamacpp`, `embed-llamacpp`, `transcription-whispercpp`,
+  `transcription-parakeet`, `translation-nmtcpp`, `tts-onnx`, `ocr-onnx`,
+  `diffusion-cpp`.
+
+### Delegated inference (P2P)
+
+- `startQVACProvider({ topic, keyPair? })` / `stopQVACProvider()` — serve models
+  to peers over Hyperswarm.
+- `loadModel({ ..., delegate: { topic, providerPublicKey, timeout?,
+  healthCheckTimeout?, fallbackToLocal?, forceNewConnection? } })` — load a
+  model from a remote provider. When `healthCheckTimeout` is set, the SDK RPC-pings
+  the provider before attempting load.
+- `cancel({ ..., delegate: {...} })` — cancel a delegated download.
+
+### Observability
+
+- `loggingStream({ id })` — stream logs for a model or the SDK (`"sdk"`,
+  `"llamacpp:llm"`, etc.). Property is `id`, not `modelId`.
+- `getLogger(name)` — per-namespace logger with `.setLevel(...)`.
+- `profiler.enable({ ... })` / `profiler.export(...)` — ring-buffer timing
+  metrics across load, inference, delegation. Per-call profiling via
+  `rpcOptions.profiling`.
+
+### HTTP server & bundling (via `@qvac/cli`)
+
+- `qvac serve openai` — start an OpenAI-compatible REST server on
+  `http://localhost:11434/v1/`. Endpoints: `/v1/models`, `/v1/chat/completions`
+  (SSE streaming + tool calls), `/v1/embeddings`, `/v1/audio/transcriptions`.
+  Requires `serve.models` in `qvac.config.*`.
+- `qvac bundle sdk` — produce a tree-shaken Bare worker bundle with only the
+  plugins your `qvac.config.*` declares.
 
 ## Integration with Other Modules
 
-- Pear: run inference in a Pear terminal "engine" and stream tokens to the UI
-  via `pear-pipe`.
-- Bare: inference runs in-process; ideal for embedded/mobile worklets.
-- Hyperswarm: delegated inference uses P2P topics and provider public keys.
+- **Pear**: run inference in a Pear terminal "engine" and stream tokens to the
+  UI via `pear-pipe`. The SDK cannot run in the renderer; see `setup-pear-desktop`.
+- **Bare**: inference runs in-process; ideal for embedded worklets. Note: on
+  Expo mobile, keep `@qvac/sdk` in the RN runtime, **not** the Bare worklet.
+- **Hyperswarm**: delegated inference uses P2P topics and provider public keys.
+- **Hyperdrive**: models can be loaded from `pear://` URLs; `seed: true` reseeds
+  them after download.
 
 ## Common Patterns
 
@@ -171,18 +294,56 @@ const modelId = await loadModel({
 const modelId = await loadModel({
   modelSrc: LLAMA_3_2_1B_INST_Q4_0,
   modelType: "llm",
-  delegate: { topic, providerPublicKey },
+  delegate: { topic, providerPublicKey, healthCheckTimeout: 2000 },
 });
+```
+
+```js
+// Multimodal via attachments (not base64 data URLs)
+const result = completion({
+  modelId,
+  history: [
+    {
+      role: "user",
+      content: "What's in this image?",
+      attachments: [{ path: "/absolute/path/to/photo.jpg" }],
+    },
+  ],
+  stream: true,
+});
+```
+
+```js
+// Tool calling with Zod schema and invoke()
+import { z } from "zod";
+
+const result = completion({
+  modelId,
+  history,
+  tools: [{
+    name: "get_weather",
+    description: "Get current weather",
+    parameters: z.object({ city: z.string() }),
+    handler: async ({ city }) => ({ temp: 22, city }),
+  }],
+  generationParams: { temp: 0.7 },
+});
+
+for (const call of await result.toolCalls) {
+  if (call.invoke) await call.invoke(); // was .call() before 0.9
+}
 ```
 
 ## Dependency Notes
 
-- **Zod v4 required**: `@qvac/sdk` internally depends on Zod v4. If your project
-  installs `zod@^3`, the `ToolInput` types are incompatible and produce confusing
-  TypeScript errors. Always install `zod@^4`:
-  ```bash
-  pnpm add zod@^4
-  ```
+- **Zod v4 required**: `@qvac/sdk` depends on Zod v4. If your project installs
+  `zod@^3`, `ToolInput` types are incompatible and produce confusing TypeScript
+  errors. Always install `zod@^4`.
+- **Expo peer deps**: `@qvac/sdk` declares many `bare-*` peers. Newer npm
+  (v7+) doesn't auto-install peers, and `bare-pack` traces imports at build
+  time, so every transitive bare module must be physically present under
+  `node_modules`. See `packages/cli/src/generators/expo-mobile.ts` for the
+  full pinned list.
 
 ## Qwen 3 `<think>` Token Handling
 
@@ -206,17 +367,19 @@ response.
 
 ## Context Management
 
-**IMPORTANT**: `completion()` does NOT accept `modelConfig`. Context settings
-go in `loadModel()`, caching goes in `completion()`:
+Context settings go in `loadModel().modelConfig`. Sampling goes in
+`completion().generationParams`. Caching goes in `completion().kvCache`.
 
-- **`modelConfig.ctx_size`** (in `loadModel()`): Set the context window size.
-- **`modelConfig.n_discarded`** (in `loadModel()`): Sliding window — auto-discard
-  oldest `N` tokens when context fills. Rule of thumb: `Math.floor(ctx_size / 10)`.
-  Eliminates manual history trimming.
-- **`kvCache: true`** (in `completion()`): Auto-generates a cache key.
-- **`kvCache: "session-id"`** (in `completion()`): Manual session key. Recommended.
-- **`deleteCache()`**: Remove cache files. Call when a conversation ends or model
-  changes.
+| Parameter | Goes in | Purpose |
+| --------- | ------- | ------- |
+| `ctx_size` | `loadModel().modelConfig` | Context window size |
+| `n_discarded` | `loadModel().modelConfig` | Sliding window (rule of thumb: `ctx_size / 10`) |
+| `tools: true` | `loadModel().modelConfig` | Enable native tool-calling template |
+| `system_prompt` | `loadModel().modelConfig` | System prompt |
+| `temp`, `top_p`, `top_k`, `predict`, `seed` | `completion().generationParams` | Per-call sampling |
+| `kvCache` | `completion().kvCache` | Session caching |
+| tool definitions | `completion().tools` | Per-call tools |
+| history | `completion().history` | Messages |
 
 ```ts
 // Context config at LOAD time
@@ -226,11 +389,18 @@ const modelId = await loadModel({
   modelConfig: {
     ctx_size: 4096,
     n_discarded: Math.floor(4096 / 10),
+    tools: true,
   },
 })
 
-// Cache key at COMPLETION time
-const result = completion({ modelId, history, stream: true, kvCache: sessionId })
+// Sampling + cache at COMPLETION time
+const result = completion({
+  modelId,
+  history,
+  stream: true,
+  kvCache: sessionId,
+  generationParams: { temp: 0.7, top_p: 0.9 },
+})
 ```
 
 ## Pitfalls & Gotchas
@@ -240,6 +410,11 @@ const result = completion({ modelId, history, stream: true, kvCache: sessionId }
   without it, tools silently don't work. The model can still generate free text.
 - **Do NOT create a "respond" or "reply" tool** — the model generates free text
   naturally with `tools: true` enabled.
+- **Use `.invoke()` on tool calls**, not `.call()` — renamed in 0.9.
+- **Put sampling params in `generationParams`**, not `modelConfig` — strict
+  schema, extra keys throw `INVALID_TOOLS_ARRAY`/validation errors.
+- **Multimodal: use `attachments: [{ path }]`** on history messages. Passing
+  base64 `image_url` from the old OpenAI-style API no longer works.
 - **Process `tokenStream` and `toolCallStream` in parallel** via `Promise.all`,
   not sequentially.
 - **Filter `<tool_call>` blocks from visible output** — the raw token stream
@@ -247,7 +422,7 @@ const result = completion({ modelId, history, stream: true, kvCache: sessionId }
 - **Use JSON repair in fallback parsing** — small models (3-4B) produce slightly
   malformed JSON in tool calls.
 - LLM models require `*.gguf` (llama.cpp). OCR/TTS use ONNX (`*.onnx`), NMT uses
-  `*.bin`.
+  `*.bin`. Diffusion uses `*.gguf`.
 - Expo requires physical devices (no emulators) for QVAC LLM inference.
 - On Linux, Vulkan runtime and compatible GPU drivers are required for GPU
   inference.
@@ -255,16 +430,24 @@ const result = completion({ modelId, history, stream: true, kvCache: sessionId }
   `n_discarded` for automatic sliding window, or `kvCache` + manual trimming.
 - **Qwen 3 models emit `<think>` blocks** — filter or suppress with `/no_think`.
 - **1B models are unreliable for tool calling** — use 3B+ minimum, 7B recommended.
+- **RAG**: default workspace is `"default"`. For multi-topic apps, use named
+  workspaces and call `ragCloseWorkspace()` when switching topics to free memory.
+- **Heartbeat, not ping**: `ping()` was removed in 0.8.1. Use `heartbeat()`.
 
 ## Error Handling Patterns
 
 - Context overflow: trim older messages and retry the call.
 - Download failures: surface progress errors and provide retry logic.
 - Shutdown races: call `unloadModel()` and wait for streams to finish before
-  exit.
+  exit; `close()` explicitly tears down the worker.
+- Error codes live in `SDK_CLIENT_ERROR_CODES` and `SDK_SERVER_ERROR_CODES`.
+  Common ones: `MODEL_LOAD_FAILED`, `MODEL_NOT_LOADED`, `PLUGIN_NOT_FOUND`,
+  `CONFIG_FILE_NOT_FOUND`, `DELEGATE_CONNECTION_FAILED`.
 
 ## Resources
 
-- https://github.com/tetherto/qvac-sdk
-- https://github.com/tetherto/qvac-docs
-- https://github.com/tetherto/qvac-examples
+- https://docs.qvac.tether.io/ — official docs
+- https://docs.qvac.tether.io/llms-full.txt — consolidated plaintext dump
+- https://github.com/tetherto/qvac — monorepo (SDK lives in `packages/sdk`)
+- `research/qvac-llms-full.txt` — snapshot in this repo
+- `research/qvac-examples/` — runnable examples for every capability

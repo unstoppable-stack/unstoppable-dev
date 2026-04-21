@@ -181,6 +181,41 @@ describe('expo-mobile generator', () => {
     })
   })
 
+  describe('node-sync feature', () => {
+    it('adds @unstoppable/node-client and hyperswarm deps', () => {
+      const files = fileMap(make(['node-sync']))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.dependencies['@unstoppable/node-client']).toBeDefined()
+      expect(pkg.dependencies.hyperswarm).toBeDefined()
+    })
+
+    it('bare worklet exposes node-sync commands 7 and 8', () => {
+      const files = fileMap(make(['node-sync']))
+      const bare = files['bare/index.js']
+      expect(bare).toContain('case 7:')
+      expect(bare).toContain('case 8:')
+      expect(bare).toContain("import('@unstoppable/node-client')")
+      expect(bare).toContain('connectToNode')
+    })
+
+    it('index shows node-sync section and auto-connects on ready', () => {
+      const files = fileMap(make(['node-sync']))
+      const index = files['app/index.tsx']
+      expect(index).toContain('testID="node-sync-section"')
+      expect(index).toContain('nodeStatus')
+      expect(index).toContain('rpcRequest(7)')
+      expect(index).toContain('useEffect')
+    })
+
+    it('bare variant does NOT include node-client', () => {
+      const files = fileMap(make([]))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.dependencies['@unstoppable/node-client']).toBeUndefined()
+      expect(files['bare/index.js']).not.toContain('@unstoppable/node-client')
+      expect(files['app/index.tsx']).not.toContain('testID="node-sync-section"')
+    })
+  })
+
   describe('storage directory naming', () => {
     it('uses project name in storage directory', () => {
       const files = fileMap(make([]))

@@ -1,10 +1,19 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-04-15
+> **Last updated:** 2026-04-21
 
 ---
 
 ## Recently Completed
+
+- **2026-04-21**: **Unstoppable Node usability pass** — `packages/node/`, `packages/node-client/`, `packages/cli/`
+  - **`nodeHello` handshake**: Node greets every peer on connect with `{ protocolVersion, nodePublicKey, services: { data, files, ai } }`. Clients wait for the greeting before pairing (2s timeout drops non-Node peers silently) and expose the services via `client.services` + `nodeHello` event.
+  - **Hyperdrive replication**: `ReplicationEngine.addDrive()` opens the drive against the shared Corestore (underlying cores replicate for free through the existing `store.replicate(socket)` handler), joins its discoveryKey on the replication swarm, and tracks it in `getDriveStats()`. Drives now persist across node restarts alongside cores.
+  - **`connectToNode({ requireServices })`**: Apps can declare "I need `files` too" and fail fast if the Node doesn't offer it — useful for AI-delegation later.
+  - **`doctor` check for `unstoppable-node`**: Flags the daemon as optional and explains the install hint.
+  - **`node-cli` generator: opt-in `node-sync` feature flag**: Scaffolded CLIs get `src/node-sync.ts` that calls `connectToNode` against the local Node in the background; README explains how to run the daemon. Pear Desktop + Expo Mobile wiring pending.
+  - **Tests**: 39/39 node tests pass (added nodeHello + service-gating + drive-replication + drive-persistence); 191/191 CLI tests pass (added 6 node-cli generator tests for node-sync).
+  - Files: `planning/status/node/README.md` tracks phase-level progress.
 
 - **2026-04-15**: **Scaffold E2E testing + feature simplification** — `packages/cli/`
   - Feature flags simplified: `p2p`, `kv-storage`, `autobase` removed (P2P+KV now base infra, autobase becomes a skill); `qvac` renamed to `local-ai`; new `wallet` flag added as stub

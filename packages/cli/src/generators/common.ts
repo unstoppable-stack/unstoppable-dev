@@ -54,6 +54,8 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
         return '- **Local AI** — QVAC SDK for offline inference with streaming chat'
       case 'wallet':
         return '- **Wallet** — WDK wallet integration (stub — coming soon)'
+      case 'node-sync':
+        return '- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding'
     }
   })
   const features = [...baseFeatures, ...optionalFeatures].join('\n')
@@ -63,6 +65,23 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
     'expo-mobile': 'Expo Mobile (iOS/Android)',
     'node-cli': 'Node.js CLI',
   }[opts.platform]
+
+  const nodeSyncSection = opts.features.includes('node-sync')
+    ? `
+
+## Connecting to the Unstoppable Node
+
+This app registers its data with a local Unstoppable Node for P2P
+replication and backup. To enable sync, run the node in a separate
+terminal:
+
+\`\`\`bash
+npx unstoppable-node
+\`\`\`
+
+The app will attempt to pair automatically on startup and keep working
+regardless of whether the Node is running.`
+    : ''
 
   return {
     path: 'README.md',
@@ -83,7 +102,7 @@ ${features}
 \`\`\`bash
 npm install
 npm run dev
-\`\`\`
+\`\`\`${nodeSyncSection}
 
 ## Project Structure
 

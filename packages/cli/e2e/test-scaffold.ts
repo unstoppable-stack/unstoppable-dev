@@ -172,6 +172,24 @@ function checkPrereqs(platform: Platform, level: number) {
     if (level >= 3) exec('which xcrun', { timeout: 5000 })
     if (level >= 5) exec('maestro --version', { timeout: 10_000 })
   }
+  if (platform === 'pear-desktop') {
+    if (level >= 4) exec('which pear', { timeout: 5000 })
+    if (level >= 5) {
+      // Playwright ships as an npm dep of the CLI package so we can run
+      // `npx playwright --version` from inside `packages/cli/`. Fail early
+      // with an actionable hint rather than waiting for `pear run` to spawn.
+      try {
+        exec('npx --no-install playwright --version', {
+          cwd: CLI_ROOT,
+          timeout: 10_000,
+        })
+      } catch {
+        throw new Error(
+          'pear-desktop Level 5 needs @playwright/test. Install with: cd packages/cli && pnpm add -D @playwright/test',
+        )
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -287,8 +305,10 @@ function generateMaestroFlow(projectName: string, features: string[]): string {
     '# and accept input. We intentionally do NOT assert on the post-save/fetch',
     '# result text. There is a known issue where the worklet-backed put appears',
     '# to silently no-op on the iOS simulator (the React state update after the',
-    '# bare-rpc round-trip never lands, even with the correct rpcCall shape).',
-    '# Tracked as a follow-up — see planning/features/scaffold-e2e-testing.md.',
+    '# bare-rpc round-trip never lands). Switch-case braces and explicit utf8',
+    '# encoding on the reply were both tried and neither resolved it — the bug',
+    '# is in how bare-rpc delivers replies on iOS, and needs device-side',
+    '# logging to diagnose. Tracked in planning/features/scaffold-e2e-testing.md.',
     '# L5 is primarily a build-pipeline smoke test; the fire-and-forget taps',
     '# below still exercise the tap path and prove testIDs resolve correctly.',
     `- assertVisible: "KV Storage"`,
@@ -587,6 +607,228 @@ async function runWorkerSpawnTest(projectDir: string, features: string[]): Promi
 }
 
 // ---------------------------------------------------------------------------
+// Pear Desktop: launch app with Playwright attached via CDP (Level 5)
+// ---------------------------------------------------------------------------
+//
+// Pear Desktop runs Chromium under the hood (via pear-electron), so we can
+// pass `--remote-debugging-port` and have Playwright connect over CDP —
+// same trick the qvac-workbench-desktop reference app uses for its own
+// test suite. We spawn `pear run --dev`, drive the resulting window, and
+// tear everything down on exit (including the detached process group).
+
+async function runPearPlaywrightTest(
+  projectDir: string,
+  projectName: string,
+  features: string[],
+): Promise<void> {
+  // Lazy-require so `test-scaffold.ts` still imports cleanly on machines
+  // without @playwright/test — the prereq check throws a friendlier error
+  // before we get here when Playwright is genuinely missing.
+  const { chromium } = await import('playwright')
+
+  // Bind-once on a random high port to avoid collisions across repeat runs.
+  const port = 10_000 + Math.floor(Math.random() * 50_000)
+
+  // `--no-sandbox` is required when running CI in rootless containers;
+  // harmless on a dev mac. `--dev` enables devtools which is a no-op here
+  // since we're driving via CDP but also ensures a stable window boot.
+  const proc = spawn(
+    'pear',
+    [
+      'run',
+      '--dev',
+      '.',
+      `--remote-debugging-port=${port}`,
+      '--no-sandbox',
+    ],
+    {
+      cwd: projectDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: true, // own process group so we can SIGKILL the whole tree
+    },
+  )
+
+  // Keep a tail of both streams so failures can point at real causes.
+  // Pear writes useful boot diagnostics to stdout (sidecar handshake,
+  // module resolution) and runtime errors to stderr.
+  let stdoutTail = ''
+  let stderrTail = ''
+  proc.stdout?.on('data', (d) => {
+    stdoutTail = (stdoutTail + d.toString()).slice(-4000)
+    if (process.env.PEAR_E2E_VERBOSE) process.stdout.write(d)
+  })
+  proc.stderr?.on('data', (d) => {
+    stderrTail = (stderrTail + d.toString()).slice(-4000)
+    if (process.env.PEAR_E2E_VERBOSE) process.stderr.write(d)
+  })
+
+  // Connect to the CDP endpoint with polling. Pear takes a variable
+  // amount of time to boot pear-electron and then Chromium — cold-launch
+  // on a loaded machine with big dep sets (local-ai+wallet) can easily
+  // blow past 15s. We poll on 1s intervals up to 60s so no variant times
+  // out for benign boot-time reasons; real failures surface by showing
+  // both the CDP error and the pear stderr tail.
+  async function connect() {
+    const deadline = Date.now() + 60_000
+    let lastErr: unknown
+    while (Date.now() < deadline) {
+      await sleep(1000)
+      try {
+        return await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
+      } catch (err) {
+        lastErr = err
+      }
+    }
+    throw new Error(
+      `Failed to connect Playwright to Pear on port ${port} within 60s\n` +
+        `pear stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
+        `pear stderr (last 4KB):\n${stderrTail || '(empty)'}\n` +
+        `original error: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`,
+    )
+  }
+
+  const browser = await connect()
+  try {
+    // Pear hands us multiple pages — devtools (when --dev is on), a
+    // splash page, and eventually the real app page. Filter aggressively.
+    const ctx = browser.contexts()[0]
+    if (!ctx) throw new Error('No browser context from Pear')
+
+    // Give the app a beat to hydrate after CDP attach.
+    await sleep(1500)
+
+    let appPage: (typeof ctx.pages extends () => (infer P)[] ? P : never) | undefined
+    const pollDeadline = Date.now() + 20_000
+    while (Date.now() < pollDeadline) {
+      for (const p of ctx.pages()) {
+        const url = p.url()
+        if (url === 'about:blank' || url.startsWith('devtools://')) continue
+        try {
+          // Our scaffolded app always renders a `<h1 class="app-title">`
+          // with the project name — unique enough to identify the window.
+          const hasTitle = await p
+            .locator('h1.app-title')
+            .isVisible({ timeout: 500 })
+            .catch(() => false)
+          if (hasTitle) {
+            appPage = p
+            break
+          }
+        } catch {
+          // page might be mid-navigation — skip and retry
+        }
+      }
+      if (appPage) break
+      await sleep(500)
+    }
+
+    if (!appPage) {
+      const urls = ctx.pages().map((p) => p.url())
+      throw new Error(
+        `Could not find the app page among open CDP targets.\n` +
+          `Open URLs: ${JSON.stringify(urls)}\n` +
+          `stderr tail: ${stderrTail || '(empty)'}`,
+      )
+    }
+
+    const page = appPage
+
+    // --- Header ---
+    const title = page.locator('h1.app-title')
+    await title.waitFor({ state: 'visible', timeout: 10_000 })
+    const titleText = await title.textContent()
+    if (titleText?.trim() !== projectName) {
+      throw new Error(`Title mismatch: expected "${projectName}", got "${titleText}"`)
+    }
+
+    // --- Always-on sections ---
+    for (const testid of ['p2p-section', 'kv-section', 'docs-section']) {
+      const el = page.locator(`[data-testid="${testid}"]`)
+      await el.waitFor({ state: 'visible', timeout: 10_000 })
+    }
+
+    // --- Wait for the worker to finish init before interacting with KV.
+    // The scaffolded UI flips `#worker-status` text from "Worker starting"
+    // to "Ready" once the worker emits `init-complete`. Firing a kv-save
+    // before this arrives racily drops the message on the floor — it reads
+    // as a UI bug ("save did nothing") but it's really just a race. This
+    // race reliably bites on variants with extra init work (local-ai
+    // preloads `@qvac/sdk`, which is the largest scaffold).
+    const workerStatus = page.locator('#worker-status')
+    await workerStatus.waitFor({ state: 'visible', timeout: 15_000 })
+    const deadline = Date.now() + 20_000
+    while (Date.now() < deadline) {
+      const txt = (await workerStatus.textContent()) ?? ''
+      if (/ready/i.test(txt)) break
+      await sleep(200)
+    }
+    const finalStatus = (await workerStatus.textContent()) ?? ''
+    if (!/ready/i.test(finalStatus)) {
+      throw new Error(
+        `Worker never reached "Ready" status. Last status: "${finalStatus}"\n` +
+          `pear stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
+          `pear stderr (last 4KB):\n${stderrTail || '(empty)'}`,
+      )
+    }
+
+    // --- KV round-trip: full save → assert feedback → fetch → assert value.
+    // Unlike the mobile variant, desktop's bare-rpc path works reliably so
+    // we drive the full happy path here. This exercises the worker bridge
+    // end to end (click handler → postMessage → worker → Hyperbee → reply).
+    await page.locator('[data-testid="kv-key-input"]').fill('e2e-key')
+    await page.locator('[data-testid="kv-value-input"]').fill('hello from e2e')
+    await page.locator('[data-testid="kv-save-btn"]').click()
+
+    const result = page.locator('[data-testid="kv-result"]')
+    await result.waitFor({ state: 'visible', timeout: 10_000 })
+    const savedText = (await result.textContent()) ?? ''
+    if (!/saved/i.test(savedText) || !savedText.includes('e2e-key')) {
+      throw new Error(`Save feedback mismatch. Got: "${savedText}"`)
+    }
+
+    await page.locator('[data-testid="kv-fetch-btn"]').click()
+    // Fetch updates the same result node; wait for the value to appear.
+    const fetchDeadline = Date.now() + 10_000
+    let fetched = ''
+    while (Date.now() < fetchDeadline) {
+      fetched = (await result.textContent()) ?? ''
+      if (fetched.includes('hello from e2e')) break
+      await sleep(200)
+    }
+    if (!fetched.includes('hello from e2e')) {
+      throw new Error(`Fetch feedback mismatch. Got: "${fetched}"`)
+    }
+
+    // --- Feature-gated sections ---
+    if (features.includes('local-ai')) {
+      const aiSection = page.locator('[data-testid="ai-section"]')
+      await aiSection.waitFor({ state: 'visible', timeout: 5_000 })
+      await page.locator('[data-testid="load-ai-btn"]').waitFor({
+        state: 'visible',
+        timeout: 5_000,
+      })
+    }
+    if (features.includes('wallet')) {
+      const walletSection = page.locator('[data-testid="wallet-section"]')
+      await walletSection.waitFor({ state: 'visible', timeout: 5_000 })
+    }
+  } finally {
+    await browser.close().catch(() => {})
+    if (proc.pid !== undefined && proc.exitCode === null) {
+      // Kill the whole process group — Pear forks helper processes
+      // (sidecar, renderer) that don't die when the main pid is killed.
+      try {
+        process.kill(-proc.pid, 'SIGKILL')
+      } catch {
+        try {
+          proc.kill('SIGKILL')
+        } catch {}
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Node CLI: spawn + stdout assertion (Level 3)
 // ---------------------------------------------------------------------------
 
@@ -815,7 +1057,12 @@ async function testDesktopVariant(
   opts: { skipBuild: boolean; level: number },
 ): Promise<VariantResult> {
   const start = Date.now()
-  const projectName = `e2e-desktop-${variant.name}`
+  // Pear's app-name validator rejects `+` (see ERR_INVALID_APP_NAME in
+  // pear-state), so fold the plus-separated variant name (e.g.
+  // "local-ai+wallet") into a Pear-safe slug before feeding it to
+  // `us scaffold -n`. The variant.name stays `+`-separated for human-facing
+  // report output; we only sanitize the generated package name.
+  const projectName = `e2e-desktop-${variant.name}`.replace(/\+/g, '-')
   const projectDir = join(TMP_BASE, 'desktop', variant.name)
   const featuresFlag = variant.features.length ? `-f ${variant.features.join(',')}` : ''
 
@@ -878,6 +1125,18 @@ async function testDesktopVariant(
     push(
       await runStep('worker spawn test', async () => {
         await runWorkerSpawnTest(projectDir, variant.features)
+      }),
+    )
+  }
+
+  // Level 5: launch the real Pear app and drive its UI with Playwright.
+  // Pear runs Chromium under the hood (via pear-electron), which Playwright
+  // can attach to over CDP if we pass `--remote-debugging-port`. Same
+  // recipe as reference-apps/qvac-workbench-desktop/tests/e2e/fixtures.
+  if (!aborted && opts.level >= 5) {
+    push(
+      await runStep('playwright: feature UI test', async () => {
+        await runPearPlaywrightTest(projectDir, projectName, variant.features)
       }),
     )
   }

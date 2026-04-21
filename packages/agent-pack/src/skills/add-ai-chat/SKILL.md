@@ -1,9 +1,9 @@
 ---
 name: add-ai-chat
-description: Local AI inference with QVAC SDK — streaming, context, tool calling.
+description: Local AI inference with QVAC SDK — streaming, context, tool calling, multimodal.
 when_to_use: User wants AI capabilities (chatbot, assistant, function calling, LLM inference) running locally without cloud APIs.
 paths: ["src/ai/**", "src/inference/**"]
-version: "2026-04-14"
+version: "2026-04-20"
 ---
 
 # Add AI Chat (QVAC)
@@ -14,8 +14,10 @@ version: "2026-04-14"
 - User needs offline AI capabilities without cloud APIs
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.8.0`) and `zod` (`^4.0.0`) installed
-- Supported runtime: Node.js, Bare, or Expo mobile (native dev build required)
+- `@qvac/sdk` (`^0.9.0`) and `zod` (`^4.0.0`) installed
+- Node.js ≥ 22.17, Bare ≥ 1.24, or Expo ≥ 54 (Expo needs a native dev build)
+- Optional `qvac.config.json` at the project root (required only when also
+  using the `@qvac/cli` HTTP server)
 - Verify model constants against the installed SDK version before coding
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
@@ -45,7 +47,7 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    ```
    > **IMPORTANT**: Install Zod v4 (not v3) — `@qvac/sdk` depends on Zod v4 internally.
 
-2. **Choose the right model** (verified constants from `@qvac/sdk@0.8.0`):
+2. **Choose the right model** (verified constants from `@qvac/sdk@0.9.0`):
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
@@ -55,8 +57,11 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    | General chat (small) | `LLAMA_3_2_1B_INST_Q4_0` | ~1GB |
    | General chat (quality) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
    | Mobile (tiny) | `QWEN3_600M_INST_Q4` | ~0.5GB |
+   | Multimodal | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection | ~500MB + ~100MB |
 
-   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.8.0`. The SDK exports Qwen 3 models.
+   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist. The SDK exports Qwen 3 models.
+   >
+   > To enumerate every model at runtime: `modelRegistryList()`, `modelRegistrySearch({ query })`, `modelRegistryGetModel({ name })`.
 
 3. **Use `@qvac/sdk` directly** — this is the actual npm package API:
    ```ts
@@ -69,12 +74,17 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    import * as readline from 'readline'
 
    async function main() {
-     // Load model (downloads on first use)
+     // Load model (downloads on first use). System prompt and context settings
+     // go here, NOT in completion().
      console.log('Loading model...')
      const modelId = await loadModel({
        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
        modelType: 'llm',
-       modelConfig: { ctx_size: 2048, n_discarded: 200 },
+       modelConfig: {
+         ctx_size: 2048,
+         n_discarded: 200,
+         system_prompt: 'You are a helpful assistant.',
+       },
        onProgress: (p) => process.stdout.write(`\r${p.percentage.toFixed(1)}%`),
      })
      console.log('\nModel ready!')
@@ -84,27 +94,27 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
 
      const ask = () => rl.question('You: ', async (input) => {
        if (input.trim().toLowerCase() === 'exit') {
-         await unloadModel(modelId)
+         await unloadModel({ modelId })
          rl.close()
          return
        }
 
        history.push({ role: 'user', content: input })
 
-       const { tokenStream } = await completion({
+       // Sampling goes in generationParams (new in 0.9 — used to be in modelConfig).
+       const { tokenStream } = completion({
          modelId,
          history,
-         systemPrompt: 'You are a helpful assistant.',
          stream: true,
          kvCache: 'main',
+         generationParams: { temp: 0.7, top_p: 0.9 },
        })
 
        let reply = ''
        process.stdout.write('AI: ')
        for await (const token of tokenStream) {
-         const text = typeof token === 'string' ? token : token.text ?? ''
-         process.stdout.write(text)
-         reply += text
+         process.stdout.write(token)
+         reply += token
        }
        console.log()
 
@@ -172,22 +182,59 @@ const tools: ToolInput[] = [{
 | `ctx_size` | `modelConfig.ctx_size` | — |
 | `n_discarded` | `modelConfig.n_discarded` | — |
 | `tools: true` | `modelConfig.tools` | — |
+| `system_prompt` | `modelConfig.system_prompt` | — |
 | Tool definitions | — | `tools: [...]` |
+| MCP clients | — | `mcp: [{ client }]` |
+| Sampling (`temp`, `top_p`, etc.) | — | `generationParams: {...}` |
 | KV cache | — | `kvCache: sessionId` |
 | History | — | `history: [...]` |
 | Streaming | — | `stream: true` |
+| Image/media attachments | — | `history[i].attachments: [{ path }]` |
 
-**`completion()` does NOT accept `modelConfig`** — set everything at load time.
+**`completion()` does NOT accept `modelConfig`** — set context/system prompt at
+load time. Sampling params moved out of `modelConfig` into `generationParams`
+as of 0.9 (strict schema — no extra keys allowed).
 
 ### Tool-calling loop
 
 Use the `tool-runner.ts` component or implement the loop:
 1. Call `completion()` with tools
 2. Process `tokenStream` + `toolCallStream` in **parallel** via `Promise.all`
-3. If `toolCalls` returned, execute handlers and feed results back
+3. If `toolCalls` resolves with calls, `await call.invoke()` on each (renamed
+   from `.call()` in 0.9) and feed the result back as a `tool` message
 4. Repeat until the model responds with text only (max 10 rounds)
 
+```ts
+for (const call of await result.toolCalls) {
+  if (call.invoke) {
+    const output = await call.invoke() // runs the handler you supplied
+    history.push({
+      role: 'tool',
+      content: JSON.stringify(output),
+    })
+  }
+}
+```
+
 See `resources/tool-calling-example.md` for the complete implementation.
+
+### MCP (Model Context Protocol) clients
+
+Pass an MCP client instead of / alongside inline tools — the SDK calls
+`listTools`/`callTool` on the duck-typed client:
+
+```ts
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+
+const mcpClient = new Client({ name: 'my-app', version: '1.0.0' })
+await mcpClient.connect(transport)
+
+const result = completion({
+  modelId,
+  history,
+  mcp: [{ client: mcpClient, includeResources: true }],
+})
+```
 
 ---
 
@@ -272,12 +319,17 @@ See the `qvac-mobile-expo` recipe for the complete integration pattern.
 ## Key Gotchas
 
 - Model downloads can be large (0.5-4GB); use `onProgress` for UX
-- Always `unloadModel()` when done to free memory
+- Always `unloadModel({ modelId })` when done to free memory
 - **Always set `tools: true` in `modelConfig`** when using tool-calling models
 - Do NOT create a "respond" or "reply" tool
 - Use `kvCache: sessionId` in `completion()` for multi-turn conversations
 - Set `n_discarded` in `modelConfig` at load time: `Math.floor(ctx_size / 10)`
-- **`completion()` does NOT accept `modelConfig`**
+- **`completion()` does NOT accept `modelConfig`** — sampling params now live in
+  `generationParams` (strict, no extra keys)
+- **Tool handler dispatch is `.invoke()` in 0.9** (renamed from `.call()`)
+- **Multimodal: use `attachments: [{ path }]` on history messages**, not base64
+  `image_url` — the old OpenAI-style payload is gone
+- **`ping()` was removed in 0.8.1** — use `heartbeat()` for health checks
 - Process `tokenStream` and `toolCallStream` in parallel, not sequentially
 - Filter `<tool_call>` blocks from visible token output
 - 1B models are unreliable for tool calling; use 3B+ minimum

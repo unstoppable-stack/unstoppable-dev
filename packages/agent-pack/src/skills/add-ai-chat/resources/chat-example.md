@@ -26,5 +26,34 @@ await unloadModel({ modelId })
 ## Variations
 
 - Use `downloadAsset()` first to pre-cache models for offline use.
-- Use `delegate` in `loadModel()` for P2P delegated inference.
+- Use `delegate` in `loadModel()` for P2P delegated inference. Pass
+  `healthCheckTimeout: 2000` to RPC-ping the provider before the load attempt.
 - Use `kvCache: true` to avoid resending context in multi-turn conversations.
+- Tune sampling with `generationParams` (new in 0.9):
+
+  ```js
+  const result = completion({
+    modelId,
+    history,
+    stream: true,
+    generationParams: { temp: 0.7, top_p: 0.9, top_k: 40 },
+  })
+  ```
+
+- Attach an image for multimodal models (new in 0.9 — no more base64 data URLs):
+
+  ```js
+  const result = completion({
+    modelId,
+    history: [
+      {
+        role: 'user',
+        content: "What's in this image?",
+        attachments: [{ path: '/absolute/path/to/photo.jpg' }],
+      },
+    ],
+    stream: true,
+  })
+  ```
+
+- Health-check before loading: `await heartbeat()` (replaces `ping()`).

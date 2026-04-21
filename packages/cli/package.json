@@ -25,6 +25,7 @@
     "test:e2e:mobile": "npx tsx e2e/test-scaffold.ts --platform expo-mobile",
     "test:e2e:mobile:mock": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform expo-mobile",
     "test:e2e:desktop": "npx tsx e2e/test-scaffold.ts --platform pear-desktop",
+    "test:e2e:desktop:l5": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform pear-desktop --level 5",
     "test:e2e:cli": "npx tsx e2e/test-scaffold.ts --platform node-cli",
     "test:e2e:smoke": "npx tsx e2e/test-scaffold.ts --platform node-cli --level 2",
     "test:e2e:ci": "QVAC_MOCK=1 npx tsx e2e/test-scaffold.ts --platform all --level-expo-mobile 2 --skip-variant expo-mobile/local-ai",
@@ -60,6 +61,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/inquirer": "^9.0.7",
     "@types/node": "^20.0.0",
+    "playwright": "^1.59.1",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^4.1.0"

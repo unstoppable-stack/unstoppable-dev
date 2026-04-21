@@ -11,8 +11,9 @@ export type Platform = 'pear-desktop' | 'expo-mobile' | 'node-cli'
  * agent-pack skills, not scaffold flags.
  */
 export type Feature =
-  | 'local-ai' // QVAC SDK + streaming chat UI
-  | 'wallet'   // WDK wallet (stub — WDK not yet validated)
+  | 'local-ai'  // QVAC SDK + streaming chat UI
+  | 'wallet'    // WDK wallet (stub — WDK not yet validated)
+  | 'node-sync' // Register cores/drives with the Unstoppable Node for replication + backup
 
 export interface GeneratorOptions {
   projectName: string
@@ -45,5 +46,11 @@ export const FEATURES: { id: Feature; name: string; description: string; platfor
     name: 'Wallet',
     description: 'WDK wallet integration (stub — coming soon)',
     platforms: ['pear-desktop', 'node-cli'],
+  },
+  {
+    id: 'node-sync',
+    name: 'Node Sync',
+    description: 'Register data with the Unstoppable Node for P2P replication + backup',
+    platforms: ['node-cli', 'pear-desktop', 'expo-mobile'],
   },
 ]

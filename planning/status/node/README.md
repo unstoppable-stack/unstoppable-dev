@@ -3,7 +3,7 @@
 **Goal:** Pear Desktop app that replicates, backs up, and seeds data from any
 Unstoppable Stack app. Also provides delegated AI inference.
 
-**Current state:** Pairing protocol and data replication built. `packages/node/` and `packages/node-client/` exist with tests.
+**Current state:** Pairing protocol, data + file replication, and service-advertisement handshake built. `packages/node/` and `packages/node-client/` exist with 39 passing tests. `@unstoppable/node-client` is now wired into the `node-cli` generator via the `node-sync` feature flag.
 
 **Key files:**
 - `planning/features/node.md` — Concept
@@ -27,22 +27,23 @@ Unstoppable Stack app. Also provides delegated AI inference.
 
 ### Phase 1: Basic Replication (MVP)
 
-| # | Task | Effort |
-|---|------|--------|
-| 1 | Scaffold Pear Desktop app (renderer + worker) | Medium |
-| 2 | Implement registry (Hyperbee for known apps + keys) | Small |
-| 3 | Implement Corestore replication engine | Large |
-| 4 | Implement discovery topic (NDJSON over Hyperswarm) | Medium |
-| 5 | Basic dashboard UI (app list, status, storage) | Medium |
+| # | Task | Effort | Status |
+|---|------|--------|--------|
+| 1 | Scaffold Pear Desktop app (renderer + worker) | Medium | Not started — CLI-only daemon today |
+| 2 | Implement registry (Hyperbee for known apps + keys) | Small | Done |
+| 3 | Implement Corestore replication engine | Large | Done (+ drive replication) |
+| 4 | Implement discovery topic (NDJSON over Hyperswarm) | Medium | Done |
+| 5 | Basic dashboard UI (app list, status, storage) | Medium | CLI status only |
 
 ### Phase 2: Auto-Discovery + Files
 
-| Task | Effort |
-|------|--------|
-| Node discovery protocol (automatic registration) | Medium |
-| SDK (`@unstoppable/node-client`) for app builders | Medium |
-| Heartbeat / online status | Small |
-| Hyperdrive replication (File Sync service) | Large |
+| Task | Effort | Status |
+|------|--------|--------|
+| Node discovery protocol (`nodeHello` handshake + service advertisement) | Medium | Done |
+| SDK (`@unstoppable/node-client`) for app builders | Medium | Done |
+| Heartbeat / online status | Small | Done |
+| Hyperdrive replication (File Sync service) | Large | Done |
+| Scaffold wiring: `node-sync` feature flag in generators | Medium | `node-cli` done; Pear Desktop + Expo Mobile pending |
 
 ### Phase 3: AI Provider + Management
 
@@ -74,6 +75,7 @@ Unstoppable Stack app. Also provides delegated AI inference.
 
 | Date | Task |
 |------|------|
+| 2026-04-21 | **Node usability pass**: `nodeHello` handshake (node advertises `{data, files, ai}` services on connect); Hyperdrive replication wired into `ReplicationEngine` (cores share the corestore — no separate swarm needed); `connectToNode` gained `requireServices` option; `doctor` command checks for the `unstoppable-node` binary; `node-cli` generator wires `@unstoppable/node-client` via new opt-in `node-sync` feature flag — scaffolded CLIs now auto-register their Hyperbee with a local Node. 39/39 node tests + 191/191 cli tests pass. |
 | 2026-03-27 | Vault → Node rebrand (classes, packages, env vars, protocols, docs) |
 | 2026-03 | Pairing protocol over Hyperswarm (NDJSON, app registration) |
 | 2026-03 | Data replication engine (Corestore-based, Hyperbee registry) |
