@@ -1,8 +1,11 @@
 # QVAC Model Selection Guide
 
-## Verified Model Constants (`@qvac/sdk@0.8.0`)
+## Verified Model Constants (`@qvac/sdk@0.9.0`)
 
-These are the **exact import names** from `@qvac/sdk`. Only use constants listed here.
+These are the **exact import names** from `@qvac/sdk`. Only use constants listed
+here. For anything else, use the model registry (`modelRegistryList()`,
+`modelRegistrySearch({ query })`, `modelRegistryGetModel({ name })`) or pass an
+explicit `modelSrc` (local path, HTTP(S) URL, `pear://` URL, or registry URL).
 
 ### LLM Models
 
@@ -18,17 +21,27 @@ These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 
 ### Non-LLM Models
 
-| Constant | Type | Best For |
+| Constant / Family | Type | Best For |
 |----------|------|----------|
 | `GTE_LARGE_FP16` | Embedding | RAG, semantic search |
 | `EMBEDDINGGEMMA_300M_Q4_0` | Embedding | Lightweight embeddings |
-| `WHISPER_TINY` | Speech-to-text | Fast transcription |
-| `WHISPER_LARGE_V3_TURBO` | Speech-to-text | High-quality transcription |
+| `WHISPER_TINY` | Speech-to-text (Whisper) | Fast transcription |
+| `WHISPER_LARGE_V3_TURBO` | Speech-to-text (Whisper) | High-quality transcription |
+| NVIDIA Parakeet TDT / CTC / Sortformer | Speech-to-text (Parakeet) | Lower-latency alternative to Whisper |
 | `VAD_SILERO_5_1_2` | Voice Activity Detection | Audio preprocessing |
 | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` | Multimodal (vision) | Image understanding |
 | `MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0` | Projection | Required pair for SmolVLM |
-| `MARIAN_OPUS_EN_IT_Q4_0` | Translation | English ↔ Italian |
-| `MARIAN_EN_HI_INDIC_1B_Q4_0` | Translation | English → Hindi/Indic |
+| `MARIAN_OPUS_EN_IT_Q4_0` | Translation (Opus) | English ↔ Italian |
+| `MARIAN_EN_HI_INDIC_1B_Q4_0` | Translation (IndicTrans) | English → Hindi/Indic |
+| FLUX2-Klein (diffusion) | Image generation | Local text-to-image |
+| Chatterbox / Supertonic | TTS | Voice synthesis, optional voice cloning |
+
+### Engines / plugins (0.9)
+
+Built-in plugins you can list in `qvac.config.plugins`:
+`llm-llamacpp`, `embed-llamacpp`, `transcription-whispercpp`,
+`transcription-parakeet`, `translation-nmtcpp`, `tts-onnx`, `ocr-onnx`,
+`diffusion-cpp`.
 
 ## Import Example
 
@@ -54,7 +67,7 @@ import {
 
 ## Important Notes
 
-> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.8.0`. The SDK exports Qwen 3 family models instead.
+> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.9.0`. The SDK exports Qwen 3 family models instead.
 
 > **GPT-OSS note**: GPT-OSS-20B emits tool calls in a non-standard format (`<|channel|>commentary to=functions.<name>`). The workbench handles this with a model-specific fallback parser. If using GPT-OSS with tool calling, implement a fallback parser for its format.
 

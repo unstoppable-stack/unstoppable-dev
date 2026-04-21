@@ -101,7 +101,31 @@
       "keywords": ["rag", "embedding", "vector", "search", "knowledge base", "semantic"],
       "files": ["src/ai/**", "src/search/**"],
       "skill": "add-ai-rag",
-      "message": "This involves RAG/search. Consider /add-ai-rag for QVAC embeddings and vector search."
+      "message": "This involves RAG/search. Consider /add-ai-rag for QVAC workspace-based embeddings (ragIngest/ragSearch)."
+    },
+    {
+      "keywords": ["openai", "openai-compatible", "openai api", "local server", "ollama", "lm studio", "rest", "/v1/chat/completions", "http api", "qvac serve"],
+      "files": ["qvac.config.json", "qvac.config.js", "qvac.config.ts"],
+      "skill": "add-openai-server",
+      "message": "This involves exposing QVAC over HTTP. Consider /add-openai-server for the OpenAI-compatible local server."
+    },
+    {
+      "keywords": ["image generation", "text-to-image", "txt2img", "stable diffusion", "flux", "diffusion", "generate image"],
+      "files": ["src/ai/**", "src/images/**"],
+      "skill": "add-ai-image-gen",
+      "message": "This involves text-to-image generation. Consider /add-ai-image-gen for QVAC's diffusion plugin."
+    },
+    {
+      "keywords": ["plugin", "custom model", "definePlugin", "defineHandler", "invokePlugin", "native addon", "custom handler"],
+      "files": ["plugins/**", "src/plugins/**", "*-plugin/**"],
+      "skill": "add-ai-plugin",
+      "message": "This involves writing a QVAC plugin. Consider /add-ai-plugin for definePlugin/defineHandler patterns."
+    },
+    {
+      "keywords": ["fine-tune", "finetune", "lora", "adapter", "peft", "specialized model", "persona"],
+      "files": ["src/ai/**", "src/finetune/**", "adapters/**"],
+      "skill": "add-ai-finetune",
+      "message": "This involves applying a LoRA adapter. Consider /add-ai-finetune for adapter-based specialization."
     },
     {
       "keywords": ["wallet", "payment", "bitcoin", "ethereum", "token", "crypto", "transaction"],

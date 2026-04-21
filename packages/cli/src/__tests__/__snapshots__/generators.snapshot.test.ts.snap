@@ -262,37 +262,47 @@ const rpc = new RPC(IPC, async (request) => {
     let response
 
     switch (request.command) {
-      case 1: // init — set storage path, open Hyperbee
-      storagePath = params.storagePath
-      mockMode = params.mock === true
-      store = new Corestore(storagePath)
-      const core = store.get({ name: 'main-db' })
-      db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
-      await db.ready()
-      response = { ok: true, mock: mockMode }
-      break
-      case 4: // ping — check worklet is alive
-      response = { ok: true, pong: true }
-      break
-      case 5: // kv-put
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      await db.put(params.key, params.value)
-      response = { ok: true }
-      break
-      case 6: // kv-get
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      const entry = await db.get(params.key)
-      response = { ok: true, value: entry?.value ?? null }
-      break
+      case 1: { // init — set storage path, open Hyperbee
+        storagePath = params.storagePath
+        mockMode = params.mock === true
+        store = new Corestore(storagePath)
+        const core = store.get({ name: 'main-db' })
+        db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+        await db.ready()
+        response = { ok: true, mock: mockMode }
+        break
+      }
+      case 4: { // ping — check worklet is alive
+        response = { ok: true, pong: true }
+        break
+      }
+      case 5: { // kv-put
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        await db.put(params.key, params.value)
+        response = { ok: true }
+        break
+      }
+      case 6: { // kv-get
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        const entry = await db.get(params.key)
+        response = { ok: true, value: entry?.value ?? null }
+        break
+      }
       default:
         response = { error: \`Unknown command: \${request.command}\` }
     }
 
-    request.reply(JSON.stringify(response))
+    // Always pass 'utf8' — the client side does \`await req.reply('utf8')\`
+    // so send/reply encodings must match. An implicit default (Buffer) leaks
+    // through as a typed-array on the RN side and JSON.parse then throws
+    // "Unexpected token o in JSON at position 1" (the 'o' of "[object ..."),
+    // or — worse — the reply is queued but never delivered to the pending
+    // promise, so the client await just hangs forever.
+    request.reply(JSON.stringify(response), 'utf8')
   } catch (error) {
     request.reply(JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error',
-    }))
+    }), 'utf8')
   }
 })
 ",
@@ -977,62 +987,74 @@ const rpc = new RPC(IPC, async (request) => {
     let response
 
     switch (request.command) {
-      case 1: // init — set storage path, open Hyperbee
-      storagePath = params.storagePath
-      mockMode = params.mock === true
-      store = new Corestore(storagePath)
-      const core = store.get({ name: 'main-db' })
-      db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
-      await db.ready()
-      response = { ok: true, mock: mockMode }
-      break
-      case 2: // load-model
-      if (mockMode) {
-        await new Promise((r) => setTimeout(r, 100))
-        modelId = 'mock-model'
-        response = { ok: true, modelId, mock: true }
+      case 1: { // init — set storage path, open Hyperbee
+        storagePath = params.storagePath
+        mockMode = params.mock === true
+        store = new Corestore(storagePath)
+        const core = store.get({ name: 'main-db' })
+        db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+        await db.ready()
+        response = { ok: true, mock: mockMode }
         break
       }
-      if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
-      modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
-      response = { ok: true, modelId }
-      break
-      case 3: // chat — accumulate tokens, reply when done
-      if (!modelId) { response = { error: 'Model not loaded' }; break }
-      if (mockMode) {
-        const last = params.messages[params.messages.length - 1]
-        response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
+      case 2: { // load-model
+        if (mockMode) {
+          await new Promise((r) => setTimeout(r, 100))
+          modelId = 'mock-model'
+          response = { ok: true, modelId, mock: true }
+          break
+        }
+        if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
+        modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
+        response = { ok: true, modelId }
         break
       }
-      const result = completion({ modelId, history: params.messages, stream: true })
-      let text = ''
-      for await (const token of result.tokenStream) {
-        text += token
+      case 3: { // chat — accumulate tokens, reply when done
+        if (!modelId) { response = { error: 'Model not loaded' }; break }
+        if (mockMode) {
+          const last = params.messages[params.messages.length - 1]
+          response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
+          break
+        }
+        const result = completion({ modelId, history: params.messages, stream: true })
+        let text = ''
+        for await (const token of result.tokenStream) {
+          text += token
+        }
+        response = { ok: true, text }
+        break
       }
-      response = { ok: true, text }
-      break
-      case 4: // ping — check worklet is alive
-      response = { ok: true, pong: true }
-      break
-      case 5: // kv-put
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      await db.put(params.key, params.value)
-      response = { ok: true }
-      break
-      case 6: // kv-get
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      const entry = await db.get(params.key)
-      response = { ok: true, value: entry?.value ?? null }
-      break
+      case 4: { // ping — check worklet is alive
+        response = { ok: true, pong: true }
+        break
+      }
+      case 5: { // kv-put
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        await db.put(params.key, params.value)
+        response = { ok: true }
+        break
+      }
+      case 6: { // kv-get
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        const entry = await db.get(params.key)
+        response = { ok: true, value: entry?.value ?? null }
+        break
+      }
       default:
         response = { error: \`Unknown command: \${request.command}\` }
     }
 
-    request.reply(JSON.stringify(response))
+    // Always pass 'utf8' — the client side does \`await req.reply('utf8')\`
+    // so send/reply encodings must match. An implicit default (Buffer) leaks
+    // through as a typed-array on the RN side and JSON.parse then throws
+    // "Unexpected token o in JSON at position 1" (the 'o' of "[object ..."),
+    // or — worse — the reply is queued but never delivered to the pending
+    // promise, so the client await just hangs forever.
+    request.reply(JSON.stringify(response), 'utf8')
   } catch (error) {
     request.reply(JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error',
-    }))
+    }), 'utf8')
   }
 })
 ",
@@ -1114,7 +1136,8 @@ module.exports = config
     "bare-rpc": "^1.1.0",
     "corestore": "^7.6.0",
     "hyperbee": "^2.22.0",
-    "@qvac/sdk": "^0.6.1",
+    "@qvac/sdk": "^0.9.0",
+    "zod": "^4.0.0",
     "expo-device": "~8.0.10",
     "bare-abort-controller": "^1.0.0",
     "bare-buffer": "^3.4.2",
@@ -1729,7 +1752,7 @@ dist/
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.8.0"
+    "@qvac/sdk": "^0.9.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -2995,7 +3018,7 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.8.0"
+    "@qvac/sdk": "^0.9.0"
   },
   "devDependencies": {}
 }",
@@ -3059,7 +3082,10 @@ let store = null
 let swarm = null
 let db = null
 let modelId = null
-const MOCK_AI = process.env.QVAC_MOCK === '1'
+const MOCK_AI = (
+  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
+)
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')
@@ -3559,7 +3585,7 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.8.0"
+    "@qvac/sdk": "^0.9.0"
   },
   "devDependencies": {}
 }",
@@ -3622,7 +3648,10 @@ let store = null
 let swarm = null
 let db = null
 let modelId = null
-const MOCK_AI = process.env.QVAC_MOCK === '1'
+const MOCK_AI = (
+  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
+)
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')

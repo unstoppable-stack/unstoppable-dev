@@ -280,4 +280,41 @@ describe('pear-desktop generator', () => {
       }
     })
   })
+
+  describe('node-sync feature', () => {
+    it('adds @unstoppable/node-client dependency', () => {
+      const files = fileMap(make(['node-sync']))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.dependencies['@unstoppable/node-client']).toBeDefined()
+    })
+
+    it('wires connectToNode into the worker after db.ready()', () => {
+      const worker = fileMap(make(['node-sync']))['worker.js']
+      expect(worker).toContain("from '@unstoppable/node-client'")
+      expect(worker).toContain('connectToNode(')
+      expect(worker).toContain("service: 'node-sync'")
+      expect(worker).toContain('main-db')
+      // Must fall back gracefully when the node is unavailable
+      expect(worker).toContain('unavailable')
+    })
+
+    it('adds node-sync UI section + message handler', () => {
+      const app = fileMap(make(['node-sync']))['app/index.js']
+      expect(app).toContain('data-testid="node-sync-section"')
+      expect(app).toContain('node-sync-status')
+      expect(app).toContain("msg.service === 'node-sync'")
+    })
+
+    it('closes the client on shutdown', () => {
+      const worker = fileMap(make(['node-sync']))['worker.js']
+      expect(worker).toContain('nodeClient.close()')
+    })
+
+    it('bare variant does not include node-client', () => {
+      const files = fileMap(make([]))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.dependencies['@unstoppable/node-client']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable/node-client')
+    })
+  })
 })

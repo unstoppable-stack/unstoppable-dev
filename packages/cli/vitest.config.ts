@@ -18,11 +18,6 @@ export default defineConfig({
       'node_modules/**',
       // Requires a live Hyperswarm DHT — gated behind `test:integration`.
       'src/remote/__tests__/p2p-integration.test.ts',
-      // TODO(unstoppable-remote): these tests target an older `us remote`
-      // subcommand shape (`wrap`, `status` layout) that has since been
-      // refactored. Exclude from default runs until the suite is updated to
-      // match the current CLI surface.
-      'src/remote/__tests__/cli-e2e.test.ts',
     ],
   },
 })

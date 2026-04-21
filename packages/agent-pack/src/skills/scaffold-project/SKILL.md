@@ -130,8 +130,9 @@ These versions are battle-tested and validated through automated research:
 | `expo-build-properties` | `~1.0.9` | **Must be in dependencies**, not just plugins |
 | `react-native-bare-kit` | `0.11.5` | Pin exact — API changes between versions |
 | `bare-pack` | `^1.5.1` | **Must be 1.x** — 2.x has breaking CLI flag changes |
-| `@qvac/sdk` | `^0.8.0` | Local AI inference |
+| `@qvac/sdk` | `^0.9.0` | Local AI inference |
 | `@qvac/cli` | `^0.1.2` | **Required as devDep for QVAC mobile** — matches SDK peer dep |
+| `zod` | `^4.0.0` | Required by `@qvac/sdk` — install v4 explicitly when using tool calling |
 | `bare-rpc` | `^1.1.0` | P2P RPC |
 | `hyperswarm` | `^4.16.0` | P2P networking |
 | `autobase` | `^7.27.0` | Multi-writer consensus |
@@ -140,7 +141,7 @@ These versions are battle-tested and validated through automated research:
 
 1. **`bare-pack@2.x` breaks mobile builds** — the `--target` CLI flag was removed in 2.x. Always use `^1.5.1`.
 2. **`expo-build-properties` must be a dependency** — listing it only in `app.json` plugins without installing it causes prebuild to fail.
-3. **`@qvac/cli` must match the SDK peer dep** — `@qvac/sdk@0.8.x` requires `@qvac/cli@^0.1.2`. Using `^0.2.x` causes ERESOLVE conflicts.
+3. **`@qvac/cli` must match the SDK peer dep** — `@qvac/sdk@0.9.x` requires `@qvac/cli@^0.1.2`. Using `^0.2.x` causes ERESOLVE conflicts.
 4. **QVAC expo plugin needs local `@qvac/cli`** — without it, npx downloads a mismatched version that can't bundle.
 5. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobase` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
 

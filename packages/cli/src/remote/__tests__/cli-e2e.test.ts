@@ -1,10 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { execSync, spawn, type ChildProcess } from 'child_process'
+import { execSync } from 'child_process'
+import { writeFileSync, unlinkSync } from 'fs'
 import { resolve } from 'path'
+import { tmpdir } from 'os'
+
+// End-to-end coverage for `us remote *` subcommand surface. These are
+// black-box tests that shell out to the built CLI binary.
+//
+// Scope: only commands that can answer without a running daemon
+// (`--help`, `status`, `hook`). Everything that mutates daemon state
+// (`start`, `stop`, `pair`, `run`, `sessions`, `logs`, `phones`, `testnet`)
+// is deliberately out of scope here — those are better covered by
+// integration tests in `p2p-integration.test.ts` that own the daemon
+// lifecycle, and they'd otherwise spawn real DHT connections during
+// `pnpm test` and make the suite network-dependent and flaky.
 
 const CLI = resolve(import.meta.dirname, '../../../dist/us.js')
 
-function run(args: string, timeout = 10000): string {
+function run(args: string, timeout = 10_000): string {
   return execSync(`node ${CLI} ${args}`, {
     encoding: 'utf-8',
     timeout,
@@ -12,163 +25,111 @@ function run(args: string, timeout = 10000): string {
   })
 }
 
-function spawnCli(args: string): ChildProcess {
-  return spawn('node', [CLI, ...args.split(' ')], {
-    env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1' },
-  })
-}
-
-function collectOutput(child: ChildProcess, timeoutMs = 5000): Promise<{ stdout: string; stderr: string; code: number | null }> {
-  return new Promise((resolve) => {
-    let stdout = ''
-    let stderr = ''
-
-    child.stdout?.on('data', (d) => (stdout += d.toString()))
-    child.stderr?.on('data', (d) => (stderr += d.toString()))
-
-    const timer = setTimeout(() => {
-      child.kill()
-      resolve({ stdout, stderr, code: null })
-    }, timeoutMs)
-
-    child.on('exit', (code) => {
-      clearTimeout(timer)
-      resolve({ stdout, stderr, code })
-    })
-  })
-}
-
 describe('CLI E2E: us remote', () => {
   describe('us remote --help', () => {
-    it('prints subcommands', () => {
+    it('lists every subcommand we expose', () => {
       const out = run('remote --help')
-      expect(out).toContain('pair')
-      expect(out).toContain('wrap')
-      expect(out).toContain('status')
-      expect(out).toContain('devices')
-      expect(out).toContain('hook')
+      // Current surface (as of the daemon refactor):
+      //   start · stop · pair · run · sessions · logs · phones · status ·
+      //   testnet · hook
+      // If any of these go missing we want a loud failure.
+      for (const cmd of [
+        'start',
+        'stop',
+        'pair',
+        'run',
+        'sessions',
+        'logs',
+        'phones',
+        'status',
+        'testnet',
+        'hook',
+      ]) {
+        expect(out, `missing "us remote ${cmd}"`).toContain(cmd)
+      }
+    })
+
+    it('documents the daemon/pairing intent', () => {
+      const out = run('remote --help')
+      expect(out.toLowerCase()).toContain('p2p')
     })
   })
 
   describe('us remote status', () => {
-    it('prints device name and key info', () => {
+    it('reports daemon state, device name, and public key without needing a daemon', () => {
       const out = run('remote status')
-      expect(out).toContain('Unstoppable')
-      expect(out).toContain('Remote')
-      expect(out).toContain('Device name:')
+      expect(out).toContain('Unstoppable Remote')
+      expect(out).toContain('Daemon:')
+      expect(out).toContain('Device:')
+      expect(out).toContain('Public key:')
     })
 
-    it('shows public key or not-generated message', () => {
+    it('surfaces a start hint when the daemon is stopped', () => {
       const out = run('remote status')
-      const hasKey = out.includes('Public key:')
-      expect(hasKey).toBe(true)
+      if (out.includes('Stopped')) {
+        expect(out).toContain('us remote start')
+      }
     })
   })
 
   describe('us remote hook', () => {
-    it('outputs shell functions for default commands', () => {
+    it('emits shell functions for every default wrappable AI command', () => {
       const out = run('remote hook')
-      expect(out).toContain('claude()')
-      expect(out).toContain('opencode()')
-      expect(out).toContain('codex()')
-      expect(out).toContain('unstoppable-agent()')
-      expect(out).toContain('us remote wrap')
+      for (const cmd of ['claude', 'opencode', 'codex', 'unstoppable-agent']) {
+        expect(out, `missing hook for "${cmd}"`).toContain(`${cmd}()`)
+      }
     })
 
-    it('respects --commands flag', () => {
+    it('each function falls back to the real binary when the daemon is down', () => {
+      // The hook must be a no-op in the Stopped case — tested via shape.
+      const out = run('remote hook')
+      expect(out).toContain('us remote status')
+      expect(out).toContain('grep -q "Running"')
+      expect(out).toContain('us remote run')
+      expect(out).toMatch(/command (claude|opencode|codex|unstoppable-agent)/)
+    })
+
+    it('respects --commands to override the default command list', () => {
       const out = run('remote hook --commands myai,otherai')
       expect(out).toContain('myai()')
       expect(out).toContain('otherai()')
+      // Defaults should NOT be present when an override was given.
       expect(out).not.toContain('claude()')
+      expect(out).not.toContain('opencode()')
     })
 
-    it('outputs valid shell syntax (no syntax errors)', () => {
+    it('emits syntactically valid shell (evaluable by bash with -n)', () => {
       const out = run('remote hook --commands testcmd')
-      expect(out).toContain('testcmd()')
-      expect(out).toContain('command -v us')
-      expect(out).toContain('command testcmd')
+      // `bash -n` parses without executing — a clean exit proves syntactic
+      // validity, which is all we care about here (we don't want to
+      // actually redefine shell functions in the test host's shell).
+      //
+      // Write via fs rather than shelling out to printf; the hook body
+      // contains nested quoting (`command -v us >/dev/null 2>&1`, etc.) that
+      // is a pain to round-trip safely through any printf/echo/heredoc.
+      const tmp = resolve(tmpdir(), `us-remote-hook-${process.pid}.sh`)
+      writeFileSync(tmp, out, 'utf-8')
+      try {
+        execSync(`bash -n ${tmp}`, { encoding: 'utf-8' })
+      } finally {
+        try {
+          unlinkSync(tmp)
+        } catch {
+          // best-effort cleanup
+        }
+      }
     })
   })
 
-  describe('us remote devices', () => {
-    it('lists devices or shows empty message', () => {
-      const out = run('remote devices')
-      // Either shows device list or "No paired devices"
-      expect(typeof out).toBe('string')
-    })
-  })
-
-  describe('us remote wrap', () => {
-    it('wraps a simple command and captures output', async () => {
-      const child = spawnCli('remote wrap echo hello-from-wrap-test')
-      const result = await collectOutput(child, 8000)
-
-      expect(result.stdout).toContain('Unstoppable')
-      expect(result.stdout).toContain('Remote')
-      expect(result.stdout).toContain('Wrapping:')
-      expect(result.stdout).toContain('hello-from-wrap-test')
-      expect(result.stdout).toContain('Session ended')
-    })
-
-    it('captures stderr output too', async () => {
-      const child = spawnCli('remote wrap "echo error-test >&2"')
-      const result = await collectOutput(child, 8000)
-
-      const combined = result.stdout + result.stderr
-      expect(combined).toContain('error-test')
-    })
-
-    it('reports session ID', async () => {
-      const child = spawnCli('remote wrap echo session-id-test')
-      const result = await collectOutput(child, 8000)
-
-      expect(result.stdout).toMatch(/Session [a-f0-9]+ started/)
-    })
-
-    it('reports exit code', async () => {
-      const child = spawnCli('remote wrap "exit 0"')
-      const result = await collectOutput(child, 8000)
-
-      expect(result.stdout).toContain('exit code:')
-    })
-
-    it('handles a command that exits with non-zero', async () => {
-      const child = spawnCli('remote wrap "exit 42"')
-      const result = await collectOutput(child, 8000)
-
-      expect(result.stdout).toContain('Session ended')
-    })
-
-    it('wraps a multi-word command', async () => {
-      const child = spawnCli('remote wrap echo one two three')
-      const result = await collectOutput(child, 8000)
-
-      expect(result.stdout).toContain('one two three')
-    })
-  })
-
-  describe('us remote pair', () => {
-    it('starts pairing mode and shows QR code area', async () => {
-      const child = spawnCli('remote pair --timeout 3')
-      const result = await collectOutput(child, 12000)
-
-      expect(result.stdout).toContain('Unstoppable')
-      expect(result.stdout).toContain('pairing mode')
-      expect(result.stdout).toContain('Scan this QR code')
-      // Pairing payload is always printed for easy copy-paste
-      expect(result.stdout).toContain('unstoppable-remote')
-    })
-
-    it('respects --timeout flag', async () => {
-      const start = Date.now()
-      const child = spawnCli('remote pair --timeout 2')
-      const result = await collectOutput(child, 12000)
-      const elapsed = Date.now() - start
-
-      // Should have taken at least 2 seconds
-      expect(elapsed).toBeGreaterThan(1500)
-      expect(elapsed).toBeLessThan(15000)
-      expect(result.stdout).toContain('pairing mode')
-    })
+  describe('us remote subcommand help', () => {
+    // Spot-check that every subcommand responds to --help — catches the
+    // case where a subcommand is removed from `--help` listing but its
+    // handler still lingers or vice versa.
+    for (const cmd of ['pair', 'run', 'sessions', 'logs', 'phones', 'hook']) {
+      it(`\`us remote ${cmd} --help\` prints a usage line`, () => {
+        const out = run(`remote ${cmd} --help`)
+        expect(out).toContain(`Usage: us remote ${cmd}`)
+      })
+    }
   })
 })

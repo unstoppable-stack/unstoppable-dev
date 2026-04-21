@@ -31,7 +31,14 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.8.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.9.0' })
+  }
+
+  if (has(opts, 'node-sync')) {
+    // Shipped from this repo (packages/node-client). Once published the
+    // range resolves from npm; during local development `npm link` or a
+    // private registry is required.
+    Object.assign(deps, { '@unstoppable/node-client': '^0.1.0' })
   }
 
   const unrouted = ['/worker.js']
@@ -157,6 +164,28 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
 
   const cleanupCode: string[] = [`  if (swarm) await swarm.destroy()`]
 
+  if (has(opts, 'node-sync')) {
+    imports.push(`import { connectToNode } from '@unstoppable/node-client'`)
+    moduleState.push(`let nodeClient = null`)
+    initCode.push(`
+  send({ type: 'status', service: 'node-sync', status: 'searching' })
+  try {
+    nodeClient = await connectToNode({
+      appId: '${opts.projectName}',
+      appName: '${opts.projectName}',
+      cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+      timeout: 5_000
+    })
+    send({ type: 'status', service: 'node-sync', status: 'connected' })
+    nodeClient.on('disconnected', () => {
+      send({ type: 'status', service: 'node-sync', status: 'disconnected' })
+    })
+  } catch (err) {
+    send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
+  }`)
+    cleanupCode.push(`  if (nodeClient) await nodeClient.close()`)
+  }
+
   const commandHandlers: string[] = [
     `
     case 'join-topic': {
@@ -183,9 +212,17 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
       `import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'`,
     )
     moduleState.push(`let modelId = null`)
-    // QVAC_MOCK is checked at module load (not inside init) so handleCommand
-    // can use it too.
-    moduleState.push(`const MOCK_AI = process.env.QVAC_MOCK === '1'`)
+    // QVAC_MOCK is read at module load (not inside init) so handleCommand
+    // can use it too. The worker runs in two different runtimes:
+    //   * Node — when driven by scripts/tests via `node worker.js`
+    //   * Bare — when hosted inside Pear Desktop (pear-electron)
+    // `process.env` only exists in Node; Bare exposes env through
+    // `Bare.env`. Referencing an undefined `process` in Bare throws a
+    // ReferenceError at import time, hard-failing the worker before it
+    // can write anything on its pipe — so probe both safely.
+    moduleState.push(
+      `const MOCK_AI = (\n  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||\n  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')\n)`,
+    )
     initCode.push(`
   if (MOCK_AI) {
     await new Promise((r) => setTimeout(r, 100))
@@ -356,6 +393,7 @@ export const workerReady = new Promise((resolve, reject) => {
 function appComponent(opts: GeneratorOptions): GeneratedFile {
   const hasQvac = has(opts, 'local-ai')
   const hasWallet = has(opts, 'wallet')
+  const hasNodeSync = has(opts, 'node-sync')
 
   // Build the sections HTML that gets injected at startup
   const sectionHtml: string[] = []
@@ -386,6 +424,15 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
         <h2 class="card-title">Wallet</h2>
         <p class="mono" id="wallet-status">⏳ Starting...</p>
         <p class="mono" style="color:#8b949e;margin-top:8px">WDK integration coming soon</p>
+      </section>`)
+  }
+
+  if (hasNodeSync) {
+    sectionHtml.push(`
+      <section data-testid="node-sync-section" class="card">
+        <h2 class="card-title">Unstoppable Node</h2>
+        <p class="mono" id="node-sync-status">⏳ Searching for local node...</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Run <code>npx unstoppable-node</code> to enable sync</p>
       </section>`)
   }
 
@@ -512,6 +559,23 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     msgCases.push(`
     if (msg.type === 'status' && msg.service === 'wallet') {
       setText('wallet-status', '✅ Ready (stub)')
+    }`)
+  }
+
+  if (hasNodeSync) {
+    msgCases.push(`
+    if (msg.type === 'status' && msg.service === 'node-sync') {
+      const hintEl = document.getElementById('node-sync-hint')
+      if (msg.status === 'searching') setText('node-sync-status', '⏳ Searching for local node...')
+      if (msg.status === 'connected') {
+        setText('node-sync-status', '✅ Connected — replicating to node')
+        if (hintEl) hintEl.style.display = 'none'
+      }
+      if (msg.status === 'disconnected') setText('node-sync-status', '⚠️ Node disconnected')
+      if (msg.status === 'unavailable') {
+        setText('node-sync-status', '❌ No node found')
+        if (hintEl) hintEl.style.display = 'block'
+      }
     }`)
   }
 

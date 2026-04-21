@@ -81,9 +81,21 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'bare-fs': '4.5.1',
   }
 
+  if (has(opts, 'node-sync')) {
+    // node-client + its transitive runtime deps. `hyperswarm` already enters
+    // the graph via `local-ai` too, so guard so we don't double-declare.
+    Object.assign(deps, {
+      '@unstoppable/node-client': '^0.1.0',
+      hyperswarm: '^4.12.1',
+      b4a: '^1.7.3',
+      events: '^3.3.0',
+    })
+  }
+
   if (has(opts, 'local-ai')) {
     Object.assign(deps, {
-      '@qvac/sdk': '^0.6.1',
+      '@qvac/sdk': '^0.9.0',
+      zod: '^4.0.0',
       'expo-device': '~8.0.10',
       // @qvac/sdk declares these as peer dependencies. Newer npm
       // (v7+) doesn't auto-install peers, and `bare-pack` traces imports
@@ -370,6 +382,7 @@ export default function NotFound() {
 function appIndex(opts: GeneratorOptions): GeneratedFile {
   const hasQvac = has(opts, 'local-ai')
   const hasWallet = has(opts, 'wallet')
+  const hasNodeSync = has(opts, 'node-sync')
 
   // Build React Native import list
   // Base always needs TextInput (KV inputs) and worklet is always present
@@ -386,7 +399,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   if (hasQvac) rnComponents.push('ActivityIndicator')
 
   const topImports: string[] = [
-    `import React, { useState } from 'react'`,
+    `import React, { useState${hasNodeSync ? ', useEffect' : ''} } from 'react'`,
     `import { ${rnComponents.join(', ')} } from 'react-native'`,
     `import { useWorklet } from '../src/contexts/WorkletContext'`,
   ]
@@ -398,6 +411,12 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     `const [kvValue, setKvValue] = useState('')`,
     `const [kvResult, setKvResult] = useState<string | null>(null)`,
   ]
+
+  if (hasNodeSync) {
+    hooks.push(
+      `const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'connected' | 'disconnected' | 'unavailable'>('idle')`,
+    )
+  }
 
   if (hasQvac) {
     hooks.push(
@@ -446,6 +465,28 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     }
   }`,
   ]
+
+  if (hasNodeSync) {
+    // Automatically try to connect once the worklet is ready. Non-blocking —
+    // a missing node keeps the app fully usable.
+    handlers.push(`
+  useEffect(() => {
+    if (!ready) return
+    let cancelled = false
+    ;(async () => {
+      setNodeStatus('searching')
+      try {
+        const res = await rpcRequest(7)
+        if (cancelled) return
+        if (res.ok) setNodeStatus(res.status === 'connected' ? 'connected' : (res.status ?? 'connected'))
+        else setNodeStatus(res.status === 'unavailable' ? 'unavailable' : 'disconnected')
+      } catch {
+        if (!cancelled) setNodeStatus('unavailable')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [ready])`)
+  }
 
   if (hasQvac) {
     // Worklet commands: 2 = load-model, 3 = chat
@@ -526,6 +567,25 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
         <View style={styles.section} testID="wallet-section">
           <Text style={styles.sectionTitle}>Wallet</Text>
           <Text style={styles.mono}>WDK integration coming soon</Text>
+        </View>`)
+  }
+
+  if (hasNodeSync) {
+    sections.push(`
+        <View style={styles.section} testID="node-sync-section">
+          <Text style={styles.sectionTitle}>Unstoppable Node</Text>
+          <Text style={styles.mono} testID="node-sync-status">
+            {nodeStatus === 'idle' && '⏳ Waiting for worklet...'}
+            {nodeStatus === 'searching' && '⏳ Searching for local node...'}
+            {nodeStatus === 'connected' && '✅ Connected — replicating to node'}
+            {nodeStatus === 'disconnected' && '⚠️ Node disconnected'}
+            {nodeStatus === 'unavailable' && '❌ No node found on local network'}
+          </Text>
+          {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
+            <Text style={[styles.mono, { marginTop: 4 }]}>
+              Run <Text style={{ color: '#58a6ff' }}>npx unstoppable-node</Text> on a nearby machine
+            </Text>
+          )}
         </View>`)
   }
 
@@ -701,6 +761,7 @@ const styles = StyleSheet.create({
 
 function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   const hasQvac = has(opts, 'local-ai')
+  const hasNodeSync = has(opts, 'node-sync')
 
   // Imports — base always needs Corestore + Hyperbee (KV is always on)
   const imports: string[] = [
@@ -716,6 +777,16 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     )
   }
 
+  if (hasNodeSync) {
+    // @unstoppable/node-client is ESM-only; wrap the dynamic import lazily so
+    // bare-pack still traces it but we control timing (node-client calls
+    // Hyperswarm on construct — we want to defer until init() has given us
+    // a Hyperbee to register).
+    imports.push(
+      `// node-client is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable/node-client' is installed.`,
+    )
+  }
+
   const stateVars: string[] = [
     `let storagePath = null`,
     `let store = null`,
@@ -723,6 +794,10 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     `let mockMode = false`,
   ]
   if (hasQvac) stateVars.push(`let modelId = null`)
+  if (hasNodeSync) {
+    stateVars.push(`let nodeClient = null`)
+    stateVars.push(`let nodeStatus = 'idle'`)
+  }
 
   // Command cases
   // Commands:
@@ -732,62 +807,104 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   //   4: ping() → { ok, pong }
   //   5: kv-put({ key, value }) → { ok }
   //   6: kv-get({ key }) → { ok, value }
+  // NOTE: every case body is wrapped in { } — mandatory when declaring
+  // lexical bindings (`const`, `let`) inside a switch. Without braces, every
+  // declaration ends up hoisted into the single shared switch block scope,
+  // which trips TDZ errors and (on some bundlers) confuses the optimiser
+  // enough to drop the surrounding await — symptom seen on iOS: `kv-put`
+  // reply never lands on the React Native side even though the put itself
+  // succeeded. Always use braces.
   const cases: string[] = [
-    `case 1: // init — set storage path, open Hyperbee
-      storagePath = params.storagePath
-      mockMode = params.mock === true
-      store = new Corestore(storagePath)
-      const core = store.get({ name: 'main-db' })
-      db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
-      await db.ready()
-      response = { ok: true, mock: mockMode }
-      break`,
+    `case 1: { // init — set storage path, open Hyperbee
+        storagePath = params.storagePath
+        mockMode = params.mock === true
+        store = new Corestore(storagePath)
+        const core = store.get({ name: 'main-db' })
+        db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+        await db.ready()
+        response = { ok: true, mock: mockMode }
+        break
+      }`,
   ]
 
   if (hasQvac) {
-    cases.push(`case 2: // load-model
-      if (mockMode) {
-        await new Promise((r) => setTimeout(r, 100))
-        modelId = 'mock-model'
-        response = { ok: true, modelId, mock: true }
+    cases.push(`case 2: { // load-model
+        if (mockMode) {
+          await new Promise((r) => setTimeout(r, 100))
+          modelId = 'mock-model'
+          response = { ok: true, modelId, mock: true }
+          break
+        }
+        if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
+        modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
+        response = { ok: true, modelId }
         break
-      }
-      if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
-      modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
-      response = { ok: true, modelId }
-      break`)
+      }`)
 
-    cases.push(`case 3: // chat — accumulate tokens, reply when done
-      if (!modelId) { response = { error: 'Model not loaded' }; break }
-      if (mockMode) {
-        const last = params.messages[params.messages.length - 1]
-        response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
+    cases.push(`case 3: { // chat — accumulate tokens, reply when done
+        if (!modelId) { response = { error: 'Model not loaded' }; break }
+        if (mockMode) {
+          const last = params.messages[params.messages.length - 1]
+          response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
+          break
+        }
+        const result = completion({ modelId, history: params.messages, stream: true })
+        let text = ''
+        for await (const token of result.tokenStream) {
+          text += token
+        }
+        response = { ok: true, text }
         break
-      }
-      const result = completion({ modelId, history: params.messages, stream: true })
-      let text = ''
-      for await (const token of result.tokenStream) {
-        text += token
-      }
-      response = { ok: true, text }
-      break`)
+      }`)
   }
 
-  cases.push(`case 4: // ping — check worklet is alive
-      response = { ok: true, pong: true }
-      break`)
+  cases.push(`case 4: { // ping — check worklet is alive
+        response = { ok: true, pong: true }
+        break
+      }`)
 
-  cases.push(`case 5: // kv-put
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      await db.put(params.key, params.value)
-      response = { ok: true }
-      break`)
+  cases.push(`case 5: { // kv-put
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        await db.put(params.key, params.value)
+        response = { ok: true }
+        break
+      }`)
 
-  cases.push(`case 6: // kv-get
-      if (!db) { response = { error: 'Storage not ready' }; break }
-      const entry = await db.get(params.key)
-      response = { ok: true, value: entry?.value ?? null }
-      break`)
+  cases.push(`case 6: { // kv-get
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        const entry = await db.get(params.key)
+        response = { ok: true, value: entry?.value ?? null }
+        break
+      }`)
+
+  if (hasNodeSync) {
+    cases.push(`case 7: { // node-sync-connect — best-effort; non-blocking
+        if (nodeClient) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        nodeStatus = 'searching'
+        try {
+          const mod = await import('@unstoppable/node-client')
+          nodeClient = await mod.connectToNode({
+            appId: '${opts.projectName}',
+            appName: '${opts.projectName}',
+            cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+            timeout: 5_000
+          })
+          nodeStatus = 'connected'
+          nodeClient.on('disconnected', () => { nodeStatus = 'disconnected' })
+          response = { ok: true, status: nodeStatus }
+        } catch (err) {
+          nodeStatus = 'unavailable'
+          response = { ok: false, status: nodeStatus, error: err.message }
+        }
+        break
+      }`)
+
+    cases.push(`case 8: { // node-sync-status
+        response = { ok: true, status: nodeStatus, connected: !!nodeClient }
+        break
+      }`)
+  }
 
   return {
     path: 'bare/index.js',
@@ -796,7 +913,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
 //   1: init({ storagePath, mock? }) — initialize base services${hasQvac ? '\n//   2: load-model() → { ok, modelId }\n//   3: chat({ messages }) → { ok, text }' : ''}
 //   4: ping() → { ok, pong }
 //   5: kv-put({ key, value }) → { ok }
-//   6: kv-get({ key }) → { ok, value }
+//   6: kv-get({ key }) → { ok, value }${hasNodeSync ? '\n//   7: node-sync-connect() → { ok, status }\n//   8: node-sync-status() → { ok, status, connected }' : ''}
 ${imports.join('\n')}
 
 ${stateVars.join('\n')}
@@ -814,11 +931,17 @@ const rpc = new RPC(IPC, async (request) => {
         response = { error: \`Unknown command: \${request.command}\` }
     }
 
-    request.reply(JSON.stringify(response))
+    // Always pass 'utf8' — the client side does \`await req.reply('utf8')\`
+    // so send/reply encodings must match. An implicit default (Buffer) leaks
+    // through as a typed-array on the RN side and JSON.parse then throws
+    // "Unexpected token o in JSON at position 1" (the 'o' of "[object ..."),
+    // or — worse — the reply is queued but never delivered to the pending
+    // promise, so the client await just hangs forever.
+    request.reply(JSON.stringify(response), 'utf8')
   } catch (error) {
     request.reply(JSON.stringify({
       error: error instanceof Error ? error.message : 'Unknown error',
-    }))
+    }), 'utf8')
   }
 })
 `,

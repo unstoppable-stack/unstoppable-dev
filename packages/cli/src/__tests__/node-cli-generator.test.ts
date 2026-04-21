@@ -94,6 +94,44 @@ describe('node-cli generator', () => {
     })
   })
 
+  describe('node-sync feature', () => {
+    it('generates node-sync.ts that calls connectToNode', () => {
+      const files = fileMap(make(['node-sync']))
+      const sync = files['src/node-sync.ts']
+      expect(sync).toBeDefined()
+      expect(sync).toContain("from '@unstoppable/node-client'")
+      expect(sync).toContain('connectToNode')
+      expect(sync).toContain('db.core.key')
+    })
+
+    it('includes @unstoppable/node-client dependency', () => {
+      const pkg = JSON.parse(fileMap(make(['node-sync']))['package.json'])
+      expect(pkg.dependencies['@unstoppable/node-client']).toBeDefined()
+    })
+
+    it('entry point imports setupNodeSync', () => {
+      const entry = fileMap(make(['node-sync']))['src/index.ts']
+      expect(entry).toContain('setupNodeSync')
+      expect(entry).toContain('nodeSync.close()')
+    })
+
+    it('type declarations include @unstoppable/node-client', () => {
+      const decls = fileMap(make(['node-sync']))['src/types.d.ts']
+      expect(decls).toContain("declare module '@unstoppable/node-client'")
+    })
+
+    it('README explains how to run unstoppable-node', () => {
+      const readme = fileMap(make(['node-sync']))['README.md']
+      expect(readme).toContain('npx unstoppable-node')
+      expect(readme).toContain('Node Sync')
+    })
+
+    it('bare variant does NOT include node-sync.ts', () => {
+      const files = fileMap(make([]))
+      expect(files['src/node-sync.ts']).toBeUndefined()
+    })
+  })
+
   describe('no autobase anywhere (flag removed)', () => {
     for (const combo of ALL_COMBOS) {
       it(`${combo.name}: no autobase dep or file`, () => {

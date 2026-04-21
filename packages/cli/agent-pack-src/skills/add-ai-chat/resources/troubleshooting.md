@@ -1,9 +1,10 @@
 # QVAC Chat App — Troubleshooting
 
 ## Model constant not found
-- Only use constants from `@qvac/sdk@0.8.0` — see the model guide
+- Only use constants from `@qvac/sdk@0.9.0` — see the model guide
 - `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist
 - Use `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, or `QWEN3_600M_INST_Q4`
+- Enumerate at runtime: `modelRegistryList()` / `modelRegistrySearch({ query })`
 
 ## Zod type errors with ToolInput
 - `@qvac/sdk` requires Zod v4, not v3
@@ -28,7 +29,38 @@
 ## Tool calls parsed but handler not invoked
 - Ensure tools have `handler` functions attached (use `ToolInput`, not raw `Tool`)
 - Use `call.invoke()` to execute — it runs the handler automatically
+- **Renamed in 0.9**: `call.call()` → `call.invoke()`. Upgrading from 0.5-0.8?
+  Update every `.call()` usage.
 - For fallback-parsed calls, look up the handler manually from the tools array
+
+## `INVALID_TOOLS_ARRAY` or schema validation error on `completion()`
+- You're likely passing sampling params (`temp`, `top_p`, etc.) inside
+  `modelConfig` or at the top level of `completion()`
+- **Fix**: Move them to `generationParams`:
+  ```ts
+  completion({ modelId, history, generationParams: { temp: 0.7, top_p: 0.9 } })
+  ```
+- `generationParams` only accepts `temp`, `top_p`, `top_k`, `predict`, `seed`,
+  `frequency_penalty`, `presence_penalty`, `repeat_penalty` — nothing else
+
+## Multimodal image input ignored / TypeScript error on `image_url`
+- The old `content: [{ type: 'image_url', image_url: { url: 'data:...' } }]`
+  payload no longer works in 0.9
+- **Fix**: attach via file path on the history message:
+  ```ts
+  history: [{
+    role: 'user',
+    content: "What's in this?",
+    attachments: [{ path: '/abs/path/to/photo.jpg' }],
+  }]
+  ```
+- Only multimodal models (e.g., `SMOLVLM2_2_500M_MULTIMODAL_Q8_0`) can consume
+  attachments — others will ignore them
+
+## `ping is not a function` / `ping()` import fails
+- `ping()` was removed in 0.8.1
+- **Fix**: `import { heartbeat } from '@qvac/sdk'`; call `await heartbeat()`
+- For remote providers: `await heartbeat({ delegate: { topic, providerPublicKey } })`
 
 ## Context overflow
 - Set `n_discarded` in `modelConfig` at load time: `n_discarded: Math.floor(ctx_size / 10)`
