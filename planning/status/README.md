@@ -1,10 +1,19 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-04-21
+> **Last updated:** 2026-04-22
 
 ---
 
 ## Recently Completed
+
+- **2026-04-22**: **Unstoppable Node full slice — usable for apps** — `packages/node/`, `packages/node-client/`, `packages/node-desktop/`, `packages/cli/`
+  - **`node-sync` rolled out to all generators**: `pear-desktop` worker and `expo-mobile` bare worklet now both support the opt-in `node-sync` feature flag — scaffolded apps dial the Node on boot, register their Hyperbee, and surface a `searching / connected / disconnected / unavailable` status section in the UI (best-effort; apps keep working offline if the Node isn't running).
+  - **AI Provider service**: New `AIProvider` class in the daemon backed by QVAC (`@qvac/sdk` is a dynamic import — data-only nodes don't pay the binary cost). CLI gains `--ai` / `--ai-mock` / `--ai-model <src>` flags (plus `UNSTOPPABLE_AI[_MOCK]` env vars). When AI is up, `services.ai` flips to `true` in the `nodeHello` handshake.
+  - **Streaming inference protocol**: New `inference` / `inference-token` / `inference-done` / `inference-error` wire messages. `NodeClient.requestInference({ messages })` is an async iterator that yields tokens from a remote node — apps can call `requireServices: ['ai']` and fail fast if the local node doesn't advertise AI.
+  - **Pear Desktop dashboard (`packages/node-desktop/`)**: Pear app that embeds the daemon directly in its worker — renderer shows service pills (data/files/ai), summary metrics (apps/cores/drives/peers), paired app list with unpair button, and a live event log. Ships as `pear run .` (or `pear run . --ai-mock` / `--ai`).
+  - **Bare-runtime portability**: `node-client` and the daemon's `protocol.js` both lazy-load `os` and guard `process.pid` / `process.uptime()` — the full stack (including `NodeDaemon`) now runs inside Bare/Pear workers without patches.
+  - **Tests**: 48/48 node tests pass (added 5 tests for AI provider + inference streaming + parallel requests); 206/206 CLI tests pass (added pear-desktop + expo-mobile node-sync generator coverage plus snapshot variants).
+  - Files: `planning/status/node/README.md` tracks phase-level progress; Phase 1 (MVP dashboard) is now complete, Phase 3 AI Provider landed ahead of schedule.
 
 - **2026-04-21**: **Unstoppable Node usability pass** — `packages/node/`, `packages/node-client/`, `packages/cli/`
   - **`nodeHello` handshake**: Node greets every peer on connect with `{ protocolVersion, nodePublicKey, services: { data, files, ai } }`. Clients wait for the greeting before pairing (2s timeout drops non-Node peers silently) and expose the services via `client.services` + `nodeHello` event.
@@ -47,7 +56,7 @@
 |---|-----------|--------|----------------|
 | 1 | [Agent Pack Content](./agent-pack-content/) | Knowledge by category | 52% battle-tested, 26% docs-only, 22% not covered |
 | 2 | [Agent Pack Architecture](./agent-pack-architecture/) | Skill system, builders | Skills exist, no auto-activation yet |
-| 3 | [Unstoppable Node](./node/) | Pear desktop sync app | Pairing & replication built |
+| 3 | [Unstoppable Node](./node/) | Pear desktop sync app | **Usable for apps — data + files + AI, dashboard shipped** |
 | 4 | [Website](./website/) | unstoppable.dev | **All major pages complete** |
 | 5 | [**Unstoppable Agent**](./agent/) | Local AI coding agent | **Phase 2 architecture — DA/OC parity** |
 | 6 | [**Remote Coder**](./remote-coder/) | P2P mobile remote for AI assistants | **Phase 1 — CLI done, mobile scaffolded** |
@@ -138,7 +147,7 @@
 | Priority | What | Why | Workstreams |
 |----------|------|-----|-------------|
 | **0 — HIGH** | Test Agent with 30B+ coding model | Phase 2 architecture ready, needs capable model | Agent |
-| **1 — HIGH** | Build Node Phase 1 | Validates 7 items at once (Corestore, Hyperdrive, etc.) | Node, Content |
+| **1 — HIGH** | Polish Node for publish + real QVAC model test | Phase 1 + 3 code complete; need end-to-end real-model run + publish `@unstoppable/node` + `@unstoppable/node-client` | Node |
 | **2 — MEDIUM** | QVAC capabilities (Vision, RAG, Transcription) | Extends what apps can do | Content/QVAC |
 | **3 — MEDIUM** | P2P advanced (HyperDB, SecretStream) | Enables collaborative + secure apps | Content/P2P |
 | **4 — MEDIUM** | Agent pack auto-activation + tooling | Better DX for scaffolded projects | Architecture |

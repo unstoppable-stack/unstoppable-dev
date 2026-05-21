@@ -48,7 +48,7 @@ lead to working knowledge.
 | **Text-to-Speech** | Docs only | — |
 | **OCR** | Docs only | — |
 | **Embeddings / RAG** | Docs only | — |
-| **Delegated Inference** | Docs only | — |
+| **Delegated Inference** | In progress | unstoppable-node (`AIProvider` + streaming protocol, mock-tested) |
 | **Sharded Models** | Docs only | — |
 | **Model Registry / Discovery** | Docs only | — |
 | **Logging / File Transport** | Docs only | — |
