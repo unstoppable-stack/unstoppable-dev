@@ -3,7 +3,7 @@ name: add-ai-rag
 description: Local embeddings and RAG with QVAC workspaces (ragIngest, ragSearch) — no manual vector DB required.
 when_to_use: User wants semantic search, knowledge bases, or context-aware AI over local documents using embeddings.
 paths: ["src/ai/**", "src/search/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI RAG (QVAC Workspaces)
@@ -15,9 +15,21 @@ version: "2026-04-20"
 - User wants to index and query local files
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
+- `@qvac/sdk` (`^0.11.0`) installed
 - An LLM for generation (see `add-ai-chat`)
 - An embedding model (defaults: `GTE_LARGE_FP16`, `EMBEDDINGGEMMA_300M_Q4_0`)
+
+> **Cancellation (0.11)**: `ragIngest`, `ragSaveEmbeddings`, and `ragReindex`
+> return decorated promises with a synchronously-readable `requestId`. Cancel
+> via `cancel({ requestId: op.requestId })`. The legacy
+> `cancel({ operation: "rag", workspace })` shape is **removed**. The broad
+> escape hatch when you don't have a `requestId` to hand is
+> `cancel({ modelId: ragEmbeddingModelId, kind: "rag" })`.
+>
+> Non-cancellable RAG ops (`ragChunk`, `ragSearch`, `ragDeleteEmbeddings`,
+> `ragListWorkspaces`, `ragCloseWorkspace`, `ragDeleteWorkspace`)
+> intentionally don't decorate — they're fast-path and don't register with
+> the server-side request registry.
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.
 > It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.

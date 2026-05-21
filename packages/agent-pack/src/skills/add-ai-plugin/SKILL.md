@@ -3,7 +3,7 @@ name: add-ai-plugin
 description: Extend QVAC with a custom plugin — new model type + typed handlers via `definePlugin()` and `defineHandler()`.
 when_to_use: User wants to add a model type QVAC doesn't ship (custom ONNX/GGUF/JS logic), wrap a native addon, or ship reusable handler(s) as an npm package.
 paths: ["plugins/**", "src/plugins/**", "*-plugin/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add a Custom QVAC Plugin
@@ -18,8 +18,8 @@ version: "2026-04-20"
   or wants to add `invokePlugin()` / `invokePluginStream()` handlers
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
-- `zod` (`^4.0.0`) — request/response schemas are Zod v4
+- `@qvac/sdk` (`^0.11.0`) installed
+- `zod` (`^4.3.0`) — request/response schemas are Zod v4.3+ (required by 0.10+)
 - Bare-compatible code for the worker-side entrypoint (no Node-only APIs,
   no dynamic imports)
 
@@ -55,8 +55,8 @@ and the browser worker boundary.
        }
      },
      "dependencies": {
-       "@qvac/sdk": "^0.9.0",
-       "zod": "^4.0.0"
+       "@qvac/sdk": "^0.11.0",
+       "zod": "^4.3.0"
      }
    }
    ```
@@ -75,6 +75,11 @@ and the browser worker boundary.
      addonPackage: 'none', // or the npm name of a native addon
      loadConfigSchema: z.object({}).catchall(z.unknown()),
 
+     // 0.10: the addon constructor shape changed. createModel now receives
+     // the new CreateModelParams (different from 0.9's variant). Verify
+     // the field names and return type against your installed
+     // @qvac/sdk types — first-party plugins were all migrated in 0.10
+     // and are the source of truth.
      createModel: (params: CreateModelParams): PluginModelResult => {
        // Called when loadModel({ modelType: 'echo', ... }) runs.
        // Return an object with at least { model, loader }.
@@ -98,8 +103,11 @@ and the browser worker boundary.
        }),
 
        // Streaming handler — mark `streaming: true` and yield chunks.
+       // Optional in 0.11+: declare your cancel scope so the SDK knows
+       // whether your addon supports per-request or per-model cancellation.
        echoStream: defineHandler({
          streaming: true,
+         cancel: { scope: 'request', hard: true }, // "request" | "model" | "none"
          requestSchema: z.object({ message: z.string() }),
          responseSchema: z.object({
            char: z.string().nullable(),
@@ -164,17 +172,25 @@ and the browser worker boundary.
    The SDK resolves each string as an npm package, imports its `./plugin`
    entrypoint, and registers the exported plugin.
 
-5. **Use the plugin** in consumer code:
+5. **Use the plugin** in consumer code. In 0.10 you should use the new
+   `LoadCustomPluginModelOptions<T>` type so the plugin name is pinned at
+   the type level (the SDK uses literal string overloads to type-check
+   `modelConfig` against your declared schema):
 
    ```ts
    import { loadModel, unloadModel } from '@qvac/sdk'
+   import type { LoadCustomPluginModelOptions } from '@qvac/sdk'
    import { echo, echoStream } from 'qvac-my-plugin'
 
-   const modelId = await loadModel({
+   // Explicit type — forces TS to check modelType matches the literal.
+   const opts: LoadCustomPluginModelOptions<'echo'> = {
      modelSrc: '/some/path/or/registry/id',
      modelType: 'echo',
      modelConfig: { /* validated by loadConfigSchema */ },
-   })
+   }
+   const modelId = await loadModel(opts)
+   // (You can also drop the annotation entirely — TS still picks the
+   // right overload since 'echo' is a string literal.)
 
    const result = await echo({ modelId, message: 'hi' })
    for await (const ch of echoStream({ modelId, message: 'hi' })) {
@@ -183,6 +199,14 @@ and the browser worker boundary.
 
    await unloadModel({ modelId })
    ```
+
+> **Migration note (0.9 → 0.10):** the catch-all `LoadModelOptions` is no
+> longer the recommended type for custom plugins — `LoadCustomPluginModelOptions<"...">`
+> is. Built-in model types (`"llm"`, `"transcription"`, etc.) continue to
+> auto-resolve to the right overload when the annotation is dropped. At
+> runtime, calling a built-in op (`completion`, `transcribe`, `translate`)
+> on the wrong model type now throws `MODEL_OPERATION_NOT_SUPPORTED` /
+> `ModelTypeMismatchError` instead of silently mis-routing.
 
 ## Advanced Features
 

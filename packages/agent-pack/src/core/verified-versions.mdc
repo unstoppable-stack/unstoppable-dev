@@ -11,7 +11,7 @@ these versions** when generating `package.json` files — do not guess or use
 `latest`. If a package isn't listed here, run `npm view <package> versions --json | tail -5`
 to get the actual latest version before writing `package.json`.
 
-Last verified: 2026-04-20
+Last verified: 2026-05-21
 
 ---
 
@@ -64,9 +64,10 @@ installing it, you'll get `MODULE_NOT_FOUND`.
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@qvac/sdk` | `^0.9.0` | Local AI inference SDK |
-| `@qvac/cli` | `^0.1.2` | Optional: OpenAI-compatible HTTP server + Bare worker bundler |
-| `zod` | `^4.0.0` | Schema validation for tool definitions (v4 required) |
+| `@qvac/sdk` | `^0.11.0` | Local AI inference SDK |
+| `@qvac/cli` | `^0.5.0` | Optional: OpenAI-compatible HTTP server + Bare worker bundler (also auto-runs `qvac verify bundle` during Expo prebuild) |
+| `zod` | `^4.3.0` | Schema validation for tool definitions (v4.3+ required by @qvac/sdk@0.10+) |
+| `react-native-bare-kit` | `0.12.3` | (Expo only) Native module that hosts the Bare runtime — **exact pin required** by @qvac/sdk@0.11 |
 
 ## UI (React + styled-components)
 
@@ -188,10 +189,32 @@ worker for P2P and/or AI operations:
 
 ```json
 "dependencies": {
-  "@qvac/sdk": "^0.9.0",
-  "zod": "^4.0.0"
+  "@qvac/sdk": "^0.11.0",
+  "zod": "^4.3.0"
 },
 "devDependencies": {
-  "@qvac/cli": "^0.1.2"
+  "@qvac/cli": "^0.5.0"
+}
+```
+
+`@qvac/sdk@0.11` declares `@qvac/cli@^0.4.0` as its peerOptional. The 0.5.x line
+is runtime-compatible (no addon-side changes between 0.4 and 0.5 — same deps,
+same `bare-pack` floor) but npm strict peer resolution rejects it. Install with
+`--legacy-peer-deps` when pinning `^0.5.0`, or pin `^0.4.0` to satisfy the peer
+range cleanly:
+
+```bash
+# Recommended (latest line, requires the flag once):
+npm install -D '@qvac/cli@^0.5.0' --legacy-peer-deps
+# Fallback (clean peer resolution, slightly older):
+npm install -D '@qvac/cli@^0.4.0'
+```
+
+For Expo (mobile) apps additionally pin `react-native-bare-kit` to the exact
+version that `@qvac/sdk@0.11` requires:
+
+```json
+"dependencies": {
+  "react-native-bare-kit": "0.12.3"
 }
 ```

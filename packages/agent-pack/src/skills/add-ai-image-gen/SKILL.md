@@ -3,7 +3,7 @@ name: add-ai-image-gen
 description: Local text-to-image generation with QVAC's diffusion plugin (FLUX2-Klein, Stable Diffusion).
 when_to_use: User wants to generate images from text prompts on-device, without any cloud image API.
 paths: ["src/ai/**", "src/images/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI Image Generation (QVAC Diffusion)
@@ -15,7 +15,7 @@ version: "2026-04-20"
 - User needs offline image generation (privacy, no API keys, no rate limits)
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
+- `@qvac/sdk` (`^0.11.0`) installed
 - A diffusion model in GGUF format (e.g., FLUX2-Klein, Stable Diffusion XL)
 - `diffusion-cpp` plugin enabled (listed in `qvac.config.plugins` or using
   the default plugin set)
@@ -27,18 +27,31 @@ version: "2026-04-20"
 
 ## Background
 
-Image generation in QVAC 0.9 is delivered via the **plugin system**. The
-built-in plugin is `diffusion-cpp`, and diffusion models (FLUX2, SDXL) are
-loaded just like any other model with `loadModel()`. Execution happens
-through the generic `invokePlugin()` / `invokePluginStream()` plugin-handler
-dispatch — there is no dedicated `generateImage()` top-level function.
+Image generation in QVAC 0.11 has a **dedicated top-level `diffusion()`
+function** (the underlying plugin is still `diffusion-cpp`). Diffusion models
+(FLUX.2, SDXL) are loaded with `loadModel()` and called with `diffusion()`.
+You can still go through `invokePlugin()` / `invokePluginStream()` for fully
+custom flows, but `diffusion()` is the supported high-level entry.
 
-This means:
-- Diffusion model constants / handler names may evolve between SDK minor
-  versions.
-- Verify handler names against your installed `@qvac/sdk` version before
-  shipping — `modelRegistrySearch({ query: 'flux' })` is the easiest way to
-  enumerate what's available locally.
+Headline capabilities on the diffusion path:
+
+- **img2img (SD/SDXL)** — `init_image` parameter for SDEdit-style
+  image-to-image with a `strength` knob (0 = preserve source, 1 = ignore).
+- **Multi-reference fusion (FLUX.2)** — `init_images` (array, mutually
+  exclusive with `init_image`) lets you blend multiple reference images into
+  a single output via in-context conditioning with RoPE-separated latent
+  tokens. Best with FLUX.2-klein + Qwen3 text encoder. Use `@image1`,
+  `@image2`, … tags in the prompt to anchor each reference semantically.
+  FLUX.2 also accepts `increase_ref_index` and `auto_resize_ref_image`
+  tunables.
+- **Per-call LoRA (NEW in 0.11)** — `diffusion({ lora })` takes an absolute
+  filesystem path to a `.safetensors` adapter. Pair with load-time
+  `modelConfig.lora_apply_mode: "auto" | "immediately" | "at_runtime"` to
+  control fusion vs. per-call application. Relative paths are rejected.
+- **ESRGAN upscaling (NEW in 0.11)** — either attach an upscaler to a
+  diffusion model (`modelConfig.upscaler = { type: "esrgan", model_src,
+  tile_size }`) and run it as a post-step via `diffusion({ upscale:
+  { repeats } })`, or use the standalone `upscale()` API documented below.
 
 ## Steps
 
@@ -70,53 +83,87 @@ This means:
    })
    ```
 
-4. **Generate an image** via the plugin handler — this returns a path /
-   buffer depending on the handler. Stream for progress updates:
+4. **Generate an image** via `diffusion()` (0.10):
+   ```ts
+   import { diffusion } from '@qvac/sdk'
+
+   // Plain text-to-image (txt2img):
+   const { outputs } = diffusion({
+     modelId,
+     prompt: 'A lighthouse on a rocky coast at sunrise, cinematic, 4k',
+     negativePrompt: 'blurry, low quality, deformed',
+     width: 1024,
+     height: 1024,
+     steps: 30,
+     seed: 42,
+   })
+   // outputs[0] is a Uint8Array of PNG bytes — write to disk:
+   import * as fs from 'node:fs'
+   fs.writeFileSync('./out/lighthouse.png', outputs[0])
+   ```
+
+5. **img2img on SD/SDXL** — pass an `init_image` and a `strength` to do
+   SDEdit-style image-to-image:
+   ```ts
+   const initImage = new Uint8Array(fs.readFileSync('./input.png'))
+   const { outputs } = diffusion({
+     modelId,
+     prompt: 'oil painting style, vibrant colors',
+     init_image: initImage,
+     strength: 0.5,   // 0 = keep source verbatim, 1 = ignore source
+     steps: 30,
+   })
+   ```
+   `strength` is SD/SDXL-only. FLUX.2 ignores `strength` because its
+   conditioning path is purely conditional, not a noise-mixing schedule.
+
+6. **Multi-reference fusion on FLUX.2** — pass `init_images` (array, ≥1):
+   ```ts
+   const von = new Uint8Array(fs.readFileSync('./assets/von-neumann.jpg'))
+   const sha = new Uint8Array(fs.readFileSync('./assets/shannon.jpg'))
+
+   const { outputs } = diffusion({
+     modelId, // a FLUX.2 model
+     prompt: '@image1 and @image2 sitting at a chessboard, oil painting',
+     init_images: [von, sha],
+     // increase_ref_index defaults to false on FLUX.2-klein (refs share
+     // one RoPE slot and blend via attention — recommended).
+     increase_ref_index: false,
+     auto_resize_ref_image: true,   // default
+     width: 1024,
+     height: 1024,
+   })
+   ```
+   - Use `@imageN` tags in the prompt for semantic anchoring of each
+     reference.
+   - `init_image` and `init_images` are mutually exclusive — pass one or
+     the other.
+   - Width/height must be multiples of 8.
+
+7. **Stream progress** — for long renders, use `invokePluginStream` (the
+   diffusion-cpp handler still exposes step events through the plugin
+   dispatch path):
    ```ts
    import { invokePluginStream } from '@qvac/sdk'
-
    const stream = invokePluginStream<{
      step?: number
      totalSteps?: number
-     imagePath?: string
      done?: boolean
+     output?: Uint8Array
    }>({
      modelId,
-     handler: 'generate', // diffusion-cpp handler name; verify in your SDK version
-     params: {
-       prompt: 'A lighthouse on a rocky coast at sunrise, cinematic, 4k',
-       negativePrompt: 'blurry, low quality, deformed',
-       width: 1024,
-       height: 1024,
-       steps: 30,
-       seed: 42,
-       outputPath: './out/lighthouse.png',
-     },
+     handler: 'generate',
+     params: { prompt: '...', steps: 30 },
    })
-
    for await (const evt of stream) {
      if (evt.step !== undefined && evt.totalSteps) {
        process.stdout.write(`\rStep ${evt.step}/${evt.totalSteps}`)
      }
-     if (evt.done && evt.imagePath) {
-       console.log(`\nSaved → ${evt.imagePath}`)
-     }
+     if (evt.done && evt.output) fs.writeFileSync('./out/x.png', evt.output)
    }
    ```
 
-   For a one-shot (non-streaming) generation, `invokePlugin()` returns the
-   final result only:
-   ```ts
-   import { invokePlugin } from '@qvac/sdk'
-
-   const { imagePath } = await invokePlugin<{ imagePath: string }>({
-     modelId,
-     handler: 'generate',
-     params: { prompt: '...', width: 1024, height: 1024, steps: 30 },
-   })
-   ```
-
-5. **Cleanup**:
+8. **Cleanup**:
    ```ts
    import { unloadModel } from '@qvac/sdk'
    await unloadModel({ modelId })
@@ -202,7 +249,7 @@ Treat anything not in your verified handler schema as unsupported.
   file suggestions
 - https://docs.qvac.tether.io/ — official docs
 
-> **Status**: Docs only, based on 0.9 plugin architecture and the
-> `diffusion-cpp` plugin listing in the consolidated docs. Exact handler
-> names and param schemas should be verified against the installed SDK
-> before shipping.
+> **Status**: Updated for 0.10 — top-level `diffusion()` function is
+> documented in the release notes and supports `init_image` (SD/SDXL,
+> with `strength`) and `init_images` (FLUX.2 multi-reference fusion).
+> Verify exact param schemas against your installed SDK before shipping.

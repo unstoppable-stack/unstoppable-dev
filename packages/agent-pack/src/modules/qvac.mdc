@@ -15,15 +15,66 @@ generation, fine-tuning, and workspace-based RAG.
 
 ## Version Notes
 
-- Latest npm: `@qvac/sdk@0.9.0` (verified 2026-04-20).
-- Companion CLI: `@qvac/cli@^0.1` provides `qvac serve openai` (HTTP server)
-  and `qvac bundle sdk` (tree-shaken Bare worker bundler).
+- Latest npm: `@qvac/sdk@0.11.0` (verified 2026-05-21).
+- Companion CLI: `@qvac/cli@^0.5.0` provides `qvac serve openai` (OpenAI-compatible
+  HTTP server with `response_format` passthrough), `qvac bundle sdk` (tree-shaken
+  Bare worker bundler), and `qvac verify bundle` (now auto-runs in Expo prebuild
+  in SDK 0.11; required for the mobile bundle to update).
+- `@qvac/sdk@0.11` declares `@qvac/cli@^0.4.0` as its peerOptional range. Pin
+  `^0.5.0` for the latest CLI (install with `--legacy-peer-deps`) or `^0.4.0`
+  to satisfy the peer cleanly — both are runtime-compatible with the SDK.
+- The npm version line is `0.x` again — `1.0.0` and `1.1.0` were published in
+  Nov 2025 and superseded; the npm `latest` dist-tag points at `0.11.0` and
+  the maintainers continue on the `0.x` line. Do not chase `1.x`.
 - Minimum runtimes: Node.js ≥ 22.17, Bare ≥ 1.24, Expo ≥ 54.
-- Reference apps (workbench, qvac-health) in the process of migrating from
-  `^0.6.1`/`^0.8.0` to `^0.9.0`.
+- Required `zod ^4.3.0` (was `^4.0.17` in 0.9 — 0.10+ finetune schemas use
+  `z.union/z.nan` combinations only available in 4.3+).
+- Required `react-native-bare-kit` exact `0.12.3` for Expo apps.
+- Reference apps (workbench, qvac-health) still on older versions (`^0.6.1`);
+  new apps should pin `^0.11.0` directly.
 - File-based configuration (`qvac.config.*`) since 0.5.0 — see Configuration.
 
-### 0.5 → 0.9 migration cheatsheet
+### 0.10 → 0.11 migration cheatsheet
+
+| Change | Before | After |
+|--------|--------|-------|
+| Cancelling any long-running call | `cancel({ operation: "downloadAsset", downloadKey, clearCache })` / `cancel({ operation: "rag", workspace })` | Read `op.requestId` synchronously from the decorated promise, then `cancel({ requestId })`. The two legacy shapes are removed. |
+| Bare `unloadModel` | Always closed the worker when the last model unloaded | On Bare, `autoClose` defaults to `false` (worker survives). Node/Electron still default to `true`. Pass `unloadModel({ modelId, autoClose: true })` to force shutdown. |
+| Parakeet load shape | Multi-file ONNX (`parakeetEncoderSrc`/`Decoder`/`Vocab`/`Preprocessor` + per-variant `modelType: "ctc" \| ...`) | Single GGUF: `loadModel({ modelSrc: PARAKEET_TDT_0_6B_V3_Q8_0, modelType: "parakeet" })`. Variant auto-detected from GGUF metadata. |
+| Parakeet constants | `PARAKEET_TDT_ENCODER_INT8`, `PARAKEET_TDT_DECODER_INT8`, `PARAKEET_TDT_VOCAB`, `PARAKEET_TDT_PREPROCESSOR_INT8`, `PARAKEET_CTC_FP32`, `PARAKEET_CTC_TOKENIZER`, … | `PARAKEET_TDT_0_6B_V3_Q8_0`, `PARAKEET_CTC_0_6B_Q8_0`, `PARAKEET_SORTFORMER_4SPK_V1_Q8_0`, `PARAKEET_EOU_120M_V1_Q8_0`. Old constants removed. |
+| Marian Opus NMT constants | `NMT_Q0F16` … `NMT_Q0F16_9`, `NMT_Q4_0` … `NMT_Q4_0_21` (32 entries) | Removed. Use `MARIAN_*` constants, IndicTrans, or Bergamot (`BERGAMOT_EN_IT` / `BERGAMOT_ES_EN` were regenerated with the upstream `base-memory` fix — `expectedSize` flipped from 17.1 MB → 30.1 MB). |
+| Typed errors over RPC | `error.code === "REQUEST_REJECTED_BY_POLICY"` string comparisons | `err instanceof RequestRejectedByPolicyError` (also `InferenceCancelledError`, `RequestIdConflictError`, `RequestNotFoundError`). Fields like `err.modelId`/`err.reason`/`err.requestId` survive the RPC boundary. |
+| Tool dialect | `"hermes" \| "pythonic" \| "json"` | Add `"harmony"` (GPT-OSS — streams final channel incrementally, drops protocol markers from `contentDelta`), plus auto-detected `qwen35` (Pythonic-XML `<tool_call><function=NAME>…</function></tool_call>`) and `gemma4` (`<\|tool_call\|>call:NAME{…}<tool_call\|>`). |
+| Reasoning budget | No per-request gate | `loadModel().modelConfig.reasoning_budget` or `completion().generationParams.reasoning_budget`. `-1` unrestricted, `0` disabled. |
+| Multi-GPU on LLM | Not exposed | `modelConfig: { "split-mode": "layer" \| "row" \| "none", "tensor-split": "1,1", "main-gpu": 0 }`. Embed uses camelCase: `splitMode`, `tensorSplit`, `mainGpu`. |
+| Whisper streaming | Text/segments only | `transcribeStream({ emitVadEvents: true, endOfTurnSilenceMs, vadRunIntervalMs })` yields a discriminated `text \| vad \| endOfTurn` event stream for push-to-talk / barge-in UX. |
+| Parakeet streaming | Not available | `transcribeStream({ parakeetStreamingConfig: { chunkMs, emitPartials, … } })` duplex session with `text` and `endOfTurn` events. |
+| FLUX.2 img2img | Single `init_image` only | Multi-reference: `diffusion({ init_images: Uint8Array[] })` with `@image1`/`@image2` anchors in the prompt. Plus `increase_ref_index` and `auto_resize_ref_image`. |
+| LoRA on diffusion | Bake into model file | Per-call `diffusion({ lora: "/abs/path/to/lora.safetensors" })` plus `loadModel().modelConfig.lora_apply_mode: "auto" \| "immediately" \| "at_runtime"`. Absolute paths required. |
+| Upscaling | Not available | Attach `modelConfig.upscaler = { type: "esrgan", model_src, tile_size }` to a diffusion model for a post-step pass (`diffusion({ upscale: { repeats } })`), or load an ESRGAN file standalone with `modelType: "diffusion", modelConfig: { mode: "upscale" }` and call `upscale({ modelId, image, repeats })`. |
+| `cancelFinetune` | Awaited the addon-side cancel | Fire-and-forget: returns immediately, addon cancel runs out-of-band via the registry's abort listener. Prefer `cancel({ requestId })` going forward. |
+| Mobile bundle verification | Manual | `qvac verify bundle` auto-runs in Expo prebuild (SDK pipeline: `runBundler → assert bundle → runVerifier → copy`). Failure preserves the last known-good artifact and throws `BundleVerificationFailedError` (code 50609). Pear consumers still run it manually before `pear stage`. |
+
+### 0.9 → 0.10 migration cheatsheet
+
+| Change | Before | After |
+|--------|--------|-------|
+| Completion stream | `result.tokenStream` + `await result.stats` (still works as derived views) | `run.events` (typed `CompletionEvent` stream) + `await run.final` |
+| Captured thinking | manual `<think>` filtering | `completion({ captureThinking: true })` → `final.thinkingText` |
+| Tool calls in stream | regex over tokens | typed `event.type === "toolCall"` events with `event.call` |
+| Multi-file download progress | `progress.onnxInfo` | `progress.fileSetInfo` (same shape, renamed) |
+| Custom plugin load options | `LoadModelOptions` (catch-all) | `LoadCustomPluginModelOptions<"plugin-name">` (literal type-pinned) |
+| Calling wrong op for type | silent mis-routing | `MODEL_OPERATION_NOT_SUPPORTED` / `ModelTypeMismatchError` |
+| `definePlugin` `createModel` | old addon shape | new addon constructor shape (plugin authors only) |
+| Delegated inference discovery | shared topic rendezvous | direct DHT connect (`swarm.dht.connect(publicKey)`) |
+| Whisper output | flat string | structured `TranscribeSegment[]` with `metadata: true` |
+| img2img | not available | `init_image` (SD/SDXL with `strength`) / `init_images` (FLUX.2 fusion) |
+| Sentence-by-sentence TTS | not available | `textToSpeechStream({ accumulateSentences: true })` duplex sessions |
+| Tool-call dialect | auto-detected only | optional `toolDialect: "hermes" \| "pythonic" \| "json"` override |
+| Tool rotation | required new model load or full cache rebuild | `TOOLS_MODE.dynamic` — free per-turn rotation |
+| Structured output | manual prompt + parse | `completion({ responseFormat: { type: "json_schema", ... } })` |
+
+### 0.5 → 0.9 migration cheatsheet (still relevant)
 
 | Change | Before | After |
 |--------|--------|-------|
@@ -90,24 +141,33 @@ import {
   LLAMA_3_2_1B_INST_Q4_0,
   completion,
   unloadModel,
+  cancel,
 } from "@qvac/sdk";
 
-const modelId = await loadModel({
+const loadOp = loadModel({
   modelSrc: LLAMA_3_2_1B_INST_Q4_0,
   modelType: "llm",
 });
+const modelId = await loadOp;
 
-const result = completion({
+const run = completion({
   modelId,
   history: [{ role: "user", content: "Hello" }],
   stream: true,
+  captureThinking: true,
 });
 
-for await (const token of result.tokenStream) {
-  process.stdout.write(token);
+stopButton.onclick = () => cancel({ requestId: run.requestId });
+
+for await (const event of run.events) {
+  if (event.type === "contentDelta") process.stdout.write(event.text);
+  if (event.type === "toolCall") console.log("tool:", event.call.name);
 }
 
-await unloadModel({ modelId });
+const final = await run.final;
+// final.contentText, final.thinkingText, final.toolCalls, final.stats
+
+await unloadModel({ modelId }); // on Bare, pass `autoClose: true` to also tear down the worker
 ```
 
 ## Core Concepts
@@ -118,8 +178,10 @@ await unloadModel({ modelId });
 - **Model registry**: constants like `LLAMA_3_2_1B_INST_Q4_0` map to preconfigured
   model sources. You can also pass local paths, HTTP(S) URLs, Hyperdrive
   (`pear://`) URLs, or registry URLs.
-- **Streaming**: `completion()` and `translate()` return `tokenStream` async
-  generators plus parallel `toolCallStream` for live tool calls.
+- **Unified event stream** (0.10): `completion()` returns a `CompletionRun`
+  exposing a typed `events` async iterable (content, thinking, toolCall, stats,
+  done) plus a `final` promise. The legacy `tokenStream` / `await stats` are
+  derived back-compat views.
 - **Plugin system**: each built-in model type (llm, whisper, parakeet, embeddings,
   nmt, tts, ocr) ships as a plugin. Tree-shake via `qvac.config.plugins` or add
   your own with `definePlugin()`.
@@ -139,16 +201,22 @@ await unloadModel({ modelId });
 | Multimodal (vision)             | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
 | Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
 | Speech-to-text (Whisper)        | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
-| Speech-to-text (Parakeet)       | NVIDIA Parakeet TDT/CTC/Sortformer                             | Lower latency option vs Whisper.                      |
-| Translation                     | `MARIAN_OPUS_EN_IT_Q4_0`, `MARIAN_EN_HI_INDIC_1B_Q4_0`         | Opus / IndicTrans / Bergamot engines available.       |
+| Speech-to-text (Parakeet)       | `PARAKEET_TDT_0_6B_V3_Q8_0` (general), `PARAKEET_CTC_0_6B_Q8_0` (low-latency), `PARAKEET_SORTFORMER_4SPK_V1_Q8_0` (diarization), `PARAKEET_EOU_120M_V1_Q8_0` (end-of-turn) | Single-file GGUF Parakeet (NEW in 0.11). Lower latency than Whisper. |
+| Translation                     | IndicTrans (`MARIAN_EN_HI_INDIC_1B_Q4_0`) or Bergamot (`BERGAMOT_EN_IT`, `BERGAMOT_ES_EN`) | IndicTrans / Bergamot engines. The 32 legacy `NMT_Q0F16*` / `NMT_Q4_0*` Marian Opus constants were removed in 0.11. |
 | Image generation                | FLUX2-Klein (diffusion)                                        | Local text-to-image.                                  |
 | TTS                             | Supertonic or Chatterbox engines                               | Voice synthesis with optional cloning.                |
 
 Use `modelRegistryList()`, `modelRegistrySearch()`, and `modelRegistryGetModel()`
 to enumerate models at runtime; use `getModelByName()`, `getModelBySrc()`, or
 `getModelByPath()` to resolve metadata for a known model. Treat any constant not
-listed above as unverified for 0.9.0 and prefer explicit `modelSrc` strings or
+listed above as unverified for 0.11 and prefer explicit `modelSrc` strings or
 the registry API.
+
+The Bergamot translation pairs `BERGAMOT_EN_IT` and `BERGAMOT_ES_EN` were
+regenerated against the upstream `base-memory` fix in 0.11 (paths now point at
+`bergamot-{enit,esen}/2026-04-28/...`, `expectedSize` flipped from 17.1 MB to
+30.1 MB). The shared vocab is also now cached and reused across
+`loadModel({ modelSrc: BERGAMOT_… })` calls.
 
 ## Context Window Limits
 
@@ -164,21 +232,77 @@ or external docs for exact limits.
 ### Lifecycle
 
 - `loadModel({ modelSrc, modelType, modelConfig?, seed?, delegate?, onProgress?, logger? })`
-  — loads a model and returns `modelId`. Overload: pass `{ modelId, modelType, modelConfig }`
+  — returns a **decorated promise** whose `requestId` is readable synchronously
+  (0.11+). `await` it to get `modelId`. Overload: pass `{ modelId, modelType, modelConfig }`
   to hot-reload config on an already-loaded model (Whisper only in 0.9).
-- `unloadModel({ modelId })` — release a single model.
+- `unloadModel({ modelId, autoClose? })` — release a single model. **On Bare,
+  `autoClose` defaults to `false` in 0.11** (worker survives unload). Node and
+  Electron still default to `true`. Pass `{ autoClose: true }` to force the
+  worker shutdown that 0.10 always did.
 - `close()` — shut down the worker and RPC client.
 - `heartbeat({ delegate? })` — health probe; replaces `ping()` as of 0.8.1.
   With `delegate`, probes a remote provider before load.
-- `downloadAsset({ assetSrc, seed?, onProgress? })` — download without loading.
-- `cancel({ operation, modelId?, downloadKey?, delegate? })` — cancel an active
-  inference, download, or delegated operation.
+- `downloadAsset({ assetSrc, seed?, onProgress? })` — decorated promise; read
+  `op.requestId` synchronously for cancellation. Cancel via
+  `cancel({ requestId: op.requestId, clearCache: true })`.
+- `cancel(...)` — unified cancel:
+  - `cancel({ requestId })` — primary path (0.11+). Pair with the `requestId`
+    on any decorated call: `completion`, `loadModel`, `embed`, `transcribe`,
+    `transcribeStream`, `translate`, `finetune`, `downloadAsset`,
+    `ragIngest`, `ragSaveEmbeddings`, `ragReindex`.
+  - `cancel({ modelId, kind? })` — broad escape hatch (cancel every in-flight
+    op on a model, optionally narrowed by `kind: "completion" | "embeddings" | "rag" | …`).
+  - **Removed**: `cancel({ operation: "downloadAsset", downloadKey, clearCache })`
+    and `cancel({ operation: "rag", workspace })` — neither carries a
+    `requestId` and neither can be back-mapped onto the new wire envelope.
+- `cancelFinetune(modelId)` — now fire-and-forget; the addon cancel runs
+  out-of-band via the registry abort listener. Prefer `cancel({ requestId })`
+  for new code.
 - `deleteCache({ all | kvCacheKey, modelId? })` — remove KV cache files.
+
+### Typed errors (re-exported in 0.11)
+
+`InferenceCancelledError`, `RequestRejectedByPolicyError`,
+`RequestIdConflictError`, and `RequestNotFoundError` survive the RPC boundary —
+`err instanceof RequestRejectedByPolicyError` narrows correctly and
+`err.modelId` / `err.reason` / `err.requestId` are populated from the
+server-side throw. `RequestRejectedByPolicyError` (code 52420) fires when an
+admission policy blocks the call — e.g. the worker's default
+`oneAtATimePerModel: true` rule for `completion` (promotes the llama.cpp
+addon's opaque "job already set" error into a typed framework rejection).
 
 ### Inference
 
-- `completion({ modelId, history, stream?, tools?, mcp?, kvCache?, generationParams? })`
-  returns `{ tokenStream, toolCallStream, toolCalls, stats, text }`.
+- `completion({ modelId, history, stream?, tools?, mcp?, kvCache?, generationParams?, responseFormat?, toolDialect?, captureThinking? })`
+  returns a `CompletionRun` with:
+  - **`run.events`** (NEW in 0.10) — async iterable of typed `CompletionEvent`s.
+    Discriminated union: `contentDelta` (visible text chunk), `thinkingDelta`,
+    `toolCall` (a complete tool call with `event.call`), `stats`, `done`, `error`.
+    The authoritative API going forward.
+  - **`run.final`** (NEW in 0.10) — promise that resolves when the run finishes,
+    with `{ contentText, thinkingText, toolCalls, stats, raw: { fullText } }`.
+  - `run.tokenStream` + `await run.stats` — back-compat derived views, still
+    work in 0.10 but new code should prefer `events` / `final`.
+  - **`responseFormat`** (NEW in 0.10) — constrain output to a JSON Schema:
+    `{ type: "json_schema", json_schema: { name, schema } }`. Output is
+    guaranteed to parse against the schema. Also accepts `text` and
+    `json_object` types.
+  - **`toolDialect`** — force a tool-call parser: `"hermes" | "pythonic" |
+    "json" | "harmony"`. Auto-detected `qwen35` and `gemma4` parsers also
+    ship in 0.11 (selected from model name). Default auto-routes to `hermes`
+    — set to `"pythonic"` for Llama 3.x fine-tunes that emit native pythonic
+    headers, `"harmony"` for GPT-OSS (streams final-channel content
+    incrementally instead of buffering until `<|return|>` and drops
+    protocol markers from `contentDelta`). The harmony parser surfaces
+    malformed-JSON / unknown-tool / non-object payloads as structured
+    `ToolCallError`s instead of silently dropping the event.
+  - **`generationParams.reasoning_budget`** (NEW in 0.11) — gates how much
+    "thinking" a reasoning model is allowed to produce. `-1` = unrestricted,
+    `0` = disabled. Also accepted as a load-time default on
+    `loadModel().modelConfig.reasoning_budget`.
+  - **`captureThinking: true`** (NEW in 0.10) — surface model `<think>` blocks
+    as `thinkingDelta` events / `final.thinkingText`. Replaces manual
+    `<think>...</think>` regex filtering.
   - `history[].attachments: [{ path }]` attaches images/media for multimodal
     models — **does not use base64 data URLs**.
   - `tools` accepts Zod-schema `ToolInput[]` (with optional `handler`) or full
@@ -187,18 +311,105 @@ or external docs for exact limits.
     clients as tools. The MCP client is duck-typed — `listTools`, `callTool`,
     and optional `listResources`, `readResource`.
   - `generationParams` is strict: `temp`, `top_p`, `top_k`, `predict`, `seed`,
-    `frequency_penalty`, `presence_penalty`, `repeat_penalty`. No extra keys
-    allowed. **Do not put these in `modelConfig`**.
+    `frequency_penalty`, `presence_penalty`, `repeat_penalty`, plus per-request
+    `json_schema` / `grammar` (mutually exclusive — passing both throws). No
+    extra keys allowed. **Do not put these in `modelConfig`**.
   - `kvCache: true` → auto key; `kvCache: "session-id"` → manual key.
   - `toolCalls` resolves to `ToolCallWithCall[]`. When a handler is provided,
-    each entry exposes `await toolCall.invoke()` (**renamed from `.call()` in 0.9**).
+    each entry exposes `await toolCall.invoke()` (renamed from `.call()` in 0.9).
+- **Dynamic tools mode** (NEW in 0.10): load with
+  `modelConfig.toolsMode: TOOLS_MODE.dynamic` to enable free per-turn rotation
+  of the `tools` array — the addon trims the previous tool block from the KV
+  cache so changing tools doesn't invalidate the cache.
 - `embed({ modelId, text })` — `text: string` → `number[]`; `text: string[]` →
   `number[][]`. Batch size defaults to 1024.
-- `transcribe({ modelId, audio })` / `transcribeStream({ modelId, audio })` —
-  speech-to-text.
+- `transcribe({ modelId, audioChunk, metadata? })` (NEW shape in 0.10) —
+  speech-to-text. With `metadata: true` returns `TranscribeSegment[]` with
+  `{ id, startMs, endMs, text, append }` for subtitle/timeline alignment.
+- `transcribeStream({ modelId, audio })` — duplex streaming variant.
+  - **Whisper VAD mode (NEW in 0.11)**: opt in with `emitVadEvents: true,
+    endOfTurnSilenceMs?, vadRunIntervalMs?`. Yields a discriminated
+    `TranscribeStreamEvent` stream: `{ type: "text", text }`,
+    `{ type: "vad", speaking, probability }`,
+    `{ type: "endOfTurn", silenceDurationMs }`. Lets you build push-to-talk
+    or barge-in UX without polling for changes in the text output.
+  - **Parakeet duplex (NEW in 0.11)**: with the new GGUF Parakeet plugin,
+    `transcribeStream({ parakeetStreamingConfig: { chunkMs, historyMs,
+    leftContextMs, rightLookaheadMs, emitPartials, emitEnergyVad } })`
+    yields `text` / `endOfTurn` events on the same iterator.
 - `translate({ modelId, text, ... })` — NMT over Opus / Bergamot / IndicTrans.
-- `textToSpeech({ modelId, text })` — TTS via Chatterbox or Supertonic engines.
+  Now strictly type-routes by loaded model type (throws `ModelTypeMismatchError`
+  on mismatch instead of silent mis-routing).
+- `textToSpeech({ modelId, text, stream?, sentenceStream? })` — TTS via
+  Chatterbox or Supertonic engines. With `stream: true, sentenceStream: true`
+  yields one chunk per sentence (int16 PCM + source sentence + chunk index).
+- **`textToSpeechStream({ modelId, accumulateSentences, sentenceDelimiterPreset, flushAfterMs })`**
+  (NEW in 0.10) — duplex TTS session you can pipe a streaming LLM into.
+  `sentenceDelimiterPreset`: `"latin" | "cjk" | "multilingual"`.
 - `ocr({ modelId, image })` — extract text from images.
+- **`diffusion({ modelId, prompt, init_image?, init_images?, strength?,
+  lora?, upscale?, increase_ref_index?, auto_resize_ref_image?, ... })`**
+  (image generation): plain text-to-image, plus `init_image` for SD/SDXL
+  SDEdit-style img2img with `strength` (0 = keep source, 1 = ignore source),
+  and `init_images` (FLUX.2-only) for multi-reference fusion (mutually
+  exclusive with `init_image`). FLUX.2 ignores `strength` (purely
+  conditional). Use `@image1` / `@image2` tags in the prompt for semantic
+  anchoring with FLUX.2-klein.
+  - **Per-call LoRA (NEW in 0.11)**: `lora: "/abs/path/to/lora.safetensors"`.
+    Absolute paths required (POSIX, Windows drive-letter, or UNC) — the SDK
+    runs across processes with differing cwds. Pair with load-time
+    `modelConfig.lora_apply_mode: "auto" | "immediately" | "at_runtime"`.
+  - **ESRGAN upscaling (NEW in 0.11)**: attach `modelConfig.upscaler =
+    { type: "esrgan", model_src, tile_size }` to a diffusion model for a
+    post-step pass via `diffusion({ upscale: { repeats } })`, or use the
+    standalone `upscale()` API below.
+- **`upscale({ modelId, image, repeats })`** (NEW in 0.11) — standalone
+  ESRGAN. Load an ESRGAN file with `modelType: "diffusion", modelConfig:
+  { mode: "upscale", upscaler: { tile_size } }` and feed a PNG/JPEG
+  `Uint8Array`. Each `repeats` pass multiplies dims by the model's native
+  scale factor. Calling `upscale()` on a non-`mode: "upscale"` model throws
+  `ModelOperationNotSupportedError` upfront.
+
+### Multi-GPU (NEW in 0.11)
+
+`@qvac/llm-llamacpp@^0.20.0` / `@qvac/embed-llamacpp@^0.16.0` expose the
+llama.cpp multi-GPU knobs. LLM uses canonical hyphenated keys (mirrors the
+llama.cpp CLI); embed uses the existing camelCase convention.
+
+```ts
+// LLM
+await loadModel({
+  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+  modelType: "llm",
+  modelConfig: {
+    "split-mode": "layer",      // "none" | "layer" | "row"
+    "tensor-split": "1,1",      // proportional split across GPUs
+    "main-gpu": 0,              // integer index, or "integrated" | "dedicated"
+  },
+})
+
+// Embed
+await loadModel({
+  modelSrc: EMBEDDING_GEMMA_300M_Q8_0,
+  modelType: "embed",
+  modelConfig: { splitMode: "layer", tensorSplit: "1,1", mainGpu: 0 },
+})
+```
+
+### Runtime introspection (NEW in 0.10)
+
+- `getLoadedModelInfo({ modelId })` — discriminated on `isDelegated`. Local
+  models expose authoritative `handlers` list and `modelType`. Useful to
+  preflight a built-in SDK call before issuing the RPC:
+  ```ts
+  const info = await getLoadedModelInfo({ modelId })
+  if (info.isDelegated || info.handlers.includes("transcribeStream")) {
+    await transcribe({ modelId /* ... */ })
+  }
+  ```
+- Mis-routed calls throw `MODEL_OPERATION_NOT_SUPPORTED` with a message that
+  lists the requested operation, the loaded model's type, and the operations
+  the model actually supports. Catch via `SDK_SERVER_ERROR_CODES`.
 
 ### RAG (workspace-based in 0.9)
 
@@ -232,9 +443,25 @@ All RAG functions accept an optional `workspace: string` (defaults to
 - `definePlugin({ modelType, displayName, addonPackage, createModel, handlers, ... })`
   — define a custom model type. Each handler uses `defineHandler({ requestSchema,
   responseSchema, streaming, handler })` with Zod schemas.
+- **Plugin constructor migration in 0.10** — `createModel` must use the new
+  addon constructor shape. The SDK's first-party plugins are already
+  migrated; out-of-tree plugin authors need to update.
+- **Custom plugin load options** — use `LoadCustomPluginModelOptions<"plugin-name">`
+  (literal string type-pinned) instead of `LoadModelOptions`. Built-in model
+  types still pick the right overload automatically when the annotation is
+  dropped:
+  ```ts
+  import type { LoadCustomPluginModelOptions } from "@qvac/sdk"
+  const opts: LoadCustomPluginModelOptions<"my-plugin"> = {
+    modelSrc: "/path/foo",
+    modelType: "my-plugin",
+    modelConfig: { /* ... */ },
+  }
+  await loadModel(opts)
+  ```
 - `invokePlugin({ modelId, handler, params })` / `invokePluginStream(...)` —
   call a custom plugin handler. `invokePluginStream` yields chunks until a
-  `done` frame.
+  `done` frame. Surfaces `PLUGIN_HANDLER_NOT_FOUND` for unknown handlers.
 - Register plugins in `qvac.config.plugins` (array of specifiers). Built-in
   plugins: `llm-llamacpp`, `embed-llamacpp`, `transcription-whispercpp`,
   `transcription-parakeet`, `translation-nmtcpp`, `tts-onnx`, `ocr-onnx`,
@@ -405,7 +632,9 @@ const result = completion({
 
 ## Pitfalls & Gotchas
 
-- **Install `zod@^4`**, not v3 — QVAC depends on Zod v4 internally.
+- **Install `zod@^4.3`**, not v3 or v4.0 — QVAC SDK 0.10 requires zod ≥ 4.3.0.
+  Earlier 4.0–4.2 versions crash at runtime with `_zod.z.xor is not a function`
+  when finetune schemas load (fixed by bumping the zod floor in 0.10).
 - **Always set `tools: true` in `modelConfig`** when using tool-calling models —
   without it, tools silently don't work. The model can still generate free text.
 - **Do NOT create a "respond" or "reply" tool** — the model generates free text
@@ -415,15 +644,75 @@ const result = completion({
   schema, extra keys throw `INVALID_TOOLS_ARRAY`/validation errors.
 - **Multimodal: use `attachments: [{ path }]`** on history messages. Passing
   base64 `image_url` from the old OpenAI-style API no longer works.
-- **Process `tokenStream` and `toolCallStream` in parallel** via `Promise.all`,
-  not sequentially.
-- **Filter `<tool_call>` blocks from visible output** — the raw token stream
-  includes XML tool call blocks that should not be shown to users.
+- **Prefer `run.events` over `tokenStream`** (0.10+): the typed event stream
+  emits `contentDelta`, `toolCall`, `thinkingDelta`, and `done` events in
+  order, so you don't need to iterate two parallel streams or run regexes
+  over raw tokens. `tokenStream` / `toolCallStream` still work as derived
+  views for back-compat.
+- **`captureThinking: true`** is the supported way to surface model thinking
+  in 0.10 — replaces manual `<think>` regex filtering. With it set, content
+  events exclude `<think>` blocks and you get a separate `thinkingDelta`
+  channel.
+- **`responseFormat: { type: "json_schema", ... }`** — when you need a
+  schema-valid JSON output, pass this on `completion()` instead of asking
+  the model to emit JSON in the prompt. Output is grammar-constrained at
+  the addon level, guaranteed to parse.
+- **`toolDialect`** — Llama 3.x fine-tunes that emit native pythonic tool
+  headers need `toolDialect: "pythonic"`. The auto-router defaults to
+  `hermes` for empirical reasons and will mis-parse pythonic frames.
+- **`fileSetInfo`, not `onnxInfo`** — multi-file model download progress
+  uses `progress.fileSetInfo` in 0.10. Same shape as the old
+  `progress.onnxInfo`.
+- **Mis-routed calls throw** — calling `transcribe()` on an LLM model now
+  throws `MODEL_OPERATION_NOT_SUPPORTED` instead of silently failing.
+  Catch via `e.code === SDK_SERVER_ERROR_CODES.MODEL_OPERATION_NOT_SUPPORTED`,
+  or pre-check with `getLoadedModelInfo({ modelId })`.
+- **Bare `unloadModel` no longer auto-closes the worker** (0.11+). If your
+  long-lived Bare worker used to be torn down when the last model unloaded
+  and you relied on that, pass `unloadModel({ modelId, autoClose: true })`.
+- **Cancel by `requestId`, not by `downloadKey`/`workspace`** (0.11+). The
+  legacy `cancel({ operation: "downloadAsset", downloadKey })` and
+  `cancel({ operation: "rag", workspace })` shapes are removed. Read
+  `op.requestId` synchronously from every long-running call's decorated
+  promise and pass it to `cancel({ requestId })`. Fall back to
+  `cancel({ modelId, kind? })` when you don't have a `requestId` to hand.
+- **Parakeet migrated to single-file GGUF** (0.11+). The multi-file ONNX
+  bundles and per-variant `modelType: "ctc" | …` discriminator are gone;
+  load one of `PARAKEET_TDT_0_6B_V3_Q8_0` / `PARAKEET_CTC_0_6B_Q8_0` /
+  `PARAKEET_SORTFORMER_4SPK_V1_Q8_0` / `PARAKEET_EOU_120M_V1_Q8_0` with
+  `modelType: "parakeet"` and the addon auto-detects the variant.
+- **Tool dialect for GPT-OSS**: set `toolDialect: "harmony"` on `completion()`.
+  Without it, the model's protocol markers (`<|channel|>analysis<|message|>…`,
+  `<|start|>assistant`, `<|return|>`) leak into `contentDelta`.
+- **LoRA paths must be absolute** — `diffusion({ lora })` rejects relative
+  paths because the SDK runs across processes with differing cwds.
+- **Marian Opus constants removed** — the 32 legacy `NMT_Q0F16…NMT_Q0F16_9`
+  and `NMT_Q4_0…NMT_Q4_0_21` constants are gone in 0.11. Switch to IndicTrans
+  or Bergamot; `MARIAN_*` constants remain available for direct Marian use.
 - **Use JSON repair in fallback parsing** — small models (3-4B) produce slightly
   malformed JSON in tool calls.
 - LLM models require `*.gguf` (llama.cpp). OCR/TTS use ONNX (`*.onnx`), NMT uses
   `*.bin`. Diffusion uses `*.gguf`.
-- Expo requires physical devices (no emulators) for QVAC LLM inference.
+- **Expo requires physical devices** — QVAC does NOT run on iOS Simulator or
+  Android Emulator (llamacpp limitation). Detect with `Device.isDevice` and
+  refuse fast with a clear error. Use `EXPO_PUBLIC_QVAC_MOCK=1` for UI dev.
+  Run with `npx expo run:ios --device` / `npx expo run:android --device`.
+- **Expo Metro: do NOT enable `unstable_enablePackageExports`** in
+  `metro.config.js`. It breaks RN's internal `stacktrace-parser` resolution
+  (red-screen `Unable to resolve module stacktrace-parser` on app start).
+  QVAC's subpath exports work fine through Metro's default subpath
+  resolution. The QVAC reference mobile app ships without the flag.
+- **Expo: import `@qvac/sdk` from React Native code, NOT from a Bare worklet.**
+  Inside a Bare worklet, the SDK's RPC client uses a deliberately obfuscated
+  dynamic import (`require('../../server/' + 'worker.js')`) that `bare-pack`
+  cannot statically trace, producing `MODULE_NOT_FOUND` at runtime. The
+  intended path is: import from RN → SDK selects `expo-rpc-client.js` →
+  loads the pre-bundled `worker.mobile.bundle` (generated by
+  `@qvac/sdk/expo-plugin` during `expo prebuild`) → spawns its own internal
+  Bare worker for inference.
+- **Expo two-phase load** (per official tutorial): call `downloadAsset()`
+  first with its own progress callback, then `loadModel()` with a separate
+  callback. Splits "downloading" vs "loading into memory" UX clearly.
 - On Linux, Vulkan runtime and compatible GPU drivers are required for GPU
   inference.
 - Context overflows are common on small models when history grows. Use

@@ -3,7 +3,7 @@ name: add-openai-server
 description: Expose QVAC locally via an OpenAI-compatible HTTP server (`qvac serve openai`) so existing OpenAI SDKs Just Work.
 when_to_use: User wants an OpenAI-compatible REST endpoint backed by local QVAC inference — drop-in for OpenAI SDKs, Ollama-style local server, LM Studio replacement, or multi-client sharing of one loaded model.
 paths: ["qvac.config.*", "scripts/**", "src/server/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add OpenAI-Compatible Server (QVAC CLI)
@@ -38,15 +38,28 @@ Default port is `11434` (same as Ollama) — most OpenAI clients can point at it
 with just a `baseURL` override.
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
-- `@qvac/cli` (`^0.1`) installed as a dev dep
+- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/cli` (`^0.5.0`) installed as a dev dep
 - A `qvac.config.json` at the project root — **required** for the server
 
 ## Steps
 
 1. **Install the CLI**:
    ```bash
-   npm install -D @qvac/cli
+   # @qvac/sdk@0.11.0's declared peerOptional range for @qvac/cli is
+   # ^0.4.0. The latest CLI line is 0.5.x, which is runtime-compatible
+   # with the SDK (no addon-side changes between 0.4 and 0.5) but npm
+   # strict peer resolution rejects it — use --legacy-peer-deps once.
+   # 0.4.x is the first CLI release that ships `qvac verify bundle`,
+   # which @qvac/sdk@0.11 auto-runs during Expo prebuild.
+   npm install -D '@qvac/cli@^0.5.0' --legacy-peer-deps
+   ```
+
+   If you want a clean peer resolution without the flag, pin to the
+   range that satisfies the SDK peer exactly:
+
+   ```bash
+   npm install -D '@qvac/cli@^0.4.0'
    ```
 
 2. **Define `serve.models` in `qvac.config.json`** — each key is the name the
