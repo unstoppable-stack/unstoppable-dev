@@ -3,7 +3,7 @@ name: add-ai-chat
 description: Local AI inference with QVAC SDK — streaming, context, tool calling, multimodal.
 when_to_use: User wants AI capabilities (chatbot, assistant, function calling, LLM inference) running locally without cloud APIs.
 paths: ["src/ai/**", "src/inference/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI Chat (QVAC)
@@ -14,7 +14,7 @@ version: "2026-04-20"
 - User needs offline AI capabilities without cloud APIs
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) and `zod` (`^4.0.0`) installed
+- `@qvac/sdk` (`^0.11.0`) and `zod` (`^4.3.0`) installed
 - Node.js ≥ 22.17, Bare ≥ 1.24, or Expo ≥ 54 (Expo needs a native dev build)
 - Optional `qvac.config.json` at the project root (required only when also
   using the `@qvac/cli` HTTP server)
@@ -43,11 +43,13 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
 
 1. **Install dependencies**:
    ```bash
-   npm i @qvac/sdk zod@^4
+   npm i @qvac/sdk 'zod@^4.3'
    ```
-   > **IMPORTANT**: Install Zod v4 (not v3) — `@qvac/sdk` depends on Zod v4 internally.
+   > **IMPORTANT**: Install Zod v4.3+ (not v3, not v4.0–4.2) — `@qvac/sdk@0.11`
+   > requires zod ≥ 4.3 because finetune schemas use APIs only available there
+   > (older minor versions crash at runtime with `z.xor is not a function`).
 
-2. **Choose the right model** (verified constants from `@qvac/sdk@0.9.0`):
+2. **Choose the right model** (verified constants from `@qvac/sdk@0.11.0`):
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
@@ -101,24 +103,31 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
 
        history.push({ role: 'user', content: input })
 
-       // Sampling goes in generationParams (new in 0.9 — used to be in modelConfig).
-       const { tokenStream } = completion({
+       // 0.10 unified event stream: prefer `run.events` over the legacy
+       // `tokenStream`. Sampling goes in `generationParams` (new in 0.9 —
+       // used to be in modelConfig). `captureThinking: true` filters
+       // <think> blocks out of content events automatically.
+       const run = completion({
          modelId,
          history,
          stream: true,
          kvCache: 'main',
          generationParams: { temp: 0.7, top_p: 0.9 },
+         captureThinking: true,
        })
 
-       let reply = ''
        process.stdout.write('AI: ')
-       for await (const token of tokenStream) {
-         process.stdout.write(token)
-         reply += token
+       for await (const event of run.events) {
+         if (event.type === 'contentDelta') process.stdout.write(event.text)
+         if (event.type === 'toolCall') {
+           // event.call is a typed tool call — handle via .invoke() if you
+           // attached handlers; see the Tool Calling section.
+         }
        }
        console.log()
 
-       history.push({ role: 'assistant', content: reply })
+       const final = await run.final
+       history.push({ role: 'assistant', content: final.contentText })
        ask()
      })
      ask()
@@ -126,6 +135,14 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
 
    main().catch(console.error)
    ```
+
+> **Back-compat note:** the old `result.tokenStream` and `await result.stats`
+> are still available in 0.10 as derived views — existing code keeps working.
+> New code should prefer `run.events` / `run.final` because: (1) tool calls
+> arrive as typed events in order rather than via a parallel
+> `toolCallStream`; (2) `<think>` blocks can be captured via
+> `captureThinking: true` instead of regex filtering; (3) `final` aggregates
+> `contentText`, `thinkingText`, `toolCalls`, and `stats` in one await.
 
 ---
 
@@ -229,12 +246,90 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 const mcpClient = new Client({ name: 'my-app', version: '1.0.0' })
 await mcpClient.connect(transport)
 
-const result = completion({
+const run = completion({
   modelId,
   history,
   mcp: [{ client: mcpClient, includeResources: true }],
 })
 ```
+
+### Dynamic tools mode (0.10)
+
+For agents that need to swap tool sets per turn (e.g. enable a tool only after
+the user opts in, or rotate through different domains in the same session),
+load the model with `toolsMode: TOOLS_MODE.dynamic`. The addon then trims the
+previous tool block from the KV cache so changing tools doesn't invalidate
+the cache:
+
+```ts
+import { loadModel, completion, TOOLS_MODE, QWEN_3_1_7B_INST_Q4 } from '@qvac/sdk'
+
+const modelId = await loadModel({
+  modelSrc: QWEN_3_1_7B_INST_Q4,
+  modelType: 'llm',
+  modelConfig: { ctx_size: 4096, tools: true, toolsMode: TOOLS_MODE.dynamic },
+})
+
+// Turn 1 — weather tools
+completion({ modelId, history, kvCache: 'session', stream: true,
+  tools: [/* weather tools */] })
+
+// Turn 2 — same kvCache, different tools. Free rotation.
+completion({ modelId, history, kvCache: 'session', stream: true,
+  tools: [/* horoscope tools */] })
+```
+
+Without dynamic mode, swapping `tools` on a cached session is undefined behavior.
+
+### Tool-call dialect routing (0.10)
+
+The SDK auto-routes between `hermes`, `pythonic`, and `json` framings. Llama
+3.x fine-tunes that emit native pythonic headers will mis-parse under the
+default `hermes` heuristic — force the parser explicitly:
+
+```ts
+const run = completion({
+  modelId, history, tools, stream: true,
+  toolDialect: 'pythonic', // 'hermes' | 'pythonic' | 'json'
+})
+```
+
+### Structured output via `responseFormat` (0.10)
+
+When you need JSON that's guaranteed to parse against a schema, pass
+`responseFormat` on `completion()`. The output is grammar-constrained at the
+addon level (no prompt engineering required, no post-hoc JSON repair):
+
+```ts
+const run = completion({
+  modelId,
+  history: [{ role: 'user', content: "I'm Alice, 30, data engineer." }],
+  stream: true,
+  responseFormat: {
+    type: 'json_schema',
+    json_schema: {
+      name: 'Person',
+      schema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'integer' },
+          occupation: { type: 'string' },
+        },
+        required: ['name', 'age', 'occupation'],
+        additionalProperties: false,
+      },
+    },
+  },
+})
+
+const final = await run.final
+const parsed = JSON.parse(final.contentText) // schema-valid
+```
+
+For non-JSON DSLs (regex-like grammars, custom syntaxes), use the lower-level
+`generationParams.grammar` (raw GBNF string) instead. `responseFormat` and
+`generationParams.grammar` are mutually exclusive within a single call.
 
 ---
 
@@ -242,9 +337,13 @@ const result = completion({
 
 Qwen 3 models emit `<think>...</think>` blocks for internal reasoning.
 
-- **Suppress reasoning**: Add `/no_think` to the end of your system prompt
-- **Filter from output**: `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
-- **Context impact**: Think tokens count against the context window even when filtered
+- **Preferred (0.10)**: pass `captureThinking: true` to `completion()` — the
+  SDK splits content and thinking into separate event channels, no regex
+  needed. `final.thinkingText` holds the full thinking transcript.
+- **Suppress entirely**: add `/no_think` to the end of your system prompt
+- **Manual filter (legacy paths only)**: `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
+- **Context impact**: think tokens count against the context window even when
+  filtered/captured
 
 ## System Prompt Engineering for Local Models
 
@@ -286,10 +385,31 @@ reference workbench uses static imports for its main inference path.
 
 ### Simulator Guidance
 
-- Physical device is the primary validation target for QVAC inference
-- But do NOT assume simulator failure means QVAC is unsupported
-- First compare: SDK version, import strategy, plugin path, dependency surface
-- The reference workbench ran on simulator after reference alignment
+- **QVAC SDK 0.9 inference does NOT run on iOS Simulator / Android Emulator.**
+  Per the [official QVAC Expo tutorial](https://docs.qvac.tether.io/sdk/tutorials/expo/):
+  *"Due to limitations with `llamacpp`, QVAC currently does not run on
+  emulators. You must use a physical device."*
+- Use `expo-device`'s `Device.isDevice` to detect simulator and surface a
+  clear, actionable error before calling `loadModel()` (otherwise llamacpp
+  fails with a confusing native message).
+- For UI development without a device, gate inference behind
+  `EXPO_PUBLIC_QVAC_MOCK=1` and return canned token streams.
+- Run on hardware with `npx expo run:ios --device` /
+  `npx expo run:android --device`.
+
+### Metro Config Pitfall — `unstable_enablePackageExports`
+
+Do **NOT** set `config.resolver.unstable_enablePackageExports = true` in
+`metro.config.js`. With this flag enabled, Metro strictly honors every
+package's `exports` field — and React Native's `exports` map does not
+re-expose `stacktrace-parser`, which `react-native/Libraries/Core/Devtools/parseErrorStack.js`
+requires at runtime. The result: a red-screen `Unable to resolve module
+stacktrace-parser` on app start.
+
+The QVAC SDK's subpath exports (`@qvac/sdk/expo-plugin`,
+`@qvac/sdk/worker.mobile.bundle`) work fine through Metro's default
+subpath resolution. The QVAC reference mobile app
+(`qvac-workbench-mobile`) ships without this flag.
 
 ### Diagnostics-First Workflow
 

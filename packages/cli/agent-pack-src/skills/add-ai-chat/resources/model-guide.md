@@ -1,6 +1,6 @@
 # QVAC Model Selection Guide
 
-## Verified Model Constants (`@qvac/sdk@0.9.0`)
+## Verified Model Constants (`@qvac/sdk@0.11.0`)
 
 These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 here. For anything else, use the model registry (`modelRegistryList()`,
@@ -27,16 +27,27 @@ explicit `modelSrc` (local path, HTTP(S) URL, `pear://` URL, or registry URL).
 | `EMBEDDINGGEMMA_300M_Q4_0` | Embedding | Lightweight embeddings |
 | `WHISPER_TINY` | Speech-to-text (Whisper) | Fast transcription |
 | `WHISPER_LARGE_V3_TURBO` | Speech-to-text (Whisper) | High-quality transcription |
-| NVIDIA Parakeet TDT / CTC / Sortformer | Speech-to-text (Parakeet) | Lower-latency alternative to Whisper |
+| `PARAKEET_TDT_0_6B_V3_Q8_0` | Speech-to-text (Parakeet, TDT) | Lower-latency than Whisper. Single-file GGUF (0.11). |
+| `PARAKEET_CTC_0_6B_Q8_0` | Speech-to-text (Parakeet, CTC) | Even lower latency than TDT. Single-file GGUF (0.11). |
+| `PARAKEET_SORTFORMER_4SPK_V1_Q8_0` | Speaker diarization (Parakeet) | Up to 4 speakers. Single-file GGUF (0.11). |
+| `PARAKEET_EOU_120M_V1_Q8_0` | End-of-turn detection (Parakeet) | Surfaces `endOfTurn` events on `transcribeStream`. NEW in 0.11. |
 | `VAD_SILERO_5_1_2` | Voice Activity Detection | Audio preprocessing |
 | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` | Multimodal (vision) | Image understanding |
 | `MMPROJ_SMOLVLM2_2_500M_MULTIMODAL_Q8_0` | Projection | Required pair for SmolVLM |
-| `MARIAN_OPUS_EN_IT_Q4_0` | Translation (Opus) | English ↔ Italian |
 | `MARIAN_EN_HI_INDIC_1B_Q4_0` | Translation (IndicTrans) | English → Hindi/Indic |
-| FLUX2-Klein (diffusion) | Image generation | Local text-to-image |
+| `BERGAMOT_EN_IT` / `BERGAMOT_ES_EN` | Translation (Bergamot) | Regenerated against the upstream `base-memory` fix in 0.11 (~30 MB now). |
+| FLUX2-Klein (diffusion) | Image generation | Local text-to-image. Supports `init_images` multi-ref fusion and per-call `lora` in 0.11. |
 | Chatterbox / Supertonic | TTS | Voice synthesis, optional voice cloning |
 
-### Engines / plugins (0.9)
+> **REMOVED in 0.11**: the 32 legacy Marian Opus NMT constants
+> (`NMT_Q0F16` … `NMT_Q0F16_9`, `NMT_Q4_0` … `NMT_Q4_0_21`) and the legacy
+> multi-file Parakeet constants (`PARAKEET_TDT_ENCODER_INT8`,
+> `PARAKEET_TDT_DECODER_INT8`, `PARAKEET_TDT_VOCAB`,
+> `PARAKEET_TDT_PREPROCESSOR_INT8`, `PARAKEET_CTC_FP32`,
+> `PARAKEET_CTC_TOKENIZER`, etc.). Use IndicTrans / Bergamot for translation
+> and the single-file Parakeet GGUFs listed above.
+
+### Engines / plugins
 
 Built-in plugins you can list in `qvac.config.plugins`:
 `llm-llamacpp`, `embed-llamacpp`, `transcription-whispercpp`,
@@ -67,9 +78,9 @@ import {
 
 ## Important Notes
 
-> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.9.0`. The SDK exports Qwen 3 family models instead.
+> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.11.0`. The SDK exports Qwen 3 / Qwen3.5 family models instead.
 
-> **GPT-OSS note**: GPT-OSS-20B emits tool calls in a non-standard format (`<|channel|>commentary to=functions.<name>`). The workbench handles this with a model-specific fallback parser. If using GPT-OSS with tool calling, implement a fallback parser for its format.
+> **GPT-OSS note**: GPT-OSS-20B emits tool calls in the Harmony protocol (`<|channel|>analysis<|message|>…`, `<|start|>assistant`, `<|return|>`). In `@qvac/sdk@0.11` set `toolDialect: "harmony"` on `completion()` — the built-in Harmony parser streams the final channel incrementally and drops protocol markers from `contentDelta`. No custom parser needed anymore.
 
 > **Tool calling reliability by size**: 1B models are unreliable for tool calling. Use 3B+ minimum, 7B recommended. Each additional tool increases grammar complexity and reduces reliability on smaller models.
 

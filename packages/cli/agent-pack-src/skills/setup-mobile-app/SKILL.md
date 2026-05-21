@@ -3,7 +3,7 @@ name: setup-mobile-app
 description: Expo mobile app with Bare runtime worklet for P2P and AI.
 when_to_use: User is customizing an Expo mobile app with Bare worklet backend, or debugging mobile build/runtime issues.
 paths: ["app.json", "app/**", "bare/**"]
-version: "2026-04-14"
+version: "2026-05-21"
 ---
 
 # Setup Mobile App (Expo + Bare)
@@ -17,7 +17,7 @@ version: "2026-04-14"
 
 The `us scaffold app -p expo-mobile` command generates all of this correctly:
 
-- `package.json` with pinned dependency versions (`bare-pack@^1.5.1`, `@qvac/cli@^0.1.2`, `expo-build-properties@~1.0.9`)
+- `package.json` with pinned dependency versions (`bare-pack@^1.5.1`, `@qvac/cli@^0.5.0`, `expo-build-properties@~1.0.9`)
 - `app.json` with Expo plugins in the correct order, memory entitlements, and NDK config
 - `metro.config.js` with native module mocking (sodium-native, hyperswarm, etc.)
 - Custom Expo plugins (`withAndroidNdkVersion.js`, `withAndroidArchitecture.js`)
@@ -92,20 +92,20 @@ cd my-mobile-app
 
 For **QVAC-only** apps (no custom Bare worklet):
 ```bash
-npm i @qvac/sdk expo-file-system expo-device react-native-bare-kit@0.11.5
+npm i @qvac/sdk expo-file-system expo-device react-native-bare-kit@0.12.3
 npx expo install expo-build-properties
 ```
 
 For **P2P apps** (with Bare worklet):
 ```bash
-npm i react-native-bare-kit@0.11.5 bare-rpc@1.1.0 expo-file-system
+npm i react-native-bare-kit@0.12.3 bare-rpc@1.1.0 expo-file-system
 npm i -D bare-pack@1.5.1
 npx expo install expo-build-properties
 ```
 
 For **P2P + AI combined**:
 ```bash
-npm i react-native-bare-kit@0.11.5 bare-rpc@1.1.0 @qvac/sdk expo-file-system expo-device
+npm i react-native-bare-kit@0.12.3 bare-rpc@1.1.0 @qvac/sdk expo-file-system expo-device
 npm i -D bare-pack@1.5.1
 npx expo install expo-build-properties
 ```
@@ -733,7 +733,7 @@ Running in Expo Go or using a stale native build. BareKit requires:
 - `npx expo run:ios` (or `run:android`)
 
 ### `useBareKit is not a function`
-Wrong API for `react-native-bare-kit@0.11.5`. Use `Worklet` + `IPC` + `bare-rpc`.
+Wrong API for `react-native-bare-kit@0.12.3`. Use `Worklet` + `IPC` + `bare-rpc`.
 
 ### `source must be a string or typed array`
 Metro returned an asset ID (number) instead of bundle source text. Import the

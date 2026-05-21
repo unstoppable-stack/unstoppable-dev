@@ -3,7 +3,7 @@ name: add-ai-transcription
 description: Local audio transcription using QVAC Whisper or NVIDIA Parakeet.
 when_to_use: User wants speech-to-text, voice notes, or meeting transcription running entirely on-device.
 paths: ["src/ai/**", "src/audio/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI Transcription (QVAC)
@@ -14,20 +14,21 @@ version: "2026-04-20"
 - User needs to process audio files or record from microphone
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
-- A Whisper model **or** a Parakeet model
+- `@qvac/sdk` (`^0.11.0`) installed
+- A Whisper model **or** a Parakeet GGUF model (the legacy multi-file
+  Parakeet ONNX bundles were removed in 0.11)
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.
 > It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.
 
 ## Engines: Whisper vs Parakeet
 
-QVAC 0.9 supports two transcription engines, each shipped as a plugin:
+QVAC 0.11 supports two transcription engines, each shipped as a plugin:
 
 | Engine | Plugin | Strengths | Trade-offs |
 |--------|--------|-----------|------------|
-| Whisper | `transcription-whispercpp` | Multilingual, robust, mature, handles noisy audio | Larger models, slower on long clips |
-| Parakeet (NVIDIA NeMo) | `transcription-parakeet` | Very low latency, high throughput | English-focused, newer (fewer community resources) |
+| Whisper | `transcription-whispercpp` | Multilingual, robust, mature, handles noisy audio. Streaming gains VAD + end-of-turn events (`emitVadEvents: true`) in 0.11. | Larger models, slower on long clips |
+| Parakeet (NVIDIA NeMo) | `transcription-parakeet` (0.5.0, single-file GGUF backed by `qvac-parakeet.cpp`) | Very low latency, high throughput. New duplex `transcribeStream` session with EOU events in 0.11. | English-focused; auto-detects TDT / CTC / EOU / Sortformer from GGUF metadata |
 
 Pick Whisper for general / multilingual / noisy audio. Pick Parakeet when you
 need the lowest end-to-end latency on English speech (e.g., live captions).
@@ -49,20 +50,35 @@ need the lowest end-to-end latency on English speech (e.g., live captions).
    })
    ```
 
-3. **Transcribe an audio file**:
+3. **Transcribe an audio file** (0.10 returns structured segments by default
+   when you pass `metadata: true`):
    ```ts
    import { transcribe } from '@qvac/sdk'
 
-   const result = await transcribe({
+   // Plain text (back-compat shape):
+   const text = await transcribe({
      modelId,
-     audio: './recording.wav',
+     audioChunk: './recording.wav',
    })
+   console.log('Transcription:', text)
 
-   console.log('Transcription:', result.text)
-   console.log('Segments:', result.segments)
+   // 0.10 structured-segment shape with timestamps + segment IDs.
+   // Required for subtitles, timeline alignment, and search.
+   const segments = await transcribe({
+     modelId,
+     audioChunk: './recording.wav',
+     metadata: true,
+   })
+   for (const s of segments) {
+     // TranscribeSegment: { id, startMs, endMs, text, append }
+     console.log(`[${s.startMs}ms → ${s.endMs}ms] id=${s.id} ${s.text}`)
+   }
    ```
 
-4. **Streaming transcription** (real-time):
+   The `append` flag tells you whether the segment is a continuation of the
+   previous one (for incremental UI updates) vs a fresh segment.
+
+4. **Streaming transcription** (real-time, duplex session):
    ```ts
    import { transcribeStream } from '@qvac/sdk'
 
@@ -72,26 +88,87 @@ need the lowest end-to-end latency on English speech (e.g., live captions).
    })
 
    for await (const segment of stream) {
-     console.log(`[${segment.start}-${segment.end}] ${segment.text}`)
+     // Same TranscribeSegment shape — startMs, endMs, text, id, append.
+     console.log(`[${segment.startMs}ms-${segment.endMs}ms] ${segment.text}`)
    }
    ```
 
-## Steps (Parakeet)
+## Steps (Parakeet — single-file GGUF, 0.11+)
 
-Parakeet uses the `transcription-parakeet` plugin. Register it in
-`qvac.config.json` (optional) and load one of the Parakeet models — TDT / CTC /
-Sortformer. The runtime API is identical to Whisper:
+Parakeet uses the `transcription-parakeet` plugin. The 0.11 release replaced
+the legacy multi-file ONNX bundles (encoder + decoder + vocab + preprocessor)
+with a **single GGUF**. The addon auto-detects the variant (TDT / CTC /
+Sortformer / EOU) from GGUF metadata — no `modelType: "ctc" | …`
+discriminator anymore.
 
 ```ts
+import { loadModel, transcribe, PARAKEET_TDT_0_6B_V3_Q8_0 } from '@qvac/sdk'
+
 const modelId = await loadModel({
-  modelSrc: 'parakeet-tdt-0-6b-v3', // resolve via modelRegistrySearch
-  modelType: 'transcription',
+  modelSrc: PARAKEET_TDT_0_6B_V3_Q8_0, // or PARAKEET_CTC_0_6B_Q8_0
+  modelType: 'parakeet',
 })
 
-const result = await transcribe({ modelId, audio: './recording.wav' })
+const text = await transcribe({ modelId, audioChunk: './recording.wav' })
 ```
 
-To enumerate: `await modelRegistrySearch({ query: 'parakeet' })`.
+Available constants in 0.11:
+
+| Constant | Use |
+|----------|-----|
+| `PARAKEET_TDT_0_6B_V3_Q8_0` | General-purpose, balanced quality/latency |
+| `PARAKEET_CTC_0_6B_Q8_0` | Lowest latency, CTC variant |
+| `PARAKEET_SORTFORMER_4SPK_V1_Q8_0` | Speaker diarization, up to 4 speakers |
+| `PARAKEET_EOU_120M_V1_Q8_0` | End-of-turn detection — surfaces `endOfTurn` events on `transcribeStream` |
+
+> **Migration**: the legacy constants (`PARAKEET_TDT_ENCODER_INT8`,
+> `PARAKEET_TDT_DECODER_INT8`, `PARAKEET_TDT_VOCAB`,
+> `PARAKEET_TDT_PREPROCESSOR_INT8`, `PARAKEET_CTC_FP32`,
+> `PARAKEET_CTC_TOKENIZER`, etc.) and every per-variant `parakeet*Src` field
+> on `modelConfig` are **gone**. Replace the whole multi-field load with the
+> single-GGUF form above.
+
+To enumerate at runtime: `await modelRegistrySearch({ query: 'parakeet' })`.
+
+## Conversational streaming (Whisper VAD + EOU, NEW in 0.11)
+
+`transcribeStream` gains a conversational mode opted into via
+`emitVadEvents: true`. The session yields a discriminated event stream
+with live voice-activity probabilities and turn boundaries so you can build
+push-to-talk or barge-in UX without polling text output:
+
+```ts
+import { transcribeStream } from '@qvac/sdk'
+
+const session = await transcribeStream({
+  modelId,                  // any Whisper or Parakeet modelId
+  emitVadEvents: true,
+  endOfTurnSilenceMs: 800,
+  vadRunIntervalMs: 100,
+})
+
+for await (const event of session) {
+  switch (event.type) {
+    case 'text':
+      process.stdout.write(event.text)
+      break
+    case 'vad':
+      console.log('speaking:', event.speaking, 'p=', event.probability)
+      break
+    case 'endOfTurn':
+      console.log('\nturn ended after', event.silenceDurationMs, 'ms')
+      break
+  }
+}
+
+session.write(audioChunk) // Uint8Array (16kHz mono PCM s16le)
+session.end()
+```
+
+Parakeet duplex sessions accept additional per-call streaming overrides via
+`parakeetStreamingConfig: { chunkMs, historyMs, leftContextMs,
+rightLookaheadMs, emitPartials, emitEnergyVad }` (each falls back to the
+`parakeetConfig.streaming*` load-time counterpart).
 
 ## Hot-reloading Whisper config (0.9)
 
@@ -141,7 +218,10 @@ the model weights stay hot in memory.
 - **Don't skip audio preprocessing** — noise, echo, and low volume dramatically hurt accuracy. Apply gain normalization and noise reduction when possible.
 - **Long recordings must be chunked** — transcribing a 2-hour file in one call will exhaust memory. Split into 30s-2min segments and concatenate results.
 - **Whisper reconfigure only** — the `loadModel` reconfigure overload is
-  currently Whisper-only in 0.9. Other model types must be unloaded and reloaded.
+  currently Whisper-only. Other model types must be unloaded and reloaded.
+- **Parakeet is now GGUF-only** (0.11+) — the multi-file ONNX bundles are
+  gone. Pass a single GGUF `modelSrc` and let the addon auto-detect the
+  variant; remove every `parakeet*Src` field from `modelConfig`.
 
 ## Validation
 1. Transcription model loads successfully (`loadModel` with `modelType: 'transcription'` resolves)

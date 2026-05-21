@@ -3,7 +3,7 @@ name: add-ai-finetune
 description: Apply a LoRA adapter to a base QVAC LLM for task-specific behavior without retraining.
 when_to_use: User wants to ship a specialized model variant (tone, domain, instructions) without full training — load a base LLM with a LoRA adapter path.
 paths: ["src/ai/**", "src/finetune/**", "models/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI Fine-Tuning (LoRA Adapters)
@@ -15,30 +15,41 @@ version: "2026-04-20"
   "specialized model", "custom assistant"
 - User wants to ship multiple personas / specialties from one base model
 
-## What QVAC 0.9 supports
+## What QVAC 0.11 supports
 
-As of `@qvac/sdk@0.9.0`, the shipping path is **LoRA adapter loading**, not
+As of `@qvac/sdk@0.11.0`, the shipping path is **LoRA adapter loading**, not
 on-device training:
 
-- Provide a trained LoRA `.gguf`/`.bin` adapter via `modelConfig.lora` at load
-  time.
+- Provide a trained LoRA `.gguf`/`.bin`/`.safetensors` adapter via
+  `modelConfig.lora` at load time (LLM models).
 - The adapter layers are merged/applied against the base model weights.
 - You can ship one base model + N adapters and hot-swap by reloading with a
   different `lora` path.
+- **Diffusion models** (FLUX.2 / SD / SDXL) additionally accept a per-call
+  `lora` parameter on `diffusion()` plus a load-time
+  `modelConfig.lora_apply_mode: "auto" | "immediately" | "at_runtime"`.
 
 Full parameter-efficient training (PEFT / QLoRA) runs offline in your pipeline
 of choice (Hugging Face PEFT, llama.cpp `finetune`, Axolotl, Unsloth). QVAC
 consumes the resulting adapter file.
 
-> **On-device training is not a documented public SDK API in 0.9**. If you
+> **On-device training is not a documented public SDK API in 0.11**. If you
 > see roadmap references to "fine-tuning", they are about hosting adapters
 > and (eventually) a training plugin. Treat anything not documented here as
 > unverified and check the release notes for your specific SDK version.
+>
+> `cancelFinetune(modelId)` is **fire-and-forget** in 0.11 — it returns
+> immediately and the addon cancel runs out-of-band via the registry's
+> abort listener. Prefer `cancel({ requestId: op.requestId })` against the
+> `finetune()` op's decorated promise.
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
+- `@qvac/sdk` (`^0.11.0`) installed
 - A base LLM constant (e.g., `LLAMA_3_2_1B_INST_Q4_0`, `QWEN_3_1_7B_INST_Q4`)
 - A LoRA adapter file on disk (trained against the same base architecture)
+- Adapter paths must be **absolute** (relative paths are rejected by the
+  diffusion `lora` field and unsafe for the LLM `lora` field across
+  worker process boundaries)
 
 ## Steps
 
@@ -170,7 +181,7 @@ small (tens of MB) but the base model they sit on is not.
 - **Rank / scaling during training affects runtime**: very high-rank LoRAs
   approach full fine-tune size and negate much of the benefit.
 - **No on-device training**: if the user actually needs to train on
-  device — e.g., federated learning — that's not a QVAC feature in 0.9.
+  device — e.g., federated learning — that's not a QVAC feature in 0.11.
   Surface the limitation explicitly rather than misleading them.
 - **`lora` is a `modelConfig` field, not a top-level `loadModel` option** —
   `modelConfig.lora`, sibling of `ctx_size`, `tools`, `system_prompt`.

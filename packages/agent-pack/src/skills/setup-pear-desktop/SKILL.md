@@ -181,8 +181,8 @@ bootstrap (not `app.ts`).
 
    **Adding AI** (add to `dependencies`):
    ```json
-   "@qvac/sdk": "^0.9.0",
-   "zod": "^4.0.0"
+   "@qvac/sdk": "^0.11.0",
+   "zod": "^4.3.0"
    ```
 
    See `core/verified-versions.md` for the full version reference.

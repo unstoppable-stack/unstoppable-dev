@@ -3,7 +3,7 @@ name: add-ai-vision
 description: QVAC multimodal vision for local image analysis using file-path attachments.
 when_to_use: User wants to analyze images, identify objects, or extract information from photos using a local model. Builds on add-ai-chat.
 paths: ["src/ai/**", "src/vision/**"]
-version: "2026-04-20"
+version: "2026-05-21"
 ---
 
 # Add AI Vision (QVAC Multimodal)
@@ -14,7 +14,7 @@ version: "2026-04-20"
 - User needs to extract text, identify objects, or describe images
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.9.0`) installed
+- `@qvac/sdk` (`^0.11.0`) installed
 - A multimodal model + its paired projection file
 - Familiarity with `add-ai-chat` (model loading, completion API)
 
@@ -72,7 +72,7 @@ no data URLs.
 
    const imagePath = path.resolve('./photo.jpg')
 
-   const result = completion({
+   const run = completion({
      modelId,
      history: [
        {
@@ -85,9 +85,13 @@ no data URLs.
      generationParams: { temp: 0.3 },
    })
 
-   for await (const token of result.tokenStream) {
-     process.stdout.write(token)
+   // 0.10 unified event stream — typed and ordered.
+   for await (const event of run.events) {
+     if (event.type === 'contentDelta') process.stdout.write(event.text)
    }
+
+   const final = await run.final
+   // final.contentText holds the full description.
    ```
 
 4. **Multi-image turns** — attach multiple files to a single message:
