@@ -51,7 +51,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.9.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.11.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync')) {
@@ -208,7 +208,7 @@ import {
   loadModel,
   completion,
   unloadModel,
-  LLAMA_3_2_1B_INST_Q4_0,
+  QWEN3_600M_INST_Q4,
 } from '@qvac/sdk'
 
 const MOCK_MODE = process.env.QVAC_MOCK === '1'
@@ -237,10 +237,11 @@ export async function setupAI() {
     }
   }
 
-  console.log('Loading AI model...')
+  console.log('Loading AI model (Qwen 3 0.6B, ~400MB on first run)...')
   modelId = await loadModel({
-    modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+    modelSrc: QWEN3_600M_INST_Q4,
     modelType: 'llm',
+    modelConfig: { ctx_size: 4096, system_prompt: 'You are a helpful assistant. /no_think' },
     onProgress: (progress: any) => {
       if (progress.percentage) {
         process.stdout.write(

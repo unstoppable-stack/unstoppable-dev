@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { execSync } from 'child_process'
-import { writeFileSync, unlinkSync } from 'fs'
+import { existsSync, writeFileSync, unlinkSync } from 'fs'
 import { resolve } from 'path'
 import { tmpdir } from 'os'
 
@@ -17,6 +17,24 @@ import { tmpdir } from 'os'
 
 const CLI = resolve(import.meta.dirname, '../../../dist/us.js')
 
+// Build-time feature flags (see `tsup.config.ts`) can omit `us remote`
+// entirely — that's the whole point of the `minimal` shipping profile.
+// When that happens this test can't run, so we skip the whole describe
+// block rather than failing noisily. To force these to run locally:
+//   pnpm build:full && pnpm test
+// (or use `pnpm test:full`, which chains both).
+const hasRemote = (() => {
+  if (!existsSync(CLI)) return false
+  try {
+    const help = execSync(`node ${CLI} --help`, { encoding: 'utf-8' })
+    return help.includes('remote ')
+  } catch {
+    return false
+  }
+})()
+
+const d = hasRemote ? describe : describe.skip
+
 function run(args: string, timeout = 10_000): string {
   return execSync(`node ${CLI} ${args}`, {
     encoding: 'utf-8',
@@ -25,7 +43,7 @@ function run(args: string, timeout = 10_000): string {
   })
 }
 
-describe('CLI E2E: us remote', () => {
+d('CLI E2E: us remote', () => {
   describe('us remote --help', () => {
     it('lists every subcommand we expose', () => {
       const out = run('remote --help')

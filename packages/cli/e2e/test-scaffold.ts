@@ -19,8 +19,25 @@
  *         pear-desktop: spawn worker.js via harness, assert NDJSON events
  *         expo-mobile:  boot simulator + install app
  *   5  full UI:
- *         expo-mobile:  Maestro flow (with QVAC_MOCK=1 when set)
+ *         expo-mobile:  Maestro flow on simulator. Asserts:
+ *                       (a) the AI section + GPU/CPU toggle render,
+ *                       (b) tapping Load Assistant in CPU mode does NOT
+ *                           surface "TurboModuleRegistry" or "BareKit"
+ *                           red-box errors (catches missing
+ *                           react-native-bare-kit linkage and broken
+ *                           QVAC SDK worker bundles),
+ *                       (c) with QVAC_MOCK=1, mocked chat round-trip works.
  *         pear-desktop: (deferred — Playwright CDP spike)
+ *   6  device runtime (expo-mobile only, opt-in via --device <udid>):
+ *         expo-mobile:  drives Maestro against an already-installed dev
+ *                       build on a connected iPhone. Toggles GPU on,
+ *                       taps Load Assistant, waits for the real ~400MB
+ *                       Qwen3 download (5-min timeout), sends a chat
+ *                       message, asserts a streamed assistant response.
+ *                       This is the only level that exercises the full
+ *                       model-load + inference path. The runner does NOT
+ *                       build/install the app — run
+ *                       `npx expo run:ios --device` once first.
  *
  * Variants (after feature simplification):
  *   pear-desktop: bare, local-ai, wallet, local-ai+wallet
@@ -37,6 +54,7 @@
  *   npx tsx e2e/test-scaffold.ts --variant local-ai            # single variant
  *   npx tsx e2e/test-scaffold.ts --level 2                     # scaffold+install only
  *   npx tsx e2e/test-scaffold.ts --skip-build                  # reuse previous scaffold
+ *   npx tsx e2e/test-scaffold.ts --device 00008110-001AB...    # full real-load test on iPhone
  *
  * Env vars:
  *   QVAC_MOCK=1          — skip model loading, echo input as "Mock: <input>"
@@ -46,12 +64,17 @@
  *   level 2+:   Node.js, npm
  *   expo-mobile level 3+: Xcode + iOS Simulator runtime
  *   expo-mobile level 5:  Maestro (brew install mobile-dev-inc/tap/maestro)
+ *   expo-mobile --device: Maestro + a connected iPhone with the dev
+ *                          build pre-installed (run `npx expo run:ios
+ *                          --device` once from the scaffolded project).
  */
 
 import { execSync, spawn, type ChildProcess } from 'child_process'
 import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
+
+import { generateMaestroFlow } from '../src/e2e/maestro-flow.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -167,8 +190,14 @@ function skipStep(name: string): StepResult {
 // Prerequisite checks
 // ---------------------------------------------------------------------------
 
-function checkPrereqs(platform: Platform, level: number) {
+function checkPrereqs(platform: Platform, level: number, deviceMode: boolean = false) {
   if (platform === 'expo-mobile') {
+    // Device mode skips xcodebuild — only Maestro is required because
+    // the dev build is already installed on the phone.
+    if (deviceMode) {
+      exec('maestro --version', { timeout: 10_000 })
+      return
+    }
     if (level >= 3) exec('which xcrun', { timeout: 5000 })
     if (level >= 5) exec('maestro --version', { timeout: 10_000 })
   }
@@ -239,156 +268,6 @@ function killMetro(proc: ChildProcess) {
   } catch {
     // already dead
   }
-}
-
-// ---------------------------------------------------------------------------
-// Maestro flow generation — feature-specific UI assertions
-// ---------------------------------------------------------------------------
-
-function generateMaestroFlow(projectName: string, features: string[]): string {
-  const bundleId = `com.unstoppable.${projectName.replace(/-/g, '')}`
-  const hasLocalAi = features.includes('local-ai')
-
-  const lines: string[] = [
-    `appId: ${bundleId}`,
-    '---',
-    '',
-    '# --- Launch and verify app header ---',
-    // NOTE: We intentionally do NOT use `- clearState` here. It wipes
-    // AsyncStorage including the Expo dev client's cached Metro packager
-    // URL, which then causes the dev client to launch with
-    // `unsanitizedScriptURLString = (null)` and a redscreen. The
-    // scaffolded app ships with `app/+not-found.tsx` which redirects any
-    // unknown route back to `/`, so the "Unmatched Route" cold-start
-    // failure mode on iOS simulator is handled app-side instead.
-    '- launchApp',
-    // The Expo dev LogBox on iOS simulator keeps a per-simulator error history
-    // that can overlay our app on launch — even errors from unrelated past apps
-    // (e.g. a `gameStore.ts` from a previous session). Dismiss proactively.
-    // `optional: true` makes this a no-op when nothing is stale.
-    `- tapOn:`,
-    `    text: "Dismiss"`,
-    `    optional: true`,
-    `- tapOn:`,
-    `    text: "Minimize"`,
-    `    optional: true`,
-    // Defensive: if Expo Router lands on the "Unmatched Route" fallback on
-    // first boot (scheme + empty path), tap "Go back" to navigate to `/`.
-    // `optional: true` makes this a no-op on the happy path.
-    `- tapOn:`,
-    `    text: "Go back"`,
-    `    optional: true`,
-    `- extendedWaitUntil:`,
-    `    visible: "${projectName}"`,
-    `    timeout: 30000`,
-    `- extendedWaitUntil:`,
-    `    visible: "Unstoppable Stack · Expo Mobile"`,
-    `    timeout: 10000`,
-    '',
-    '# --- Docs section (always present) ---',
-    `- assertVisible: "Docs — unstoppable.dev"`,
-    '',
-    '# --- P2P section (always present — base infrastructure) ---',
-    `- assertVisible: "P2P Network"`,
-    // Wait for worklet readiness before any action that depends on it. The
-    // "Discovery active" label only renders once `ready === true` (worklet
-    // booted + Bare RPC init completed). Without this gate, later taps race
-    // the worklet bootstrap and the `if (!ready) return` guards in the
-    // generated handlers silently drop them, which manifests as a missing
-    // "Saved …" text and a confusing assertion failure.
-    `- extendedWaitUntil:`,
-    `    visible: "Discovery active"`,
-    `    timeout: 20000`,
-    '',
-    '# --- KV Storage section ---',
-    '# Structural assertion only: verify the section + inputs + buttons render',
-    '# and accept input. We intentionally do NOT assert on the post-save/fetch',
-    '# result text. There is a known issue where the worklet-backed put appears',
-    '# to silently no-op on the iOS simulator (the React state update after the',
-    '# bare-rpc round-trip never lands). Switch-case braces and explicit utf8',
-    '# encoding on the reply were both tried and neither resolved it — the bug',
-    '# is in how bare-rpc delivers replies on iOS, and needs device-side',
-    '# logging to diagnose. Tracked in planning/features/scaffold-e2e-testing.md.',
-    '# L5 is primarily a build-pipeline smoke test; the fire-and-forget taps',
-    '# below still exercise the tap path and prove testIDs resolve correctly.',
-    `- assertVisible: "KV Storage"`,
-    `- assertVisible:`,
-    `    id: "kv-save-btn"`,
-    `- assertVisible:`,
-    `    id: "kv-fetch-btn"`,
-    `- tapOn:`,
-    `    id: "kv-key-input"`,
-    `- inputText: "e2e-key"`,
-    `- tapOn:`,
-    `    id: "kv-value-input"`,
-    `- inputText: "hello from e2e"`,
-    `- tapOn:`,
-    `    id: "kv-save-btn"`,
-    `- tapOn:`,
-    `    id: "kv-fetch-btn"`,
-  ]
-
-  if (hasLocalAi) {
-    lines.push(
-      '',
-      '# --- AI Assistant: button always visible ---',
-      `- assertVisible: "AI Assistant"`,
-      `- assertVisible:`,
-      `    id: "load-ai-btn"`,
-    )
-
-    if (QVAC_MOCK) {
-      lines.push(
-        '',
-        '# --- QVAC_MOCK=1: exercise the full chat flow ---',
-        `- tapOn:`,
-        `    id: "load-ai-btn"`,
-        `- extendedWaitUntil:`,
-        `    visible:`,
-        `      id: "chat-input"`,
-        `    timeout: 8000`,
-        `- tapOn:`,
-        `    id: "chat-input"`,
-        `- inputText: "hello"`,
-        `- tapOn:`,
-        `    id: "chat-send-btn"`,
-        `- extendedWaitUntil:`,
-        `    visible: "Mock:.*"`,
-        `    timeout: 8000`,
-      )
-    }
-  }
-
-  lines.push(
-    '',
-    '# --- Relaunch to verify state restores cleanly ---',
-    '- stopApp',
-    '- launchApp',
-    '# After relaunch, the Expo dev LogBox can pop up on the simulator showing',
-    '# cached errors from *other* apps the user ran in this simulator (RN keeps',
-    '# dev-menu history keyed by simulator, not bundle id). Dismiss it if present',
-    '# so our header assertion isn\'t masked. `optional: true` makes the tap a',
-    '# no-op when the overlay is absent, which is the common case on CI.',
-    `- tapOn:`,
-    `    text: "Dismiss"`,
-    `    optional: true`,
-    `- tapOn:`,
-    `    text: "Minimize"`,
-    `    optional: true`,
-    `- tapOn:`,
-    `    text: "Go back"`,
-    `    optional: true`,
-    `- extendedWaitUntil:`,
-    `    visible: "${projectName}"`,
-    `    timeout: 30000`,
-    // Use extendedWaitUntil instead of assertVisible: the header renders a
-    // moment after the project-name title when the worklet remounts.
-    `- extendedWaitUntil:`,
-    `    visible: "Unstoppable Stack · Expo Mobile"`,
-    `    timeout: 10000`,
-  )
-
-  return lines.join('\n') + '\n'
 }
 
 // ---------------------------------------------------------------------------
@@ -554,8 +433,18 @@ async function runWorkerSpawnTest(projectDir: string, features: string[]): Promi
       'db-get-ok with expected value',
     )
 
-    // 6. local-ai (with QVAC_MOCK=1): AI should become ready in <2s, chat should echo
+    // 6. local-ai (with QVAC_MOCK=1): initial status is `idle` — the UI triggers
+    // the load on user click. Exercise the same flow here: verify idle, send
+    // `load-ai`, wait for ready, then chat.
     if (features.includes('local-ai')) {
+      await waitFor(
+        (m) => m.some((x) => x.type === 'status' && x.service === 'ai' && x.status === 'idle'),
+        5_000,
+        'AI service idle (awaiting load)',
+      )
+
+      send({ type: 'load-ai' })
+
       await waitFor(
         (m) => m.some((x) => x.type === 'status' && x.service === 'ai' && x.status === 'ready'),
         5_000,
@@ -896,7 +785,7 @@ async function runNodeCliSpawnTest(projectDir: string, features: string[]): Prom
 
 async function testMobileVariant(
   variant: Variant,
-  opts: { skipBuild: boolean; level: number },
+  opts: { skipBuild: boolean; level: number; deviceUdid: string | null },
 ): Promise<VariantResult> {
   const start = Date.now()
   const projectName = `e2e-${variant.name}`
@@ -939,19 +828,70 @@ async function testMobileVariant(
   }
 
   // Level 2: npm install
-  // --legacy-peer-deps: expo-router 6.0.23 declares a `peerOptional react-dom@*`
-  // which resolves to react-dom@19.2.5, conflicting with our pinned
-  // react@19.1.0. Expo works fine at runtime regardless. This is a known
-  // upstream mismatch and will relax once expo-router releases with pinned
-  // react-dom.
+  // The slim package.json (only @qvac/sdk + zod + expo-file-system +
+  // expo-device for local-ai) lets npm resolve all of @qvac/sdk's 25+
+  // peer deps transitively without conflict. Plain `npm install` works
+  // — no `--legacy-peer-deps` needed. See the local-ai dependency
+  // comment in expo-mobile.ts for the full reasoning.
   if (!aborted && opts.level >= 2 && !opts.skipBuild) {
     push(
       await runStep('npm install', async () => {
-        exec('npm install --legacy-peer-deps', { cwd: projectDir, timeout: 300_000 })
+        exec('npm install', { cwd: projectDir, timeout: 300_000 })
       }),
     )
   } else if (opts.level < 2) {
     steps.push(skipStep('npm install'))
+  }
+
+  // ---------------------------------------------------------------------
+  // Device mode (--device <udid>): full real-load + chat on iPhone.
+  //
+  // Skips the simulator build/install pipeline entirely. We assume the
+  // user already ran `npx expo run:ios --device` once from the
+  // scaffolded project (or has otherwise installed the dev build),
+  // because cross-device code-signing automation is too brittle for a
+  // generic e2e runner. Maestro then drives the device-mode flow which
+  // exercises the real model download + chat round-trip — the only
+  // path that catches "the model can actually load and respond" class
+  // of bugs.
+  // ---------------------------------------------------------------------
+  if (opts.deviceUdid) {
+    if (!aborted) {
+      push(
+        await runStep('maestro: device feature UI test', async () => {
+          const flowContent = generateMaestroFlow(
+            projectName,
+            variant.features,
+            { mode: 'device' },
+          )
+          const flowDir = join(projectDir, '.maestro')
+          mkdirSync(flowDir, { recursive: true })
+          const flowPath = join(flowDir, 'device-feature-test.yaml')
+          writeFileSync(flowPath, flowContent)
+
+          // Maestro accepts `--device <udid|name>` to target a specific
+          // physical device. Long timeout: covers ~400MB cold model
+          // download (5 min) + load (~15s) + chat (60s) + buffer.
+          const output = exec(
+            `maestro --device ${opts.deviceUdid} test "${flowPath}"`,
+            { timeout: 480_000 },
+          )
+
+          if (output.includes('FAILED')) {
+            throw new Error(`Maestro device test failed:\n${output.slice(-1500)}`)
+          }
+        }),
+      )
+    }
+
+    const passed = steps.every((s) => s.passed)
+    return {
+      variant: variant.name,
+      platform: 'expo-mobile',
+      steps,
+      passed,
+      duration: Date.now() - start,
+    }
   }
 
   // Level 3: prebuild + xcodebuild
@@ -1020,12 +960,25 @@ async function testMobileVariant(
     if (!aborted && opts.level >= 5) {
       push(
         await runStep('maestro: feature UI test', async () => {
-          const flowContent = generateMaestroFlow(projectName, variant.features)
+          const flowContent = generateMaestroFlow(
+            projectName,
+            variant.features,
+            { mode: 'simulator', qvacMock: QVAC_MOCK },
+          )
           const flowDir = join(projectDir, '.maestro')
           mkdirSync(flowDir, { recursive: true })
           const flowPath = join(flowDir, 'feature-test.yaml')
           writeFileSync(flowPath, flowContent)
 
+          // Simulator timeout sizing:
+          //   - bare variant: ~30s (no AI section)
+          //   - local-ai (no QVAC_MOCK): ~60s — toggles CPU + asserts no
+          //     red-box. We deliberately do NOT tap Load Assistant on
+          //     the simulator; see the comment in
+          //     src/e2e/maestro-flow.ts for why. Real inference
+          //     verification lives in --device mode.
+          //   - local-ai + QVAC_MOCK=1: ~45s (mock chat round-trip <10s)
+          // 3 min budget covers all of these comfortably.
           const output = exec(`maestro test "${flowPath}"`, { timeout: 180_000 })
 
           if (output.includes('FAILED')) {
@@ -1290,6 +1243,10 @@ async function runPlatform(
     // exclude combos that need restricted package access or other credentials
     // that aren't configured in the current environment.
     skipPairs: Set<string>
+    // When set, expo-mobile runs Maestro against this physical device
+    // UDID instead of building/installing on the simulator. The dev
+    // build must already be installed on the device.
+    deviceUdid: string | null
   },
 ): Promise<VariantResult[]> {
   const allVariants = variantsForPlatform(platform)
@@ -1310,9 +1267,11 @@ async function runPlatform(
     return []
   }
 
-  log(`\n╔═══ ${platform.toUpperCase()} · Level ${opts.level} · ${variants.length} variant(s) ═══╗`)
+  const deviceMode = platform === 'expo-mobile' && !!opts.deviceUdid
+  const levelLabel = deviceMode ? 'Level 6 (device)' : `Level ${opts.level}`
+  log(`\n╔═══ ${platform.toUpperCase()} · ${levelLabel} · ${variants.length} variant(s) ═══╗`)
 
-  checkPrereqs(platform, opts.level)
+  checkPrereqs(platform, opts.level, deviceMode)
 
   const results: VariantResult[] = []
   for (const variant of variants) {
@@ -1321,7 +1280,11 @@ async function runPlatform(
         ? await testDesktopVariant(variant, { skipBuild: opts.skipBuild, level: opts.level })
         : platform === 'node-cli'
           ? await testNodeCliVariant(variant, { skipBuild: opts.skipBuild, level: opts.level })
-          : await testMobileVariant(variant, { skipBuild: opts.skipBuild, level: opts.level })
+          : await testMobileVariant(variant, {
+              skipBuild: opts.skipBuild,
+              level: opts.level,
+              deviceUdid: deviceMode ? opts.deviceUdid : null,
+            })
     results.push(result)
   }
 
@@ -1419,11 +1382,26 @@ async function main() {
 
   const skipBuild = args.includes('--skip-build')
 
+  // --device <udid> opts into the device-mode flow (full real-load + chat).
+  // Implies --platform expo-mobile and overrides any --level (the runner
+  // skips xcodebuild + simulator boot when this is set).
+  const deviceUdid = args.includes('--device')
+    ? args[args.indexOf('--device') + 1]
+    : null
+  if (deviceUdid && !platforms.includes('expo-mobile')) {
+    console.error(
+      `--device is only meaningful for expo-mobile. Pass --platform expo-mobile.`,
+    )
+    process.exit(1)
+  }
+
   const levelsByPlatform: Record<string, number> = {}
   for (const p of platforms) levelsByPlatform[p] = resolveLevel(args, p)
 
   log('Unstoppable Stack — Scaffold E2E Test Runner')
-  if (isAll) {
+  if (deviceUdid) {
+    log(`Mode: expo-mobile device test (udid: ${deviceUdid})`)
+  } else if (isAll) {
     const summary = platforms.map((p) => `${p}=L${levelsByPlatform[p]}`).join(', ')
     log(`Mode: all platforms (${summary})${QVAC_MOCK ? ' [QVAC_MOCK=1]' : ''}`)
   } else {
@@ -1432,7 +1410,14 @@ async function main() {
         `${QVAC_MOCK ? ' (QVAC_MOCK=1)' : ''}`,
     )
   }
-  if (platforms.includes('expo-mobile') && levelsByPlatform['expo-mobile'] >= 5) {
+  if (deviceUdid) {
+    log('Runtime: Maestro (against connected iPhone)')
+    log('NOTE: dev build must already be installed on the device')
+    log('      (run `npx expo run:ios --device` from the scaffolded project once)')
+  } else if (
+    platforms.includes('expo-mobile') &&
+    levelsByPlatform['expo-mobile'] >= 5
+  ) {
     log(`Simulator: ${SIMULATOR_NAME}, Runtime: Maestro`)
   }
   log(`Output: ${TMP_BASE}`)
@@ -1455,6 +1440,7 @@ async function main() {
         skipBuild,
         variantFilter,
         skipPairs,
+        deviceUdid: platform === 'expo-mobile' ? deviceUdid : null,
       })
       allResults.push(...results)
     } catch (err: any) {

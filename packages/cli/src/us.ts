@@ -1,25 +1,58 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander'
-import { registerInitCommand } from './commands/init.js'
-import { registerScaffoldCommand } from './commands/scaffold.js'
-import { registerDoctorCommand } from './commands/doctor.js'
-import { registerResearchCommand } from './commands/research.js'
-import { registerRemoteCommand } from './commands/remote.js'
-import { registerSearchCommand } from './commands/search.js'
 
-const program = new Command()
+// Each registration is gated by a build-time flag (see
+// `src/types/features.d.ts` + `tsup.config.ts`). The flags are replaced
+// with literal `true` / `false` by esbuild's `define` pass, which lets the
+// bundler DCE both the dynamic `import()` and the target module tree when a
+// feature is off.
+//
+// Using dynamic `import()` inside the gate (rather than top-level static
+// imports + conditional call) is what unlocks the bundler's ability to
+// drop the module entirely — a static import would survive even when the
+// function call behind it is dead, because ESM imports have observable
+// side effects.
+async function main() {
+  const program = new Command()
 
-program
-  .name('us')
-  .description('The Unstoppable Stack CLI')
-  .version('0.2.0')
+  program
+    .name('us')
+    .description('The Unstoppable Stack CLI')
+    .version(`0.2.0 (${__US_BUILD_PROFILE__})`)
 
-registerInitCommand(program)
-registerScaffoldCommand(program)
-registerDoctorCommand(program)
-registerResearchCommand(program)
-registerRemoteCommand(program)
-registerSearchCommand(program)
+  if (US_FEAT_INIT) {
+    const { registerInitCommand } = await import('./commands/init.js')
+    registerInitCommand(program)
+  }
+  if (US_FEAT_SCAFFOLD) {
+    const { registerScaffoldCommand } = await import('./commands/scaffold.js')
+    registerScaffoldCommand(program)
+  }
+  if (US_FEAT_DOCTOR) {
+    const { registerDoctorCommand } = await import('./commands/doctor.js')
+    registerDoctorCommand(program)
+  }
+  if (US_FEAT_REMOTE) {
+    const { registerRemoteCommand } = await import('./commands/remote.js')
+    registerRemoteCommand(program)
+  }
+  if (US_FEAT_RESEARCH) {
+    const { registerResearchCommand } = await import('./commands/research.js')
+    registerResearchCommand(program)
+  }
+  if (US_FEAT_SEARCH) {
+    const { registerSearchCommand } = await import('./commands/search.js')
+    registerSearchCommand(program)
+  }
 
-program.parse()
+  await program.parseAsync()
+}
+
+main().catch((err) => {
+  // Commander throws with .code === 'commander.helpDisplayed' for --help
+  // and similar benign exits. Let those pass through silently.
+  if (err?.code?.startsWith?.('commander.')) return
+  console.error(err)
+  process.exit(1)
+})

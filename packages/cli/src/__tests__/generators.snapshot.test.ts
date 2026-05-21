@@ -63,15 +63,18 @@ const VARIANTS: Record<Platform, { name: string; features: Feature[] }[]> = {
     { name: 'local-ai', features: ['local-ai'] },
     { name: 'wallet', features: ['wallet'] },
     { name: 'local-ai+wallet', features: ['local-ai', 'wallet'] },
+    { name: 'node-sync', features: ['node-sync'] },
   ],
   'node-cli': [
     { name: 'bare', features: [] },
     { name: 'local-ai', features: ['local-ai'] },
     { name: 'wallet', features: ['wallet'] },
+    { name: 'node-sync', features: ['node-sync'] },
   ],
   'expo-mobile': [
     { name: 'bare', features: [] },
     { name: 'local-ai', features: ['local-ai'] },
+    { name: 'node-sync', features: ['node-sync'] },
   ],
 }
 

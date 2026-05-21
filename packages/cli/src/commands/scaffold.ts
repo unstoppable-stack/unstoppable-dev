@@ -56,7 +56,11 @@ export function registerScaffoldCommand(program: Command) {
         for (const file of files) {
           const fullPath = join(outputDir, file.path)
           await mkdir(dirname(fullPath), { recursive: true })
-          await writeFile(fullPath, file.content)
+          if (file.encoding === 'base64') {
+            await writeFile(fullPath, Buffer.from(file.content, 'base64'))
+          } else {
+            await writeFile(fullPath, file.content)
+          }
         }
 
         output({
