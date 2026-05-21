@@ -24,6 +24,9 @@ export interface GeneratorOptions {
 export interface GeneratedFile {
   path: string
   content: string
+  /** Encoding for the content. Defaults to 'utf8'. Use 'base64' for binary
+   *  files (e.g. placeholder PNG icons). */
+  encoding?: 'utf8' | 'base64'
 }
 
 export type Generator = (opts: GeneratorOptions) => GeneratedFile[]

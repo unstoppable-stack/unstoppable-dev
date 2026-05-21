@@ -27,6 +27,8 @@ us init
 
 Your AI assistant (Claude, Cursor, OpenCode, or Codex) gets pre-loaded with battle-tested knowledge about the entire stack — so it actually builds things that work.
 
+**Full CLI reference:** [`packages/cli/README.md`](./packages/cli/README.md) — every command, every flag, troubleshooting, and dev setup.
+
 ## Why?
 
 AI coding tools are amazing at building centralized apps. React + Next.js + AWS? Minutes.
@@ -65,6 +67,8 @@ cd my-app
 ```
 
 Your project comes pre-configured with AI rules for your chosen assistant. Start describing what you want to build.
+
+For every command, flag, and troubleshooting tip, see the full CLI reference: [`packages/cli/README.md`](./packages/cli/README.md).
 
 ### Example prompts that work out of the box:
 
@@ -154,6 +158,9 @@ pnpm --filter website dev
 # Install the CLI globally for testing
 cd packages/cli && npm install -g .
 ```
+
+See [`packages/cli/README.md`](./packages/cli/README.md#development) for the full
+dev workflow (test scripts, E2E levels, generator layout).
 
 ### Editing the Agent Pack
 

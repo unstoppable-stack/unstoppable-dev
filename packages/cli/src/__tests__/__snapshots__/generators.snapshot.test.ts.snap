@@ -20,6 +20,7 @@ dist/
     "slug": "snap-test",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "scheme": "snap-test",
     "newArchEnabled": true,
     "plugins": [
@@ -53,6 +54,10 @@ dist/
     },
     "android": {
       "package": "com.unstoppable.snaptest",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0a1628"
+      },
       "edgeToEdgeEnabled": true
     }
   }
@@ -197,6 +202,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
   mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
   input: {
     backgroundColor: '#0d1117',
     borderWidth: 1,
@@ -223,6 +230,19 @@ const styles = StyleSheet.create({
   result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
   chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  deviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1f2937',
+    gap: 8,
+  },
+  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
   bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
   bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
   bubbleBot: {
@@ -238,12 +258,22 @@ const styles = StyleSheet.create({
     "path": "app/index.tsx",
   },
   {
+    "content": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMElEQVR42u3OIQEAAAgDMDQByED/ghDjZmJ+1bOXVAICAgICAgICAgICAgICAunAA1fSHEzA5mfcAAAAAElFTkSuQmCC",
+    "path": "assets/icon.png",
+  },
+  {
     "content": "// Bare worklet — runs in react-native-bare-kit, not in React Native context
 // Commands:
 //   1: init({ storagePath, mock? }) — initialize base services
 //   4: ping() → { ok, pong }
 //   5: kv-put({ key, value }) → { ok }
 //   6: kv-get({ key }) → { ok, value }
+//
+// NOTE: QVAC inference is NOT in this worklet. @qvac/sdk runs from React
+// Native (app/index.tsx) and spawns its own internal Bare worker via the
+// QVAC expo-plugin's prebuilt mobile bundle. Loading @qvac/sdk in a
+// user-owned Bare runtime triggers a MODULE_NOT_FOUND for the SDK's
+// dynamic import of dist/server/worker.js that bare-pack can't trace.
 const RPC = require('bare-rpc')
 const { IPC } = BareKit
 const Corestore = require('corestore')
@@ -309,12 +339,42 @@ const rpc = new RPC(IPC, async (request) => {
     "path": "bare/index.js",
   },
   {
-    "content": "const { getDefaultConfig } = require('expo/metro-config')
+    "content": "// Learn more https://docs.expo.dev/guides/customizing-metro/
+const { getDefaultConfig } = require('expo/metro-config')
+const { execSync } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+// Ensure the Bare worklet bundle (\`bare/app.bundle.js\`) is fresh before
+// Metro starts. The npm \`pre*\` hooks (\`prestart\`, \`preios\`, \`preandroid\`)
+// only fire when launching via \`npm run …\`. When developers run
+// \`npx expo start\` or \`expo start\` directly, those hooks are bypassed
+// and Metro fails with \`Unable to resolve "../../bare/app.bundle.js"\`.
+// Running bare-pack here makes every entry point safe.
+const workletEntry = path.join(__dirname, 'bare/index.js')
+const workletBundle = path.join(__dirname, 'bare/app.bundle.js')
+function workletBundleStale() {
+  if (!fs.existsSync(workletBundle)) return true
+  try {
+    return fs.statSync(workletBundle).mtimeMs < fs.statSync(workletEntry).mtimeMs
+  } catch {
+    return true
+  }
+}
+if (workletBundleStale()) {
+  console.log('[metro] Building Bare worklet bundle (bare/app.bundle.js)…')
+  execSync('npm run build:bare', { stdio: 'inherit', cwd: __dirname })
+}
 
 const config = getDefaultConfig(__dirname)
 
-config.resolver.unstable_enablePackageExports = true
-
+// Mock native Node.js modules that can't run in React Native. These run
+// only inside the Bare worklet (see \`bare/index.js\`) — when imported from
+// shared modules that the RN side also pulls in, point them at an empty
+// stub so Metro doesn't try to bundle native code.
+//
+// This list mirrors the QVAC reference mobile app
+// (\`reference-apps/qvac-workbench-mobile/metro.config.js\`).
 const emptyModule = require.resolve('./mocks/empty.js')
 const nativeModuleMocks = [
   "sodium-native",
@@ -336,6 +396,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform)
 }
 
+// Treat QVAC model artifacts (\`.bundle\`, \`.bin\`, \`.model\`, \`.onnx\`) as
+// assets so Metro doesn't try to parse them as JS.
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'bundle', 'bin', 'model', 'onnx',
@@ -379,7 +441,7 @@ module.exports = config
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.11.5",
+    "react-native-bare-kit": "0.12.3",
     "bare-pack": "^1.5.1",
     "bare-rpc": "^1.1.0",
     "corestore": "^7.6.0",
@@ -512,8 +574,43 @@ Expo Mobile (iOS/Android)
 
 \`\`\`bash
 npm install
-npm run dev
+npm run ios       # iOS simulator (or: npm run android)
 \`\`\`
+
+The first run takes 3–5 minutes — it generates the native \`ios/\` and
+\`android/\` projects, runs \`pod install\`, and builds a real binary that
+links \`react-native-bare-kit\` and the QVAC SDK's native modules. After
+that, you can iterate on JavaScript with \`npm run start\` (Metro only,
+~2s reloads). You only need to redo \`npm run ios\` when you change a
+native dependency or a config plugin.
+
+### Why not Expo Go?
+
+This app uses **custom native modules** (\`react-native-bare-kit\` for the
+P2P worklet, \`@qvac/sdk\` for local AI). Expo Go is a fixed shell app
+that only ships Expo's stock modules — it physically cannot load
+BareKit. If you open the dev URL in Expo Go you'll see:
+
+\`\`\`
+[Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'BareKit'
+ could not be found.]
+\`\`\`
+
+Always launch via \`npm run ios\` / \`npm run android\` so the native build
+includes everything.
+
+### On a physical device
+
+\`\`\`bash
+npx expo run:ios --device       # iOS — pick your connected iPhone
+npx expo run:android --device   # Android — physical device
+\`\`\`
+
+QVAC inference (LLM completion) **only works on physical devices** —
+\`llamacpp\` doesn't support iOS Simulator or Android Emulator. The UI
+will load on simulators but \`Load Assistant\` blocks GPU mode there.
+Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
+test the chat UI flow without real inference.
 
 ## Project Structure
 
@@ -637,6 +734,7 @@ dist/
     "slug": "snap-test",
     "version": "1.0.0",
     "orientation": "portrait",
+    "icon": "./assets/icon.png",
     "scheme": "snap-test",
     "newArchEnabled": true,
     "plugins": [
@@ -671,6 +769,10 @@ dist/
     },
     "android": {
       "package": "com.unstoppable.snaptest",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0a1628"
+      },
       "edgeToEdgeEnabled": true
     }
   }
@@ -701,9 +803,11 @@ export default function NotFound() {
     "path": "app/+not-found.tsx",
   },
   {
-    "content": "import React, { useState } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator } from 'react-native'
+    "content": "import React, { useState, useRef } from 'react'
+import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
+import { downloadAsset, loadModel, completion, unloadModel, QWEN3_600M_INST_Q4, VERBOSITY } from '@qvac/sdk'
+import * as Device from 'expo-device'
 
 export default function Home() {
   const { ready, rpcRequest } = useWorklet()
@@ -711,9 +815,13 @@ export default function Home() {
   const [kvValue, setKvValue] = useState('')
   const [kvResult, setKvResult] = useState<string | null>(null)
   const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiProgress, setAiProgress] = useState<string | null>(null)
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])
   const [chatInput, setChatInput] = useState('')
   const [thinking, setThinking] = useState(false)
+  const [aiDevice, setAiDevice] = useState<'gpu' | 'cpu'>('gpu')
+  const modelIdRef = useRef<string | null>(null)
   
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
@@ -742,27 +850,147 @@ export default function Home() {
     }
   }
 
+  const QVAC_MOCK = process.env.EXPO_PUBLIC_QVAC_MOCK === '1'
+
   async function loadAI() {
-    if (!ready) return
+    setAiError(null)
+    setAiProgress(null)
     setAiStatus('loading')
-    try {
-      const res = await rpcRequest(2)
-      setAiStatus(res.ok ? 'ready' : 'error')
-    } catch {
+    if (QVAC_MOCK) {
+      await new Promise((r) => setTimeout(r, 200))
+      modelIdRef.current = 'mock-model'
+      setAiStatus('ready')
+      return
+    }
+    // Per QVAC docs: "QVAC currently does not run on emulators. You must
+    // use a physical device." GPU mode reliably fails on simulator (Metal
+    // / Vulkan unavailable), so block early with a clear message. CPU
+    // mode is technically also unsupported by llamacpp on emulators, but
+    // we let users try it — if it fails, the underlying QVAC error is
+    // already surfaced via the catch block below.
+    if (Device.isDevice === false && aiDevice === 'gpu') {
+      setAiError(
+        "GPU inference doesn't run on the iOS Simulator / Android Emulator. " +
+        'Toggle Device → CPU below to try CPU mode (slower, may still ' +
+        'fail on emulators per QVAC limits), or run on a physical device ' +
+        'with: npx expo run:ios --device (or run:android --device). Or ' +
+        'set EXPO_PUBLIC_QVAC_MOCK=1 to exercise the UI without inference.',
+      )
       setAiStatus('error')
+      return
+    }
+    try {
+      // Two-phase load — split download and load progress so the UI can
+      // show what's actually happening. This mirrors the official QVAC
+      // Expo tutorial: downloadAsset first (model arrives over the
+      // network or from Hyperdrive peers), then loadModel (mmap'd into
+      // the GGUF engine).
+      setAiProgress('Downloading model...')
+      await downloadAsset({
+        assetSrc: QWEN3_600M_INST_Q4,
+        onProgress: (p: any) => {
+          if (typeof p?.percentage === 'number') {
+            setAiProgress('Downloading ' + Math.round(p.percentage) + '%')
+          }
+        },
+      })
+      setAiProgress('Loading model into memory...')
+      const id = await loadModel({
+        modelSrc: QWEN3_600M_INST_Q4,
+        modelType: 'llm',
+        modelConfig: {
+          // Device choice is exposed to users via the GPU toggle in the
+          // Assistant section. GPU = Metal/Vulkan (real devices, ~5-10x
+          // faster). CPU = portable fallback (older hardware,
+          // experimentation).
+          device: aiDevice,
+          ctx_size: 4096,
+          system_prompt: 'You are a helpful assistant. /no_think',
+          // VERBOSITY.ERROR keeps the JS console quiet — flip to .DEBUG
+          // when chasing model-loading issues.
+          verbosity: VERBOSITY.ERROR,
+        },
+        onProgress: (p: any) => {
+          if (typeof p?.percentage === 'number') {
+            setAiProgress('Loading ' + Math.round(p.percentage) + '%')
+          }
+        },
+      })
+      modelIdRef.current = id
+      setAiStatus('ready')
+      setAiProgress(null)
+    } catch (e: any) {
+      setAiError(e?.message ?? String(e))
+      setAiStatus('error')
+      setAiProgress(null)
     }
   }
 
   async function sendMessage() {
-    if (!chatInput.trim() || thinking || aiStatus !== 'ready') return
+    const id = modelIdRef.current
+    if (!chatInput.trim() || thinking || aiStatus !== 'ready' || !id) return
     const userMsg = { role: 'user' as const, content: chatInput.trim() }
-    setChatInput('')
     const next = [...messages, userMsg]
-    setMessages(next)
+    const placeholder = { role: 'assistant' as const, content: '' }
+    setChatInput('')
+    setMessages([...next, placeholder])
     setThinking(true)
+
     try {
-      const res = await rpcRequest(3, { messages: next })
-      if (res.ok) setMessages([...next, { role: 'assistant' as const, content: res.text }])
+      if (QVAC_MOCK) {
+        const reply = 'Mock: ' + userMsg.content
+        for (let i = 1; i <= reply.length; i++) {
+          await new Promise((r) => setTimeout(r, 5))
+          setMessages([...next, { role: 'assistant', content: reply.slice(0, i) }])
+        }
+        return
+      }
+      const result = completion({
+        modelId: id,
+        history: next,
+        stream: true,
+      })
+      // Strip Qwen 3 <think>...</think> blocks from the live token stream
+      // so the chat bubble shows only the user-facing answer. We track
+      // depth and carry partial tags across chunks. /no_think in the
+      // system prompt usually suppresses them; this is a safety net.
+      let inThink = false
+      let carry = ''
+      let visible = ''
+      for await (const token of result.tokenStream) {
+        carry += token
+        let outChunk = ''
+        while (carry.length) {
+          if (!inThink) {
+            const open = carry.indexOf('<think>')
+            if (open === -1) {
+              if (carry.length > 7) { outChunk += carry.slice(0, -7); carry = carry.slice(-7) }
+              break
+            }
+            outChunk += carry.slice(0, open)
+            carry = carry.slice(open + 7)
+            inThink = true
+          } else {
+            const close = carry.indexOf('</think>')
+            if (close === -1) {
+              if (carry.length > 8) carry = carry.slice(-8)
+              break
+            }
+            carry = carry.slice(close + 8)
+            inThink = false
+          }
+        }
+        if (outChunk) {
+          visible += outChunk
+          setMessages([...next, { role: 'assistant', content: visible }])
+        }
+      }
+      if (!inThink && carry) {
+        visible += carry
+        setMessages([...next, { role: 'assistant', content: visible }])
+      }
+    } catch (e: any) {
+      setMessages([...next, { role: 'assistant', content: '❌ ' + (e?.message ?? String(e)) }])
     } finally {
       setThinking(false)
     }
@@ -817,27 +1045,61 @@ export default function Home() {
         
         <View style={styles.section} testID="ai-section">
           <Text style={styles.sectionTitle}>AI Assistant</Text>
+          <Text style={styles.hint}>
+            Qwen 3 0.6B · ~400MB download on first run, cached after.{'\\n'}
+            <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
+            — QVAC inference does not run on the iOS Simulator or Android
+            Emulator. Set{' '}
+            <Text style={{ fontFamily: 'monospace' }}>EXPO_PUBLIC_QVAC_MOCK=1</Text>{' '}
+            to test the UI without inference.
+          </Text>
           {aiStatus === 'idle' && (
-            <TouchableOpacity
-              style={[styles.btn, styles.btnFull, !ready && styles.btnDisabled]}
-              onPress={loadAI}
-              disabled={!ready}
-              testID="load-ai-btn"
-              accessibilityLabel="Load Assistant"
-            >
-              <Text style={styles.btnText}>
-                {ready ? 'Load Assistant' : 'Waiting for worklet...'}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <View style={styles.deviceRow} testID="ai-device-toggle">
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.deviceLabel}>
+                    Device: {aiDevice === 'gpu' ? 'GPU' : 'CPU'}
+                  </Text>
+                  <Text style={styles.deviceHint}>
+                    {aiDevice === 'gpu'
+                      ? 'Faster (Metal / Vulkan) · physical device only'
+                      : 'Slower fallback · for older hardware or experimentation'}
+                  </Text>
+                </View>
+                <Switch
+                  value={aiDevice === 'gpu'}
+                  onValueChange={(on) => setAiDevice(on ? 'gpu' : 'cpu')}
+                  trackColor={{ false: '#3a3a3a', true: '#1f6feb' }}
+                  thumbColor={aiDevice === 'gpu' ? '#58a6ff' : '#888'}
+                  testID="ai-device-switch"
+                  accessibilityLabel="Toggle GPU inference"
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.btn, styles.btnFull]}
+                onPress={loadAI}
+                testID="load-ai-btn"
+                accessibilityLabel="Load Assistant"
+              >
+                <Text style={styles.btnText}>Load Assistant</Text>
+              </TouchableOpacity>
+            </>
           )}
           {aiStatus === 'loading' && (
             <View style={styles.row}>
               <ActivityIndicator color="#58a6ff" />
-              <Text style={[styles.mono, { marginLeft: 8 }]}>Loading model...</Text>
+              <Text style={[styles.mono, { marginLeft: 8 }]}>
+                {aiProgress ?? 'Loading model...'}
+              </Text>
             </View>
           )}
           {aiStatus === 'error' && (
-            <Text style={{ color: '#f85149', fontSize: 14 }}>Failed to load model</Text>
+            <View>
+              <Text style={styles.error} testID="ai-error-msg">❌ {aiError ?? 'Failed to load model'}</Text>
+              <TouchableOpacity style={[styles.btn, styles.btnFull, { marginTop: 8 }]} onPress={loadAI} testID="ai-retry-btn">
+                <Text style={styles.btnText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           )}
           {aiStatus === 'ready' && (
             <>
@@ -845,14 +1107,17 @@ export default function Home() {
                 {messages.length === 0 && (
                   <Text style={styles.chatHint}>Ask me anything...</Text>
                 )}
-                {messages.map((msg, i) => (
-                  <View
-                    key={i}
-                    style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}
-                  >
-                    <Text style={styles.bubbleText}>{msg.content}</Text>
-                  </View>
-                ))}
+                {messages
+                  .filter((m) => m.content)
+                  .map((msg, i) => (
+                    <View
+                      key={i}
+                      style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}
+                      testID={\`chat-bubble-\${msg.role}\`}
+                    >
+                      <Text style={styles.bubbleText}>{msg.content}</Text>
+                    </View>
+                  ))}
                 {thinking && (
                   <View style={[styles.bubble, styles.bubbleBot]}>
                     <ActivityIndicator size="small" color="#58a6ff" />
@@ -918,6 +1183,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
   mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
   input: {
     backgroundColor: '#0d1117',
     borderWidth: 1,
@@ -944,6 +1211,19 @@ const styles = StyleSheet.create({
   result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
   chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  deviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1f2937',
+    gap: 8,
+  },
+  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
   bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
   bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
   bubbleBot: {
@@ -959,25 +1239,31 @@ const styles = StyleSheet.create({
     "path": "app/index.tsx",
   },
   {
+    "content": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMElEQVR42u3OIQEAAAgDMDQByED/ghDjZmJ+1bOXVAICAgICAgICAgICAgICAunAA1fSHEzA5mfcAAAAAElFTkSuQmCC",
+    "path": "assets/icon.png",
+  },
+  {
     "content": "// Bare worklet — runs in react-native-bare-kit, not in React Native context
 // Commands:
 //   1: init({ storagePath, mock? }) — initialize base services
-//   2: load-model() → { ok, modelId }
-//   3: chat({ messages }) → { ok, text }
 //   4: ping() → { ok, pong }
 //   5: kv-put({ key, value }) → { ok }
 //   6: kv-get({ key }) → { ok, value }
+//
+// NOTE: QVAC inference is NOT in this worklet. @qvac/sdk runs from React
+// Native (app/index.tsx) and spawns its own internal Bare worker via the
+// QVAC expo-plugin's prebuilt mobile bundle. Loading @qvac/sdk in a
+// user-owned Bare runtime triggers a MODULE_NOT_FOUND for the SDK's
+// dynamic import of dist/server/worker.js that bare-pack can't trace.
 const RPC = require('bare-rpc')
 const { IPC } = BareKit
 const Corestore = require('corestore')
 const Hyperbee = require('hyperbee')
-const { loadModel, completion, LLAMA_3_2_1B_INST_Q4_0 } = require('@qvac/sdk')
 
 let storagePath = null
 let store = null
 let db = null
 let mockMode = false
-let modelId = null
 
 const rpc = new RPC(IPC, async (request) => {
   try {
@@ -995,33 +1281,6 @@ const rpc = new RPC(IPC, async (request) => {
         db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
         await db.ready()
         response = { ok: true, mock: mockMode }
-        break
-      }
-      case 2: { // load-model
-        if (mockMode) {
-          await new Promise((r) => setTimeout(r, 100))
-          modelId = 'mock-model'
-          response = { ok: true, modelId, mock: true }
-          break
-        }
-        if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
-        modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
-        response = { ok: true, modelId }
-        break
-      }
-      case 3: { // chat — accumulate tokens, reply when done
-        if (!modelId) { response = { error: 'Model not loaded' }; break }
-        if (mockMode) {
-          const last = params.messages[params.messages.length - 1]
-          response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
-          break
-        }
-        const result = completion({ modelId, history: params.messages, stream: true })
-        let text = ''
-        for await (const token of result.tokenStream) {
-          text += token
-        }
-        response = { ok: true, text }
         break
       }
       case 4: { // ping — check worklet is alive
@@ -1061,12 +1320,42 @@ const rpc = new RPC(IPC, async (request) => {
     "path": "bare/index.js",
   },
   {
-    "content": "const { getDefaultConfig } = require('expo/metro-config')
+    "content": "// Learn more https://docs.expo.dev/guides/customizing-metro/
+const { getDefaultConfig } = require('expo/metro-config')
+const { execSync } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+// Ensure the Bare worklet bundle (\`bare/app.bundle.js\`) is fresh before
+// Metro starts. The npm \`pre*\` hooks (\`prestart\`, \`preios\`, \`preandroid\`)
+// only fire when launching via \`npm run …\`. When developers run
+// \`npx expo start\` or \`expo start\` directly, those hooks are bypassed
+// and Metro fails with \`Unable to resolve "../../bare/app.bundle.js"\`.
+// Running bare-pack here makes every entry point safe.
+const workletEntry = path.join(__dirname, 'bare/index.js')
+const workletBundle = path.join(__dirname, 'bare/app.bundle.js')
+function workletBundleStale() {
+  if (!fs.existsSync(workletBundle)) return true
+  try {
+    return fs.statSync(workletBundle).mtimeMs < fs.statSync(workletEntry).mtimeMs
+  } catch {
+    return true
+  }
+}
+if (workletBundleStale()) {
+  console.log('[metro] Building Bare worklet bundle (bare/app.bundle.js)…')
+  execSync('npm run build:bare', { stdio: 'inherit', cwd: __dirname })
+}
 
 const config = getDefaultConfig(__dirname)
 
-config.resolver.unstable_enablePackageExports = true
-
+// Mock native Node.js modules that can't run in React Native. These run
+// only inside the Bare worklet (see \`bare/index.js\`) — when imported from
+// shared modules that the RN side also pulls in, point them at an empty
+// stub so Metro doesn't try to bundle native code.
+//
+// This list mirrors the QVAC reference mobile app
+// (\`reference-apps/qvac-workbench-mobile/metro.config.js\`).
 const emptyModule = require.resolve('./mocks/empty.js')
 const nativeModuleMocks = [
   "sodium-native",
@@ -1088,6 +1377,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform)
 }
 
+// Treat QVAC model artifacts (\`.bundle\`, \`.bin\`, \`.model\`, \`.onnx\`) as
+// assets so Metro doesn't try to parse them as JS.
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'bundle', 'bin', 'model', 'onnx',
@@ -1131,43 +1422,18 @@ module.exports = config
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.11.5",
+    "react-native-bare-kit": "0.12.3",
     "bare-pack": "^1.5.1",
     "bare-rpc": "^1.1.0",
     "corestore": "^7.6.0",
     "hyperbee": "^2.22.0",
-    "@qvac/sdk": "^0.9.0",
-    "zod": "^4.0.0",
-    "expo-device": "~8.0.10",
-    "bare-abort-controller": "^1.0.0",
-    "bare-buffer": "^3.4.2",
-    "bare-crypto": "^1.11.2",
-    "bare-dns": "^2.1.4",
-    "bare-fetch": "^2.5.1",
-    "bare-http1": "^4.1.6",
-    "bare-https": "^2.1.1",
-    "bare-link": "^2.1.10",
-    "bare-net": "^2.2.0",
-    "bare-os": "^3.6.2",
-    "bare-path": "^3.0.0",
-    "bare-process": "^4.2.2",
-    "bare-runtime": "^1.24.2",
-    "bare-stream": "^2.7.0",
-    "bare-subprocess": "^5.2.1",
-    "bare-zlib": "^1.3.1",
-    "compact-encoding": "^2.19.0",
-    "events": "^3.3.0",
-    "hyperdb": "^4.19.0",
-    "hyperdrive": "^13.0.1",
-    "hyperswarm": "^4.12.1",
-    "llm-splitter": "~0.2.0",
-    "pear-pipe": "^1.0.6",
-    "tar-stream": "^3.1.7"
+    "@qvac/sdk": "^0.11.0",
+    "zod": "^4.3.0",
+    "expo-device": "~8.0.10"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
-    "typescript": "~5.9.2",
-    "@qvac/cli": "^0.1.2"
+    "typescript": "~5.9.2"
   },
   "overrides": {
     "bare-fs": "4.5.1"
@@ -1293,8 +1559,840 @@ Expo Mobile (iOS/Android)
 
 \`\`\`bash
 npm install
-npm run dev
+npm run ios       # iOS simulator (or: npm run android)
 \`\`\`
+
+The first run takes 3–5 minutes — it generates the native \`ios/\` and
+\`android/\` projects, runs \`pod install\`, and builds a real binary that
+links \`react-native-bare-kit\` and the QVAC SDK's native modules. After
+that, you can iterate on JavaScript with \`npm run start\` (Metro only,
+~2s reloads). You only need to redo \`npm run ios\` when you change a
+native dependency or a config plugin.
+
+### Why not Expo Go?
+
+This app uses **custom native modules** (\`react-native-bare-kit\` for the
+P2P worklet, \`@qvac/sdk\` for local AI). Expo Go is a fixed shell app
+that only ships Expo's stock modules — it physically cannot load
+BareKit. If you open the dev URL in Expo Go you'll see:
+
+\`\`\`
+[Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'BareKit'
+ could not be found.]
+\`\`\`
+
+Always launch via \`npm run ios\` / \`npm run android\` so the native build
+includes everything.
+
+### On a physical device
+
+\`\`\`bash
+npx expo run:ios --device       # iOS — pick your connected iPhone
+npx expo run:android --device   # Android — physical device
+\`\`\`
+
+QVAC inference (LLM completion) **only works on physical devices** —
+\`llamacpp\` doesn't support iOS Simulator or Android Emulator. The UI
+will load on simulators but \`Load Assistant\` blocks GPU mode there.
+Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
+test the chat UI flow without real inference.
+
+## Project Structure
+
+See \`planning/\` for architecture decisions and feature plans.
+",
+    "path": "README.md",
+  },
+  {
+    "content": "import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react'
+import { TurboModuleRegistry, NativeModules } from 'react-native'
+
+interface WorkletContextValue {
+  ready: boolean
+  rpcRequest: (command: number, data?: any) => Promise<any>
+  nativeAvailable: boolean
+}
+
+const WorkletContext = createContext<WorkletContextValue | null>(null)
+
+function hasBareKitNativeModule(): boolean {
+  return !!(TurboModuleRegistry.get('BareKit') || NativeModules.BareKit)
+}
+
+// Correct bare-rpc round-trip:
+//   1. rpc.request(cmd) → OutgoingRequest
+//   2. req.send(payload, 'utf8') to actually send
+//   3. await req.reply('utf8') to await + decode the response as a string
+// Then JSON.parse on the string. Passing 'utf8' to both send() and reply()
+// keeps the wire format predictable and avoids Buffer/encoding surprises.
+async function rpcCall(rpc: any, command: number, data?: any): Promise<any> {
+  const req = rpc.request(command)
+  req.send(data === undefined ? '' : JSON.stringify(data), 'utf8')
+  const responseStr = await req.reply('utf8')
+  return responseStr ? JSON.parse(responseStr) : {}
+}
+
+export function WorkletProvider({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false)
+  const [nativeAvailable] = useState(hasBareKitNativeModule)
+  const workletRef = useRef<any>(null)
+  const rpcRef = useRef<any>(null)
+
+  useEffect(() => {
+    if (!nativeAvailable) return
+    let mounted = true
+
+    async function init() {
+      const { Worklet } = require('react-native-bare-kit')
+      const RPC = require('bare-rpc')
+      const { Paths, Directory } = require('expo-file-system')
+
+      const appDir = new Directory(Paths.document, 'snap-test-storage')
+      if (!appDir.exists) appDir.create()
+      const storagePath = appDir.uri.replace('file://', '')
+
+      const worklet = new Worklet()
+      const source = require('../../bare/app.bundle.js')
+      await worklet.start('/app.bundle', source)
+      workletRef.current = worklet
+
+      const rpc = new RPC(worklet.IPC)
+      rpcRef.current = rpc
+
+      // QVAC_MOCK: Expo public env vars are injected at bundle time. Setting
+      // EXPO_PUBLIC_QVAC_MOCK=1 enables mock mode in the worklet (skips model
+      // loading, echoes input). Used by E2E tests.
+      const mock = process.env.EXPO_PUBLIC_QVAC_MOCK === '1'
+      await rpcCall(rpc, 1, { storagePath, mock })
+
+      if (mounted) setReady(true)
+    }
+
+    init().catch((err) => console.error('Worklet init error:', err))
+
+    return () => {
+      mounted = false
+      workletRef.current?.terminate()
+    }
+  }, [nativeAvailable])
+
+  const rpcRequest = useCallback(async (command: number, data?: any) => {
+    if (!rpcRef.current) throw new Error('Worklet not ready')
+    return rpcCall(rpcRef.current, command, data)
+  }, [])
+
+  return (
+    <WorkletContext.Provider value={{ ready, rpcRequest, nativeAvailable }}>
+      {children}
+    </WorkletContext.Provider>
+  )
+}
+
+export function useWorklet() {
+  const ctx = useContext(WorkletContext)
+  if (!ctx) throw new Error('useWorklet must be used within WorkletProvider')
+  return ctx
+}
+",
+    "path": "src/contexts/WorkletContext.tsx",
+  },
+]
+`;
+
+exports[`generator snapshots > expo-mobile > node-sync: file tree matches snapshot 1`] = `
+[
+  {
+    "content": "node_modules/
+dist/
+.pear/
+*.log
+.env
+.env.local
+.DS_Store
+",
+    "path": ".gitignore",
+  },
+  {
+    "content": "{
+  "expo": {
+    "name": "snap-test",
+    "slug": "snap-test",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "snap-test",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 29,
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ],
+      [
+        "./plugins/withAndroidNdkVersion.js",
+        "29.0.14206865"
+      ],
+      [
+        "./plugins/withAndroidArchitecture.js",
+        [
+          "arm64-v8a"
+        ]
+      ]
+    ],
+    "ios": {
+      "bundleIdentifier": "com.unstoppable.snaptest",
+      "entitlements": {
+        "com.apple.developer.kernel.increased-memory-limit": true
+      }
+    },
+    "android": {
+      "package": "com.unstoppable.snaptest",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0a1628"
+      },
+      "edgeToEdgeEnabled": true
+    }
+  }
+}",
+    "path": "app.json",
+  },
+  {
+    "content": "import { Stack } from 'expo-router'
+import { WorkletProvider } from '../src/contexts/WorkletContext'
+
+export default function Layout() {
+  return (
+    <WorkletProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </WorkletProvider>
+  )
+}
+",
+    "path": "app/_layout.tsx",
+  },
+  {
+    "content": "import { Redirect } from 'expo-router'
+
+export default function NotFound() {
+  return <Redirect href="/" />
+}
+",
+    "path": "app/+not-found.tsx",
+  },
+  {
+    "content": "import React, { useState, useEffect } from 'react'
+import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput } from 'react-native'
+import { useWorklet } from '../src/contexts/WorkletContext'
+
+export default function Home() {
+  const { ready, rpcRequest } = useWorklet()
+  const [kvKey, setKvKey] = useState('')
+  const [kvValue, setKvValue] = useState('')
+  const [kvResult, setKvResult] = useState<string | null>(null)
+  const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'connected' | 'disconnected' | 'unavailable'>('idle')
+  
+  async function kvSave() {
+    if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
+    if (!ready) { setKvResult('Worklet not ready'); return }
+    try {
+      const res = await rpcRequest(5, { key: kvKey, value: kvValue })
+      if (res.ok) setKvResult('Saved "' + kvKey + '"')
+      else setKvResult('Error: ' + (res.error ?? 'unknown'))
+    } catch (e: any) {
+      setKvResult('Exception: ' + (e?.message ?? String(e)))
+    }
+  }
+
+  async function kvFetch() {
+    if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
+    if (!ready) { setKvResult('Worklet not ready'); return }
+    try {
+      const res = await rpcRequest(6, { key: kvKey })
+      if (res.ok) {
+        setKvResult(res.value !== null ? '"' + kvKey + '" → ' + JSON.stringify(res.value) : '"' + kvKey + '" not found')
+      } else {
+        setKvResult('Error: ' + (res.error ?? 'unknown'))
+      }
+    } catch (e: any) {
+      setKvResult('Exception: ' + (e?.message ?? String(e)))
+    }
+  }
+
+  useEffect(() => {
+    if (!ready) return
+    let cancelled = false
+    ;(async () => {
+      setNodeStatus('searching')
+      try {
+        const res = await rpcRequest(7)
+        if (cancelled) return
+        if (res.ok) setNodeStatus(res.status === 'connected' ? 'connected' : (res.status ?? 'connected'))
+        else setNodeStatus(res.status === 'unavailable' ? 'unavailable' : 'disconnected')
+      } catch {
+        if (!cancelled) setNodeStatus('unavailable')
+      }
+    })()
+    return () => { cancelled = true }
+  }, [ready])
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+        <View style={styles.header} testID="app-header">
+          <Text style={styles.title}>snap-test</Text>
+          <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
+        </View>
+        
+        <View style={styles.section} testID="p2p-section">
+          <Text style={styles.sectionTitle}>P2P Network</Text>
+          <Text style={styles.mono}>
+            Worklet: {ready ? '✅ Connected' : '⏳ Starting...'}
+          </Text>
+          {ready && <Text style={styles.mono}>Discovery active</Text>}
+        </View>
+        
+        <View style={styles.section} testID="kv-section">
+          <Text style={styles.sectionTitle}>KV Storage</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Key"
+            placeholderTextColor="#555"
+            value={kvKey}
+            onChangeText={setKvKey}
+            testID="kv-key-input"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Value"
+            placeholderTextColor="#555"
+            value={kvValue}
+            onChangeText={setKvValue}
+            testID="kv-value-input"
+          />
+          <View style={styles.row}>
+            <TouchableOpacity style={styles.btn} onPress={kvSave} testID="kv-save-btn">
+              <Text style={styles.btnText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={kvFetch} testID="kv-fetch-btn">
+              <Text style={styles.btnText}>Fetch</Text>
+            </TouchableOpacity>
+          </View>
+          {kvResult !== null && (
+            <Text style={styles.result} testID="kv-result">{kvResult}</Text>
+          )}
+        </View>
+        
+        <View style={styles.section} testID="node-sync-section">
+          <Text style={styles.sectionTitle}>Unstoppable Node</Text>
+          <Text style={styles.mono} testID="node-sync-status">
+            {nodeStatus === 'idle' && '⏳ Waiting for worklet...'}
+            {nodeStatus === 'searching' && '⏳ Searching for local node...'}
+            {nodeStatus === 'connected' && '✅ Connected — replicating to node'}
+            {nodeStatus === 'disconnected' && '⚠️ Node disconnected'}
+            {nodeStatus === 'unavailable' && '❌ No node found on local network'}
+          </Text>
+          {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
+            <Text style={[styles.mono, { marginTop: 4 }]}>
+              Run <Text style={{ color: '#58a6ff' }}>npx unstoppable-node</Text> on a nearby machine
+            </Text>
+          )}
+        </View>
+        
+        <View style={styles.section} testID="docs-section">
+          <Text style={styles.sectionTitle}>Resources</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
+            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
+            <Text style={styles.link}>Holepunch on GitHub</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0d1117' },
+  scroll: { padding: 20, paddingBottom: 40 },
+  header: { marginBottom: 24 },
+  title: { fontSize: 26, fontWeight: '700', color: '#58a6ff', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#8b949e', marginBottom: 4 },
+  section: {
+    backgroundColor: '#161b22',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#30363d',
+  },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
+  mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
+  input: {
+    backgroundColor: '#0d1117',
+    borderWidth: 1,
+    borderColor: '#30363d',
+    borderRadius: 8,
+    padding: 10,
+    color: '#e6edf3',
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  btn: {
+    flex: 1,
+    backgroundColor: '#1f6feb',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  btnOutline: { backgroundColor: '#21262d', borderWidth: 1, borderColor: '#30363d' },
+  btnFull: { flex: 0, paddingHorizontal: 24, alignSelf: 'flex-start' },
+  btnSend: { flex: 0, paddingHorizontal: 16, paddingVertical: 10 },
+  btnDisabled: { opacity: 0.4 },
+  btnText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
+  result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
+  chatList: { maxHeight: 220, marginBottom: 10 },
+  chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  deviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1f2937',
+    gap: 8,
+  },
+  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
+  bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
+  bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
+  bubbleBot: {
+    backgroundColor: '#21262d',
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#30363d',
+  },
+  bubbleText: { color: '#e6edf3', fontSize: 14 },
+  link: { color: '#58a6ff', fontSize: 14, marginBottom: 8 },
+})
+",
+    "path": "app/index.tsx",
+  },
+  {
+    "content": "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMElEQVR42u3OIQEAAAgDMDQByED/ghDjZmJ+1bOXVAICAgICAgICAgICAgICAunAA1fSHEzA5mfcAAAAAElFTkSuQmCC",
+    "path": "assets/icon.png",
+  },
+  {
+    "content": "// Bare worklet — runs in react-native-bare-kit, not in React Native context
+// Commands:
+//   1: init({ storagePath, mock? }) — initialize base services
+//   4: ping() → { ok, pong }
+//   5: kv-put({ key, value }) → { ok }
+//   6: kv-get({ key }) → { ok, value }
+//   7: node-sync-connect() → { ok, status }
+//   8: node-sync-status() → { ok, status, connected }
+//
+// NOTE: QVAC inference is NOT in this worklet. @qvac/sdk runs from React
+// Native (app/index.tsx) and spawns its own internal Bare worker via the
+// QVAC expo-plugin's prebuilt mobile bundle. Loading @qvac/sdk in a
+// user-owned Bare runtime triggers a MODULE_NOT_FOUND for the SDK's
+// dynamic import of dist/server/worker.js that bare-pack can't trace.
+const RPC = require('bare-rpc')
+const { IPC } = BareKit
+const Corestore = require('corestore')
+const Hyperbee = require('hyperbee')
+// node-client is ESM; bare supports dynamic import and the @unstoppable
+// scope resolves once '@unstoppable/node-client' is installed.
+
+let storagePath = null
+let store = null
+let db = null
+let mockMode = false
+let nodeClient = null
+let nodeStatus = 'idle'
+
+const rpc = new RPC(IPC, async (request) => {
+  try {
+    const params = request.data?.length > 0
+      ? JSON.parse(request.data.toString())
+      : {}
+    let response
+
+    switch (request.command) {
+      case 1: { // init — set storage path, open Hyperbee
+        storagePath = params.storagePath
+        mockMode = params.mock === true
+        store = new Corestore(storagePath)
+        const core = store.get({ name: 'main-db' })
+        db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+        await db.ready()
+        response = { ok: true, mock: mockMode }
+        break
+      }
+      case 4: { // ping — check worklet is alive
+        response = { ok: true, pong: true }
+        break
+      }
+      case 5: { // kv-put
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        await db.put(params.key, params.value)
+        response = { ok: true }
+        break
+      }
+      case 6: { // kv-get
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        const entry = await db.get(params.key)
+        response = { ok: true, value: entry?.value ?? null }
+        break
+      }
+      case 7: { // node-sync-connect — best-effort; non-blocking
+        if (nodeClient) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
+        if (!db) { response = { error: 'Storage not ready' }; break }
+        nodeStatus = 'searching'
+        try {
+          const mod = await import('@unstoppable/node-client')
+          nodeClient = await mod.connectToNode({
+            appId: 'snap-test',
+            appName: 'snap-test',
+            cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+            timeout: 5_000
+          })
+          nodeStatus = 'connected'
+          nodeClient.on('disconnected', () => { nodeStatus = 'disconnected' })
+          response = { ok: true, status: nodeStatus }
+        } catch (err) {
+          nodeStatus = 'unavailable'
+          response = { ok: false, status: nodeStatus, error: err.message }
+        }
+        break
+      }
+      case 8: { // node-sync-status
+        response = { ok: true, status: nodeStatus, connected: !!nodeClient }
+        break
+      }
+      default:
+        response = { error: \`Unknown command: \${request.command}\` }
+    }
+
+    // Always pass 'utf8' — the client side does \`await req.reply('utf8')\`
+    // so send/reply encodings must match. An implicit default (Buffer) leaks
+    // through as a typed-array on the RN side and JSON.parse then throws
+    // "Unexpected token o in JSON at position 1" (the 'o' of "[object ..."),
+    // or — worse — the reply is queued but never delivered to the pending
+    // promise, so the client await just hangs forever.
+    request.reply(JSON.stringify(response), 'utf8')
+  } catch (error) {
+    request.reply(JSON.stringify({
+      error: error instanceof Error ? error.message : 'Unknown error',
+    }), 'utf8')
+  }
+})
+",
+    "path": "bare/index.js",
+  },
+  {
+    "content": "// Learn more https://docs.expo.dev/guides/customizing-metro/
+const { getDefaultConfig } = require('expo/metro-config')
+const { execSync } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+// Ensure the Bare worklet bundle (\`bare/app.bundle.js\`) is fresh before
+// Metro starts. The npm \`pre*\` hooks (\`prestart\`, \`preios\`, \`preandroid\`)
+// only fire when launching via \`npm run …\`. When developers run
+// \`npx expo start\` or \`expo start\` directly, those hooks are bypassed
+// and Metro fails with \`Unable to resolve "../../bare/app.bundle.js"\`.
+// Running bare-pack here makes every entry point safe.
+const workletEntry = path.join(__dirname, 'bare/index.js')
+const workletBundle = path.join(__dirname, 'bare/app.bundle.js')
+function workletBundleStale() {
+  if (!fs.existsSync(workletBundle)) return true
+  try {
+    return fs.statSync(workletBundle).mtimeMs < fs.statSync(workletEntry).mtimeMs
+  } catch {
+    return true
+  }
+}
+if (workletBundleStale()) {
+  console.log('[metro] Building Bare worklet bundle (bare/app.bundle.js)…')
+  execSync('npm run build:bare', { stdio: 'inherit', cwd: __dirname })
+}
+
+const config = getDefaultConfig(__dirname)
+
+// Mock native Node.js modules that can't run in React Native. These run
+// only inside the Bare worklet (see \`bare/index.js\`) — when imported from
+// shared modules that the RN side also pulls in, point them at an empty
+// stub so Metro doesn't try to bundle native code.
+//
+// This list mirrors the QVAC reference mobile app
+// (\`reference-apps/qvac-workbench-mobile/metro.config.js\`).
+const emptyModule = require.resolve('./mocks/empty.js')
+const nativeModuleMocks = [
+  "sodium-native",
+  "sodium-universal",
+  "corestore",
+  "hypercore",
+  "hyperbee",
+  "hyperswarm",
+  "autobase",
+  "bare-fs",
+  "bare-path",
+  "bare-os"
+]
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (nativeModuleMocks.includes(moduleName)) {
+    return { filePath: emptyModule, type: 'sourceFile' }
+  }
+  return context.resolveRequest(context, moduleName, platform)
+}
+
+// Treat QVAC model artifacts (\`.bundle\`, \`.bin\`, \`.model\`, \`.onnx\`) as
+// assets so Metro doesn't try to parse them as JS.
+config.resolver.assetExts = [
+  ...config.resolver.assetExts,
+  'bundle', 'bin', 'model', 'onnx',
+]
+
+module.exports = config
+",
+    "path": "metro.config.js",
+  },
+  {
+    "content": "module.exports = {}
+",
+    "path": "mocks/empty.js",
+  },
+  {
+    "content": "{
+  "name": "snap-test",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "ios:clean": "rm -rf ios android && npm run prebuild && expo run:ios",
+    "android": "expo run:android",
+    "build:bare": "npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js",
+    "prebuild": "npm run build:bare && npx expo prebuild",
+    "prestart": "npm run build:bare",
+    "preios": "npm run build:bare",
+    "preandroid": "npm run build:bare"
+  },
+  "dependencies": {
+    "expo": "~54.0.33",
+    "expo-build-properties": "~1.0.9",
+    "expo-file-system": "^19.0.15",
+    "expo-linking": "~8.0.11",
+    "expo-router": "~6.0.23",
+    "expo-splash-screen": "~31.0.10",
+    "expo-status-bar": "~3.0.8",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-bare-kit": "0.12.3",
+    "bare-pack": "^1.5.1",
+    "bare-rpc": "^1.1.0",
+    "corestore": "^7.6.0",
+    "hyperbee": "^2.22.0",
+    "@unstoppable/node-client": "^0.1.0",
+    "hyperswarm": "^4.12.1",
+    "b4a": "^1.7.3",
+    "events": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "~19.1.10",
+    "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "bare-fs": "4.5.1"
+  }
+}",
+    "path": "package.json",
+  },
+  {
+    "content": "# Planning
+
+Architecture decisions, feature plans, and project documentation.
+
+## What Goes Here
+
+- **Architecture decisions** — Record important technical choices
+- **Feature plans** — Break down features before implementing
+- **Design docs** — Document system design and data flows
+",
+    "path": "planning/README.md",
+  },
+  {
+    "content": "const { withGradleProperties, withAppBuildGradle } = require('@expo/config-plugins')
+
+module.exports = function withAndroidArchitecture(config, architectures = ['arm64-v8a']) {
+  config = withGradleProperties(config, (config) => {
+    const architectureString = architectures.join(',')
+    const propIndex = config.modResults.findIndex(
+      (item) => item.type === 'property' && item.key === 'reactNativeArchitectures'
+    )
+
+    if (propIndex >= 0) {
+      config.modResults[propIndex].value = architectureString
+    } else {
+      config.modResults.push({
+        type: 'property',
+        key: 'reactNativeArchitectures',
+        value: architectureString,
+      })
+    }
+    return config
+  })
+
+  config = withAppBuildGradle(config, (config) => {
+    let buildGradle = config.modResults.contents
+    const abiFiltersArray = architectures.map((arch) => \`"\${arch}"\`).join(', ')
+    const ndkBlock = \`\\n        ndk {\\n            abiFilters \${abiFiltersArray}\\n        }\`
+
+    if (!buildGradle.includes('ndk {')) {
+      const buildConfigRegex =
+        /(buildConfigField\\s+"String",\\s+"REACT_NATIVE_RELEASE_LEVEL"[^\\n]*\\n)/
+      if (buildConfigRegex.test(buildGradle)) {
+        buildGradle = buildGradle.replace(buildConfigRegex, \`$1\${ndkBlock}\\n\`)
+      }
+    } else {
+      const ndkRegex = /ndk\\s*\\{[^}]*\\}/s
+      const newNdkBlock = \`ndk {\\n            abiFilters \${abiFiltersArray}\\n        }\`
+      buildGradle = buildGradle.replace(ndkRegex, newNdkBlock)
+    }
+
+    config.modResults.contents = buildGradle
+    return config
+  })
+
+  return config
+}
+",
+    "path": "plugins/withAndroidArchitecture.js",
+  },
+  {
+    "content": "const { withProjectBuildGradle } = require('@expo/config-plugins')
+
+module.exports = function withAndroidNdkVersion(config, ndkVersion) {
+  if (!ndkVersion) {
+    console.warn('[withAndroidNdkVersion] No NDK version provided, skipping')
+    return config
+  }
+
+  return withProjectBuildGradle(config, (config) => {
+    let buildGradle = config.modResults.contents
+    const extBlock = \`\\next {\\n    ndkVersion = "\${ndkVersion}"\\n}\\n\\n\`
+
+    if (buildGradle.includes('ext {') && buildGradle.includes('ndkVersion')) {
+      buildGradle = buildGradle.replace(
+        /ndkVersion\\s*=\\s*["'][^"']*["']/,
+        \`ndkVersion = "\${ndkVersion}"\`
+      )
+    } else if (buildGradle.includes('ext {')) {
+      buildGradle = buildGradle.replace(
+        /ext\\s*\\{/,
+        \`ext {\\n    ndkVersion = "\${ndkVersion}"\`
+      )
+    } else {
+      buildGradle = buildGradle.replace(
+        /apply plugin: "expo-root-project"/,
+        \`\${extBlock}apply plugin: "expo-root-project"\`
+      )
+    }
+
+    config.modResults.contents = buildGradle
+    console.log(\`[withAndroidNdkVersion] Set NDK version to \${ndkVersion}\`)
+    return config
+  })
+}
+",
+    "path": "plugins/withAndroidNdkVersion.js",
+  },
+  {
+    "content": "# snap-test
+
+Built with the **Unstoppable Stack** — P2P, local-first, no servers.
+
+## Platform
+
+Expo Mobile (iOS/Android)
+
+## Features
+
+- **P2P Networking** — Hyperswarm for peer discovery and connections
+- **KV Storage** — Hyperbee for persistent local key-value data
+- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run ios       # iOS simulator (or: npm run android)
+\`\`\`
+
+The first run takes 3–5 minutes — it generates the native \`ios/\` and
+\`android/\` projects, runs \`pod install\`, and builds a real binary that
+links \`react-native-bare-kit\` and the QVAC SDK's native modules. After
+that, you can iterate on JavaScript with \`npm run start\` (Metro only,
+~2s reloads). You only need to redo \`npm run ios\` when you change a
+native dependency or a config plugin.
+
+### Why not Expo Go?
+
+This app uses **custom native modules** (\`react-native-bare-kit\` for the
+P2P worklet, \`@qvac/sdk\` for local AI). Expo Go is a fixed shell app
+that only ships Expo's stock modules — it physically cannot load
+BareKit. If you open the dev URL in Expo Go you'll see:
+
+\`\`\`
+[Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'BareKit'
+ could not be found.]
+\`\`\`
+
+Always launch via \`npm run ios\` / \`npm run android\` so the native build
+includes everything.
+
+### On a physical device
+
+\`\`\`bash
+npx expo run:ios --device       # iOS — pick your connected iPhone
+npx expo run:android --device   # Android — physical device
+\`\`\`
+
+QVAC inference (LLM completion) **only works on physical devices** —
+\`llamacpp\` doesn't support iOS Simulator or Android Emulator. The UI
+will load on simulators but \`Load Assistant\` blocks GPU mode there.
+Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
+test the chat UI flow without real inference.
+
+## Connecting to the Unstoppable Node
+
+This app registers its data with a local Unstoppable Node for P2P
+replication and backup. To enable sync, run the node in a separate
+terminal:
+
+\`\`\`bash
+npx unstoppable-node
+\`\`\`
+
+The app will attempt to pair automatically on startup and keep working
+regardless of whether the Node is running.
 
 ## Project Structure
 
@@ -1406,6 +2504,7 @@ exports[`generator snapshots > file paths only > expo-mobile / bare: path list m
   "app/+not-found.tsx",
   "app/_layout.tsx",
   "app/index.tsx",
+  "assets/icon.png",
   "bare/index.js",
   "metro.config.js",
   "mocks/empty.js",
@@ -1425,6 +2524,27 @@ exports[`generator snapshots > file paths only > expo-mobile / local-ai: path li
   "app/+not-found.tsx",
   "app/_layout.tsx",
   "app/index.tsx",
+  "assets/icon.png",
+  "bare/index.js",
+  "metro.config.js",
+  "mocks/empty.js",
+  "package.json",
+  "planning/README.md",
+  "plugins/withAndroidArchitecture.js",
+  "plugins/withAndroidNdkVersion.js",
+  "src/contexts/WorkletContext.tsx",
+]
+`;
+
+exports[`generator snapshots > file paths only > expo-mobile / node-sync: path list matches snapshot 1`] = `
+[
+  ".gitignore",
+  "README.md",
+  "app.json",
+  "app/+not-found.tsx",
+  "app/_layout.tsx",
+  "app/index.tsx",
+  "assets/icon.png",
   "bare/index.js",
   "metro.config.js",
   "mocks/empty.js",
@@ -1458,6 +2578,21 @@ exports[`generator snapshots > file paths only > node-cli / local-ai: path list 
   "planning/README.md",
   "src/ai-manager.ts",
   "src/index.ts",
+  "src/storage-manager.ts",
+  "src/swarm-manager.ts",
+  "src/types.d.ts",
+  "tsconfig.json",
+]
+`;
+
+exports[`generator snapshots > file paths only > node-cli / node-sync: path list matches snapshot 1`] = `
+[
+  ".gitignore",
+  "README.md",
+  "package.json",
+  "planning/README.md",
+  "src/index.ts",
+  "src/node-sync.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -1509,6 +2644,20 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
 `;
 
 exports[`generator snapshots > file paths only > pear-desktop / local-ai: path list matches snapshot 1`] = `
+[
+  ".gitignore",
+  "README.md",
+  "app/bridge.js",
+  "app/index.js",
+  "index.html",
+  "index.js",
+  "package.json",
+  "planning/README.md",
+  "worker.js",
+]
+`;
+
+exports[`generator snapshots > file paths only > pear-desktop / node-sync: path list matches snapshot 1`] = `
 [
   ".gitignore",
   "README.md",
@@ -1752,7 +2901,8 @@ dist/
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.9.0"
+    "@qvac/sdk": "^0.11.0",
+    "zod": "^4.3.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -1815,7 +2965,7 @@ import {
   loadModel,
   completion,
   unloadModel,
-  LLAMA_3_2_1B_INST_Q4_0,
+  QWEN3_600M_INST_Q4,
 } from '@qvac/sdk'
 
 const MOCK_MODE = process.env.QVAC_MOCK === '1'
@@ -1844,10 +2994,11 @@ export async function setupAI() {
     }
   }
 
-  console.log('Loading AI model...')
+  console.log('Loading AI model (Qwen 3 0.6B, ~400MB on first run)...')
   modelId = await loadModel({
-    modelSrc: LLAMA_3_2_1B_INST_Q4_0,
+    modelSrc: QWEN3_600M_INST_Q4,
     modelType: 'llm',
+    modelConfig: { ctx_size: 4096, system_prompt: 'You are a helpful assistant. /no_think' },
     onProgress: (progress: any) => {
       if (progress.percentage) {
         process.stdout.write(
@@ -1960,6 +3111,267 @@ declare module 'corestore'
 declare module 'hyperbee'
 declare module 'hypercore-crypto'
 declare module 'b4a'
+",
+    "path": "src/types.d.ts",
+  },
+  {
+    "content": "{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}",
+    "path": "tsconfig.json",
+  },
+]
+`;
+
+exports[`generator snapshots > node-cli > node-sync: file tree matches snapshot 1`] = `
+[
+  {
+    "content": "node_modules/
+dist/
+.pear/
+*.log
+.env
+.env.local
+.DS_Store
+",
+    "path": ".gitignore",
+  },
+  {
+    "content": "{
+  "name": "snap-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "hyperswarm": "^4.16.0",
+    "corestore": "^7.6.0",
+    "hyperbee": "^2.22.0",
+    "b4a": "^1.7.3",
+    "hypercore-crypto": "^3.4.0",
+    "@unstoppable/node-client": "^0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  }
+}",
+    "path": "package.json",
+  },
+  {
+    "content": "# Planning
+
+Architecture decisions, feature plans, and project documentation.
+
+## What Goes Here
+
+- **Architecture decisions** — Record important technical choices
+- **Feature plans** — Break down features before implementing
+- **Design docs** — Document system design and data flows
+",
+    "path": "planning/README.md",
+  },
+  {
+    "content": "# snap-test
+
+Built with the **Unstoppable Stack** — P2P, local-first, no servers.
+
+## Platform
+
+Node.js CLI
+
+## Features
+
+- **P2P Networking** — Hyperswarm for peer discovery and connections
+- **KV Storage** — Hyperbee for persistent local key-value data
+- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Connecting to the Unstoppable Node
+
+This app registers its data with a local Unstoppable Node for P2P
+replication and backup. To enable sync, run the node in a separate
+terminal:
+
+\`\`\`bash
+npx unstoppable-node
+\`\`\`
+
+The app will attempt to pair automatically on startup and keep working
+regardless of whether the Node is running.
+
+## Project Structure
+
+See \`planning/\` for architecture decisions and feature plans.
+",
+    "path": "README.md",
+  },
+  {
+    "content": "import Corestore from 'corestore'
+import { createSwarm } from './swarm-manager.js'
+import { createStorage } from './storage-manager.js'
+import { setupNodeSync } from './node-sync.js'
+
+async function main() {
+  console.log('Starting snap-test...')
+
+  const store = new Corestore('./storage')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
+  const db = await createStorage(store)
+  console.log('Storage ready')
+  const nodeSync = setupNodeSync({ db })
+
+  console.log('snap-test is running. Press Ctrl+C to exit.')
+
+  process.on('SIGINT', async () => {
+    console.log('\\nShutting down...')
+    await swarm.destroy()
+    await nodeSync.close()
+    process.exit(0)
+  })
+}
+
+main().catch((err) => {
+  console.error('Fatal error:', err)
+  process.exit(1)
+})
+",
+    "path": "src/index.ts",
+  },
+  {
+    "content": "/**
+ * Unstoppable Node sync.
+ *
+ * Connects this app to the local Unstoppable Node (if one is running) so the
+ * Node replicates and backs up the app's Hyperbee. The app keeps working
+ * normally whether or not the Node is reachable — this is best-effort.
+ *
+ * Start the Node separately:   npx unstoppable-node
+ *
+ * To add more cores or drives later, call setupNodeSync with them in the
+ * \`cores\` / \`drives\` arrays.
+ */
+import { connectToNode } from '@unstoppable/node-client'
+
+interface NodeSyncOpts {
+  db: any // Hyperbee — we just need its \`core.key\` to register for replication
+}
+
+export function setupNodeSync({ db }: NodeSyncOpts) {
+  let client: any = null
+  let closed = false
+
+  async function connect() {
+    try {
+      client = await connectToNode({
+        appId: 'snap-test',
+        appName: 'snap-test',
+        cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+        timeout: 5_000,
+      })
+      console.log('Connected to Unstoppable Node — replication enabled')
+      client.on('disconnected', () => {
+        if (!closed) {
+          console.log('Node disconnected; will retry on next restart')
+        }
+      })
+    } catch (err: any) {
+      console.log(\`No Unstoppable Node found (\${err.message})\`)
+      console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
+    }
+  }
+
+  // Fire-and-forget — app doesn't block on this
+  connect()
+
+  return {
+    async close() {
+      closed = true
+      if (client) await client.close()
+    },
+  }
+}
+",
+    "path": "src/node-sync.ts",
+  },
+  {
+    "content": "import Hyperbee from 'hyperbee'
+
+export async function createStorage(store: any) {
+  const core = store.get({ name: 'main-db' })
+  const db = new Hyperbee(core, {
+    keyEncoding: 'utf-8',
+    valueEncoding: 'json',
+  })
+  await db.ready()
+  return db
+}
+",
+    "path": "src/storage-manager.ts",
+  },
+  {
+    "content": "import Hyperswarm from 'hyperswarm'
+import crypto from 'hypercore-crypto'
+
+export function createSwarm(store: any) {
+  const swarm = new Hyperswarm()
+
+  swarm.on('connection', (conn: any, info: any) => {
+    console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
+    store.replicate(conn)
+    conn.on('error', (err: Error) => console.error('Connection error:', err.message))
+    conn.on('close', () => console.log('Peer disconnected'))
+  })
+
+  return swarm
+}
+
+export function joinTopic(swarm: any, topicName: string) {
+  const topic = crypto.discoveryKey(Buffer.from(topicName))
+  const discovery = swarm.join(topic, { server: true, client: true })
+  return discovery
+}
+",
+    "path": "src/swarm-manager.ts",
+  },
+  {
+    "content": "declare module 'hyperswarm'
+declare module 'corestore'
+declare module 'hyperbee'
+declare module 'hypercore-crypto'
+declare module 'b4a'
+declare module '@unstoppable/node-client'
 ",
     "path": "src/types.d.ts",
   },
@@ -2382,6 +3794,7 @@ function injectStyles() {
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
     .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
     .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }
@@ -2732,18 +4145,20 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
+        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
         <div id="ai-loading" style="display:none">
-          <span class="mono">⏳ Loading model...</span>
+          <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <span style="color:#f85149">Failed to load model</span>
+          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
           <div id="chat-messages" class="chat-list" data-testid="chat-messages">
-            <p class="chat-hint">Ask me anything...</p>
+            <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
@@ -2781,11 +4196,15 @@ injectStyles()
   })
 
   // AI Assistant
-  document.getElementById('load-ai').addEventListener('click', () => {
+  function requestLoad() {
     document.getElementById('ai-idle').style.display = 'none'
+    document.getElementById('ai-error').style.display = 'none'
     document.getElementById('ai-loading').style.display = 'block'
-    sendToWorker({ type: 'chat', history: [] }) // triggers model load via first chat
-  })
+    setText('ai-loading-label', '⏳ Preparing model…')
+    sendToWorker({ type: 'load-ai' })
+  }
+  document.getElementById('load-ai').addEventListener('click', requestLoad)
+  document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
@@ -2849,11 +4268,23 @@ onWorkerMessage((msg) => {
   
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'ready') {
       document.getElementById('ai-loading').style.display = 'none'
+      document.getElementById('ai-error').style.display = 'none'
       document.getElementById('ai-chat').style.display = 'block'
+      document.getElementById('chat-input').focus()
     }
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'error') {
       document.getElementById('ai-loading').style.display = 'none'
+      setText('ai-error-msg', msg.error || 'Failed to load model')
       document.getElementById('ai-error').style.display = 'block'
+    }
+    if (msg.type === 'model-progress') {
+      // QVAC emits { phase, percentage?, downloaded?, total? }. Show a
+      // useful label whatever shape arrives so the UI never looks frozen.
+      let label = '⏳ ' + (msg.phase || 'Loading') + '…'
+      if (typeof msg.percentage === 'number') {
+        label = '⏳ ' + (msg.phase || 'Downloading') + ' ' + Math.round(msg.percentage) + '%'
+      }
+      setText('ai-loading-label', label)
     }
     if (msg.type === 'chat-token' && streamingEl) {
       streamingEl.textContent += msg.token
@@ -2867,6 +4298,12 @@ onWorkerMessage((msg) => {
       const inp = document.getElementById('chat-input')
       inp.disabled = false
       inp.focus()
+      document.getElementById('chat-send').disabled = false
+    }
+    if (msg.type === 'chat-error') {
+      if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
+      const inp = document.getElementById('chat-input')
+      inp.disabled = false
       document.getElementById('chat-send').disabled = false
     }
 })
@@ -2904,6 +4341,7 @@ function injectStyles() {
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
     .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
     .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }
@@ -3018,7 +4456,8 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.9.0"
+    "@qvac/sdk": "^0.11.0",
+    "zod": "^4.3.0"
   },
   "devDependencies": {}
 }",
@@ -3072,7 +4511,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'
+import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
@@ -3082,6 +4521,7 @@ let store = null
 let swarm = null
 let db = null
 let modelId = null
+let modelLoading = false
 const MOCK_AI = (
   (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
   (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
@@ -3120,8 +4560,38 @@ async function handleCommand(msg) {
       send({ type: 'db-get-ok', key: msg.key, value: entry?.value ?? null })
       break
     }
+    case 'load-ai': {
+      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
+      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
+      modelLoading = true
+      if (MOCK_AI) {
+        await new Promise((r) => setTimeout(r, 200))
+        modelId = 'mock-model'
+        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
+        break
+      }
+      try {
+        send({ type: 'status', service: 'ai', status: 'loading' })
+        modelId = await loadModel({
+          modelSrc: QWEN3_600M_INST_Q4,
+          modelType: 'llm',
+          modelConfig: {
+            ctx_size: 4096,
+            system_prompt: 'You are a helpful assistant. /no_think',
+          },
+          onProgress: (p) => send({ type: 'model-progress', ...p }),
+        })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+      } catch (err) {
+        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
+      } finally {
+        modelLoading = false
+      }
+      break
+    }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded' }); break }
+      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (MOCK_AI) {
         const last = msg.history[msg.history.length - 1]
         const reply = \`Mock: \${last?.content ?? '(empty)'}\`
@@ -3132,11 +4602,45 @@ async function handleCommand(msg) {
         send({ type: 'chat-done' })
         break
       }
-      const result = completion({ modelId, history: msg.history, stream: true })
-      for await (const token of result.tokenStream) {
-        send({ type: 'chat-token', token })
+      try {
+        const result = completion({ modelId, history: msg.history, stream: true })
+        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
+        // /no_think in the system prompt, small models occasionally leak a
+        // few tokens. Track depth so partial tags across chunks still hide.
+        let inThink = false
+        let carry = ''
+        for await (const token of result.tokenStream) {
+          carry += token
+          let out = ''
+          while (carry.length) {
+            if (!inThink) {
+              const open = carry.indexOf('<think>')
+              if (open === -1) {
+                // Keep up to 7 chars (length of "<think>") in carry in case
+                // the tag is split across tokens; emit the rest.
+                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
+                break
+              }
+              out += carry.slice(0, open)
+              carry = carry.slice(open + 7)
+              inThink = true
+            } else {
+              const close = carry.indexOf('</think>')
+              if (close === -1) {
+                if (carry.length > 8) carry = carry.slice(-8)
+                break
+              }
+              carry = carry.slice(close + 8)
+              inThink = false
+            }
+          }
+          if (out) send({ type: 'chat-token', token: out })
+        }
+        if (!inThink && carry) send({ type: 'chat-token', token: carry })
+        send({ type: 'chat-done' })
+      } catch (err) {
+        send({ type: 'chat-error', error: String(err && err.message || err) })
       }
-      send({ type: 'chat-done' })
       break
     }
     case 'wallet-balance': {
@@ -3174,22 +4678,7 @@ async function init() {
   await db.ready()
   send({ type: 'status', service: 'storage', status: 'ready' })
 
-  if (MOCK_AI) {
-    await new Promise((r) => setTimeout(r, 100))
-    modelId = 'mock-model'
-    send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-  } else {
-    try {
-      modelId = await loadModel({
-        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-        modelType: 'llm',
-        onProgress: (p) => send({ type: 'model-progress', ...p }),
-      })
-      send({ type: 'status', service: 'ai', status: 'ready', modelId })
-    } catch (err) {
-      send({ type: 'status', service: 'ai', status: 'error', error: err.message })
-    }
-  }
+  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
   
 
   // Wallet stub — WDK integration deferred. See 'add-wallet' skill.
@@ -3303,18 +4792,20 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
+        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
         <div id="ai-loading" style="display:none">
-          <span class="mono">⏳ Loading model...</span>
+          <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <span style="color:#f85149">Failed to load model</span>
+          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
           <div id="chat-messages" class="chat-list" data-testid="chat-messages">
-            <p class="chat-hint">Ask me anything...</p>
+            <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
@@ -3352,11 +4843,15 @@ injectStyles()
   })
 
   // AI Assistant
-  document.getElementById('load-ai').addEventListener('click', () => {
+  function requestLoad() {
     document.getElementById('ai-idle').style.display = 'none'
+    document.getElementById('ai-error').style.display = 'none'
     document.getElementById('ai-loading').style.display = 'block'
-    sendToWorker({ type: 'chat', history: [] }) // triggers model load via first chat
-  })
+    setText('ai-loading-label', '⏳ Preparing model…')
+    sendToWorker({ type: 'load-ai' })
+  }
+  document.getElementById('load-ai').addEventListener('click', requestLoad)
+  document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
@@ -3416,11 +4911,23 @@ onWorkerMessage((msg) => {
   
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'ready') {
       document.getElementById('ai-loading').style.display = 'none'
+      document.getElementById('ai-error').style.display = 'none'
       document.getElementById('ai-chat').style.display = 'block'
+      document.getElementById('chat-input').focus()
     }
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'error') {
       document.getElementById('ai-loading').style.display = 'none'
+      setText('ai-error-msg', msg.error || 'Failed to load model')
       document.getElementById('ai-error').style.display = 'block'
+    }
+    if (msg.type === 'model-progress') {
+      // QVAC emits { phase, percentage?, downloaded?, total? }. Show a
+      // useful label whatever shape arrives so the UI never looks frozen.
+      let label = '⏳ ' + (msg.phase || 'Loading') + '…'
+      if (typeof msg.percentage === 'number') {
+        label = '⏳ ' + (msg.phase || 'Downloading') + ' ' + Math.round(msg.percentage) + '%'
+      }
+      setText('ai-loading-label', label)
     }
     if (msg.type === 'chat-token' && streamingEl) {
       streamingEl.textContent += msg.token
@@ -3434,6 +4941,12 @@ onWorkerMessage((msg) => {
       const inp = document.getElementById('chat-input')
       inp.disabled = false
       inp.focus()
+      document.getElementById('chat-send').disabled = false
+    }
+    if (msg.type === 'chat-error') {
+      if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
+      const inp = document.getElementById('chat-input')
+      inp.disabled = false
       document.getElementById('chat-send').disabled = false
     }
 })
@@ -3471,6 +4984,7 @@ function injectStyles() {
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
     .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
     .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }
@@ -3585,7 +5099,8 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@qvac/sdk": "^0.9.0"
+    "@qvac/sdk": "^0.11.0",
+    "zod": "^4.3.0"
   },
   "devDependencies": {}
 }",
@@ -3638,7 +5153,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'
+import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
@@ -3648,6 +5163,7 @@ let store = null
 let swarm = null
 let db = null
 let modelId = null
+let modelLoading = false
 const MOCK_AI = (
   (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
   (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
@@ -3686,8 +5202,38 @@ async function handleCommand(msg) {
       send({ type: 'db-get-ok', key: msg.key, value: entry?.value ?? null })
       break
     }
+    case 'load-ai': {
+      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
+      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
+      modelLoading = true
+      if (MOCK_AI) {
+        await new Promise((r) => setTimeout(r, 200))
+        modelId = 'mock-model'
+        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
+        break
+      }
+      try {
+        send({ type: 'status', service: 'ai', status: 'loading' })
+        modelId = await loadModel({
+          modelSrc: QWEN3_600M_INST_Q4,
+          modelType: 'llm',
+          modelConfig: {
+            ctx_size: 4096,
+            system_prompt: 'You are a helpful assistant. /no_think',
+          },
+          onProgress: (p) => send({ type: 'model-progress', ...p }),
+        })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+      } catch (err) {
+        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
+      } finally {
+        modelLoading = false
+      }
+      break
+    }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded' }); break }
+      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (MOCK_AI) {
         const last = msg.history[msg.history.length - 1]
         const reply = \`Mock: \${last?.content ?? '(empty)'}\`
@@ -3698,11 +5244,45 @@ async function handleCommand(msg) {
         send({ type: 'chat-done' })
         break
       }
-      const result = completion({ modelId, history: msg.history, stream: true })
-      for await (const token of result.tokenStream) {
-        send({ type: 'chat-token', token })
+      try {
+        const result = completion({ modelId, history: msg.history, stream: true })
+        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
+        // /no_think in the system prompt, small models occasionally leak a
+        // few tokens. Track depth so partial tags across chunks still hide.
+        let inThink = false
+        let carry = ''
+        for await (const token of result.tokenStream) {
+          carry += token
+          let out = ''
+          while (carry.length) {
+            if (!inThink) {
+              const open = carry.indexOf('<think>')
+              if (open === -1) {
+                // Keep up to 7 chars (length of "<think>") in carry in case
+                // the tag is split across tokens; emit the rest.
+                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
+                break
+              }
+              out += carry.slice(0, open)
+              carry = carry.slice(open + 7)
+              inThink = true
+            } else {
+              const close = carry.indexOf('</think>')
+              if (close === -1) {
+                if (carry.length > 8) carry = carry.slice(-8)
+                break
+              }
+              carry = carry.slice(close + 8)
+              inThink = false
+            }
+          }
+          if (out) send({ type: 'chat-token', token: out })
+        }
+        if (!inThink && carry) send({ type: 'chat-token', token: carry })
+        send({ type: 'chat-done' })
+      } catch (err) {
+        send({ type: 'chat-error', error: String(err && err.message || err) })
       }
-      send({ type: 'chat-done' })
       break
     }
     case 'shutdown':
@@ -3736,23 +5316,490 @@ async function init() {
   await db.ready()
   send({ type: 'status', service: 'storage', status: 'ready' })
 
-  if (MOCK_AI) {
-    await new Promise((r) => setTimeout(r, 100))
-    modelId = 'mock-model'
-    send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-  } else {
-    try {
-      modelId = await loadModel({
-        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-        modelType: 'llm',
-        onProgress: (p) => send({ type: 'model-progress', ...p }),
-      })
-      send({ type: 'status', service: 'ai', status: 'ready', modelId })
-    } catch (err) {
-      send({ type: 'status', service: 'ai', status: 'error', error: err.message })
-    }
-  }
+  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
   
+  send({ type: 'init-complete' })
+}
+
+init().catch((err) => send({ type: 'fatal', error: err.message }))
+",
+    "path": "worker.js",
+  },
+]
+`;
+
+exports[`generator snapshots > pear-desktop > node-sync: file tree matches snapshot 1`] = `
+[
+  {
+    "content": "node_modules/
+dist/
+.pear/
+*.log
+.env
+.env.local
+.DS_Store
+",
+    "path": ".gitignore",
+  },
+  {
+    "content": "import run from 'pear-run'
+
+const workerPath = Pear.key
+  ? \`\${Pear.config.applink || ''}/worker.js\`
+  : \`\${Pear.config.dir || ''}/worker.js\`
+
+const pipe = run(workerPath, [])
+
+const handlers = new Set()
+let messageBuffer = ''
+
+pipe.on('data', (data) => {
+  messageBuffer += Buffer.from(data).toString()
+  const lines = messageBuffer.split('\\n')
+  messageBuffer = lines.pop() || ''
+  for (const line of lines) {
+    if (!line.trim()) continue
+    try {
+      const msg = JSON.parse(line)
+      for (const handler of handlers) handler(msg)
+    } catch {}
+  }
+})
+
+export function sendToWorker(msg) {
+  pipe.write(JSON.stringify(msg) + '\\n')
+}
+
+export function onWorkerMessage(handler) {
+  handlers.add(handler)
+  return () => handlers.delete(handler)
+}
+
+export function destroyWorker() {
+  try {
+    sendToWorker({ type: 'shutdown' })
+    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
+  } catch {}
+  handlers.clear()
+}
+
+export const workerReady = new Promise((resolve, reject) => {
+  const timeout = setTimeout(() => reject(new Error('Worker init timeout (30s)')), 30000)
+  const unsub = onWorkerMessage((msg) => {
+    if (msg.type === 'workerReady') {
+      clearTimeout(timeout)
+      unsub()
+      resolve(msg)
+    }
+  })
+})
+",
+    "path": "app/bridge.js",
+  },
+  {
+    "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+
+// ---------------------------------------------------------------------------
+// Layout
+// ---------------------------------------------------------------------------
+
+document.getElementById('app').innerHTML = \`
+  <div class="layout">
+    <header class="app-header">
+      <h1 class="app-title">snap-test</h1>
+      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
+      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+    </header>
+    <main class="content">
+      <section data-testid="p2p-section" class="card">
+        <h2 class="card-title">P2P Network</h2>
+        <p class="mono" id="p2p-status">⏳ Starting...</p>
+      </section>
+      <section data-testid="kv-section" class="card">
+        <h2 class="card-title">KV Storage</h2>
+        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <div class="row gap-8">
+          <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
+          <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
+        </div>
+        <p id="kv-result" class="result" style="display:none" data-testid="kv-result"></p>
+      </section>
+      <section data-testid="node-sync-section" class="card">
+        <h2 class="card-title">Unstoppable Node</h2>
+        <p class="mono" id="node-sync-status">⏳ Searching for local node...</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Run <code>npx unstoppable-node</code> to enable sync</p>
+      </section>
+      <section data-testid="docs-section" class="card">
+        <h2 class="card-title">Resources</h2>
+        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
+      </section>
+    </main>
+  </div>
+\`
+
+injectStyles()
+
+// ---------------------------------------------------------------------------
+// Feature wiring (runs after DOM is built above)
+// ---------------------------------------------------------------------------
+
+  // KV Storage — in-worker Hyperbee via bridge
+  document.getElementById('kv-save').addEventListener('click', () => {
+    const key = document.getElementById('kv-key').value.trim()
+    const value = document.getElementById('kv-value').value
+    if (!key) return
+    sendToWorker({ type: 'db-put', key, value })
+  })
+
+  document.getElementById('kv-fetch').addEventListener('click', () => {
+    const key = document.getElementById('kv-key').value.trim()
+    if (!key) return
+    sendToWorker({ type: 'db-get', key })
+  })
+
+// ---------------------------------------------------------------------------
+// Worker message handler
+// ---------------------------------------------------------------------------
+
+onWorkerMessage((msg) => {
+  
+    if (msg.type === 'init-complete') {
+      setText('worker-status', '✅ Ready')
+    }
+  
+    if (msg.type === 'status' && msg.service === 'p2p') {
+      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+    }
+  
+    if (msg.type === 'db-put-ok') {
+      showResult('kv-result', 'Saved "' + msg.key + '"')
+    }
+    if (msg.type === 'db-get-ok') {
+      const val = msg.value
+      showResult('kv-result', val !== null ? '"' + msg.key + '" → ' + JSON.stringify(val) : '"' + msg.key + '" not found')
+    }
+  
+    if (msg.type === 'status' && msg.service === 'node-sync') {
+      const hintEl = document.getElementById('node-sync-hint')
+      if (msg.status === 'searching') setText('node-sync-status', '⏳ Searching for local node...')
+      if (msg.status === 'connected') {
+        setText('node-sync-status', '✅ Connected — replicating to node')
+        if (hintEl) hintEl.style.display = 'none'
+      }
+      if (msg.status === 'disconnected') setText('node-sync-status', '⚠️ Node disconnected')
+      if (msg.status === 'unavailable') {
+        setText('node-sync-status', '❌ No node found')
+        if (hintEl) hintEl.style.display = 'block'
+      }
+    }
+})
+
+workerReady.catch((err) => {
+  document.getElementById('app').innerHTML =
+    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+})
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function setText(id, text) {
+  const el = document.getElementById(id)
+  if (el) el.textContent = text
+}
+
+function showResult(id, text) {
+  const el = document.getElementById(id)
+  if (!el) return
+  el.textContent = text
+  el.style.display = 'block'
+}
+
+function injectStyles() {
+  const style = document.createElement('style')
+  style.textContent = \`
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
+    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
+    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
+    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
+    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
+    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
+    .row { display: flex; align-items: center; }
+    .gap-8 { gap: 8px; }
+    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
+    .inp:focus { border-color: #58a6ff; }
+    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #388bfd; }
+    .btn:disabled { opacity: 0.4; cursor: default; }
+    .btn-outline { background: #21262d; border: 1px solid #30363d; }
+    .btn-outline:hover { background: #30363d; }
+    .btn-send { padding: 8px 14px; }
+    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
+    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
+    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+    .bubble-user { background: #1f6feb; align-self: flex-end; }
+    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
+    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
+    .link:hover { text-decoration: underline; }
+  \`
+  document.head.appendChild(style)
+}
+",
+    "path": "app/index.js",
+  },
+  {
+    "content": "<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>snap-test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #e6e6e6;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #bar {
+      -webkit-app-region: drag;
+      height: 24px;
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 9999;
+    }
+    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
+    pear-ctrl[data-platform="darwin"] {
+      margin-top: 6px;
+      margin-left: 8px;
+    }
+    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+  </style>
+</head>
+<body>
+  <div id="bar"><pear-ctrl></pear-ctrl></div>
+  <div id="app"></div>
+  <script type="module" src="./app/index.js"></script>
+</body>
+</html>
+",
+    "path": "index.html",
+  },
+  {
+    "content": "import Runtime from 'pear-electron'
+import Bridge from 'pear-bridge'
+
+const bridge = new Bridge({ waypoint: '/index.html' })
+await bridge.ready()
+
+const runtime = new Runtime()
+const pipe = await runtime.start({ bridge })
+pipe.on('close', () => Pear.exit())
+
+Pear.teardown(() => pipe.destroy())
+",
+    "path": "index.js",
+  },
+  {
+    "content": "{
+  "name": "snap-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "pear": {
+    "name": "snap-test",
+    "type": "desktop",
+    "pre": "pear-electron/pre",
+    "routes": ".",
+    "unrouted": [
+      "/worker.js"
+    ],
+    "gui": {
+      "backgroundColor": "#1a1a2e",
+      "height": 720,
+      "width": 1100
+    }
+  },
+  "scripts": {
+    "dev": "pear run -d .",
+    "stage": "pear stage .",
+    "release": "pear release ."
+  },
+  "dependencies": {
+    "pear-electron": "^1.7.0",
+    "pear-bridge": "^1.2.4",
+    "pear-run": "^1.0.7",
+    "bare-rpc": "^1.1.0",
+    "hyperswarm": "^4.16.0",
+    "corestore": "^7.6.0",
+    "hyperbee": "^2.22.0",
+    "b4a": "^1.7.3",
+    "hypercore-crypto": "^3.4.0",
+    "@unstoppable/node-client": "^0.1.0"
+  },
+  "devDependencies": {}
+}",
+    "path": "package.json",
+  },
+  {
+    "content": "# Planning
+
+Architecture decisions, feature plans, and project documentation.
+
+## What Goes Here
+
+- **Architecture decisions** — Record important technical choices
+- **Feature plans** — Break down features before implementing
+- **Design docs** — Document system design and data flows
+",
+    "path": "planning/README.md",
+  },
+  {
+    "content": "# snap-test
+
+Built with the **Unstoppable Stack** — P2P, local-first, no servers.
+
+## Platform
+
+Pear Desktop
+
+## Features
+
+- **P2P Networking** — Hyperswarm for peer discovery and connections
+- **KV Storage** — Hyperbee for persistent local key-value data
+- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Connecting to the Unstoppable Node
+
+This app registers its data with a local Unstoppable Node for P2P
+replication and backup. To enable sync, run the node in a separate
+terminal:
+
+\`\`\`bash
+npx unstoppable-node
+\`\`\`
+
+The app will attempt to pair automatically on startup and keep working
+regardless of whether the Node is running.
+
+## Project Structure
+
+See \`planning/\` for architecture decisions and feature plans.
+",
+    "path": "README.md",
+  },
+  {
+    "content": "/* global Pear */
+import Corestore from 'corestore'
+import Hyperswarm from 'hyperswarm'
+import Hyperbee from 'hyperbee'
+import crypto from 'hypercore-crypto'
+import { connectToNode } from '@unstoppable/node-client'
+
+const pipe = Pear.worker.pipe()
+const storagePath = Pear.config.storage
+
+// Module-scope state (populated during init, used by handleCommand + cleanup)
+let store = null
+let swarm = null
+let db = null
+let nodeClient = null
+
+function send(msg) {
+  pipe.write(JSON.stringify(msg) + '\\n')
+}
+
+let buffer = ''
+pipe.on('data', (data) => {
+  buffer += data.toString()
+  const lines = buffer.split('\\n')
+  buffer = lines.pop() || ''
+  for (const line of lines) {
+    if (!line.trim()) continue
+    handleCommand(JSON.parse(line))
+  }
+})
+
+async function handleCommand(msg) {
+  switch (msg.type) {
+    case 'join-topic': {
+      const topic = crypto.discoveryKey(Buffer.from(msg.topic))
+      swarm.join(topic, { server: true, client: true })
+      send({ type: 'joined', topic: msg.topic })
+      break
+    }
+    case 'db-put': {
+      await db.put(msg.key, msg.value)
+      send({ type: 'db-put-ok', key: msg.key })
+      break
+    }
+    case 'db-get': {
+      const entry = await db.get(msg.key)
+      send({ type: 'db-get-ok', key: msg.key, value: entry?.value ?? null })
+      break
+    }
+    case 'shutdown':
+      await cleanup()
+      break
+    default:
+      send({ type: 'error', error: \`Unknown command: \${msg.type}\` })
+  }
+}
+
+async function cleanup() {
+  if (swarm) await swarm.destroy()
+  if (nodeClient) await nodeClient.close()
+  Pear.exit()
+}
+
+send({ type: 'workerReady' })
+
+async function init() {
+  store = new Corestore(storagePath)
+
+  swarm = new Hyperswarm()
+  swarm.on('connection', (conn) => {
+    store.replicate(conn)
+    conn.on('error', () => {})
+  })
+  send({ type: 'status', service: 'p2p', status: 'ready' })
+
+  const core = store.get({ name: 'main-db' })
+  db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+  await db.ready()
+  send({ type: 'status', service: 'storage', status: 'ready' })
+
+  send({ type: 'status', service: 'node-sync', status: 'searching' })
+  try {
+    nodeClient = await connectToNode({
+      appId: 'snap-test',
+      appName: 'snap-test',
+      cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
+      timeout: 5_000
+    })
+    send({ type: 'status', service: 'node-sync', status: 'connected' })
+    nodeClient.on('disconnected', () => {
+      send({ type: 'status', service: 'node-sync', status: 'disconnected' })
+    })
+  } catch (err) {
+    send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
+  }
   send({ type: 'init-complete' })
 }
 
@@ -3954,6 +6001,7 @@ function injectStyles() {
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
     .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
     .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }

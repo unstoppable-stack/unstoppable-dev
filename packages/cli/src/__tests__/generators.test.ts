@@ -158,12 +158,151 @@ describe('expo-mobile generator', () => {
       expect(index).toContain('testID="chat-send-btn"')
     })
 
-    it('bare worklet supports mock mode for load-model and chat', () => {
+    it('renders chat bubbles with role-scoped testIDs (so e2e can target assistant replies)', () => {
+      // The CPU-mode simulator e2e (and the device e2e) wait for
+      // `chat-bubble-assistant` to assert a real streamed reply landed.
+      // The bubble must also be conditional on non-empty content,
+      // otherwise the empty placeholder we push at send-time would
+      // mount the testID before any tokens arrive — making the wait a
+      // no-op that always passes. Both invariants are critical and
+      // must be locked in.
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      // testID must use the message role so we get
+      // `chat-bubble-user` + `chat-bubble-assistant`.
+      expect(index).toContain('testID={`chat-bubble-${msg.role}`}')
+      // Empty messages (the streaming placeholder) must be filtered
+      // out of the render so the testID only appears once content
+      // has streamed in.
+      expect(index).toContain('messages\n                  .filter((m) => m.content)')
+    })
+
+    it('does NOT import @qvac/sdk in the bare worklet', () => {
+      // QVAC SDK's bare-runtime path uses an obfuscated dynamic import of
+      // ../../server/worker.js that bare-pack cannot statically trace,
+      // producing a runtime MODULE_NOT_FOUND. Inference must therefore live
+      // in React Native (app/index.tsx) — see the architectural comment in
+      // the bareWorklet() generator for full context.
       const files = fileMap(make(['local-ai']))
       const bare = files['bare/index.js']
-      expect(bare).toContain('mockMode')
-      expect(bare).toContain("modelId = 'mock-model'")
-      expect(bare).toContain('Mock:')
+      expect(bare).not.toContain("require('@qvac/sdk')")
+      expect(bare).not.toContain('loadModel(')
+      expect(bare).not.toContain('completion(')
+    })
+
+    it('imports @qvac/sdk in the React Native runtime instead', () => {
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain("from '@qvac/sdk'")
+      expect(index).toContain('loadModel(')
+      expect(index).toContain('completion(')
+      expect(index).toContain('QWEN3_600M_INST_Q4')
+    })
+
+    it('react-native side supports EXPO_PUBLIC_QVAC_MOCK for tests', () => {
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain('EXPO_PUBLIC_QVAC_MOCK')
+      expect(index).toContain("'mock-model'")
+      expect(index).toContain("'Mock: '")
+    })
+
+    it('rejects GPU on simulators with a clear, actionable error', () => {
+      // Per QVAC docs: inference doesn't run on iOS Simulator / Android
+      // Emulator. GPU mode reliably fails (no Metal/Vulkan) so we refuse
+      // fast with an actionable message instead of letting llamacpp fail
+      // with a confusing native error. CPU mode is still attempted (see
+      // the toggle test below) so users can experiment.
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain('Device.isDevice === false')
+      expect(index).toContain("GPU inference doesn't run on the iOS Simulator")
+      expect(index).toContain('Toggle Device → CPU')
+    })
+
+    it('README warns against Expo Go and points to npm run ios for native builds', () => {
+      // Expo Go is a fixed shell that can't load BareKit / QVAC native
+      // modules. The most common new-user pitfall is running
+      // `npx expo start` and opening in Expo Go, getting a confusing
+      // `TurboModuleRegistry.getEnforcing('BareKit')` error. README
+      // must call this out unmistakably.
+      const files = fileMap(make(['local-ai']))
+      const readme = files['README.md']
+      expect(readme).toContain('npm run ios')
+      expect(readme).toContain('Why not Expo Go?')
+      expect(readme).toContain("'BareKit'")
+      expect(readme).toContain('--device')
+    })
+
+    it('exposes a GPU/CPU toggle so users can choose inference device', () => {
+      // GPU is fastest on real devices but Metal/Vulkan don't run on
+      // emulators. The toggle lets users fall back to CPU mode without
+      // editing source. The simulator gate only blocks GPU mode — CPU
+      // can be attempted (QVAC may still reject, but the user gets the
+      // real underlying error rather than a hard pre-block).
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain("useState<'gpu' | 'cpu'>('gpu')")
+      expect(index).toContain('Switch')
+      expect(index).toContain('testID="ai-device-switch"')
+      expect(index).toContain('device: aiDevice')
+      // GPU-only simulator block (CPU is allowed through to surface real error)
+      expect(index).toContain("Device.isDevice === false && aiDevice === 'gpu'")
+    })
+
+    it('auto-builds the Bare worklet bundle on metro start', () => {
+      // npm `pre*` hooks (prestart/preios/preandroid) only fire on
+      // `npm run …`. Direct invocations (`npx expo start`, `expo start`,
+      // CI scripts) bypass them and bundling fails on the missing
+      // bare/app.bundle.js. We invoke `bare-pack` from metro.config.js
+      // itself so every entry point is safe.
+      const files = fileMap(make(['local-ai']))
+      const metro = files['metro.config.js']
+      expect(metro).toContain('workletBundleStale')
+      expect(metro).toContain('npm run build:bare')
+      expect(metro).toContain('bare/app.bundle.js')
+    })
+
+    it('matches the QVAC reference app metro pattern (no package-exports overrides)', () => {
+      // The QVAC reference mobile app
+      // (`reference-apps/qvac-workbench-mobile/metro.config.js`) ships a
+      // minimal config that only mocks native modules. Earlier versions
+      // of the scaffold disabled `unstable_enablePackageExports` and
+      // added subpath redirects — that fought Metro's resolver and broke
+      // RN's haste map (Failed to get the SHA-1 errors). We now match
+      // the reference pattern exactly.
+      const files = fileMap(make(['local-ai']))
+      const metro = files['metro.config.js']
+      expect(metro).not.toContain('unstable_enablePackageExports')
+      expect(metro).not.toContain('subpathRedirects')
+      expect(metro).toContain('nativeModuleMocks.includes(moduleName)')
+      expect(metro).toContain('"sodium-native"')
+      expect(metro).toContain('"bare-fs"')
+    })
+
+    it('ships a placeholder icon at assets/icon.png so prebuild succeeds', () => {
+      // Without an icon, Expo's prebuild + Metro asset endpoint log
+      // `Asset not found: assets/icon.png` on every dev boot.
+      const allFiles = generateExpoMobile(make(['local-ai']))
+      const icon = allFiles.find((f) => f.path === 'assets/icon.png')
+      expect(icon).toBeDefined()
+      expect(icon!.encoding).toBe('base64')
+      expect(icon!.content.length).toBeGreaterThan(50)
+    })
+
+    it('references assets/icon.png from app.json (ios + android adaptive)', () => {
+      const files = fileMap(make(['local-ai']))
+      const appJson = JSON.parse(files['app.json'])
+      expect(appJson.expo.icon).toBe('./assets/icon.png')
+      expect(appJson.expo.android.adaptiveIcon.foregroundImage).toBe('./assets/icon.png')
+    })
+
+    it('uses the two-phase downloadAsset + loadModel pattern from QVAC docs', () => {
+      const files = fileMap(make(['local-ai']))
+      const index = files['app/index.tsx']
+      expect(index).toContain('downloadAsset(')
+      expect(index).toContain('loadModel(')
+      expect(index).toContain('VERBOSITY.ERROR')
     })
   })
 

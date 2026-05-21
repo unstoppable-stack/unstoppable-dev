@@ -12,11 +12,15 @@
     "agent-pack-src"
   ],
   "scripts": {
-    "build": "tsup src/us.ts src/remote/daemon-entry.ts src/remote/test-client.ts --format esm --dts --external node-pty",
-    "dev": "tsup src/us.ts src/remote/daemon-entry.ts src/remote/test-client.ts --format esm --watch --external node-pty",
+    "build": "tsup",
+    "build:minimal": "US_BUILD_PROFILE=minimal tsup",
+    "build:full": "US_BUILD_PROFILE=full tsup",
+    "dev": "US_BUILD_PROFILE=full tsup --watch",
+    "prepack": "US_BUILD_PROFILE=minimal tsup",
     "start": "node dist/us.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:full": "pnpm build:full && vitest run",
     "test:watch": "vitest",
     "test:integration": "vitest run src/remote/__tests__/p2p-integration.test.ts",
     "test:e2e": "npx tsx e2e/test-scaffold.ts",

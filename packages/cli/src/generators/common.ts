@@ -83,6 +83,8 @@ The app will attempt to pair automatically on startup and keep working
 regardless of whether the Node is running.`
     : ''
 
+  const gettingStarted = gettingStartedFor(opts)
+
   return {
     path: 'README.md',
     content: `# ${opts.projectName}
@@ -97,18 +99,65 @@ ${platformName}
 
 ${features}
 
-## Getting Started
-
-\`\`\`bash
-npm install
-npm run dev
-\`\`\`${nodeSyncSection}
+${gettingStarted}${nodeSyncSection}
 
 ## Project Structure
 
 See \`planning/\` for architecture decisions and feature plans.
 `
   }
+}
+
+function gettingStartedFor(opts: GeneratorOptions): string {
+  if (opts.platform === 'expo-mobile') {
+    return `## Getting Started
+
+\`\`\`bash
+npm install
+npm run ios       # iOS simulator (or: npm run android)
+\`\`\`
+
+The first run takes 3–5 minutes — it generates the native \`ios/\` and
+\`android/\` projects, runs \`pod install\`, and builds a real binary that
+links \`react-native-bare-kit\` and the QVAC SDK's native modules. After
+that, you can iterate on JavaScript with \`npm run start\` (Metro only,
+~2s reloads). You only need to redo \`npm run ios\` when you change a
+native dependency or a config plugin.
+
+### Why not Expo Go?
+
+This app uses **custom native modules** (\`react-native-bare-kit\` for the
+P2P worklet, \`@qvac/sdk\` for local AI). Expo Go is a fixed shell app
+that only ships Expo's stock modules — it physically cannot load
+BareKit. If you open the dev URL in Expo Go you'll see:
+
+\`\`\`
+[Invariant Violation: TurboModuleRegistry.getEnforcing(...): 'BareKit'
+ could not be found.]
+\`\`\`
+
+Always launch via \`npm run ios\` / \`npm run android\` so the native build
+includes everything.
+
+### On a physical device
+
+\`\`\`bash
+npx expo run:ios --device       # iOS — pick your connected iPhone
+npx expo run:android --device   # Android — physical device
+\`\`\`
+
+QVAC inference (LLM completion) **only works on physical devices** —
+\`llamacpp\` doesn't support iOS Simulator or Android Emulator. The UI
+will load on simulators but \`Load Assistant\` blocks GPU mode there.
+Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
+test the chat UI flow without real inference.`
+  }
+  return `## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\``
 }
 
 export function planningReadme(): GeneratedFile {

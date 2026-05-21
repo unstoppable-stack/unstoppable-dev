@@ -31,7 +31,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.9.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.11.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync')) {
@@ -208,10 +208,16 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (has(opts, 'local-ai')) {
+    // QWEN3_600M_INST_Q4 is the smallest verified LLM in @qvac/sdk@0.11
+    // (~400MB download vs ~770MB for LLAMA_3_2_1B). Qwen 3 emits
+    // `<think>...</think>` reasoning blocks by default; we suppress them
+    // with `/no_think` in the system prompt and also strip any that leak
+    // into the token stream so the chat bubbles stay clean.
     imports.push(
-      `import { loadModel, completion, unloadModel, LLAMA_3_2_1B_INST_Q4_0 } from '@qvac/sdk'`,
+      `import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'`,
     )
     moduleState.push(`let modelId = null`)
+    moduleState.push(`let modelLoading = false`)
     // QVAC_MOCK is read at module load (not inside init) so handleCommand
     // can use it too. The worker runs in two different runtimes:
     //   * Node — when driven by scripts/tests via `node worker.js`
@@ -223,31 +229,48 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
     moduleState.push(
       `const MOCK_AI = (\n  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||\n  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')\n)`,
     )
+    // Emit an initial "idle" status so the UI can render the Load button
+    // instead of assuming the model is silently (de)loading on boot.
     initCode.push(`
-  if (MOCK_AI) {
-    await new Promise((r) => setTimeout(r, 100))
-    modelId = 'mock-model'
-    send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-  } else {
-    try {
-      modelId = await loadModel({
-        modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-        modelType: 'llm',
-        onProgress: (p) => send({ type: 'model-progress', ...p }),
-      })
-      send({ type: 'status', service: 'ai', status: 'ready', modelId })
-    } catch (err) {
-      send({ type: 'status', service: 'ai', status: 'error', error: err.message })
-    }
-  }
+  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
   `)
     cleanupCode.push(
       `  if (modelId && modelId !== 'mock-model') await unloadModel({ modelId })`,
     )
 
     commandHandlers.push(`
+    case 'load-ai': {
+      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
+      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
+      modelLoading = true
+      if (MOCK_AI) {
+        await new Promise((r) => setTimeout(r, 200))
+        modelId = 'mock-model'
+        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
+        break
+      }
+      try {
+        send({ type: 'status', service: 'ai', status: 'loading' })
+        modelId = await loadModel({
+          modelSrc: QWEN3_600M_INST_Q4,
+          modelType: 'llm',
+          modelConfig: {
+            ctx_size: 4096,
+            system_prompt: 'You are a helpful assistant. /no_think',
+          },
+          onProgress: (p) => send({ type: 'model-progress', ...p }),
+        })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+      } catch (err) {
+        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
+      } finally {
+        modelLoading = false
+      }
+      break
+    }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded' }); break }
+      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (MOCK_AI) {
         const last = msg.history[msg.history.length - 1]
         const reply = \`Mock: \${last?.content ?? '(empty)'}\`
@@ -258,11 +281,45 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
         send({ type: 'chat-done' })
         break
       }
-      const result = completion({ modelId, history: msg.history, stream: true })
-      for await (const token of result.tokenStream) {
-        send({ type: 'chat-token', token })
+      try {
+        const result = completion({ modelId, history: msg.history, stream: true })
+        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
+        // /no_think in the system prompt, small models occasionally leak a
+        // few tokens. Track depth so partial tags across chunks still hide.
+        let inThink = false
+        let carry = ''
+        for await (const token of result.tokenStream) {
+          carry += token
+          let out = ''
+          while (carry.length) {
+            if (!inThink) {
+              const open = carry.indexOf('<think>')
+              if (open === -1) {
+                // Keep up to 7 chars (length of "<think>") in carry in case
+                // the tag is split across tokens; emit the rest.
+                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
+                break
+              }
+              out += carry.slice(0, open)
+              carry = carry.slice(open + 7)
+              inThink = true
+            } else {
+              const close = carry.indexOf('</think>')
+              if (close === -1) {
+                if (carry.length > 8) carry = carry.slice(-8)
+                break
+              }
+              carry = carry.slice(close + 8)
+              inThink = false
+            }
+          }
+          if (out) send({ type: 'chat-token', token: out })
+        }
+        if (!inThink && carry) send({ type: 'chat-token', token: carry })
+        send({ type: 'chat-done' })
+      } catch (err) {
+        send({ type: 'chat-error', error: String(err && err.message || err) })
       }
-      send({ type: 'chat-done' })
       break
     }`)
   }
@@ -440,18 +497,20 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     sectionHtml.push(`
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
+        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
         <div id="ai-loading" style="display:none">
-          <span class="mono">⏳ Loading model...</span>
+          <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <span style="color:#f85149">Failed to load model</span>
+          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
           <div id="chat-messages" class="chat-list" data-testid="chat-messages">
-            <p class="chat-hint">Ask me anything...</p>
+            <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
@@ -492,11 +551,15 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   if (hasQvac) {
     featureHandlers.push(`
   // AI Assistant
-  document.getElementById('load-ai').addEventListener('click', () => {
+  function requestLoad() {
     document.getElementById('ai-idle').style.display = 'none'
+    document.getElementById('ai-error').style.display = 'none'
     document.getElementById('ai-loading').style.display = 'block'
-    sendToWorker({ type: 'chat', history: [] }) // triggers model load via first chat
-  })
+    setText('ai-loading-label', '⏳ Preparing model…')
+    sendToWorker({ type: 'load-ai' })
+  }
+  document.getElementById('load-ai').addEventListener('click', requestLoad)
+  document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
@@ -583,11 +646,23 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     msgCases.push(`
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'ready') {
       document.getElementById('ai-loading').style.display = 'none'
+      document.getElementById('ai-error').style.display = 'none'
       document.getElementById('ai-chat').style.display = 'block'
+      document.getElementById('chat-input').focus()
     }
     if (msg.type === 'status' && msg.service === 'ai' && msg.status === 'error') {
       document.getElementById('ai-loading').style.display = 'none'
+      setText('ai-error-msg', msg.error || 'Failed to load model')
       document.getElementById('ai-error').style.display = 'block'
+    }
+    if (msg.type === 'model-progress') {
+      // QVAC emits { phase, percentage?, downloaded?, total? }. Show a
+      // useful label whatever shape arrives so the UI never looks frozen.
+      let label = '⏳ ' + (msg.phase || 'Loading') + '…'
+      if (typeof msg.percentage === 'number') {
+        label = '⏳ ' + (msg.phase || 'Downloading') + ' ' + Math.round(msg.percentage) + '%'
+      }
+      setText('ai-loading-label', label)
     }
     if (msg.type === 'chat-token' && streamingEl) {
       streamingEl.textContent += msg.token
@@ -601,6 +676,12 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       const inp = document.getElementById('chat-input')
       inp.disabled = false
       inp.focus()
+      document.getElementById('chat-send').disabled = false
+    }
+    if (msg.type === 'chat-error') {
+      if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
+      const inp = document.getElementById('chat-input')
+      inp.disabled = false
       document.getElementById('chat-send').disabled = false
     }`)
   }
@@ -673,6 +754,7 @@ function injectStyles() {
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
     .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
     .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }

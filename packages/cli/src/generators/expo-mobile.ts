@@ -11,6 +11,7 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     appJson(opts),
     metroConfig(opts),
     emptyMock(),
+    assetsKeep(),
     appLayout(opts),
     appIndex(opts),
     appNotFound(opts),
@@ -39,7 +40,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'react-native': '0.81.5',
     'react-native-safe-area-context': '~5.6.0',
     'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.11.5',
+    'react-native-bare-kit': '0.12.3',
     'bare-pack': '^1.5.1',
     'bare-rpc': '^1.1.0',
     // Base P2P + KV infra — always required by bare/index.js worklet
@@ -93,43 +94,49 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
+    // Mirrors the official QVAC Expo tutorial dep surface
+    // (https://docs.qvac.tether.io/sdk/tutorials/expo/) and the QVAC
+    // reference mobile app (qvac-workbench-mobile). We deliberately do
+    // NOT enumerate @qvac/sdk's 25+ peer deps (bare-buffer, bare-crypto,
+    // hyperswarm, tar-stream, etc.) — modern npm resolves them
+    // transitively. Listing them with our own version pins is what
+    // forced previous scaffolds to require `npm install --legacy-peer-deps`,
+    // because any pin range that didn't perfectly overlap with @qvac/sdk's
+    // peer-dep range produced a hard ERESOLVE error.
     Object.assign(deps, {
-      '@qvac/sdk': '^0.9.0',
-      zod: '^4.0.0',
+      '@qvac/sdk': '^0.11.0',
+      // Zod v4.3+ — @qvac/sdk@0.10 bumped its zod floor from ^4.0.17 to
+      // ^4.3.0 because finetune schemas use z.union/z.nan combinations
+      // only available in 4.3+. Pinning lower causes runtime
+      // `z.xor is not a function` crashes when finetune schemas load.
+      // 0.11 keeps the same zod floor.
+      zod: '^4.3.0',
+      // expo-file-system: where @qvac/sdk caches model files. Optional
+      // peer of @qvac/sdk but always required in practice.
+      'expo-file-system': '^19.0.15',
+      // expo-device: used by our scaffold to detect simulator vs physical
+      // device and refuse fast with a clear error (per QVAC docs:
+      // "QVAC currently does not run on emulators").
       'expo-device': '~8.0.10',
-      // @qvac/sdk declares these as peer dependencies. Newer npm
-      // (v7+) doesn't auto-install peers, and `bare-pack` traces imports
-      // at install time so every module must be physically present under
-      // node_modules. Pinning them here mirrors what the QVAC workbench
-      // reference app installs transitively.
-      'bare-abort-controller': '^1.0.0',
-      'bare-buffer': '^3.4.2',
-      'bare-crypto': '^1.11.2',
-      'bare-dns': '^2.1.4',
-      'bare-fetch': '^2.5.1',
-      'bare-http1': '^4.1.6',
-      'bare-https': '^2.1.1',
-      'bare-link': '^2.1.10',
-      'bare-net': '^2.2.0',
-      'bare-os': '^3.6.2',
-      'bare-path': '^3.0.0',
-      'bare-process': '^4.2.2',
-      'bare-runtime': '^1.24.2',
-      'bare-stream': '^2.7.0',
-      'bare-subprocess': '^5.2.1',
-      'bare-zlib': '^1.3.1',
-      'compact-encoding': '^2.19.0',
-      events: '^3.3.0',
-      hyperdb: '^4.19.0',
-      hyperdrive: '^13.0.1',
-      hyperswarm: '^4.12.1',
-      'llm-splitter': '~0.2.0',
-      'pear-pipe': '^1.0.6',
-      'tar-stream': '^3.1.7',
     })
-    Object.assign(devDeps, {
-      '@qvac/cli': '^0.1.2',
-    })
+    // NOTE: @qvac/cli is intentionally NOT listed here. It's an optional
+    // peer of @qvac/sdk used for two scenarios: (1) running an
+    // OpenAI-compatible HTTP server (`qvac serve openai`), (2) bundling
+    // a tree-shaken SDK worker (`qvac bundle sdk`). The default scaffold
+    // doesn't need either — the @qvac/sdk Expo plugin handles bundling
+    // automatically during `expo prebuild`.
+    //
+    // When you DO want it, install with:
+    //   npm i -D '@qvac/cli@^0.5.0' --legacy-peer-deps
+    // The --legacy-peer-deps is needed only because @qvac/sdk@0.11.0's
+    // declared peer range (^0.4.0) hasn't caught up to the actual cli
+    // release line (^0.5.0). Both versions are runtime-compatible with
+    // @qvac/sdk@0.11 — no addon-side differences. 0.4.x is the first
+    // CLI line that ships `qvac verify bundle`, which SDK 0.11 auto-runs
+    // during Expo prebuild against the emitted worker.mobile.bundle.js
+    // (failure preserves the last known-good artifact and aborts with
+    // BundleVerificationFailedError, code 50609).
+    // See the add-openai-server skill for the opt-in flow.
   }
 
   return {
@@ -181,6 +188,7 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
           slug: opts.projectName,
           version: '1.0.0',
           orientation: 'portrait',
+          icon: './assets/icon.png',
           scheme: opts.projectName,
           newArchEnabled: true,
           plugins,
@@ -192,6 +200,10 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
           },
           android: {
             package: `com.unstoppable.${opts.projectName.replace(/-/g, '')}`,
+            adaptiveIcon: {
+              foregroundImage: './assets/icon.png',
+              backgroundColor: '#0a1628',
+            },
             edgeToEdgeEnabled: true,
           },
         },
@@ -218,12 +230,42 @@ function metroConfig(opts: GeneratorOptions): GeneratedFile {
 
   return {
     path: 'metro.config.js',
-    content: `const { getDefaultConfig } = require('expo/metro-config')
+    content: `// Learn more https://docs.expo.dev/guides/customizing-metro/
+const { getDefaultConfig } = require('expo/metro-config')
+const { execSync } = require('child_process')
+const fs = require('fs')
+const path = require('path')
+
+// Ensure the Bare worklet bundle (\`bare/app.bundle.js\`) is fresh before
+// Metro starts. The npm \`pre*\` hooks (\`prestart\`, \`preios\`, \`preandroid\`)
+// only fire when launching via \`npm run …\`. When developers run
+// \`npx expo start\` or \`expo start\` directly, those hooks are bypassed
+// and Metro fails with \`Unable to resolve "../../bare/app.bundle.js"\`.
+// Running bare-pack here makes every entry point safe.
+const workletEntry = path.join(__dirname, 'bare/index.js')
+const workletBundle = path.join(__dirname, 'bare/app.bundle.js')
+function workletBundleStale() {
+  if (!fs.existsSync(workletBundle)) return true
+  try {
+    return fs.statSync(workletBundle).mtimeMs < fs.statSync(workletEntry).mtimeMs
+  } catch {
+    return true
+  }
+}
+if (workletBundleStale()) {
+  console.log('[metro] Building Bare worklet bundle (bare/app.bundle.js)…')
+  execSync('npm run build:bare', { stdio: 'inherit', cwd: __dirname })
+}
 
 const config = getDefaultConfig(__dirname)
 
-config.resolver.unstable_enablePackageExports = true
-
+// Mock native Node.js modules that can't run in React Native. These run
+// only inside the Bare worklet (see \`bare/index.js\`) — when imported from
+// shared modules that the RN side also pulls in, point them at an empty
+// stub so Metro doesn't try to bundle native code.
+//
+// This list mirrors the QVAC reference mobile app
+// (\`reference-apps/qvac-workbench-mobile/metro.config.js\`).
 const emptyModule = require.resolve('./mocks/empty.js')
 const nativeModuleMocks = ${JSON.stringify(nativeMocks, null, 2)}
 
@@ -234,6 +276,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform)
 }
 
+// Treat QVAC model artifacts (\`.bundle\`, \`.bin\`, \`.model\`, \`.onnx\`) as
+// assets so Metro doesn't try to parse them as JS.
 config.resolver.assetExts = [
   ...config.resolver.assetExts,
   'bundle', 'bin', 'model', 'onnx',
@@ -246,6 +290,22 @@ module.exports = config
 
 function emptyMock(): GeneratedFile {
   return { path: 'mocks/empty.js', content: 'module.exports = {}\n' }
+}
+
+// Placeholder app icon. A 32x32 dark-blue PNG (~105 bytes). Generated once
+// by hand — replace `assets/icon.png` with your real 1024x1024 icon when
+// branding the app. Without an icon file, Expo's prebuild + Metro asset
+// endpoint log `Asset not found: assets/icon.png` on every dev boot.
+const PLACEHOLDER_ICON_BASE64 =
+  'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAMElEQVR42u3OIQEAAAgD' +
+  'MDQByED/ghDjZmJ+1bOXVAICAgICAgICAgICAgICAunAA1fSHEzA5mfcAAAAAElFTkSuQmCC'
+
+function assetsKeep(): GeneratedFile {
+  return {
+    path: 'assets/icon.png',
+    content: PLACEHOLDER_ICON_BASE64,
+    encoding: 'base64',
+  }
 }
 
 function pluginNdkVersion(): GeneratedFile {
@@ -396,13 +456,33 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     'Linking',
     'TextInput',
   ]
-  if (hasQvac) rnComponents.push('ActivityIndicator')
+  if (hasQvac) {
+    rnComponents.push('ActivityIndicator')
+    rnComponents.push('Switch')
+  }
+
+  const reactImports = ['useState']
+  if (hasNodeSync) reactImports.push('useEffect')
+  if (hasQvac) reactImports.push('useRef')
 
   const topImports: string[] = [
-    `import React, { useState${hasNodeSync ? ', useEffect' : ''} } from 'react'`,
+    `import React, { ${reactImports.join(', ')} } from 'react'`,
     `import { ${rnComponents.join(', ')} } from 'react-native'`,
     `import { useWorklet } from '../src/contexts/WorkletContext'`,
   ]
+  if (hasQvac) {
+    // QVAC inference imports MUST live in the React Native runtime — the
+    // @qvac/sdk package selects expo-rpc-client.js here and loads the
+    // pre-bundled worker.mobile.bundle generated by the QVAC expo plugin
+    // during prebuild. Importing @qvac/sdk inside the user Bare worklet
+    // triggers MODULE_NOT_FOUND for dist/server/worker.js because the SDK's
+    // bare-runtime path uses an obfuscated dynamic import that bare-pack
+    // can't trace. See bareWorklet() comment for details.
+    topImports.push(
+      `import { downloadAsset, loadModel, completion, unloadModel, QWEN3_600M_INST_Q4, VERBOSITY } from '@qvac/sdk'`,
+    )
+    topImports.push(`import * as Device from 'expo-device'`)
+  }
 
   // State hooks — base (P2P + KV) always active
   const hooks: string[] = [
@@ -422,11 +502,21 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     hooks.push(
       `const [aiStatus, setAiStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')`,
     )
+    hooks.push(`const [aiError, setAiError] = useState<string | null>(null)`)
+    hooks.push(`const [aiProgress, setAiProgress] = useState<string | null>(null)`)
     hooks.push(
       `const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([])`,
     )
     hooks.push(`const [chatInput, setChatInput] = useState('')`)
     hooks.push(`const [thinking, setThinking] = useState(false)`)
+    // GPU is the QVAC-recommended default on real devices (Metal on iOS,
+    // Vulkan on Android), ~5-10x faster than CPU. Users can flip to CPU
+    // before loading for older hardware or to experiment on simulator.
+    hooks.push(`const [aiDevice, setAiDevice] = useState<'gpu' | 'cpu'>('gpu')`)
+    // modelId lives in a ref because we don't need re-renders when it
+    // changes and we want to read it inside the async chat loop without
+    // closing over a stale state value.
+    hooks.push(`const modelIdRef = useRef<string | null>(null)`)
   }
 
   // Handler functions — base KV handlers go through the worklet via RPC
@@ -489,29 +579,156 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (hasQvac) {
-    // Worklet commands: 2 = load-model, 3 = chat
+    // QVAC SDK runs in the React Native runtime. expo-rpc-client.js loads
+    // the prebuilt worker.mobile.bundle (generated by @qvac/sdk/expo-plugin
+    // during prebuild) and starts its own internal Bare worker — separate
+    // from our user-owned worklet.
+    //
+    // EXPO_PUBLIC_QVAC_MOCK=1 short-circuits both load and chat for tests
+    // and simulator-only validation. Expo only inlines env vars prefixed
+    // with EXPO_PUBLIC_ at bundle time; check it once at module scope.
     handlers.push(`
+  const QVAC_MOCK = process.env.EXPO_PUBLIC_QVAC_MOCK === '1'
+
   async function loadAI() {
-    if (!ready) return
+    setAiError(null)
+    setAiProgress(null)
     setAiStatus('loading')
-    try {
-      const res = await rpcRequest(2)
-      setAiStatus(res.ok ? 'ready' : 'error')
-    } catch {
+    if (QVAC_MOCK) {
+      await new Promise((r) => setTimeout(r, 200))
+      modelIdRef.current = 'mock-model'
+      setAiStatus('ready')
+      return
+    }
+    // Per QVAC docs: "QVAC currently does not run on emulators. You must
+    // use a physical device." GPU mode reliably fails on simulator (Metal
+    // / Vulkan unavailable), so block early with a clear message. CPU
+    // mode is technically also unsupported by llamacpp on emulators, but
+    // we let users try it — if it fails, the underlying QVAC error is
+    // already surfaced via the catch block below.
+    if (Device.isDevice === false && aiDevice === 'gpu') {
+      setAiError(
+        "GPU inference doesn't run on the iOS Simulator / Android Emulator. " +
+        'Toggle Device → CPU below to try CPU mode (slower, may still ' +
+        'fail on emulators per QVAC limits), or run on a physical device ' +
+        'with: npx expo run:ios --device (or run:android --device). Or ' +
+        'set EXPO_PUBLIC_QVAC_MOCK=1 to exercise the UI without inference.',
+      )
       setAiStatus('error')
+      return
+    }
+    try {
+      // Two-phase load — split download and load progress so the UI can
+      // show what's actually happening. This mirrors the official QVAC
+      // Expo tutorial: downloadAsset first (model arrives over the
+      // network or from Hyperdrive peers), then loadModel (mmap'd into
+      // the GGUF engine).
+      setAiProgress('Downloading model...')
+      await downloadAsset({
+        assetSrc: QWEN3_600M_INST_Q4,
+        onProgress: (p: any) => {
+          if (typeof p?.percentage === 'number') {
+            setAiProgress('Downloading ' + Math.round(p.percentage) + '%')
+          }
+        },
+      })
+      setAiProgress('Loading model into memory...')
+      const id = await loadModel({
+        modelSrc: QWEN3_600M_INST_Q4,
+        modelType: 'llm',
+        modelConfig: {
+          // Device choice is exposed to users via the GPU toggle in the
+          // Assistant section. GPU = Metal/Vulkan (real devices, ~5-10x
+          // faster). CPU = portable fallback (older hardware,
+          // experimentation).
+          device: aiDevice,
+          ctx_size: 4096,
+          system_prompt: 'You are a helpful assistant. /no_think',
+          // VERBOSITY.ERROR keeps the JS console quiet — flip to .DEBUG
+          // when chasing model-loading issues.
+          verbosity: VERBOSITY.ERROR,
+        },
+        onProgress: (p: any) => {
+          if (typeof p?.percentage === 'number') {
+            setAiProgress('Loading ' + Math.round(p.percentage) + '%')
+          }
+        },
+      })
+      modelIdRef.current = id
+      setAiStatus('ready')
+      setAiProgress(null)
+    } catch (e: any) {
+      setAiError(e?.message ?? String(e))
+      setAiStatus('error')
+      setAiProgress(null)
     }
   }
 
   async function sendMessage() {
-    if (!chatInput.trim() || thinking || aiStatus !== 'ready') return
+    const id = modelIdRef.current
+    if (!chatInput.trim() || thinking || aiStatus !== 'ready' || !id) return
     const userMsg = { role: 'user' as const, content: chatInput.trim() }
-    setChatInput('')
     const next = [...messages, userMsg]
-    setMessages(next)
+    const placeholder = { role: 'assistant' as const, content: '' }
+    setChatInput('')
+    setMessages([...next, placeholder])
     setThinking(true)
+
     try {
-      const res = await rpcRequest(3, { messages: next })
-      if (res.ok) setMessages([...next, { role: 'assistant' as const, content: res.text }])
+      if (QVAC_MOCK) {
+        const reply = 'Mock: ' + userMsg.content
+        for (let i = 1; i <= reply.length; i++) {
+          await new Promise((r) => setTimeout(r, 5))
+          setMessages([...next, { role: 'assistant', content: reply.slice(0, i) }])
+        }
+        return
+      }
+      const result = completion({
+        modelId: id,
+        history: next,
+        stream: true,
+      })
+      // Strip Qwen 3 <think>...</think> blocks from the live token stream
+      // so the chat bubble shows only the user-facing answer. We track
+      // depth and carry partial tags across chunks. /no_think in the
+      // system prompt usually suppresses them; this is a safety net.
+      let inThink = false
+      let carry = ''
+      let visible = ''
+      for await (const token of result.tokenStream) {
+        carry += token
+        let outChunk = ''
+        while (carry.length) {
+          if (!inThink) {
+            const open = carry.indexOf('<think>')
+            if (open === -1) {
+              if (carry.length > 7) { outChunk += carry.slice(0, -7); carry = carry.slice(-7) }
+              break
+            }
+            outChunk += carry.slice(0, open)
+            carry = carry.slice(open + 7)
+            inThink = true
+          } else {
+            const close = carry.indexOf('</think>')
+            if (close === -1) {
+              if (carry.length > 8) carry = carry.slice(-8)
+              break
+            }
+            carry = carry.slice(close + 8)
+            inThink = false
+          }
+        }
+        if (outChunk) {
+          visible += outChunk
+          setMessages([...next, { role: 'assistant', content: visible }])
+        }
+      }
+      if (!inThink && carry) {
+        visible += carry
+        setMessages([...next, { role: 'assistant', content: visible }])
+      }
+    } catch (e: any) {
+      setMessages([...next, { role: 'assistant', content: '❌ ' + (e?.message ?? String(e)) }])
     } finally {
       setThinking(false)
     }
@@ -593,27 +810,61 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     sections.push(`
         <View style={styles.section} testID="ai-section">
           <Text style={styles.sectionTitle}>AI Assistant</Text>
+          <Text style={styles.hint}>
+            Qwen 3 0.6B · ~400MB download on first run, cached after.{'\\n'}
+            <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
+            — QVAC inference does not run on the iOS Simulator or Android
+            Emulator. Set{' '}
+            <Text style={{ fontFamily: 'monospace' }}>EXPO_PUBLIC_QVAC_MOCK=1</Text>{' '}
+            to test the UI without inference.
+          </Text>
           {aiStatus === 'idle' && (
-            <TouchableOpacity
-              style={[styles.btn, styles.btnFull, !ready && styles.btnDisabled]}
-              onPress={loadAI}
-              disabled={!ready}
-              testID="load-ai-btn"
-              accessibilityLabel="Load Assistant"
-            >
-              <Text style={styles.btnText}>
-                {ready ? 'Load Assistant' : 'Waiting for worklet...'}
-              </Text>
-            </TouchableOpacity>
+            <>
+              <View style={styles.deviceRow} testID="ai-device-toggle">
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.deviceLabel}>
+                    Device: {aiDevice === 'gpu' ? 'GPU' : 'CPU'}
+                  </Text>
+                  <Text style={styles.deviceHint}>
+                    {aiDevice === 'gpu'
+                      ? 'Faster (Metal / Vulkan) · physical device only'
+                      : 'Slower fallback · for older hardware or experimentation'}
+                  </Text>
+                </View>
+                <Switch
+                  value={aiDevice === 'gpu'}
+                  onValueChange={(on) => setAiDevice(on ? 'gpu' : 'cpu')}
+                  trackColor={{ false: '#3a3a3a', true: '#1f6feb' }}
+                  thumbColor={aiDevice === 'gpu' ? '#58a6ff' : '#888'}
+                  testID="ai-device-switch"
+                  accessibilityLabel="Toggle GPU inference"
+                />
+              </View>
+              <TouchableOpacity
+                style={[styles.btn, styles.btnFull]}
+                onPress={loadAI}
+                testID="load-ai-btn"
+                accessibilityLabel="Load Assistant"
+              >
+                <Text style={styles.btnText}>Load Assistant</Text>
+              </TouchableOpacity>
+            </>
           )}
           {aiStatus === 'loading' && (
             <View style={styles.row}>
               <ActivityIndicator color="#58a6ff" />
-              <Text style={[styles.mono, { marginLeft: 8 }]}>Loading model...</Text>
+              <Text style={[styles.mono, { marginLeft: 8 }]}>
+                {aiProgress ?? 'Loading model...'}
+              </Text>
             </View>
           )}
           {aiStatus === 'error' && (
-            <Text style={{ color: '#f85149', fontSize: 14 }}>Failed to load model</Text>
+            <View>
+              <Text style={styles.error} testID="ai-error-msg">❌ {aiError ?? 'Failed to load model'}</Text>
+              <TouchableOpacity style={[styles.btn, styles.btnFull, { marginTop: 8 }]} onPress={loadAI} testID="ai-retry-btn">
+                <Text style={styles.btnText}>Retry</Text>
+              </TouchableOpacity>
+            </View>
           )}
           {aiStatus === 'ready' && (
             <>
@@ -621,14 +872,17 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
                 {messages.length === 0 && (
                   <Text style={styles.chatHint}>Ask me anything...</Text>
                 )}
-                {messages.map((msg, i) => (
-                  <View
-                    key={i}
-                    style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}
-                  >
-                    <Text style={styles.bubbleText}>{msg.content}</Text>
-                  </View>
-                ))}
+                {messages
+                  .filter((m) => m.content)
+                  .map((msg, i) => (
+                    <View
+                      key={i}
+                      style={[styles.bubble, msg.role === 'user' ? styles.bubbleUser : styles.bubbleBot]}
+                      testID={\`chat-bubble-\${msg.role}\`}
+                    >
+                      <Text style={styles.bubbleText}>{msg.content}</Text>
+                    </View>
+                  ))}
                 {thinking && (
                   <View style={[styles.bubble, styles.bubbleBot]}>
                     <ActivityIndicator size="small" color="#58a6ff" />
@@ -714,6 +968,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
   mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
   input: {
     backgroundColor: '#0d1117',
     borderWidth: 1,
@@ -740,6 +996,19 @@ const styles = StyleSheet.create({
   result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
   chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  deviceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginBottom: 8,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#1f2937',
+    gap: 8,
+  },
+  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
   bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
   bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
   bubbleBot: {
@@ -756,11 +1025,20 @@ const styles = StyleSheet.create({
 }
 
 // ---------------------------------------------------------------------------
-// Bare worklet — handles QVAC (cmds 2-3) and P2P (cmd 4) in Bare runtime
+// Bare worklet — owns P2P transport + Hyperbee KV
+//
+// IMPORTANT: We deliberately do NOT import `@qvac/sdk` here. The QVAC SDK,
+// when loaded inside a Bare runtime, falls back to an obfuscated dynamic
+// import of `../../server/worker.js` that bare-pack cannot statically trace
+// (`MODULE_NOT_FOUND: Cannot find module '../../server/worker.js'` at
+// runtime). The intended Expo path is to import `@qvac/sdk` from the React
+// Native side — `expo-rpc-client.js` then loads the pre-bundled
+// `@qvac/sdk/worker.mobile.bundle` (generated by `@qvac/sdk/expo-plugin`
+// during `expo prebuild`) and spawns its own dedicated Bare worker for
+// inference. Inference therefore lives in `app/index.tsx`, not here.
 // ---------------------------------------------------------------------------
 
 function bareWorklet(opts: GeneratorOptions): GeneratedFile {
-  const hasQvac = has(opts, 'local-ai')
   const hasNodeSync = has(opts, 'node-sync')
 
   // Imports — base always needs Corestore + Hyperbee (KV is always on)
@@ -770,12 +1048,6 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     `const Corestore = require('corestore')`,
     `const Hyperbee = require('hyperbee')`,
   ]
-
-  if (hasQvac) {
-    imports.push(
-      `const { loadModel, completion, LLAMA_3_2_1B_INST_Q4_0 } = require('@qvac/sdk')`,
-    )
-  }
 
   if (hasNodeSync) {
     // @unstoppable/node-client is ESM-only; wrap the dynamic import lazily so
@@ -793,7 +1065,6 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     `let db = null`,
     `let mockMode = false`,
   ]
-  if (hasQvac) stateVars.push(`let modelId = null`)
   if (hasNodeSync) {
     stateVars.push(`let nodeClient = null`)
     stateVars.push(`let nodeStatus = 'idle'`)
@@ -802,11 +1073,19 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   // Command cases
   // Commands:
   //   1: init({ storagePath, mock? }) — initialize storage and Hyperbee
-  //   2: load-model() → { ok, modelId }  (local-ai only)
-  //   3: chat({ messages }) → { ok, text }  (local-ai only)
   //   4: ping() → { ok, pong }
   //   5: kv-put({ key, value }) → { ok }
   //   6: kv-get({ key }) → { ok, value }
+  //
+  // NOTE: command IDs 2 and 3 used to handle QVAC `load-model` and `chat`
+  // here, but `@qvac/sdk` doesn't actually work inside a Bare worklet on
+  // Expo (its bare-runtime fallback does an obfuscated dynamic import that
+  // bare-pack can't trace). Inference is now driven directly from React
+  // Native via `@qvac/sdk` in `app/index.tsx`, which spawns its own
+  // dedicated worker via `react-native-bare-kit` using the prebuilt
+  // mobile bundle. The IDs are preserved as gaps to avoid breaking older
+  // RN code that may still reference them.
+  //
   // NOTE: every case body is wrapped in { } — mandatory when declaring
   // lexical bindings (`const`, `let`) inside a switch. Without braces, every
   // declaration ends up hoisted into the single shared switch block scope,
@@ -826,37 +1105,6 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
         break
       }`,
   ]
-
-  if (hasQvac) {
-    cases.push(`case 2: { // load-model
-        if (mockMode) {
-          await new Promise((r) => setTimeout(r, 100))
-          modelId = 'mock-model'
-          response = { ok: true, modelId, mock: true }
-          break
-        }
-        if (modelId) { response = { ok: true, modelId, alreadyLoaded: true }; break }
-        modelId = await loadModel({ modelSrc: LLAMA_3_2_1B_INST_Q4_0, modelType: 'llm' })
-        response = { ok: true, modelId }
-        break
-      }`)
-
-    cases.push(`case 3: { // chat — accumulate tokens, reply when done
-        if (!modelId) { response = { error: 'Model not loaded' }; break }
-        if (mockMode) {
-          const last = params.messages[params.messages.length - 1]
-          response = { ok: true, text: \`Mock: \${last?.content ?? ''}\` }
-          break
-        }
-        const result = completion({ modelId, history: params.messages, stream: true })
-        let text = ''
-        for await (const token of result.tokenStream) {
-          text += token
-        }
-        response = { ok: true, text }
-        break
-      }`)
-  }
 
   cases.push(`case 4: { // ping — check worklet is alive
         response = { ok: true, pong: true }
@@ -910,10 +1158,16 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     path: 'bare/index.js',
     content: `// Bare worklet — runs in react-native-bare-kit, not in React Native context
 // Commands:
-//   1: init({ storagePath, mock? }) — initialize base services${hasQvac ? '\n//   2: load-model() → { ok, modelId }\n//   3: chat({ messages }) → { ok, text }' : ''}
+//   1: init({ storagePath, mock? }) — initialize base services
 //   4: ping() → { ok, pong }
 //   5: kv-put({ key, value }) → { ok }
 //   6: kv-get({ key }) → { ok, value }${hasNodeSync ? '\n//   7: node-sync-connect() → { ok, status }\n//   8: node-sync-status() → { ok, status, connected }' : ''}
+//
+// NOTE: QVAC inference is NOT in this worklet. @qvac/sdk runs from React
+// Native (app/index.tsx) and spawns its own internal Bare worker via the
+// QVAC expo-plugin's prebuilt mobile bundle. Loading @qvac/sdk in a
+// user-owned Bare runtime triggers a MODULE_NOT_FOUND for the SDK's
+// dynamic import of dist/server/worker.js that bare-pack can't trace.
 ${imports.join('\n')}
 
 ${stateVars.join('\n')}
