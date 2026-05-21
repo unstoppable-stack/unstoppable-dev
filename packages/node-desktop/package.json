@@ -1,0 +1,30 @@
+{
+  "name": "unstoppable-node-desktop",
+  "version": "0.1.0",
+  "description": "Pear Desktop dashboard for the Unstoppable Node — visual control panel for data/file/AI sync",
+  "type": "module",
+  "private": true,
+  "pear": {
+    "name": "unstoppable-node-desktop",
+    "type": "desktop",
+    "pre": "pear-electron/pre",
+    "routes": ".",
+    "unrouted": ["/worker.js"],
+    "gui": {
+      "backgroundColor": "#0d1117",
+      "height": 720,
+      "width": 1100
+    }
+  },
+  "scripts": {
+    "dev": "pear run -d .",
+    "stage": "pear stage .",
+    "release": "pear release ."
+  },
+  "dependencies": {
+    "pear-electron": "^1.7.0",
+    "pear-bridge": "^1.2.4",
+    "pear-run": "^1.0.7",
+    "unstoppable-node": "file:../node"
+  }
+}
