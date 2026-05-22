@@ -11,6 +11,11 @@ packages/agent/
 packages/remote-app/
 packages/search/
 # Sandbox test apps (agent-accessible but not committed)
-sandbox/
+sandbox/*
 !sandbox/README.md
+!sandbox/node-demo/
+sandbox/node-demo/*
+!sandbox/node-demo/demo.js
+!sandbox/node-demo/package.json
+!sandbox/node-demo/FINDINGS.md
 inspiration/**/*
