@@ -1,0 +1,21 @@
+{
+  "name": "@unstoppable/node-client",
+  "version": "0.1.0",
+  "description": "Client library to connect Unstoppable Stack apps to the Node for data replication and sync",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "bare-events": "^2.8.3",
+    "hypercore-crypto": "^3.6.0",
+    "hyperswarm": "^4.17.0"
+  },
+  "optionalDependencies": {
+    "bare-env": "^3.0.0",
+    "bare-os": "^3.6.1"
+  },
+  "license": "MIT"
+}
