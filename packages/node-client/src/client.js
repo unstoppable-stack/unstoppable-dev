@@ -1,0 +1,315 @@
+import Hyperswarm from 'hyperswarm'
+import b4a from 'b4a'
+import { EventEmitter } from 'bare-events'
+import { localDiscoveryTopic, encodeMessage } from './protocol.js'
+
+// How long we'll wait for a peer to send `nodeHello` before deciding it's
+// not actually a Node and dropping the connection. This matters because
+// anyone on the same Hyperswarm topic could connect; we only trust peers
+// that identify themselves with the Node greeting.
+const HELLO_TIMEOUT_MS = 2_000
+
+// `process` exists in Node.js and Bare, but Bare does not expose `pid` or
+// `uptime()`. Wrap in guards so the client works across both runtimes.
+const _proc = typeof process !== 'undefined' ? process : null
+const _pid = _proc && typeof _proc.pid === 'number' ? _proc.pid : 0
+const _startedAt = Date.now()
+function _uptime () {
+  if (_proc && typeof _proc.uptime === 'function') return _proc.uptime()
+  return (Date.now() - _startedAt) / 1000
+}
+
+export class NodeClient extends EventEmitter {
+  constructor ({ appId, appName, cores = [], drives = [], swarm: swarmOpts, topic: topicOverride }) {
+    super()
+    this.appId = appId
+    this.appName = appName
+    this.cores = cores
+    this.drives = drives
+
+    this.swarm = new Hyperswarm(swarmOpts)
+    this.socket = null
+    this.nodePublicKey = null
+    this.services = null
+    this.protocolVersion = null
+    this.paired = false
+    this.registered = false
+    this._closing = false
+    this._candidates = new Map()
+    this._topicOverride = topicOverride || null
+    this._inferenceRequests = new Map()
+    this._requestSeq = 0
+  }
+
+  async connect () {
+    const topic = this._topicOverride || localDiscoveryTopic()
+
+    this.swarm.join(topic, { server: false, client: true })
+
+    this.swarm.on('connection', (socket, info) => {
+      if (this.paired) {
+        socket.destroy()
+        return
+      }
+
+      const remoteKey = b4a.toString(info.publicKey, 'hex')
+      // Don't pair until the peer greets us with `nodeHello`. If the
+      // greeting never arrives inside HELLO_TIMEOUT_MS, it's not a Node
+      // (probably another app sharing the local discovery topic) and we
+      // quietly drop the socket. We previously fired `pairRequest` eagerly
+      // here, which worked but gave us no way to advertise service
+      // capabilities and leaked pair attempts to non-Node peers.
+      const helloTimer = setTimeout(() => {
+        this._candidates.delete(remoteKey)
+        socket.destroy()
+      }, HELLO_TIMEOUT_MS)
+
+      this._candidates.set(remoteKey, { socket, helloTimer })
+      this.emit('candidateFound', { publicKey: remoteKey })
+
+      this._setupCandidateSocket(socket, remoteKey)
+    })
+
+    await this.swarm.flush()
+    this.emit('searching')
+  }
+
+  _setupCandidateSocket (socket, remoteKey) {
+    let buffer = ''
+
+    socket.on('data', (data) => {
+      buffer += b4a.toString(data)
+      const lines = buffer.split('\n')
+      buffer = lines.pop()
+      for (const line of lines) {
+        if (!line.trim()) continue
+        try {
+          const msg = JSON.parse(line)
+          this._handleMessage(msg, socket, remoteKey)
+        } catch {
+          // ignore malformed
+        }
+      }
+    })
+
+    socket.on('close', () => {
+      this._clearCandidate(remoteKey)
+      if (this.socket === socket) {
+        this.socket = null
+        this.paired = false
+        this.registered = false
+        if (!this._closing) {
+          this.emit('disconnected')
+        }
+      }
+    })
+
+    socket.on('error', () => {
+      this._clearCandidate(remoteKey)
+    })
+  }
+
+  _clearCandidate (remoteKey) {
+    const entry = this._candidates.get(remoteKey)
+    if (!entry) return
+    if (entry.helloTimer) clearTimeout(entry.helloTimer)
+    this._candidates.delete(remoteKey)
+  }
+
+  _handleNodeHello (msg, socket, remoteKey) {
+    const entry = this._candidates.get(remoteKey)
+    if (!entry) return
+    // Already greeted — ignore duplicates.
+    if (entry.greeted) return
+    entry.greeted = true
+    if (entry.helloTimer) {
+      clearTimeout(entry.helloTimer)
+      entry.helloTimer = null
+    }
+
+    // Remember the first node's advertised services so the caller can
+    // decide whether to proceed even before `paired` fires.
+    if (!this.services) {
+      this.services = msg.services || null
+      this.protocolVersion = msg.protocolVersion || null
+      this.emit('nodeHello', {
+        publicKey: remoteKey,
+        nodePublicKey: msg.nodePublicKey,
+        services: msg.services,
+        protocolVersion: msg.protocolVersion
+      })
+    }
+
+    this._sendPairRequest(socket)
+  }
+
+  _sendPairRequest (socket) {
+    socket.write(encodeMessage({
+      type: 'pairRequest',
+      appId: this.appId,
+      appName: this.appName,
+      publicKey: b4a.toString(this.swarm.keyPair.publicKey, 'hex'),
+      pid: _pid
+    }))
+  }
+
+  _handleMessage (msg, socket, remoteKey) {
+    switch (msg.type) {
+      case 'nodeHello':
+        this._handleNodeHello(msg, socket, remoteKey)
+        break
+
+      case 'pairAccepted':
+        if (this.paired) {
+          socket.destroy()
+          return
+        }
+        this.paired = true
+        this.socket = socket
+        this.nodePublicKey = msg.nodePublicKey
+        // `pairAccepted` carries services too, but nodeHello already filled
+        // these in — keep them in sync in case the node updates between
+        // hello and pair (e.g. ai comes online mid-session in future).
+        if (msg.services) this.services = msg.services
+
+        for (const [key, candidate] of this._candidates) {
+          if (key !== remoteKey) candidate.socket.destroy()
+        }
+        this._candidates.clear()
+
+        this.emit('paired', {
+          nodePublicKey: msg.nodePublicKey,
+          services: msg.services
+        })
+        this._sendRegistration()
+        break
+
+      case 'pairDenied':
+        this.emit('pairDenied', { reason: msg.reason })
+        socket.destroy()
+        break
+
+      case 'registered':
+        this.registered = true
+        this.emit('registered', { replicating: msg.replicating })
+        break
+
+      case 'syncStatus':
+        this.emit('syncStatus', msg)
+        break
+
+      case 'inference-token':
+      case 'inference-done':
+      case 'inference-error': {
+        const handler = this._inferenceRequests.get(msg.requestId)
+        if (handler) handler(msg)
+        else this.emit('message', msg)
+        break
+      }
+
+      case 'error':
+        this.emit('nodeError', { message: msg.message })
+        break
+
+      default:
+        this.emit('message', msg)
+    }
+  }
+
+  /**
+   * Request an AI completion from the node's AI provider.
+   *
+   * Yields token strings as they arrive. Throws if the node didn't advertise
+   * `services.ai` or if inference errors on the server side.
+   *
+   * @param {Object} req
+   * @param {Array<{role:string,content:string}>} req.messages
+   * @returns {AsyncGenerator<string>}
+   */
+  async *requestInference ({ messages }) {
+    if (!this.paired || !this.socket) throw new Error('Not paired with a node')
+    if (!this.services?.ai) throw new Error('Node does not advertise AI service')
+
+    const requestId = `r${++this._requestSeq}`
+    const queue = []
+    let resolveNext = null
+    let done = false
+    let error = null
+
+    this._inferenceRequests.set(requestId, (msg) => {
+      if (msg.type === 'inference-token') {
+        queue.push(msg.token)
+      } else if (msg.type === 'inference-done') {
+        done = true
+      } else if (msg.type === 'inference-error') {
+        error = new Error(msg.error || 'inference failed')
+        done = true
+      }
+      if (resolveNext) { const r = resolveNext; resolveNext = null; r() }
+    })
+
+    this.socket.write(encodeMessage({
+      type: 'inference',
+      requestId,
+      appId: this.appId,
+      messages
+    }))
+
+    try {
+      while (true) {
+        if (queue.length > 0) {
+          yield queue.shift()
+          continue
+        }
+        if (done) break
+        await new Promise((resolve) => { resolveNext = resolve })
+      }
+      if (error) throw error
+    } finally {
+      this._inferenceRequests.delete(requestId)
+    }
+  }
+
+  _sendRegistration () {
+    if (!this.socket || !this.paired) return
+
+    const coreDescriptors = this.cores.map(c => ({
+      key: typeof c.key === 'string' ? c.key : b4a.toString(c.key, 'hex'),
+      type: c.type || 'hypercore',
+      name: c.name
+    }))
+
+    const driveDescriptors = this.drives.map(d => ({
+      key: typeof d.key === 'string' ? d.key : b4a.toString(d.key, 'hex'),
+      name: d.name
+    }))
+
+    this.socket.write(encodeMessage({
+      type: 'register',
+      appId: this.appId,
+      cores: coreDescriptors,
+      drives: driveDescriptors
+    }))
+  }
+
+  sendHeartbeat () {
+    if (!this.socket || !this.paired) return
+    this.socket.write(encodeMessage({
+      type: 'heartbeat',
+      appId: this.appId,
+      uptime: _uptime()
+    }))
+  }
+
+  async close () {
+    this._closing = true
+    for (const [, entry] of this._candidates) {
+      if (entry.helloTimer) clearTimeout(entry.helloTimer)
+      try { entry.socket.destroy() } catch {}
+    }
+    this._candidates.clear()
+    if (this.socket) this.socket.destroy()
+    await this.swarm.destroy()
+    this.emit('closed')
+  }
+}

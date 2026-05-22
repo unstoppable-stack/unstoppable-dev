@@ -1,0 +1,38 @@
+{
+  "name": "unstoppable-node",
+  "version": "0.1.0",
+  "description": "Personal sync node for Unstoppable Stack apps — replicates, backs up, and seeds your P2P data",
+  "type": "module",
+  "bin": {
+    "unstoppable-node": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test --test-force-exit test/*.test.js",
+    "test:unit": "node --test test/protocol.test.js test/registry.test.js",
+    "test:integration": "node --test --test-force-exit test/pairing.test.js test/replication.test.js",
+    "test:edge": "node --test --test-force-exit test/edge-cases.test.js",
+    "test:e2e": "node --test --test-force-exit --test-timeout 120000 test/e2e/e2e.test.js",
+    "test:all": "node --test --test-force-exit --test-timeout 120000 test/*.test.js test/e2e/e2e.test.js"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "bare-events": "^2.8.3",
+    "chalk": "^5.3.0",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hypercore": "^11.27.0",
+    "hypercore-crypto": "^3.6.0",
+    "hyperdrive": "^12.3.0",
+    "hyperswarm": "^4.17.0"
+  },
+  "optionalDependencies": {
+    "bare-env": "^3.0.0",
+    "bare-os": "^3.6.1"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "hyperdht": "^6.29.1"
+  }
+}

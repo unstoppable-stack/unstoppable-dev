@@ -8,8 +8,6 @@
 .us/
 benchmark/
 packages/agent/
-packages/node-client/
-packages/node/
 packages/remote-app/
 packages/search/
 # Sandbox test apps (agent-accessible but not committed)
