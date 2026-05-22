@@ -4,7 +4,11 @@ const workerPath = Pear.key
   ? `${Pear.config.applink || ''}/worker.js`
   : `${Pear.config.dir || ''}/worker.js`
 
-const pipe = run(workerPath, [])
+// Forward the launch args (e.g. `--ai`, `--ai-mock`, `--ai-model`) so the
+// worker can read them from `Pear.config.args`. Without this, the worker
+// always boots with an empty args list and AI never turns on regardless
+// of how the user invoked `pear run`.
+const pipe = run(workerPath, Pear.config.args || [])
 
 const handlers = new Set()
 let messageBuffer = ''
