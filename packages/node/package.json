@@ -3,6 +3,42 @@
   "version": "0.1.0",
   "description": "Personal sync node for Unstoppable Stack apps — replicates, backs up, and seeds your P2P data",
   "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./node": "./src/node.js",
+    "./ai-provider": "./src/ai-provider.js",
+    "./registry": "./src/registry.js",
+    "./replication": "./src/replication.js",
+    "./protocol": "./src/protocol.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "p2p",
+    "hyperswarm",
+    "hypercore",
+    "hyperbee",
+    "hyperdrive",
+    "unstoppable-stack",
+    "local-first",
+    "qvac"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-stack.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://unstoppable.dev",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "unstoppable-node": "./src/index.js"
   },

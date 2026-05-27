@@ -45,6 +45,10 @@ async function main() {
     const { registerSearchCommand } = await import('./commands/search.js')
     registerSearchCommand(program)
   }
+  if (US_FEAT_NODE) {
+    const { registerNodeCommand } = await import('./commands/node.js')
+    registerNodeCommand(program)
+  }
 
   await program.parseAsync()
 }

@@ -16,6 +16,7 @@ declare const US_FEAT_DOCTOR: boolean
 declare const US_FEAT_REMOTE: boolean
 declare const US_FEAT_RESEARCH: boolean
 declare const US_FEAT_SEARCH: boolean
+declare const US_FEAT_NODE: boolean
 
 // Name of the profile that was used to build this bundle
 // ("minimal" | "full" | custom). Surfaced via `us --version` so bug
