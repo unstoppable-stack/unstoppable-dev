@@ -16,6 +16,9 @@ document.getElementById('app').innerHTML = `
         </div>
       </div>
       <div class="services" id="services"></div>
+      <div class="header-actions">
+        <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
+      </div>
     </header>
     <main class="content">
       <section class="card" id="summary-card">
@@ -25,6 +28,7 @@ document.getElementById('app').innerHTML = `
           <div class="metric"><span class="metric-label">Cores</span><span class="metric-value" id="m-cores">–</span></div>
           <div class="metric"><span class="metric-label">Drives</span><span class="metric-value" id="m-drives">–</span></div>
           <div class="metric"><span class="metric-label">Peers</span><span class="metric-value" id="m-peers">–</span></div>
+          <div class="metric"><span class="metric-label">Storage</span><span class="metric-value" id="m-storage" title="Sum of replicated core + drive byteLength. Click 'Recalc' for actual disk size.">–</span></div>
         </div>
       </section>
       <section class="card">
@@ -59,6 +63,19 @@ document.getElementById('app').innerHTML = `
         <button class="btn btn-approve" id="modal-approve">Approve &amp; remember</button>
       </div>
       <p class="modal-pending dim" id="modal-pending-count" hidden></p>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="peek-modal" hidden>
+    <div class="modal modal-wide">
+      <h2 class="modal-title" id="peek-title">Peek data</h2>
+      <p class="modal-text dim">A live, read-only view of the data this app is replicating through the node.</p>
+      <div class="peek-tabs" id="peek-tabs"></div>
+      <div class="peek-body" id="peek-body"><p class="dim">Loading…</p></div>
+      <div class="modal-actions">
+        <button class="btn btn-approve-once" id="peek-refresh">Refresh</button>
+        <button class="btn btn-deny" id="peek-close">Close</button>
+      </div>
     </div>
   </div>
 `
@@ -122,6 +139,25 @@ onWorkerMessage((msg) => {
     case 'pairPromoted':
       pushLog(`Promoted ${msg.appName || msg.appId} to trusted`, 'ok')
       break
+    case 'servicesChanged':
+      renderServices(msg.services || {})
+      pushLog(`Services updated: ${Object.entries(msg.services || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '(none)'}`, 'ok')
+      break
+    case 'appPaused':
+      pushLog(`Paused replication for ${msg.appId} (${msg.touched} units)`, 'dim')
+      break
+    case 'appResumed':
+      pushLog(`Resumed replication for ${msg.appId} (${msg.touched} units)`, 'ok')
+      break
+    case 'peek-core-result':
+    case 'peek-drive-result': {
+      const handler = peekState.pendingRequests.get(msg.requestId)
+      if (handler) {
+        peekState.pendingRequests.delete(msg.requestId)
+        handler(msg.result, msg.type === 'peek-drive-result' ? 'drive' : 'core')
+      }
+      break
+    }
     case 'appRegistered':
       pushLog(`${msg.appId}: ${msg.coreCount} core(s), ${msg.driveCount} drive(s)`, 'info')
       break
@@ -163,6 +199,16 @@ onWorkerMessage((msg) => {
 })
 
 wireApprovalModal()
+wireAiToggle()
+wirePeekModal()
+
+const peekState = {
+  appId: null,
+  targets: [],
+  activeIndex: 0,
+  pendingRequests: new Map()
+}
+let peekRequestSeq = 0
 
 workerReady.catch((err) => {
   setText('node-status', '❌ Worker failed to start')
@@ -178,6 +224,15 @@ function renderServices (services) {
   el.innerHTML = Object.entries(services)
     .map(([name, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${on ? '+' : '-'}${name}</span>`)
     .join('')
+  renderAiToggle(services)
+}
+
+function renderAiToggle (services) {
+  const btn = document.getElementById('ai-toggle')
+  if (!btn) return
+  const on = !!services?.ai
+  btn.textContent = on ? 'Disable AI' : 'Enable AI (mock)'
+  btn.dataset.action = on ? 'disable-ai' : 'enable-ai'
 }
 
 function renderSummary (status) {
@@ -185,12 +240,26 @@ function renderSummary (status) {
   setText('m-cores', String(status.cores?.length ?? 0))
   setText('m-drives', String(status.drives?.length ?? 0))
   setText('m-peers', String(status.connectedPeers ?? 0))
+  const bytes = status.storage?.total ?? 0
+  setText('m-storage', formatBytes(bytes))
+}
+
+// Formats bytes for the dashboard tiles. We never need more than one decimal
+// in the UI; 4 GB is more meaningful than 4.2398 GB on a small status card.
+function formatBytes (n) {
+  if (!Number.isFinite(n) || n <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let i = 0
+  let v = n
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++ }
+  return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`
 }
 
 function renderApps (status) {
   const el = document.getElementById('apps-list')
   const apps = status.apps || []
   const approved = status.trust?.approved || {}
+  const perApp = status.storage?.perApp || {}
 
   if (apps.length === 0) {
     el.innerHTML = '<p class="dim">No apps paired yet. Start one with `us init` and it will appear here.</p>'
@@ -201,6 +270,9 @@ function renderApps (status) {
     const drives = (status.drives || []).filter((d) => d.appId === app.appId)
     const totalEntries = cores.reduce((s, c) => s + (c.length || 0), 0)
     const totalPeers = cores.reduce((s, c) => s + (c.peers || 0), 0)
+    const appBytes = perApp[app.appId] || 0
+    const appUnits = [...cores, ...drives]
+    const allPaused = appUnits.length > 0 && appUnits.every((u) => u.paused)
     const trusted = !!approved[app.publicKey]
     const trustBadge = trusted
       ? '<span class="badge badge-ok" title="Approved by user via the pair-request modal">trusted</span>'
@@ -208,6 +280,18 @@ function renderApps (status) {
     const promoteBtn = trusted
       ? ''
       : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Promote</button>`
+    const pauseLabel = allPaused ? 'Resume' : 'Pause'
+    const pauseAction = allPaused ? 'resume-app' : 'pause-app'
+    const pauseBtn = appUnits.length > 0
+      ? `<button class="btn-ghost" data-pause-action="${pauseAction}" data-app-id="${escape(app.appId)}" title="Toggle replication for this app's cores/drives">${pauseLabel}</button>`
+      : ''
+    const peekTargets = [
+      ...cores.map((c) => ({ kind: 'core', key: c.key, name: c.name, type: c.type })),
+      ...drives.map((d) => ({ kind: 'drive', key: d.key, name: d.name }))
+    ]
+    const peekBtn = peekTargets.length > 0
+      ? `<button class="btn-ghost" data-peek-app="${escape(app.appId)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Peek data</button>`
+      : ''
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
@@ -221,10 +305,13 @@ function renderApps (status) {
             <span>${drives.length} drives</span>
             <span>${totalEntries} entries</span>
             <span>${totalPeers} peers</span>
+            <span title="Replicated bytes for this app">${formatBytes(appBytes)}</span>
             <span class="mono dim" title="${escape(app.publicKey || '')}">key ${short(app.publicKey)}</span>
           </div>
         </div>
         <div class="app-actions">
+          ${peekBtn}
+          ${pauseBtn}
           ${promoteBtn}
           <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
         </div>
@@ -249,6 +336,27 @@ function renderApps (status) {
       const appName = btn.getAttribute('data-appname') || ''
       if (!publicKey) return
       sendToWorker({ type: 'promote-trust', appId, appName, publicKey })
+    })
+  })
+
+  el.querySelectorAll('[data-peek-app]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      let targets
+      try { targets = JSON.parse(btn.getAttribute('data-peek-targets') || '[]') }
+      catch { targets = [] }
+      const appId = btn.getAttribute('data-peek-app')
+      openPeekModal(appId, targets)
+    })
+  })
+
+  el.querySelectorAll('[data-pause-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const appId = btn.getAttribute('data-app-id')
+      const action = btn.getAttribute('data-pause-action')
+      if (!appId || !action) return
+      btn.disabled = true
+      sendToWorker({ type: action, appId })
+      setTimeout(() => { btn.disabled = false }, 1500)
     })
   })
 }
@@ -340,6 +448,118 @@ function updatePendingCount () {
   el.hidden = false
   const n = approvalQueue.length
   el.textContent = `${n} more pending after this one.`
+}
+
+function openPeekModal (appId, targets) {
+  peekState.appId = appId
+  peekState.targets = Array.isArray(targets) ? targets : []
+  peekState.activeIndex = 0
+  document.getElementById('peek-title').textContent = `Peek data — ${appId}`
+  renderPeekTabs()
+  loadCurrentPeek()
+  document.getElementById('peek-modal').hidden = false
+}
+
+function closePeekModal () {
+  document.getElementById('peek-modal').hidden = true
+  peekState.pendingRequests.clear()
+}
+
+function renderPeekTabs () {
+  const tabs = document.getElementById('peek-tabs')
+  tabs.innerHTML = peekState.targets.map((t, i) => `
+    <button data-peek-tab="${i}" class="${i === peekState.activeIndex ? 'active' : ''}">
+      ${escape(t.kind === 'drive' ? '📁 ' : '📦 ')}${escape(t.name || short(t.key))}
+    </button>
+  `).join('')
+  tabs.querySelectorAll('[data-peek-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      peekState.activeIndex = Number(btn.getAttribute('data-peek-tab'))
+      renderPeekTabs()
+      loadCurrentPeek()
+    })
+  })
+}
+
+function loadCurrentPeek () {
+  const target = peekState.targets[peekState.activeIndex]
+  const body = document.getElementById('peek-body')
+  if (!target) {
+    body.innerHTML = '<p class="dim">No data registered for this app.</p>'
+    return
+  }
+  body.innerHTML = '<p class="dim">Loading…</p>'
+  const requestId = `peek-${++peekRequestSeq}`
+  peekState.pendingRequests.set(requestId, (result, kind) => renderPeekResult(target, result, kind))
+  if (target.kind === 'drive') {
+    sendToWorker({ type: 'peek-drive', requestId, key: target.key, limit: 50 })
+  } else {
+    sendToWorker({ type: 'peek-core', requestId, key: target.key, limit: 10 })
+  }
+}
+
+function renderPeekResult (target, result, kind) {
+  const body = document.getElementById('peek-body')
+  if (!result) {
+    body.innerHTML = `<p class="dim">Node isn't replicating this key yet (key=${escape(short(target.key))}).</p>`
+    return
+  }
+  if (kind === 'drive') {
+    if (result.error) {
+      body.innerHTML = `<p class="dim">Error: ${escape(result.error)}</p>`
+      return
+    }
+    if (result.entries.length === 0) {
+      body.innerHTML = `<p class="dim">Drive is empty (version ${result.version}).</p>`
+      return
+    }
+    body.innerHTML = `<p class="dim">${result.entries.length} entries (drive version ${result.version})</p>` +
+      result.entries.map((e) => `
+        <div class="peek-row">
+          <span class="badge ${e.type === 'file' ? 'badge-ok' : 'badge-neutral'}">${escape(e.type)}</span>
+          <span class="mono">${escape(e.key)}</span>
+          ${e.size > 0 ? `<span class="dim">${formatBytes(e.size)}</span>` : ''}
+        </div>
+      `).join('')
+    return
+  }
+  if (result.length === 0) {
+    body.innerHTML = `<p class="dim">Core is empty (key=${escape(short(target.key))}).</p>`
+    return
+  }
+  body.innerHTML = `<p class="dim">Last ${result.blocks.length} of ${result.length} blocks (${formatBytes(result.byteLength)})</p>` +
+    result.blocks.map((b) => `
+      <div class="peek-row">
+        <span class="mono dim">#${b.seq}</span>
+        <span class="dim">${b.length}B</span>
+        <span>${escape(b.preview || '(binary)')}</span>
+      </div>
+    `).join('')
+}
+
+function wirePeekModal () {
+  const refresh = document.getElementById('peek-refresh')
+  const close = document.getElementById('peek-close')
+  if (refresh) refresh.addEventListener('click', loadCurrentPeek)
+  if (close) close.addEventListener('click', closePeekModal)
+}
+
+function wireAiToggle () {
+  const btn = document.getElementById('ai-toggle')
+  if (!btn) return
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action || 'enable-ai'
+    btn.disabled = true
+    btn.textContent = action === 'enable-ai' ? 'Enabling…' : 'Disabling…'
+    if (action === 'enable-ai') {
+      sendToWorker({ type: 'enable-ai', mock: true })
+    } else {
+      sendToWorker({ type: 'disable-ai' })
+    }
+    // Re-enable after a short delay; the actual button text will be
+    // corrected by the next `servicesChanged` / status snapshot.
+    setTimeout(() => { btn.disabled = false }, 1500)
+  })
 }
 
 function wireApprovalModal () {
@@ -530,6 +750,14 @@ function injectStyles () {
     .badge-warn { background: rgba(187, 128, 9, 0.18); color: #d29922; }
     .badge-neutral { background: rgba(110, 118, 129, 0.25); color: #8b949e; }
     .app-actions { display: flex; gap: 6px; align-items: center; }
+    .modal-wide { max-width: 720px; }
+    .peek-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
+    .peek-tabs button { background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    .peek-tabs button.active { background: rgba(56, 139, 253, 0.15); border-color: #58a6ff; color: #58a6ff; }
+    .peek-body { max-height: 360px; overflow: auto; background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: ui-monospace, monospace; font-size: 12px; }
+    .peek-row { padding: 4px 0; border-bottom: 1px dashed #21262d; }
+    .peek-row:last-child { border-bottom: 0; }
+    .header-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
 
     .mono { font-family: 'SFMono-Regular', monospace; }
     .mono-wrap { word-break: break-all; }

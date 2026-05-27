@@ -175,6 +175,15 @@ export class NodeDaemon extends EventEmitter {
       case 'status-request':
         await this._handleStatusRequest(msg, socket)
         break
+      case 'disk-usage-request':
+        await this._handleDiskUsageRequest(msg, socket)
+        break
+      case 'peek-core':
+        await this._handlePeekCore(msg, socket)
+        break
+      case 'peek-drive':
+        await this._handlePeekDrive(msg, socket)
+        break
       default:
         this.emit('unknownMessage', { type: msg.type, from: remoteKey })
     }
@@ -185,6 +194,36 @@ export class NodeDaemon extends EventEmitter {
       type: 'status',
       requestId: msg.requestId,
       status: await this.getStatus()
+    }))
+  }
+
+  async _handleDiskUsageRequest (msg, socket) {
+    socket.write(encodeMessage({
+      type: 'disk-usage',
+      requestId: msg.requestId,
+      usage: await this.getDiskUsage()
+    }))
+  }
+
+  async _handlePeekCore (msg, socket) {
+    const result = this.replication
+      ? await this.replication.peekCore(msg.key, { limit: msg.limit })
+      : null
+    socket.write(encodeMessage({
+      type: 'peek-core-result',
+      requestId: msg.requestId,
+      result
+    }))
+  }
+
+  async _handlePeekDrive (msg, socket) {
+    const result = this.replication
+      ? await this.replication.peekDrive(msg.key, { dir: msg.dir, limit: msg.limit })
+      : null
+    socket.write(encodeMessage({
+      type: 'peek-drive-result',
+      requestId: msg.requestId,
+      result
     }))
   }
 
@@ -328,6 +367,7 @@ export class NodeDaemon extends EventEmitter {
     const coreStats = this.replication ? this.replication.getStats() : []
     const driveStats = this.replication ? this.replication.getDriveStats() : []
     const connectedPeers = this.connections.size
+    const replicated = this.replication ? this.replication.getReplicatedBytes() : null
 
     return {
       protocolVersion: PROTOCOL_VERSION,
@@ -340,6 +380,8 @@ export class NodeDaemon extends EventEmitter {
       cores: coreStats,
       drives: driveStats,
       connectedPeers,
+      storagePath: this.storagePath,
+      storage: replicated,
       ai: this.ai ? {
         ready: !!this.services.ai,
         mock: !!this._aiOpts?.mock,
@@ -348,10 +390,104 @@ export class NodeDaemon extends EventEmitter {
     }
   }
 
+  // Bring up the AI provider after start(). Idempotent — calling twice
+  // returns the existing provider. Throws if QVAC dynamic import fails.
+  // After success, `services.ai === true` and an `aiReady` event is emitted.
+  async enableAI (opts = {}) {
+    if (this.ai && this._ready === undefined) return this.ai
+    if (this.ai && this.services.ai) return this.ai
+
+    if (this.ai) {
+      try { await this.ai.close() } catch {}
+      this.ai = null
+    }
+
+    this._aiOpts = opts && Object.keys(opts).length > 0 ? opts : (this._aiOpts || {})
+    this.ai = new AIProvider(this._aiOpts)
+    this.ai.on('progress', (p) => this.emit('aiProgress', p))
+    this.ai.on('error', (e) => this.emit('aiError', e))
+    try {
+      await this.ai.start()
+      this.services = { ...this.services, ai: true }
+      this.emit('aiReady', { mock: !!this._aiOpts?.mock, modelId: this.ai.modelId })
+      this.emit('servicesChanged', { services: { ...this.services } })
+      return this.ai
+    } catch (err) {
+      this.emit('aiError', { phase: 'enable', error: err.message })
+      try { await this.ai.close() } catch {}
+      this.ai = null
+      this.services = { ...this.services, ai: false }
+      this.emit('servicesChanged', { services: { ...this.services } })
+      throw err
+    }
+  }
+
+  // Tear down a running AI provider. Cheap if AI was never enabled.
+  // After this, `services.ai === false` and a `servicesChanged` event
+  // fires so the dashboard can re-render the pill row.
+  async disableAI () {
+    if (!this.ai && !this.services.ai) return
+    if (this.ai) {
+      try { await this.ai.close() } catch (err) {
+        this.emit('aiError', { phase: 'disable', error: err.message })
+      }
+      this.ai = null
+    }
+    this.services = { ...this.services, ai: false }
+    this.emit('servicesChanged', { services: { ...this.services } })
+  }
+
+  // Walks the storage directory to compute actual bytes-on-disk. Slow on
+  // large stores — call ad-hoc from the dashboard, not in tight loops.
+  // Returns null if the storage path is unreadable. Skips the trust
+  // registry sidecar so the number tracks "data the node is hosting".
+  async getDiskUsage () {
+    if (!this.storagePath) return null
+    const { stat, readdir } = await import('fs/promises')
+    const { join } = await import('path')
+
+    let total = 0
+    let files = 0
+    async function walk (dir) {
+      let entries
+      try { entries = await readdir(dir, { withFileTypes: true }) } catch { return }
+      for (const entry of entries) {
+        const full = join(dir, entry.name)
+        if (entry.isDirectory()) {
+          await walk(full)
+        } else if (entry.isFile()) {
+          try {
+            const st = await stat(full)
+            total += st.size
+            files++
+          } catch {}
+        }
+      }
+    }
+    try {
+      await walk(this.storagePath)
+    } catch { return null }
+    return { bytes: total, files, path: this.storagePath }
+  }
+
   async unpairApp (appId) {
     await this.replication.removeAppCores(appId)
     await this.registry.removeApp(appId)
     this.emit('unpaired', { appId })
+  }
+
+  async pauseApp (appId) {
+    if (!this.replication) return 0
+    const touched = await this.replication.pauseApp(appId)
+    if (touched > 0) this.emit('appPaused', { appId, touched })
+    return touched
+  }
+
+  async resumeApp (appId) {
+    if (!this.replication) return 0
+    const touched = await this.replication.resumeApp(appId)
+    if (touched > 0) this.emit('appResumed', { appId, touched })
+    return touched
   }
 
   async close () {
