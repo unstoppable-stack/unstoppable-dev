@@ -219,6 +219,92 @@ describe('pairing', () => {
     )
   })
 
+  it('approvePairing callback gates pair acceptance — approve path', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const seen = []
+    const node = await env.createNode({
+      approvePairing: async ({ appId, appName, publicKey }) => {
+        seen.push({ appId, appName, hasKey: typeof publicKey === 'string' })
+        return 'approve'
+      }
+    })
+    cleanupItems.push(node)
+    await node.start()
+
+    const client = await env.createConnectedClient({ appId: 'gated-1', appName: 'Gated' })
+    cleanupItems.push(client)
+
+    assert.equal(seen.length, 1)
+    assert.equal(seen[0].appId, 'gated-1')
+    assert.equal(seen[0].hasKey, true)
+    assert.ok(client.paired, 'client should be paired')
+    assert.ok(client.registered, 'client should be registered')
+  })
+
+  it('approvePairing callback gates pair acceptance — deny path', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const node = await env.createNode({
+      approvePairing: async () => 'deny'
+    })
+    cleanupItems.push(node)
+    await node.start()
+
+    const deniedPromise = env.waitForEvent(node, 'pairDenied')
+
+    await assert.rejects(
+      env.createConnectedClient({ appId: 'rejected-app', appName: 'Rejected', timeout: 4000 }),
+      /denied/i
+    )
+
+    const denied = await deniedPromise
+    assert.equal(denied.appId, 'rejected-app')
+    assert.equal(denied.reason, 'deny')
+  })
+
+  it('approvePairing rejection is treated as deny (does not crash daemon)', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const errors = []
+    const node = await env.createNode({
+      approvePairing: async () => { throw new Error('approval gate exploded') }
+    })
+    cleanupItems.push(node)
+    node.on('error', (e) => errors.push(e))
+    await node.start()
+
+    await assert.rejects(
+      env.createConnectedClient({ appId: 'thrown-app', appName: 'Thrown', timeout: 4000 }),
+      /denied/i
+    )
+
+    const approvalError = errors.find((e) => e.type === 'approval')
+    assert.ok(approvalError, 'should emit approval error')
+    assert.equal(approvalError.appId, 'thrown-app')
+    assert.match(approvalError.error, /approval gate exploded/)
+  })
+
+  it('approvePairing="approve-remember" is also accepted', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const node = await env.createNode({
+      approvePairing: async () => 'approve-remember'
+    })
+    cleanupItems.push(node)
+    await node.start()
+
+    const client = await env.createConnectedClient({ appId: 'remember-app', appName: 'Remember' })
+    cleanupItems.push(client)
+
+    assert.ok(client.paired)
+    assert.ok(client.registered)
+  })
+
   it('persists registry across restarts', async () => {
     env = await createTestEnv()
     cleanupItems = []
