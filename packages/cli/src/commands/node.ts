@@ -243,12 +243,34 @@ export function registerNodeCommand(program: Command) {
         clearState()
         return
       }
+      // `us node start` spawns the daemon with `detached: true`, which makes
+      // the child the leader of a new process group. SIGTERM to just the
+      // leader pid leaves any grandchildren (e.g. Bare's own runtime child)
+      // alive — `kill -- -pid` signals the whole group instead. We try the
+      // group first, then fall back to the single pid if that fails (e.g.
+      // foreground-started daemons don't have a separate group).
+      let signaled = false
       try {
-        process.kill(pid, opts.signal)
-        console.log(chalk.green(`✓ Sent ${opts.signal} to pid ${pid}.`))
+        process.kill(-pid, opts.signal)
+        signaled = true
       } catch (err: any) {
-        console.error(chalk.red(`Failed to stop pid ${pid}: ${err.message}`))
-        process.exit(1)
+        if (err?.code !== 'ESRCH' && err?.code !== 'EPERM') {
+          try {
+            process.kill(pid, opts.signal)
+            signaled = true
+          } catch (err2: any) {
+            console.error(chalk.red(`Failed to stop pid ${pid}: ${err2.message}`))
+            process.exit(1)
+          }
+        } else {
+          try {
+            process.kill(pid, opts.signal)
+            signaled = true
+          } catch {}
+        }
+      }
+      if (signaled) {
+        console.log(chalk.green(`✓ Sent ${opts.signal} to process group ${pid}.`))
       }
       clearState()
     })

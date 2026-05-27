@@ -1,4 +1,4 @@
-import { NodeDaemon } from 'unstoppable-node/src/node.js'
+import { NodeDaemon } from 'unstoppable-node/node'
 import { ApprovalGate } from './approval.js'
 
 const STATUS_INTERVAL_MS = 2_000
