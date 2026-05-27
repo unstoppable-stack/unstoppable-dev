@@ -62,8 +62,11 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('aiReady', (info) => send({ type: 'aiReady', ...info }))
   node.on('aiError', (info) => send({ type: 'aiError', ...info }))
   node.on('aiProgress', (info) => send({ type: 'aiProgress', ...info }))
+  node.on('servicesChanged', (info) => send({ type: 'servicesChanged', ...info }))
   node.on('inference', (info) => send({ type: 'inference', ...info }))
   node.on('unpaired', (info) => send({ type: 'unpaired', ...info }))
+  node.on('appPaused', (info) => send({ type: 'appPaused', ...info }))
+  node.on('appResumed', (info) => send({ type: 'appResumed', ...info }))
 
   const statusTimer = setInterval(async () => {
     try {
@@ -114,6 +117,42 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         send({ type: 'status', ...status, trust: approvalGate.snapshot() })
         break
       }
+
+      case 'pause-app':
+        await node.pauseApp(msg.appId)
+        break
+
+      case 'resume-app':
+        await node.resumeApp(msg.appId)
+        break
+
+      case 'peek-core': {
+        const result = node.replication
+          ? await node.replication.peekCore(msg.key, { limit: msg.limit })
+          : null
+        send({ type: 'peek-core-result', requestId: msg.requestId, result })
+        break
+      }
+
+      case 'peek-drive': {
+        const result = node.replication
+          ? await node.replication.peekDrive(msg.key, { dir: msg.dir, limit: msg.limit })
+          : null
+        send({ type: 'peek-drive-result', requestId: msg.requestId, result })
+        break
+      }
+
+      case 'enable-ai':
+        try {
+          await node.enableAI({ mock: msg.mock === true, modelSrc: msg.modelSrc })
+        } catch (err) {
+          send({ type: 'error', phase: 'enable-ai', error: err.message })
+        }
+        break
+
+      case 'disable-ai':
+        await node.disableAI()
+        break
 
       case 'shutdown':
         await cleanup()

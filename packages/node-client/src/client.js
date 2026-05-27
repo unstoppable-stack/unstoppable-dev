@@ -260,6 +260,25 @@ export class NodeClient extends EventEmitter {
         break
       }
 
+      case 'disk-usage': {
+        const resolve = this._statusRequests.get(msg.requestId)
+        if (resolve) {
+          this._statusRequests.delete(msg.requestId)
+          resolve(msg.usage)
+        }
+        break
+      }
+
+      case 'peek-core-result':
+      case 'peek-drive-result': {
+        const resolve = this._statusRequests.get(msg.requestId)
+        if (resolve) {
+          this._statusRequests.delete(msg.requestId)
+          resolve(msg.result)
+        }
+        break
+      }
+
       case 'error':
         this.emit('nodeError', { message: msg.message })
         break
@@ -302,6 +321,69 @@ export class NodeClient extends EventEmitter {
         resolve(status)
       })
       this.socket.write(encodeMessage({ type: 'status-request', requestId }))
+    })
+  }
+
+  /**
+   * Ask the Node to walk its storage directory and report disk usage in
+   * bytes. Slow on large stores — call ad-hoc, not in tight loops.
+   * Returns `null` if the node can't read its storage.
+   *
+   * @param {Object} [opts]
+   * @param {number} [opts.timeout=30000]
+   * @returns {Promise<{ bytes:number, files:number, path:string }|null>}
+   */
+  async getDiskUsage ({ timeout = 30_000 } = {}) {
+    if (this._closing) throw new ClientClosedError()
+    if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
+
+    const requestId = `d${++this._requestSeq}`
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this._statusRequests.delete(requestId)
+        reject(new NodeClientError('STATUS_TIMEOUT', `getDiskUsage() timed out after ${timeout}ms`))
+      }, timeout)
+      this._statusRequests.set(requestId, (usage) => {
+        clearTimeout(timer)
+        resolve(usage)
+      })
+      this.socket.write(encodeMessage({ type: 'disk-usage-request', requestId }))
+    })
+  }
+
+  /**
+   * Peek at the last N blocks of a core the Node is replicating. Useful
+   * for a "data flowing?" sanity check from the dashboard; not a
+   * Hyperbee query API. Returns `null` if the Node isn't replicating
+   * that key.
+   */
+  async peekCore (key, { limit = 5, timeout = 15_000 } = {}) {
+    return this._peek('peek-core', { key, limit }, timeout)
+  }
+
+  /**
+   * Directory listing for a Hyperdrive the Node is replicating.
+   * Returns `null` if the Node isn't replicating that key.
+   */
+  async peekDrive (key, { dir = '/', limit = 50, timeout = 15_000 } = {}) {
+    return this._peek('peek-drive', { key, dir, limit }, timeout)
+  }
+
+  _peek (type, payload, timeoutMs) {
+    if (this._closing) throw new ClientClosedError()
+    if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
+
+    const requestId = `p${++this._requestSeq}`
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this._statusRequests.delete(requestId)
+        reject(new NodeClientError('PEEK_TIMEOUT', `${type} timed out after ${timeoutMs}ms`))
+      }, timeoutMs)
+      this._statusRequests.set(requestId, (result) => {
+        clearTimeout(timer)
+        resolve(result)
+      })
+      this.socket.write(encodeMessage({ type, requestId, ...payload }))
     })
   }
 

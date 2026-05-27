@@ -99,6 +99,45 @@ export class ReplicationEngine {
     }
   }
 
+  // Pause all swarm subscriptions for the given app. The cores stay open
+  // (so reads from the dashboard still work) but we leave the discovery
+  // topic so no new peers are accepted. We record the paused state on
+  // each entry so getStats can surface it.
+  async pauseApp (appId) {
+    let touched = 0
+    for (const [, info] of this.replicating) {
+      if (info.appId !== appId || info.paused) continue
+      try { await this.swarm.leave(info.topic) } catch {}
+      info.paused = true
+      touched++
+    }
+    for (const [, info] of this.drives) {
+      if (info.appId !== appId || info.paused) continue
+      try { await this.swarm.leave(info.topic) } catch {}
+      info.paused = true
+      touched++
+    }
+    return touched
+  }
+
+  // Reverse of pauseApp.
+  async resumeApp (appId) {
+    let touched = 0
+    for (const [, info] of this.replicating) {
+      if (info.appId !== appId || !info.paused) continue
+      try { this.swarm.join(info.topic) } catch {}
+      info.paused = false
+      touched++
+    }
+    for (const [, info] of this.drives) {
+      if (info.appId !== appId || !info.paused) continue
+      try { this.swarm.join(info.topic) } catch {}
+      info.paused = false
+      touched++
+    }
+    return touched
+  }
+
   getStats () {
     const stats = []
     for (const [key, info] of this.replicating) {
@@ -110,6 +149,7 @@ export class ReplicationEngine {
         length: info.core.length,
         byteLength: info.core.byteLength,
         peers: info.core.peers.length,
+        paused: !!info.paused,
         lastSync: info.lastSync || null
       })
     }
@@ -127,6 +167,66 @@ export class ReplicationEngine {
     return info ? info.drive : null
   }
 
+  getCore (keyHex) {
+    const info = this.replicating.get(keyHex)
+    return info ? info.core : null
+  }
+
+  // Read the last `limit` block headers from a core. For hyperbees this is
+  // not the same as the last `limit` entries (Hyperbee buckets multiple
+  // keys per block) but it's enough for the dashboard's "is data flowing?"
+  // sanity check.
+  async peekCore (keyHex, { limit = 5 } = {}) {
+    const core = this.getCore(keyHex)
+    if (!core) return null
+    const length = core.length
+    if (length === 0) {
+      return { key: keyHex, length: 0, byteLength: core.byteLength, blocks: [] }
+    }
+    const lo = Math.max(0, length - limit)
+    const blocks = []
+    for (let seq = lo; seq < length; seq++) {
+      try {
+        // Wait briefly so peek works the first time after a write, but cap
+        // the per-block delay so a torn-down peer can't hang the modal.
+        const block = await core.get(seq, { wait: true, timeout: 1_500 })
+        if (!block) continue
+        const len = block.length || block.byteLength || 0
+        // Best-effort preview: try utf-8 truncated to 80 chars. Binary will
+        // come out as gibberish — that's fine, the user gets a length too.
+        let preview = ''
+        try {
+          preview = block.toString('utf8', 0, Math.min(len, 80))
+        } catch {}
+        blocks.push({ seq, length: len, preview })
+      } catch {}
+    }
+    return { key: keyHex, length, byteLength: core.byteLength, blocks }
+  }
+
+  // Top-level directory listing of a Hyperdrive. Returns `null` if the
+  // drive isn't replicating. `dir` defaults to `/`; entries are limited to
+  // `limit` to keep the dashboard responsive on large drives.
+  async peekDrive (keyHex, { dir = '/', limit = 50 } = {}) {
+    const drive = this.getDrive(keyHex)
+    if (!drive) return null
+
+    const entries = []
+    try {
+      for await (const entry of drive.list(dir, { recursive: false })) {
+        entries.push({
+          key: entry.key,
+          type: entry.value?.linkname ? 'link' : (entry.value?.blob ? 'file' : 'unknown'),
+          size: entry.value?.blob?.byteLength || 0
+        })
+        if (entries.length >= limit) break
+      }
+    } catch (err) {
+      return { key: keyHex, dir, error: err.message, entries }
+    }
+    return { key: keyHex, dir, version: drive.version, entries }
+  }
+
   getDriveStats () {
     const stats = []
     for (const [key, info] of this.drives) {
@@ -136,11 +236,42 @@ export class ReplicationEngine {
         name: info.name,
         appId: info.appId,
         version: info.drive.version,
+        // `core.byteLength` for a Hyperdrive's metadata feed is small;
+        // the actual file bytes live in the blobs core which Hyperdrive
+        // exposes lazily. Try to include both when available.
+        byteLength: info.drive.core.byteLength,
+        blobsByteLength: info.drive.blobs?.core?.byteLength || 0,
         peers: info.drive.core.peers.length,
+        paused: !!info.paused,
         lastSync: info.lastSync || null
       })
     }
     return stats
+  }
+
+  // Logical-bytes view: sum of what we'd replicate, not what's on disk.
+  // Bytes-on-disk needs to walk the storage directory and is computed in
+  // NodeDaemon.getDiskUsage() because the directory path lives there.
+  getReplicatedBytes () {
+    const perApp = new Map()
+    let totalCores = 0
+    let totalDrives = 0
+    for (const [, info] of this.replicating) {
+      const n = info.core.byteLength || 0
+      totalCores += n
+      perApp.set(info.appId, (perApp.get(info.appId) || 0) + n)
+    }
+    for (const [, info] of this.drives) {
+      const n = (info.drive.core.byteLength || 0) + (info.drive.blobs?.core?.byteLength || 0)
+      totalDrives += n
+      perApp.set(info.appId, (perApp.get(info.appId) || 0) + n)
+    }
+    return {
+      totalCores,
+      totalDrives,
+      total: totalCores + totalDrives,
+      perApp: Object.fromEntries(perApp)
+    }
   }
 
   async close () {

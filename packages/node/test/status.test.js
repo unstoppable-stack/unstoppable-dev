@@ -71,6 +71,45 @@ describe('node status RPC', () => {
     }
   })
 
+  it('client.getDiskUsage() returns bytes/files/path', async () => {
+    const node = await env.createNode()
+    await node.start()
+
+    const client = await env.createConnectedClient({ appId: 'disk' })
+
+    try {
+      const usage = await client.getDiskUsage()
+      assert.ok(usage, 'expected disk usage object')
+      assert.equal(typeof usage.bytes, 'number')
+      assert.equal(typeof usage.files, 'number')
+      assert.ok(usage.files > 0, 'expected at least one file after corestore init')
+      assert.ok(usage.bytes > 0, 'expected non-zero bytes')
+      assert.ok(typeof usage.path === 'string' && usage.path.length > 0)
+    } finally {
+      await client.close()
+      await node.close()
+    }
+  })
+
+  it('status includes storage block with totals + perApp breakdown', async () => {
+    const node = await env.createNode()
+    await node.start()
+
+    const client = await env.createConnectedClient({ appId: 'storage-app' })
+
+    try {
+      const status = await client.getNodeStatus()
+      assert.ok(status.storage, 'status.storage should be present')
+      assert.equal(typeof status.storage.total, 'number')
+      assert.equal(typeof status.storage.totalCores, 'number')
+      assert.equal(typeof status.storage.totalDrives, 'number')
+      assert.ok(status.storage.perApp, 'storage.perApp present')
+    } finally {
+      await client.close()
+      await node.close()
+    }
+  })
+
   it('status surfaces AI readiness when the node has a mock AI provider', async () => {
     const node = await env.createNode({ ai: { mock: true } })
     await node.start()

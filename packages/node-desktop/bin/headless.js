@@ -39,6 +39,24 @@ const host = createDaemonHost({
   exit
 })
 
+if (_proc?.stdin) {
+  let buffer = ''
+  _proc.stdin.setEncoding?.('utf8')
+  _proc.stdin.on('data', async (data) => {
+    buffer += data.toString()
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+    for (const line of lines) {
+      if (!line.trim()) continue
+      try {
+        await host.handleCommand(JSON.parse(line))
+      } catch (err) {
+        send({ type: 'error', phase: 'stdin-command', error: err.message })
+      }
+    }
+  })
+}
+
 async function shutdown () {
   await host.cleanup()
 }
