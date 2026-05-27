@@ -39,6 +39,16 @@ export function localDiscoveryTopic () {
   return crypto.hash(b4a.from(`unstoppable:node:local:${PROTOCOL_VERSION}:${machineId}`))
 }
 
+// Friendly identifier the dashboard shows in the pair-approval modal
+// so a user with the same `appId` on phone + laptop can tell them apart.
+// Apps may override via `connectToNode({ deviceName })`.
+export function localDeviceName () {
+  if (_os && typeof _os.hostname === 'function') {
+    try { return _os.hostname() } catch {}
+  }
+  return null
+}
+
 export function parseMessages (data) {
   try {
     const lines = b4a.toString(data).split('\n').filter(Boolean)

@@ -20,11 +20,13 @@
     "dev": "pear run -d .",
     "stage": "pear stage .",
     "release": "pear release .",
-    "test": "node --test --test-force-exit test/*.test.js"
+    "test": "node --test --test-force-exit test/*.test.js",
+    "test:smoke": "node scripts/smoke.js"
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
     "pear-bridge": "^1.2.4",
+    "pear-electron": "^1.7.0",
+    "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
     "unstoppable-node": "file:../node"
   }
