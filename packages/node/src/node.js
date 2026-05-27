@@ -31,6 +31,20 @@ export class NodeDaemon extends EventEmitter {
     // protocol before Hyperdrive replication existed — it's always on now.
     // `ai` flips to true when start() successfully brings up an AIProvider.
     this.services = { ...DEFAULT_SERVICES, ...(opts.services || {}) }
+
+    // Optional pair-approval gate. When provided, we await it before
+    // accepting a `pairRequest` and registering the app. The callback
+    // receives `{ appId, appName, publicKey, remoteKey }` (publicKey =
+    // app's identity key, remoteKey = transport peer key from
+    // Hyperswarm) and must resolve to one of:
+    //   'approve'           — proceed; do NOT remember
+    //   'approve-remember'  — proceed; remember (caller persists)
+    //   'deny' (or anything else) — reject with `pairDenied`
+    // Without a callback, the daemon auto-accepts (CLI / headless
+    // mode); the dashboard wires this up to the approval modal.
+    this._approvePairing = typeof opts.approvePairing === 'function'
+      ? opts.approvePairing
+      : null
   }
 
   async start () {
@@ -193,8 +207,37 @@ export class NodeDaemon extends EventEmitter {
       appId: msg.appId,
       appName: msg.appName,
       publicKey: msg.publicKey,
-      deviceName: msg.deviceName
+      deviceName: msg.deviceName,
+      remoteKey
     })
+
+    if (this._approvePairing) {
+      let decision
+      try {
+        decision = await this._approvePairing({
+          appId: msg.appId,
+          appName: msg.appName,
+          publicKey: msg.publicKey,
+          remoteKey
+        })
+      } catch (err) {
+        this.emit('error', { type: 'approval', appId: msg.appId, error: err.message })
+        decision = 'deny'
+      }
+      if (decision !== 'approve' && decision !== 'approve-remember') {
+        socket.write(encodeMessage({
+          type: 'pairDenied',
+          reason: typeof decision === 'string' ? decision : 'denied'
+        }))
+        this.emit('pairDenied', {
+          appId: msg.appId,
+          appName: msg.appName,
+          publicKey: msg.publicKey,
+          reason: typeof decision === 'string' ? decision : 'denied'
+        })
+        return
+      }
+    }
 
     await this.registry.registerApp({
       appId: msg.appId,

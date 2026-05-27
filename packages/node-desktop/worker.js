@@ -14,6 +14,7 @@
 // UI) or simple commands (UI → node: unpair, toggle-ai).
 
 import { NodeDaemon } from 'unstoppable-node/src/node.js'
+import { ApprovalGate } from './lib/approval.js'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
@@ -25,14 +26,32 @@ function send (msg) {
 const aiMock = Pear.config.args?.includes('--ai-mock') || false
 const aiEnabled = aiMock || Pear.config.args?.includes('--ai') || false
 
-const node = new NodeDaemon(storagePath, {
-  ai: aiEnabled ? { mock: aiMock } : undefined
+// Trust gate. Lives next to the corestore so it survives restarts.
+const approvalGate = new ApprovalGate({
+  registryPath: `${storagePath}/trust-registry.json`
 })
 
-node.on('ready', (info) => send({ type: 'ready', ...info, services: node.services }))
+approvalGate.on('pending', (info) => send({ type: 'pairAwaitingApproval', ...info }))
+approvalGate.on('autoDecided', (info) => send({ type: 'pairAutoDecided', ...info }))
+approvalGate.on('decided', (info) => send({ type: 'pairDecisionRecorded', ...info }))
+approvalGate.on('revoked', (info) => send({ type: 'pairRevoked', ...info }))
+approvalGate.on('forgot', (info) => send({ type: 'pairForgotten', ...info }))
+
+const node = new NodeDaemon(storagePath, {
+  ai: aiEnabled ? { mock: aiMock } : undefined,
+  approvePairing: (req) => approvalGate.request(req)
+})
+
+node.on('ready', (info) => send({
+  type: 'ready',
+  ...info,
+  services: node.services,
+  trust: approvalGate.snapshot()
+}))
 node.on('restored', (info) => send({ type: 'restored', ...info }))
 node.on('pairRequest', (info) => send({ type: 'pairRequest', ...info }))
 node.on('paired', (info) => send({ type: 'paired', ...info }))
+node.on('pairDenied', (info) => send({ type: 'pairDenied', ...info }))
 node.on('appRegistered', (info) => send({ type: 'appRegistered', ...info }))
 node.on('peerConnected', (info) => send({ type: 'peerConnected', ...info }))
 node.on('peerDisconnected', (info) => send({ type: 'peerDisconnected', ...info }))
@@ -50,7 +69,7 @@ const STATUS_INTERVAL_MS = 2_000
 const statusTimer = setInterval(async () => {
   try {
     const status = await node.getStatus()
-    send({ type: 'status', ...status })
+    send({ type: 'status', ...status, trust: approvalGate.snapshot() })
   } catch (err) {
     send({ type: 'error', phase: 'status', error: err.message })
   }
@@ -74,16 +93,46 @@ pipe.on('data', async (data) => {
 async function handleCommand (msg) {
   switch (msg.type) {
     case 'unpair':
+      // Revoke trust at the same time as unpairing so a malicious
+      // app can't silently re-pair on the next connection. The UI
+      // is expected to send the publicKey alongside the appId; if
+      // it's missing (older renderer), we still unpair but the
+      // key remains in "approved" state — better than losing data.
+      if (msg.publicKey) {
+        await approvalGate.revoke(msg.publicKey, {
+          appId: msg.appId,
+          appName: msg.appName,
+          reason: 'unpaired by user'
+        })
+      }
       await node.unpairApp(msg.appId)
       break
+
+    case 'pair-approve':
+      await approvalGate.approve(msg.publicKey, { remember: msg.remember !== false })
+      break
+
+    case 'pair-deny':
+      await approvalGate.deny(msg.publicKey, {
+        remember: msg.remember !== false,
+        reason: msg.reason || 'denied by user'
+      })
+      break
+
+    case 'forget-trust':
+      await approvalGate.forget(msg.publicKey)
+      break
+
     case 'refresh-status': {
       const status = await node.getStatus()
-      send({ type: 'status', ...status })
+      send({ type: 'status', ...status, trust: approvalGate.snapshot() })
       break
     }
+
     case 'shutdown':
       await cleanup()
       break
+
     default:
       send({ type: 'error', phase: 'command', error: `Unknown command: ${msg.type}` })
   }
@@ -97,6 +146,15 @@ async function cleanup () {
 
 send({ type: 'workerReady', aiEnabled, aiMock })
 
-node.start().catch((err) => {
-  send({ type: 'fatal', error: err.message })
-})
+;(async () => {
+  try {
+    // Hydrate the trust registry from disk before the daemon
+    // starts accepting connections. Otherwise a fast inbound peer
+    // could trigger a "first time we see this key" prompt for a
+    // key we already trusted in a previous session.
+    await approvalGate.ready()
+    await node.start()
+  } catch (err) {
+    send({ type: 'fatal', error: err.message })
+  }
+})()
