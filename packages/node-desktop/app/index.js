@@ -18,6 +18,7 @@ document.getElementById('app').innerHTML = `
       <div class="services" id="services"></div>
       <div class="header-actions">
         <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
+        <button class="btn-ghost" id="help-btn" title="Show the welcome guide">?</button>
       </div>
     </header>
     <main class="content">
@@ -63,6 +64,23 @@ document.getElementById('app').innerHTML = `
         <button class="btn btn-approve" id="modal-approve">Approve &amp; remember</button>
       </div>
       <p class="modal-pending dim" id="modal-pending-count" hidden></p>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="welcome-modal" hidden>
+    <div class="modal modal-wide">
+      <h2 class="modal-title">Welcome to Unstoppable Node</h2>
+      <p class="modal-text">This window keeps a P2P data hub running on your machine. Apps you launch with <code>us init</code> will pair with it automatically.</p>
+      <ul class="welcome-list">
+        <li><strong>Data + files</strong> always available — your cores and drives replicate in the background while this window is open.</li>
+        <li><strong>AI</strong> is opt-in. Click <em>Enable AI</em> in the header (mock is fine for demos), or run with <code>--ai</code> for QVAC.</li>
+        <li><strong>Trust gate</strong> — every first-time pair request shows up as a modal. Approve it once, or remember the decision.</li>
+        <li><strong>Peek + pause</strong> — every paired app gets a row with a "Peek data" and Pause/Resume button so you can poke without leaving the dashboard.</li>
+      </ul>
+      <p class="modal-text dim">You can re-open this any time from the header. Nothing is sent off your machine.</p>
+      <div class="modal-actions">
+        <button class="btn btn-approve" id="welcome-dismiss">Got it</button>
+      </div>
     </div>
   </div>
 
@@ -201,6 +219,7 @@ onWorkerMessage((msg) => {
 wireApprovalModal()
 wireAiToggle()
 wirePeekModal()
+wireWelcomeModal()
 
 const peekState = {
   appId: null,
@@ -544,6 +563,32 @@ function wirePeekModal () {
   if (close) close.addEventListener('click', closePeekModal)
 }
 
+// First-run welcome modal. Uses localStorage so subsequent launches skip the
+// modal by default. The header `?` button always re-opens it.
+const WELCOME_KEY = 'unstoppable-node-welcome-seen'
+
+function showWelcome () {
+  const m = document.getElementById('welcome-modal')
+  if (m) m.hidden = false
+}
+
+function hideWelcome () {
+  const m = document.getElementById('welcome-modal')
+  if (m) m.hidden = true
+  try { localStorage.setItem(WELCOME_KEY, '1') } catch {}
+}
+
+function wireWelcomeModal () {
+  const dismiss = document.getElementById('welcome-dismiss')
+  const help = document.getElementById('help-btn')
+  if (dismiss) dismiss.addEventListener('click', hideWelcome)
+  if (help) help.addEventListener('click', showWelcome)
+
+  let seen = false
+  try { seen = localStorage.getItem(WELCOME_KEY) === '1' } catch {}
+  if (!seen) showWelcome()
+}
+
 function wireAiToggle () {
   const btn = document.getElementById('ai-toggle')
   if (!btn) return
@@ -758,6 +803,9 @@ function injectStyles () {
     .peek-row { padding: 4px 0; border-bottom: 1px dashed #21262d; }
     .peek-row:last-child { border-bottom: 0; }
     .header-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+    .welcome-list { padding-left: 18px; margin: 6px 0 14px; color: #c9d1d9; line-height: 1.5; }
+    .welcome-list li { margin: 6px 0; }
+    .welcome-list code, .modal-text code { background: rgba(110, 118, 129, 0.2); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, monospace; }
 
     .mono { font-family: 'SFMono-Regular', monospace; }
     .mono-wrap { word-break: break-all; }

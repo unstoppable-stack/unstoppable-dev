@@ -1,9 +1,36 @@
 # Unstoppable Node v0.4 — Implementation Spec
 
-> Status: **proposed**
+> Status: **in progress (16 of 20 features landed)** — see "Implementation status" below
 > Audience: an engineer picking up the Node work cold
 > Last updated: 2026-05-27
 > Scope: turn the current local-only Node slice into a publishable, smoke-tested developer preview
+
+## Implementation status (2026-05-27)
+
+| ID | Feature | Status |
+|----|---------|--------|
+| F1 | Bare-runtime smoke test in CI | Done — `bin/headless.js` + `scripts/smoke.js` + `.github/workflows/node-smoke.yml` |
+| F2 | Migrate off `Pear.worker.pipe()` | Done — `pear-pipe` in dashboard worker |
+| F3 | Publish prep (no actual publish) | Done — exports map, files list, repo metadata, READMEs, gated `node-publish.yml`; `npm publish --dry-run` passes |
+| F4 | Real-QVAC E2E test | Pending — needs model download in CI; mock path covered by F1 smoke |
+| F5 | Discovery flakiness | Pending — needs reproduction work |
+| F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
+| F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
+| F8 | Live AI toggle | Done — `enableAI`/`disableAI` + dashboard button |
+| F9 | Notifications | Pending |
+| F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
+| F11 | "auto-paired" badge + Promote | Done |
+| F12 | Storage quotas | Pending |
+| F13 | Export / import | Pending |
+| F14 | Per-app pause/resume | Done |
+| F15 | `getNodeStatus()` + event | Done |
+| F16 | Reconnect with backoff | Done — opt-in |
+| F17 | Typed errors | Done — 6 subclasses with stable `.code` |
+| F18 | `us node` subcommand | Done — start/status/stop, pid file, log tail |
+| F19 | First-run welcome modal | Done — localStorage-gated + `?` button |
+| F20 | System tray | Pending |
+
+323 tests pass across 4 packages.
 > Predecessor docs (read first, in order):
 >   1. `planning/features/node.md` — concept
 >   2. `planning/features/node-technical.md` — architecture

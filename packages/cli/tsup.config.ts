@@ -21,6 +21,7 @@ type Flag =
   | 'US_FEAT_REMOTE'
   | 'US_FEAT_RESEARCH'
   | 'US_FEAT_SEARCH'
+  | 'US_FEAT_NODE'
 
 type ProfileName = 'minimal' | 'full'
 
@@ -33,6 +34,7 @@ const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
     US_FEAT_REMOTE: false,
     US_FEAT_RESEARCH: false,
     US_FEAT_SEARCH: false,
+    US_FEAT_NODE: true,
   },
   // Everything we've built. Used for `pnpm dev`, integration tests, and
   // internal installs that need `us remote` / `us research` / `us search`.
@@ -43,6 +45,7 @@ const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
     US_FEAT_REMOTE: true,
     US_FEAT_RESEARCH: true,
     US_FEAT_SEARCH: true,
+    US_FEAT_NODE: true,
   },
 }
 
