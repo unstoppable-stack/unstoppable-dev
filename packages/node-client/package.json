@@ -7,6 +7,9 @@
   "exports": {
     ".": "./src/index.js"
   },
+  "scripts": {
+    "test": "node --test --test-force-exit test/*.test.js"
+  },
   "dependencies": {
     "b4a": "^1.8.0",
     "bare-events": "^2.8.3",

@@ -163,6 +163,71 @@ describe('lib/approval — ApprovalGate', () => {
     assert.equal(pendings, 0)
   })
 
+  it('forwards deviceName on the pending event so the modal can show it', async () => {
+    const gate = new ApprovalGate({ registryPath: path })
+    await gate.ready()
+
+    const pendings = []
+    gate.on('pending', (p) => pendings.push(p))
+
+    const decision = gate.request({
+      appId: 'app',
+      appName: 'App',
+      publicKey: 'kk11',
+      deviceName: 'my-laptop.local',
+      remoteKey: 'rr01'
+    })
+    await Promise.resolve()
+    assert.equal(pendings.length, 1)
+    assert.equal(pendings[0].deviceName, 'my-laptop.local')
+
+    await gate.approve('kk11')
+    assert.equal(await decision, 'approve-remember')
+  })
+
+  it('null deviceName falls through to null on the pending event', async () => {
+    const gate = new ApprovalGate({ registryPath: path })
+    await gate.ready()
+
+    const pendings = []
+    gate.on('pending', (p) => pendings.push(p))
+
+    const decision = gate.request({
+      appId: 'app',
+      appName: 'App',
+      publicKey: 'kk22',
+      remoteKey: 'rr02'
+    })
+    await Promise.resolve()
+    assert.equal(pendings[0].deviceName, null)
+    await gate.approve('kk22')
+    await decision
+  })
+
+  it('promote() writes a remembered approval for an auto-paired key', async () => {
+    const gate = new ApprovalGate({ registryPath: path })
+    await gate.ready()
+
+    const events = []
+    gate.on('promoted', (e) => events.push(e))
+
+    await gate.promote('autopairedkey', { appId: 'aa', appName: 'AA' })
+
+    const snap = gate.snapshot()
+    assert.equal(snap.approved.autopairedkey?.appId, 'aa')
+    assert.equal(events.length, 1)
+    assert.equal(events[0].publicKey, 'autopairedkey')
+
+    // And from now on this key short-circuits to "approve".
+    const decision = await gate.request({
+      appId: 'aa',
+      appName: 'AA',
+      publicKey: 'autopairedkey',
+      remoteKey: 'r1'
+    })
+    assert.equal(decision, 'approve')
+  })
+
   it('snapshot reflects persisted state and pending requests', async () => {
     const gate = new ApprovalGate({ registryPath: path })
     await gate.ready()

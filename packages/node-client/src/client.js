@@ -1,7 +1,8 @@
 import Hyperswarm from 'hyperswarm'
 import b4a from 'b4a'
 import { EventEmitter } from 'bare-events'
-import { localDiscoveryTopic, encodeMessage } from './protocol.js'
+import { localDiscoveryTopic, localDeviceName, encodeMessage } from './protocol.js'
+import { ClientClosedError, InferenceError, NodeClientError } from './errors.js'
 
 // How long we'll wait for a peer to send `nodeHello` before deciding it's
 // not actually a Node and dropping the connection. This matters because
@@ -19,13 +20,33 @@ function _uptime () {
   return (Date.now() - _startedAt) / 1000
 }
 
+// Default reconnect knobs when the caller passes `reconnect: true`.
+const DEFAULT_RECONNECT = Object.freeze({
+  initialDelayMs: 500,
+  maxDelayMs: 15_000,
+  factor: 2,
+  maxAttempts: Infinity
+})
+
 export class NodeClient extends EventEmitter {
-  constructor ({ appId, appName, cores = [], drives = [], swarm: swarmOpts, topic: topicOverride }) {
+  constructor ({
+    appId,
+    appName,
+    cores = [],
+    drives = [],
+    swarm: swarmOpts,
+    topic: topicOverride,
+    deviceName,
+    reconnect
+  }) {
     super()
     this.appId = appId
     this.appName = appName
     this.cores = cores
     this.drives = drives
+    this.deviceName = typeof deviceName === 'string' && deviceName.length > 0
+      ? deviceName
+      : localDeviceName()
 
     this.swarm = new Hyperswarm(swarmOpts)
     this.socket = null
@@ -38,11 +59,22 @@ export class NodeClient extends EventEmitter {
     this._candidates = new Map()
     this._topicOverride = topicOverride || null
     this._inferenceRequests = new Map()
+    this._statusRequests = new Map()
     this._requestSeq = 0
+    this.lastStatus = null
+    this._topic = null
+
+    this._reconnect = reconnect
+      ? { ...DEFAULT_RECONNECT, ...(typeof reconnect === 'object' ? reconnect : {}) }
+      : null
+    this._reconnectAttempt = 0
+    this._reconnectTimer = null
+    this._wasEverPaired = false
   }
 
   async connect () {
     const topic = this._topicOverride || localDiscoveryTopic()
+    this._topic = topic
 
     this.swarm.join(topic, { server: false, client: true })
 
@@ -98,8 +130,10 @@ export class NodeClient extends EventEmitter {
         this.socket = null
         this.paired = false
         this.registered = false
+        this.services = null
         if (!this._closing) {
           this.emit('disconnected')
+          if (this._reconnect) this._scheduleReconnect()
         }
       }
     })
@@ -149,6 +183,7 @@ export class NodeClient extends EventEmitter {
       appId: this.appId,
       appName: this.appName,
       publicKey: b4a.toString(this.swarm.keyPair.publicKey, 'hex'),
+      deviceName: this.deviceName || undefined,
       pid: _pid
     }))
   }
@@ -189,10 +224,17 @@ export class NodeClient extends EventEmitter {
         socket.destroy()
         break
 
-      case 'registered':
+      case 'registered': {
         this.registered = true
+        const isReconnection = this._wasEverPaired
+        this._wasEverPaired = true
+        if (isReconnection) {
+          this._reconnectAttempt = 0
+          this.emit('reconnected', { attempts: this._reconnectAttempt })
+        }
         this.emit('registered', { replicating: msg.replicating })
         break
+      }
 
       case 'syncStatus':
         this.emit('syncStatus', msg)
@@ -204,6 +246,17 @@ export class NodeClient extends EventEmitter {
         const handler = this._inferenceRequests.get(msg.requestId)
         if (handler) handler(msg)
         else this.emit('message', msg)
+        break
+      }
+
+      case 'status': {
+        this.lastStatus = msg.status
+        this.emit('nodeStatus', msg.status)
+        const resolve = this._statusRequests.get(msg.requestId)
+        if (resolve) {
+          this._statusRequests.delete(msg.requestId)
+          resolve(msg.status)
+        }
         break
       }
 
@@ -226,9 +279,36 @@ export class NodeClient extends EventEmitter {
    * @param {Array<{role:string,content:string}>} req.messages
    * @returns {AsyncGenerator<string>}
    */
+  /**
+   * Ask the Node for a fresh status snapshot. Useful for "Connected to:
+   * 3 apps, AI ready" style headers. Also emits a `nodeStatus` event.
+   *
+   * @param {Object} [opts]
+   * @param {number} [opts.timeout=5000]
+   * @returns {Promise<Object>}
+   */
+  async getNodeStatus ({ timeout = 5_000 } = {}) {
+    if (this._closing) throw new ClientClosedError()
+    if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
+
+    const requestId = `s${++this._requestSeq}`
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this._statusRequests.delete(requestId)
+        reject(new NodeClientError('STATUS_TIMEOUT', `getNodeStatus() timed out after ${timeout}ms`))
+      }, timeout)
+      this._statusRequests.set(requestId, (status) => {
+        clearTimeout(timer)
+        resolve(status)
+      })
+      this.socket.write(encodeMessage({ type: 'status-request', requestId }))
+    })
+  }
+
   async *requestInference ({ messages }) {
-    if (!this.paired || !this.socket) throw new Error('Not paired with a node')
-    if (!this.services?.ai) throw new Error('Node does not advertise AI service')
+    if (this._closing) throw new ClientClosedError()
+    if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
+    if (!this.services?.ai) throw new NodeClientError('NODE_MISSING_SERVICE', 'Node does not advertise AI service', { missing: ['ai'], services: this.services })
 
     const requestId = `r${++this._requestSeq}`
     const queue = []
@@ -242,7 +322,7 @@ export class NodeClient extends EventEmitter {
       } else if (msg.type === 'inference-done') {
         done = true
       } else if (msg.type === 'inference-error') {
-        error = new Error(msg.error || 'inference failed')
+        error = new InferenceError(msg.error || 'inference failed')
         done = true
       }
       if (resolveNext) { const r = resolveNext; resolveNext = null; r() }
@@ -301,8 +381,47 @@ export class NodeClient extends EventEmitter {
     }))
   }
 
+  // Opt-in reconnect with exponential backoff. The hyperswarm topic stays
+  // joined across disconnects, so most of the time a new peer will arrive
+  // on its own; the scheduler is here mainly to (a) re-emit `searching`
+  // events for the app to react to and (b) optionally bail out after
+  // maxAttempts so a poorly-behaved Node doesn't trap the app forever.
+  _scheduleReconnect () {
+    if (this._closing || !this._reconnect) return
+    if (this._reconnectTimer) return
+
+    const { initialDelayMs, maxDelayMs, factor, maxAttempts } = this._reconnect
+    if (this._reconnectAttempt >= maxAttempts) {
+      this.emit('reconnectFailed', { attempts: this._reconnectAttempt })
+      return
+    }
+    this._reconnectAttempt++
+    const delay = Math.min(
+      initialDelayMs * Math.pow(factor, this._reconnectAttempt - 1),
+      maxDelayMs
+    )
+    this.emit('reconnecting', { attempt: this._reconnectAttempt, delayMs: delay })
+    this._reconnectTimer = setTimeout(() => {
+      this._reconnectTimer = null
+      if (this._closing || this.paired) return
+      // Re-join the discovery topic to nudge the swarm. Hyperswarm dedupes
+      // joins on the same topic so this is cheap if we're still joined.
+      try {
+        if (this._topic) this.swarm.join(this._topic, { server: false, client: true })
+        this.swarm.flush().catch(() => {})
+      } catch {}
+      this.emit('searching')
+      // If we still haven't paired by the next backoff window, escalate.
+      this._scheduleReconnect()
+    }, delay)
+  }
+
   async close () {
     this._closing = true
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer)
+      this._reconnectTimer = null
+    }
     for (const [, entry] of this._candidates) {
       if (entry.helloTimer) clearTimeout(entry.helloTimer)
       try { entry.socket.destroy() } catch {}

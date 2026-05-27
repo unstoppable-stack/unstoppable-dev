@@ -70,7 +70,8 @@ export async function createTestEnv () {
       swarm: { bootstrap },
       topic,
       timeout: opts.timeout,
-      requireServices: opts.requireServices
+      requireServices: opts.requireServices,
+      reconnect: opts.reconnect
     })
   }
 

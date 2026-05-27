@@ -1,7 +1,25 @@
 import { NodeClient } from './client.js'
 import { KNOWN_SERVICES } from './protocol.js'
+import {
+  NodeClientError,
+  NodeNotFoundError,
+  NodeDeniedError,
+  NodeMissingServiceError,
+  InvalidOptionError,
+  ClientClosedError,
+  InferenceError
+} from './errors.js'
 
 export { NodeClient }
+export {
+  NodeClientError,
+  NodeNotFoundError,
+  NodeDeniedError,
+  NodeMissingServiceError,
+  InvalidOptionError,
+  ClientClosedError,
+  InferenceError
+}
 
 /**
  * Connect an app to the local Unstoppable Node.
@@ -17,6 +35,18 @@ export { NodeClient }
  * @param {string[]} [opts.requireServices]  - Services the Node must advertise
  *                                             (e.g. ['data', 'files']). Rejects
  *                                             if the Node reports any as false.
+ * @param {string} [opts.deviceName]     - Friendly device label shown in the
+ *                                         dashboard's pair-approval modal.
+ *                                         Defaults to `os.hostname()`.
+ * @param {boolean|Object} [opts.reconnect] - If truthy, the client will
+ *                                          re-search for the Node and
+ *                                          re-pair on disconnect, with
+ *                                          exponential backoff. Pass an
+ *                                          object to tune
+ *                                          `{ initialDelayMs, maxDelayMs,
+ *                                            factor, maxAttempts }`.
+ *                                          Listen for `reconnecting` /
+ *                                          `reconnected` events.
  * @returns {Promise<NodeClient>} Connected and paired client
  */
 export async function connectToNode ({
@@ -27,20 +57,22 @@ export async function connectToNode ({
   swarm,
   topic,
   timeout: timeoutMs = 15_000,
-  requireServices = []
+  requireServices = [],
+  deviceName,
+  reconnect
 }) {
   for (const s of requireServices) {
     if (!KNOWN_SERVICES.includes(s)) {
-      throw new Error(`Unknown service "${s}" — known: ${KNOWN_SERVICES.join(', ')}`)
+      throw new InvalidOptionError(`Unknown service "${s}" — known: ${KNOWN_SERVICES.join(', ')}`)
     }
   }
 
-  const client = new NodeClient({ appId, appName, cores, drives, swarm, topic })
+  const client = new NodeClient({ appId, appName, cores, drives, swarm, topic, deviceName, reconnect })
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       client.close()
-      reject(new Error('Node not found — is unstoppable-node running?'))
+      reject(new NodeNotFoundError())
     }, timeoutMs)
 
     // Check requireServices as soon as we learn about the node (don't wait
@@ -50,10 +82,7 @@ export async function connectToNode ({
       if (missing.length > 0) {
         clearTimeout(timeout)
         client.close()
-        reject(new Error(
-          `Node does not offer required service(s): ${missing.join(', ')}. ` +
-          `Advertised: ${JSON.stringify(services)}`
-        ))
+        reject(new NodeMissingServiceError(missing, services))
       }
     })
 
@@ -65,7 +94,7 @@ export async function connectToNode ({
     client.on('pairDenied', ({ reason }) => {
       clearTimeout(timeout)
       client.close()
-      reject(new Error(`Node denied pairing: ${reason}`))
+      reject(new NodeDeniedError(reason))
     })
 
     client.connect().catch((err) => {

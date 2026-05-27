@@ -40,16 +40,16 @@ export class ApprovalGate extends EventEmitter {
   }
 
   // Called by the daemon for each pairRequest.
-  async request ({ appId, appName, publicKey, remoteKey }) {
+  async request ({ appId, appName, publicKey, deviceName, remoteKey }) {
     await this.ready()
 
     const { decision } = decisionFor(this._cache, publicKey)
     if (decision === 'deny') {
-      this.emit('autoDecided', { decision: 'deny', publicKey, appId, appName })
+      this.emit('autoDecided', { decision: 'deny', publicKey, appId, appName, deviceName })
       return 'deny'
     }
     if (decision === 'approve') {
-      this.emit('autoDecided', { decision: 'approve', publicKey, appId, appName })
+      this.emit('autoDecided', { decision: 'approve', publicKey, appId, appName, deviceName })
       return 'approve'
     }
 
@@ -59,6 +59,7 @@ export class ApprovalGate extends EventEmitter {
         appId,
         appName,
         publicKey,
+        deviceName: typeof deviceName === 'string' ? deviceName : null,
         remoteKey: typeof remoteKey === 'string' ? remoteKey : null,
         receivedAt: new Date().toISOString()
       }
@@ -129,6 +130,19 @@ export class ApprovalGate extends EventEmitter {
       reason
     })
     this.emit('revoked', { publicKey, appId, appName, reason })
+  }
+
+  // Promote a key the daemon auto-paired (no user gate at the time of
+  // pairing — e.g. paired before the trust gate existed, or paired in
+  // CLI mode without an `approvePairing` callback) to "user-approved"
+  // status. Writes an approval entry so it shows the `trusted` badge.
+  async promote (publicKey, { appId, appName } = {}) {
+    this._cache = await recordApproval(this.registryPath, publicKey, {
+      appId: appId || 'unknown',
+      appName: appName || 'unknown',
+      remember: true
+    })
+    this.emit('promoted', { publicKey, appId, appName })
   }
 
   // Forget a decision entirely (returns key to "unknown" state).

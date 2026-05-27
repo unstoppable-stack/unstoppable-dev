@@ -1,0 +1,55 @@
+name: Node Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/node/**'
+      - 'packages/node-client/**'
+      - 'packages/node-desktop/**'
+      - 'sandbox/node-demo/**'
+      - '.github/workflows/node-smoke.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/node/**'
+      - 'packages/node-client/**'
+      - 'packages/node-desktop/**'
+      - 'sandbox/node-demo/**'
+      - '.github/workflows/node-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  headless-demo:
+    name: Headless Bare demo
+    runs-on: macos-14
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Bare/Pear runtimes
+        run: npm install -g bare@latest pear@latest
+
+      - name: Install node package deps
+        working-directory: packages/node
+        run: npm install
+
+      - name: Install node-client package deps
+        working-directory: packages/node-client
+        run: npm install
+
+      - name: Install node-desktop package deps
+        working-directory: packages/node-desktop
+        run: npm install
+
+      - name: Install node-demo deps
+        working-directory: sandbox/node-demo
+        run: npm install
+
+      - name: Run headless smoke test
+        working-directory: packages/node-desktop
+        run: npm run test:smoke

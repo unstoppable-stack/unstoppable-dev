@@ -172,10 +172,22 @@ export class NodeDaemon extends EventEmitter {
       case 'inference':
         await this._handleInference(msg, socket, remoteKey)
         break
+      case 'status-request':
+        await this._handleStatusRequest(msg, socket)
+        break
       default:
         this.emit('unknownMessage', { type: msg.type, from: remoteKey })
     }
   }
+
+  async _handleStatusRequest (msg, socket) {
+    socket.write(encodeMessage({
+      type: 'status',
+      requestId: msg.requestId,
+      status: await this.getStatus()
+    }))
+  }
+
 
   async _handleInference (msg, socket /* , remoteKey */) {
     const requestId = msg.requestId
@@ -218,6 +230,7 @@ export class NodeDaemon extends EventEmitter {
           appId: msg.appId,
           appName: msg.appName,
           publicKey: msg.publicKey,
+          deviceName: msg.deviceName,
           remoteKey
         })
       } catch (err) {
@@ -233,6 +246,7 @@ export class NodeDaemon extends EventEmitter {
           appId: msg.appId,
           appName: msg.appName,
           publicKey: msg.publicKey,
+          deviceName: msg.deviceName,
           reason: typeof decision === 'string' ? decision : 'denied'
         })
         return
@@ -242,7 +256,8 @@ export class NodeDaemon extends EventEmitter {
     await this.registry.registerApp({
       appId: msg.appId,
       appName: msg.appName,
-      publicKey: msg.publicKey
+      publicKey: msg.publicKey,
+      deviceName: msg.deviceName
     })
 
     socket.write(encodeMessage({
@@ -303,13 +318,34 @@ export class NodeDaemon extends EventEmitter {
     })
   }
 
+  // Snapshot of the daemon's current state. Stable shape — consumed by:
+  //   - the dashboard worker (full detail)
+  //   - `NodeClient.getNodeStatus()` over the wire (full detail; safe to
+  //     send to the same client that already paired)
+  //   - `us node status` and other headless tools
   async getStatus () {
-    const apps = await this.registry.listApps()
-    const coreStats = this.replication.getStats()
-    const driveStats = this.replication.getDriveStats()
+    const apps = this.registry ? await this.registry.listApps() : []
+    const coreStats = this.replication ? this.replication.getStats() : []
+    const driveStats = this.replication ? this.replication.getDriveStats() : []
     const connectedPeers = this.connections.size
 
-    return { apps, cores: coreStats, drives: driveStats, connectedPeers, services: this.services }
+    return {
+      protocolVersion: PROTOCOL_VERSION,
+      nodePublicKey: this.discoverySwarm
+        ? b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex')
+        : null,
+      services: { ...this.services },
+      apps,
+      pairedApps: apps.length,
+      cores: coreStats,
+      drives: driveStats,
+      connectedPeers,
+      ai: this.ai ? {
+        ready: !!this.services.ai,
+        mock: !!this._aiOpts?.mock,
+        modelId: this.ai.modelId || null
+      } : null
+    }
   }
 
   async unpairApp (appId) {

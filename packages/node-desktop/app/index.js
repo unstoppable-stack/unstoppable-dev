@@ -49,6 +49,7 @@ document.getElementById('app').innerHTML = `
       <dl class="modal-info">
         <dt>App</dt><dd id="modal-app-name">–</dd>
         <dt>App ID</dt><dd id="modal-app-id" class="mono">–</dd>
+        <dt>Device</dt><dd id="modal-device-name">–</dd>
         <dt>Public key</dt><dd id="modal-app-key" class="mono mono-wrap">–</dd>
       </dl>
       <p class="modal-warn">Only approve apps you launched yourself. Approving means this node will replicate the app's data and (if enabled) serve AI inference for it.</p>
@@ -117,6 +118,9 @@ onWorkerMessage((msg) => {
       break
     case 'pairForgotten':
       pushLog(`Forgot decision for ${short(msg.publicKey)}`, 'dim')
+      break
+    case 'pairPromoted':
+      pushLog(`Promoted ${msg.appName || msg.appId} to trusted`, 'ok')
       break
     case 'appRegistered':
       pushLog(`${msg.appId}: ${msg.coreCount} core(s), ${msg.driveCount} drive(s)`, 'info')
@@ -199,13 +203,20 @@ function renderApps (status) {
     const totalPeers = cores.reduce((s, c) => s + (c.peers || 0), 0)
     const trusted = !!approved[app.publicKey]
     const trustBadge = trusted
-      ? '<span class="badge badge-ok" title="Approved by user">trusted</span>'
-      : '<span class="badge badge-warn" title="Approved by daemon (no user gate set)">untrusted</span>'
+      ? '<span class="badge badge-ok" title="Approved by user via the pair-request modal">trusted</span>'
+      : '<span class="badge badge-neutral" title="Paired before the trust gate ran. Not a security problem — click Promote to mark it user-approved.">auto-paired</span>'
+    const promoteBtn = trusted
+      ? ''
+      : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Promote</button>`
+    const deviceLine = app.deviceName
+      ? `<span title="Device">${escape(app.deviceName)}</span>`
+      : ''
     return `
       <div class="app-row" data-app-id="${escape(app.appId)}">
         <div class="app-info">
           <div class="app-name">${escape(app.appName || app.appId)} ${trustBadge}</div>
           <div class="app-meta">
+            ${deviceLine}
             <span>${cores.length} cores</span>
             <span>${drives.length} drives</span>
             <span>${totalEntries} entries</span>
@@ -213,7 +224,10 @@ function renderApps (status) {
             <span class="mono dim" title="${escape(app.publicKey || '')}">key ${short(app.publicKey)}</span>
           </div>
         </div>
-        <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
+        <div class="app-actions">
+          ${promoteBtn}
+          <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
+        </div>
       </div>
     `
   }).join('')
@@ -225,6 +239,16 @@ function renderApps (status) {
       if (!appId) return
       if (!confirm(`Unpair ${appId}? Its data will stop replicating and this key will be denied on future pair attempts.`)) return
       sendToWorker({ type: 'unpair', appId, publicKey })
+    })
+  })
+
+  el.querySelectorAll('[data-promote]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const appId = btn.getAttribute('data-promote')
+      const publicKey = btn.getAttribute('data-pubkey') || null
+      const appName = btn.getAttribute('data-appname') || ''
+      if (!publicKey) return
+      sendToWorker({ type: 'promote-trust', appId, appName, publicKey })
     })
   })
 }
@@ -300,6 +324,7 @@ function showNextApproval () {
   }
   setText('modal-app-name', approvalCurrent.appName || '(unnamed)')
   setText('modal-app-id', approvalCurrent.appId || '–')
+  setText('modal-device-name', approvalCurrent.deviceName || '(not provided)')
   setText('modal-app-key', approvalCurrent.publicKey || '–')
   modal.hidden = false
   updatePendingCount()
@@ -503,6 +528,8 @@ function injectStyles () {
     }
     .badge-ok { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
     .badge-warn { background: rgba(187, 128, 9, 0.18); color: #d29922; }
+    .badge-neutral { background: rgba(110, 118, 129, 0.25); color: #8b949e; }
+    .app-actions { display: flex; gap: 6px; align-items: center; }
 
     .mono { font-family: 'SFMono-Regular', monospace; }
     .mono-wrap { word-break: break-all; }
