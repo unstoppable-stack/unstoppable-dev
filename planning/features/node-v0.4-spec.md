@@ -21,7 +21,7 @@
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
-| F12 | Storage quotas | Pending |
+| F12 | Storage quotas | Partial — global/per-app config, quota status, dashboard badges, and advisory pause enforcement landed |
 | F13 | Export / import | Pending |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
@@ -457,7 +457,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Target.
 
-**Implementation status.** Partial: `node-config.json`, daemon `getConfig()` / `updateConfig()`, dashboard worker commands, and editable Config UI landed. Stored quota values are not enforced until F12.
+**Implementation status.** Partial: `node-config.json`, daemon `getConfig()` / `updateConfig()`, dashboard worker commands, and editable Config UI landed. Stored quota values are enforced by F12 advisory pause logic.
 
 **Problem.** The dashboard now has a Config tab, but most node settings are still implicit launch flags or hardcoded behavior. Users should be able to inspect and change supported node configuration from the UI, with clear live-apply vs restart-required behavior.
 
@@ -498,6 +498,8 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 #### F12. Storage quotas
 
 **Release label.** Stretch.
+
+**Implementation status.** Partial: daemon status includes `storage.quotas`, configured global/per-app limits pause over-quota app announcements, dashboard storage rows show quota state, and tests cover per-app advisory pause. Per-app custom quotas are currently global config defaults, not app-specific editable rows.
 
 **Problem.** A misbehaving (or malicious) app could fill the node's disk by registering huge drives. The dashboard has no defense.
 

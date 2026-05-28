@@ -70,6 +70,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('aiProgress', (info) => send({ type: 'aiProgress', ...info }))
   node.on('servicesChanged', (info) => send({ type: 'servicesChanged', ...info }))
   node.on('configChanged', (info) => send({ type: 'config', ...info }))
+  node.on('quotaExceeded', (info) => send({ type: 'quotaExceeded', ...info }))
   node.on('inference', (info) => send({ type: 'inference', ...info }))
   node.on('unpaired', (info) => send({ type: 'unpaired', ...info }))
   node.on('appPaused', (info) => send({ type: 'appPaused', ...info }))

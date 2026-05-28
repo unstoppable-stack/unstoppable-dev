@@ -253,7 +253,10 @@ onWorkerMessage((msg) => {
       pushLog(`Services updated: ${Object.entries(msg.services || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '(none)'}`, 'ok')
       break
     case 'appPaused':
-      pushLog(`Paused replication for ${msg.appId} (${msg.touched} units)`, 'dim')
+      pushLog(`Paused replication for ${msg.appId} (${msg.touched} units${msg.reason ? `, ${msg.reason}` : ''})`, 'dim')
+      break
+    case 'quotaExceeded':
+      pushLog(`Quota exceeded for ${msg.appId}: ${formatBytes(msg.used)} used (${msg.reason})`, 'err')
       break
     case 'appResumed':
       pushLog(`Resumed replication for ${msg.appId} (${msg.touched} units)`, 'ok')
@@ -367,18 +370,29 @@ function renderStorage (status) {
   if (!el) return
   const apps = status.apps || []
   const perApp = storage.perApp || {}
+  const quota = storage.quotas || {}
+  if (quota.global?.limit !== null && quota.global?.limit !== undefined) {
+    setText('storage-total', `${formatBytes(storage.total || 0)} / ${formatBytes(quota.global.limit)}${quota.global.exceeded ? ' over quota' : ''}`)
+  }
   if (apps.length === 0) {
     el.innerHTML = '<p class="dim">No paired apps yet.</p>'
     return
   }
   el.innerHTML = apps.map((app) => `
+    ${(() => {
+      const q = quota.perApp?.[app.appId]
+      const quotaBadge = q?.exceeded ? '<span class="badge badge-warn">quota</span>' : ''
+      const quotaText = q?.limit !== null && q?.limit !== undefined ? ` / ${formatBytes(q.limit)}` : ''
+      return `
     <div class="app-row">
       <div class="app-info">
-        <div class="app-name">${escape(app.appName || app.appId)}</div>
+        <div class="app-name">${escape(app.appName || app.appId)} ${quotaBadge}</div>
         <div class="app-meta"><span class="mono">${escape(app.appId)}</span></div>
       </div>
-      <div class="storage-value">${formatBytes(perApp[app.appId] || 0)}</div>
+      <div class="storage-value">${formatBytes(perApp[app.appId] || 0)}${quotaText}</div>
     </div>
+      `
+    })()}
   `).join('')
 }
 
