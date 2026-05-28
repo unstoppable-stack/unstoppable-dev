@@ -228,6 +228,7 @@ onWorkerMessage((msg) => {
       break
     case 'pairAwaitingApproval':
       enqueueApproval(msg)
+      notifyPairRequest(msg)
       break
     case 'pairAutoDecided':
       pushLog(`Auto-${msg.decision === 'approve' ? 'approved' : 'denied'} ${msg.appName || msg.appId}`, msg.decision === 'approve' ? 'ok' : 'info')
@@ -430,6 +431,7 @@ function renderConfigForm (config) {
   setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
   setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
   setChecked('cfg-ui-welcome', config.ui?.showWelcome !== false)
+  applyWelcomePreference(config)
 }
 
 // Formats bytes for the dashboard tiles. We never need more than one decimal
@@ -766,9 +768,35 @@ function wireWelcomeModal () {
   if (dismiss) dismiss.addEventListener('click', hideWelcome)
   if (help) help.addEventListener('click', showWelcome)
 
+  if (currentConfig && currentConfig.ui?.showWelcome === false) return
   let seen = false
   try { seen = localStorage.getItem(WELCOME_KEY) === '1' } catch {}
   if (!seen) showWelcome()
+}
+
+function applyWelcomePreference (config) {
+  if (config.ui?.showWelcome === false) {
+    hideWelcome()
+    return
+  }
+  let seen = false
+  try { seen = localStorage.getItem(WELCOME_KEY) === '1' } catch {}
+  if (!seen) showWelcome()
+}
+
+function notifyPairRequest (req) {
+  if (currentConfig?.notifications?.pairRequests === false) return
+  if (!('Notification' in window)) return
+  const body = `${req.appName || req.appId || 'An app'} wants to pair with this node.`
+  if (Notification.permission === 'granted') {
+    new Notification('Unstoppable Node pair request', { body })
+    return
+  }
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') new Notification('Unstoppable Node pair request', { body })
+    }).catch(() => {})
+  }
 }
 
 function wireAiToggle () {
