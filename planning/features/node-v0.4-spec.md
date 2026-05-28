@@ -22,7 +22,7 @@
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
 | F12 | Storage quotas | Partial — global/per-app config, quota status, dashboard badges, and advisory pause enforcement landed |
-| F13 | Export / import | Pending |
+| F13 | Export / import | Partial — JSON bundle for config, trust registry, and paired app registry landed |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
 | F16 | Reconnect with backoff | Done — opt-in |
@@ -527,6 +527,8 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 #### F13. Export node state
 
 **Release label.** Stretch.
+
+**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Full encrypted Corestore archive and identity round-trip remain future work.
 
 **Problem.** Users have no way to back up the node's identity + paired apps + AI config. If they lose their machine, they lose their P2P "router."
 

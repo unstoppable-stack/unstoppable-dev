@@ -70,6 +70,8 @@ await node.resumeApp('my-app')
 
 ```bash
 unstoppable-node start --storage ./my-storage --ai-mock
+unstoppable-node export ./node-backup.uns --storage ./my-storage
+unstoppable-node import ./node-backup.uns --storage ./restored-storage
 ```
 
 | Flag                | Effect                                        |
@@ -79,6 +81,10 @@ unstoppable-node start --storage ./my-storage --ai-mock
 | `--ai-model <src>`  | QVAC model source (preset name or URL)        |
 
 Storage path comes from positional arg or `--storage`.
+
+Export/import currently writes a JSON bundle with node config, paired-app
+registry, and dashboard trust decisions. It does not yet include encrypted
+Corestore data archives.
 
 ## Quickstart
 

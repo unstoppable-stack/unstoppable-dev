@@ -50,6 +50,13 @@ export class AppRegistry {
     return apps
   }
 
+  async importApps (apps = []) {
+    for (const app of apps) {
+      if (!app?.appId) continue
+      await this.bee.put(`apps/${app.appId}`, app)
+    }
+  }
+
   async removeApp (appId) {
     await this.bee.del(`apps/${appId}`)
   }

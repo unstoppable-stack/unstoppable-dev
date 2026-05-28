@@ -6,6 +6,7 @@ import { AppRegistry } from './registry.js'
 import { ReplicationEngine } from './replication.js'
 import { AIProvider } from './ai-provider.js'
 import { loadConfig, saveConfig, mergeConfigPatch, validateConfig } from './config.js'
+import { writeNodeStateBundle } from './export.js'
 import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION, buildCapabilities, defaultCapabilityGrants } from './protocol.js'
 
 const DEFAULT_DISCOVERY_WARMUP_MS = 0
@@ -144,6 +145,12 @@ export class NodeDaemon extends EventEmitter {
     if (this.replication) await this._enforceQuotas(this.replication.getReplicatedBytes())
     this.emit('configChanged', { config: await this.getConfig() })
     return this.getConfig()
+  }
+
+  async exportState (outPath) {
+    const apps = this.registry ? await this.registry.listApps() : []
+    const config = await this.getConfig()
+    return writeNodeStateBundle({ storagePath: this.storagePath, outPath, config, apps })
   }
 
   async _applyConfig (previous, next) {
