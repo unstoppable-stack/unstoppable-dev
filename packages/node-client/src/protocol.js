@@ -8,6 +8,15 @@ export const PROTOCOL_VERSION = 'v1'
 // hints and for validating `requireServices` option values.
 export const KNOWN_SERVICES = Object.freeze(['data', 'files', 'ai'])
 
+export function buildRequestedCapabilities ({ requireServices = [] } = {}) {
+  const requested = {
+    resources: ['register', 'status'],
+    storage: ['usage']
+  }
+  if (requireServices.includes('ai')) requested.ai = ['completion.stream']
+  return requested
+}
+
 // Node has `os` + `process`, Bare has `bare-os` + `bare-env`. Prefer the
 // Bare modules so a Pear app and a Node client on the same machine
 // compute the same `localDiscoveryTopic()` hash (otherwise Bare would
@@ -31,6 +40,7 @@ const _os = await _loadOs()
 const _env = await _loadEnv()
 
 export function localDiscoveryTopic () {
+  if (_env?.UNSTOPPABLE_NODE_TOPIC) return b4a.from(_env.UNSTOPPABLE_NODE_TOPIC, 'hex')
   const user = _env?.USER || _env?.USERNAME || 'default'
   const host = _os && typeof _os.hostname === 'function' ? _os.hostname() : 'bare-runtime'
   const machineId = `${user}@${host}`

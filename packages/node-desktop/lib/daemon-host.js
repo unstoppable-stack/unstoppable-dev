@@ -41,13 +41,19 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
   const node = new NodeDaemon(storagePath, {
     ai,
-    approvePairing: (req) => approvalGate.request(req)
+    discoveryWarmupMs: 2_000,
+    approvePairing: async (req) => {
+      const config = await node.getConfig()
+      if (config.pairing.requireApproval === false) return 'approve'
+      return approvalGate.request(req)
+    }
   })
 
-  node.on('ready', (info) => send({
+  node.on('ready', async (info) => send({
     type: 'ready',
     ...info,
     services: node.services,
+    config: await node.getConfig(),
     trust: approvalGate.snapshot()
   }))
   node.on('restored', (info) => send({ type: 'restored', ...info }))
@@ -63,6 +69,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('aiError', (info) => send({ type: 'aiError', ...info }))
   node.on('aiProgress', (info) => send({ type: 'aiProgress', ...info }))
   node.on('servicesChanged', (info) => send({ type: 'servicesChanged', ...info }))
+  node.on('configChanged', (info) => send({ type: 'config', ...info }))
   node.on('inference', (info) => send({ type: 'inference', ...info }))
   node.on('unpaired', (info) => send({ type: 'unpaired', ...info }))
   node.on('appPaused', (info) => send({ type: 'appPaused', ...info }))
@@ -117,6 +124,19 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         send({ type: 'status', ...status, trust: approvalGate.snapshot() })
         break
       }
+
+      case 'get-config':
+        send({ type: 'config', config: await node.getConfig() })
+        break
+
+      case 'update-config':
+        try {
+          const config = await node.updateConfig(msg.patch || {})
+          send({ type: 'config', config })
+        } catch (err) {
+          send({ type: 'config-error', error: err.message })
+        }
+        break
 
       case 'pause-app':
         await node.pauseApp(msg.appId)

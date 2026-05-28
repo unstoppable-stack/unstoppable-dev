@@ -35,10 +35,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    // Shipped from this repo (packages/node-client). Once published the
-    // range resolves from npm; during local development `npm link` or a
-    // private registry is required.
-    Object.assign(deps, { '@unstoppable/node-client': '^0.1.0' })
+    Object.assign(deps, { '@unstoppable/node-client': '^0.4.0' })
   }
 
   const unrouted = ['/worker.js']
@@ -780,4 +777,3 @@ function injectStyles() {
 `,
   }
 }
-

@@ -1,0 +1,41 @@
+name: Node Real QVAC
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_src:
+        description: 'QVAC model source: URL, preset, or runner-local path'
+        required: true
+        type: string
+      model_type:
+        description: 'QVAC model type'
+        required: false
+        default: 'llm'
+        type: string
+
+jobs:
+  real-qvac:
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install node deps
+        working-directory: packages/node
+        run: npm install
+
+      - name: Install QVAC SDK
+        working-directory: packages/node
+        run: npm install @qvac/sdk
+
+      - name: Run real QVAC E2E
+        working-directory: packages/node
+        run: npm run test:qvac
+        env:
+          QVAC_MODEL_SRC: ${{ inputs.model_src }}
+          QVAC_MODEL_TYPE: ${{ inputs.model_type }}
+          QVAC_TEST_TIMEOUT: '1200000'

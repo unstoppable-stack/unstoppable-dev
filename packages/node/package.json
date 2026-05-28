@@ -1,6 +1,6 @@
 {
   "name": "unstoppable-node",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Personal sync node for Unstoppable Stack apps — replicates, backs up, and seeds your P2P data",
   "type": "module",
   "main": "src/index.js",
@@ -8,6 +8,7 @@
     ".": "./src/index.js",
     "./node": "./src/node.js",
     "./ai-provider": "./src/ai-provider.js",
+    "./config": "./src/config.js",
     "./registry": "./src/registry.js",
     "./replication": "./src/replication.js",
     "./protocol": "./src/protocol.js"
@@ -45,12 +46,14 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node --test --test-force-exit test/*.test.js",
+    "test": "node --test --test-concurrency=1 --test-force-exit test/*.test.js",
     "test:unit": "node --test test/protocol.test.js test/registry.test.js",
     "test:integration": "node --test --test-force-exit test/pairing.test.js test/replication.test.js",
     "test:edge": "node --test --test-force-exit test/edge-cases.test.js",
     "test:e2e": "node --test --test-force-exit --test-timeout 120000 test/e2e/e2e.test.js",
-    "test:all": "node --test --test-force-exit --test-timeout 120000 test/*.test.js test/e2e/e2e.test.js"
+    "test:qvac": "RUN_QVAC_E2E=1 node --test --test-force-exit --test-timeout 300000 test/ai-provider-real.test.js",
+    "test:all": "node --test --test-concurrency=1 --test-force-exit --test-timeout 120000 test/*.test.js test/e2e/e2e.test.js",
+    "prepublishOnly": "npm test && npm pack --dry-run"
   },
   "dependencies": {
     "b4a": "^1.8.0",

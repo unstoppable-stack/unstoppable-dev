@@ -53,3 +53,5 @@ jobs:
       - name: Run headless smoke test
         working-directory: packages/node-desktop
         run: npm run test:smoke
+        env:
+          NODE_SMOKE_RUNS: '20'

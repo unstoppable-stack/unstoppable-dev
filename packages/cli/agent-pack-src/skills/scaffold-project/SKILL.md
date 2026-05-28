@@ -122,28 +122,40 @@ Then start implementing app-specific logic on top of the scaffolded code.
 
 ## Validated Dependency Versions
 
-These versions are battle-tested and validated through automated research:
+These versions are battle-tested and validated through automated research.
+The Expo / Bare entries form a **coupled set** — bumping any single one risks
+breaking the worklet bundle pipeline. See `core/verified-versions.mdc` →
+"Mobile (Expo + Bare)" for the full table and the rule for moving them
+together.
 
 | Package | Version | Notes |
 |---------|---------|-------|
-| `expo` | `~54.0.33` | Expo SDK 54 |
-| `expo-build-properties` | `~1.0.9` | **Must be in dependencies**, not just plugins |
-| `react-native-bare-kit` | `0.11.5` | Pin exact — API changes between versions |
-| `bare-pack` | `^1.5.1` | **Must be 1.x** — 2.x has breaking CLI flag changes |
-| `@qvac/sdk` | `^0.11.0` | Local AI inference |
-| `@qvac/cli` | `^0.5.0` | **Required as devDep for QVAC mobile** — auto-runs `qvac verify bundle` during Expo prebuild |
-| `zod` | `^4.3.0` | Required by `@qvac/sdk@0.10+` — install v4.3+ explicitly when using tool calling |
-| `bare-rpc` | `^1.1.0` | P2P RPC |
-| `hyperswarm` | `^4.16.0` | P2P networking |
-| `autobase` | `^7.27.0` | Multi-writer consensus |
+| `bare-pack` | `^1.5.1` | **Anchor pin. Do NOT bump to 2.x** — `2.0.0` removed the `--target` CLI flag that the generated `build:bare` script uses. Every other mobile entry in this table has been validated against this anchor. |
+| `expo` | `~54.0.33` | Expo SDK 54. Pairs with `react-native@0.81.x`; SDK 55 (RN 0.83) / 56 (RN 0.85) not validated against `bare-pack@1.5.1`. |
+| `expo-build-properties` | `~1.0.9` | Matches SDK 54. **Must be in dependencies**, not just `app.json` plugins. |
+| `expo-router` | `~6.0.23` | Matches SDK 54. |
+| `expo-file-system` | `^19.0.15` | Matches SDK 54. Also the optional peer of `@qvac/sdk` for model caching. |
+| `expo-device` | `~8.0.10` | Matches SDK 54. Used to detect simulator vs physical device for QVAC. |
+| `react-native` | `0.81.5` (exact) | Exact pin — Expo SDK 54 + `react-native-bare-kit@0.12.3` only validated against this. |
+| `react` | `19.1.0` (exact) | Exact pin — Expo SDK 54 ships this. |
+| `react-native-bare-kit` | `0.12.3` (exact) | **Required exact pin by `@qvac/sdk@0.11`** — caret ranges silently install pre-1.0 minors and break the QVAC mobile worker bundle. |
+| `bare-fs` (override) | `4.5.1` (exact) | Mobile-only `package.json` `overrides` entry. Newer `bare-fs` on Bare 4.7.x has not been validated against the bundle pipeline. |
+| `@qvac/sdk` | `^0.11.0` | Local AI inference. |
+| `@qvac/cli` | `^0.5.0` | **Required as devDep for QVAC mobile** — auto-runs `qvac verify bundle` during Expo prebuild (since SDK 0.11). |
+| `zod` | `^4.3.0` | Required by `@qvac/sdk@0.10+` — install v4.3+ explicitly when using tool calling. |
+| `bare-rpc` | `^1.1.0` | P2P RPC. |
+| `hyperswarm` | `^4.16.0` | P2P networking. |
+| `autobase` | `^7.27.0` | Multi-writer consensus. |
 
 ## Known Issues (from research)
 
-1. **`bare-pack@2.x` breaks mobile builds** — the `--target` CLI flag was removed in 2.x. Always use `^1.5.1`.
-2. **`expo-build-properties` must be a dependency** — listing it only in `app.json` plugins without installing it causes prebuild to fail.
-3. **`@qvac/cli` must be ≥ 0.4.0 for SDK 0.11** — `@qvac/sdk@0.11.x` declares `@qvac/cli@^0.4.0` as the peerOptional range. We use `^0.5.0` (latest line) which is runtime-compatible but requires `--legacy-peer-deps` because npm strict semver doesn't treat `0.5.x` as satisfying `^0.4.0`. Pin `^0.4.0` if you need clean peer resolution. Avoid older lines (`^0.1.2` / `^0.2.4`) — they predate `qvac verify bundle` which 0.11 auto-runs during Expo prebuild.
-4. **QVAC expo plugin needs local `@qvac/cli`** — without it, npx downloads a mismatched version that can't bundle.
-5. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobase` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
+1. **`bare-pack@2.x` breaks mobile builds** — the `--target` CLI flag was removed in 2.x. Always use `^1.5.1`. This is the **anchor pin** for the whole Mobile/Expo coupled set — the moment we move off it, every Expo / RN / bare-kit pin in the table must be re-validated together.
+2. **`react-native-bare-kit` caret ranges are dangerous** — pin exact (`0.12.3`, no caret). Pre-1.0 minors break the QVAC mobile worker bundle with cryptic native errors. Always use the exact version that the installed `@qvac/sdk` declares as its peer.
+3. **Expo SDK upgrades are all-or-nothing** — Expo SDK pins one specific `react-native` major. Mixing SDK 54 with RN 0.85 (SDK 56's RN) is not supported. Bump the whole Mobile table together or not at all.
+4. **`expo-build-properties` must be a dependency** — listing it only in `app.json` plugins without installing it causes prebuild to fail.
+5. **`@qvac/cli` must be ≥ 0.4.0 for SDK 0.11** — `@qvac/sdk@0.11.x` declares `@qvac/cli@^0.4.0` as the peerOptional range. We use `^0.5.0` (latest line) which is runtime-compatible but requires `--legacy-peer-deps` because npm strict semver doesn't treat `0.5.x` as satisfying `^0.4.0`. Pin `^0.4.0` if you need clean peer resolution. Avoid older lines (`^0.1.2` / `^0.2.4`) — they predate `qvac verify bundle` which 0.11 auto-runs during Expo prebuild.
+6. **QVAC expo plugin needs local `@qvac/cli`** — without it, npx downloads a mismatched version that can't bundle.
+7. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobase` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
 
 ## Discovery Commands
 
@@ -158,6 +170,6 @@ us scaffold list-features    # JSON array of features with platform compatibilit
 2. **Verify the JSON output** — scaffold outputs `{ "success": true, ... }`. Check this before proceeding.
 3. **Run `npm install` immediately** — the postinstall script handles prebuild and bare-pack
 4. **Do not modify generated plugins** — `withAndroidNdkVersion.js` and `withAndroidArchitecture.js` are validated
-5. **Do not change dependency versions** without checking the validated versions table above
+5. **Do not change dependency versions** without checking the validated versions table above. The Mobile (Expo + Bare) entries are a **coupled set** — `bare-pack`, `expo`, `react-native`, `react-native-bare-kit`, and every `expo-*` package must move together against a re-validated bundle pipeline. Never bump one in isolation.
 6. **Use `--force` when re-scaffolding** — if the directory already exists
 7. **Customize after scaffolding** — add screens, features, and logic on top of the generated base

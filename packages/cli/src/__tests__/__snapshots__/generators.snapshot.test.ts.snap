@@ -2210,7 +2210,7 @@ module.exports = config
     "bare-rpc": "^1.1.0",
     "corestore": "^7.6.0",
     "hyperbee": "^2.22.0",
-    "@unstoppable/node-client": "^0.1.0",
+    "@unstoppable/node-client": "^0.4.0",
     "hyperswarm": "^4.12.1",
     "b4a": "^1.7.3",
     "events": "^3.3.0"
@@ -3172,7 +3172,7 @@ dist/
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@unstoppable/node-client": "^0.1.0"
+    "@unstoppable/node-client": "^0.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -5644,7 +5644,7 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@unstoppable/node-client": "^0.1.0"
+    "@unstoppable/node-client": "^0.4.0"
   },
   "devDependencies": {}
 }",
