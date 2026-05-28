@@ -141,6 +141,7 @@ export class NodeDaemon extends EventEmitter {
     await this._applyConfig(current, next)
     this.config = next
     await saveConfig(this.storagePath, next)
+    if (this.replication) await this._enforceQuotas(this.replication.getReplicatedBytes())
     this.emit('configChanged', { config: await this.getConfig() })
     return this.getConfig()
   }
@@ -423,6 +424,8 @@ export class NodeDaemon extends EventEmitter {
       coreCount: (msg.cores || []).length,
       driveCount: (msg.drives || []).length
     })
+
+    await this._enforceQuotas(this.replication.getReplicatedBytes())
   }
 
   // Snapshot of the daemon's current state. Stable shape — consumed by:
@@ -432,10 +435,15 @@ export class NodeDaemon extends EventEmitter {
   //   - `us node status` and other headless tools
   async getStatus () {
     const apps = this.registry ? await this.registry.listApps() : []
-    const coreStats = this.replication ? this.replication.getStats() : []
-    const driveStats = this.replication ? this.replication.getDriveStats() : []
+    let coreStats = this.replication ? this.replication.getStats() : []
+    let driveStats = this.replication ? this.replication.getDriveStats() : []
     const connectedPeers = this.connections.size
     const replicated = this.replication ? this.replication.getReplicatedBytes() : null
+    const quotas = await this._enforceQuotas(replicated)
+    if (quotas.enforced.length > 0) {
+      coreStats = this.replication ? this.replication.getStats() : []
+      driveStats = this.replication ? this.replication.getDriveStats() : []
+    }
 
     return {
       protocolVersion: PROTOCOL_VERSION,
@@ -450,12 +458,51 @@ export class NodeDaemon extends EventEmitter {
       drives: driveStats,
       connectedPeers,
       storagePath: this.storagePath,
-      storage: replicated,
+      storage: replicated ? { ...replicated, quotas } : null,
       ai: this.ai ? {
         ready: !!this.services.ai,
         mock: !!this._aiOpts?.mock,
         modelId: this.ai.modelId || null
       } : null
+    }
+  }
+
+  async _enforceQuotas (replicated) {
+    const config = await this.getConfig()
+    const globalLimit = config.storage.globalQuotaBytes
+    const perAppLimit = config.storage.perAppQuotaBytes
+    const perApp = replicated?.perApp || {}
+    const enforced = []
+    const appStates = {}
+    const globalExceeded = globalLimit !== null && (replicated?.total || 0) > globalLimit
+
+    for (const [appId, used] of Object.entries(perApp)) {
+      const exceeded = (perAppLimit !== null && used > perAppLimit) || globalExceeded
+      appStates[appId] = {
+        used,
+        limit: perAppLimit,
+        exceeded,
+        reason: exceeded ? (globalExceeded ? 'global' : 'per-app') : null
+      }
+      if (!exceeded || !this.replication) continue
+      const touched = await this.replication.pauseApp(appId)
+      if (touched > 0) {
+        const info = { appId, touched, reason: appStates[appId].reason, used, limit: globalExceeded ? globalLimit : perAppLimit }
+        enforced.push(info)
+        this.emit('quotaExceeded', info)
+        this.emit('appPaused', { appId, touched, reason: 'quota' })
+      }
+    }
+
+    return {
+      global: {
+        used: replicated?.total || 0,
+        limit: globalLimit,
+        exceeded: globalExceeded
+      },
+      perAppLimit,
+      perApp: appStates,
+      enforced
     }
   }
 
