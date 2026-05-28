@@ -13,6 +13,12 @@ ships Hyperswarm.
 npm install @unstoppable/node-client
 ```
 
+Start a local node in another terminal:
+
+```bash
+npx unstoppable-node start --ai-mock
+```
+
 ## Usage
 
 ```js

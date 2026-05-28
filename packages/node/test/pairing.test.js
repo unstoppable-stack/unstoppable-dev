@@ -63,6 +63,8 @@ describe('pairing', () => {
     assert.ok(events.length >= 2)
     assert.equal(events[0].type, 'pairRequest')
     assert.equal(events[0].appId, 'my-app')
+    assert.deepEqual(events[0].requestedCapabilities.resources, ['register', 'status'])
+    assert.deepEqual(events[0].requestedCapabilities.storage, ['usage'])
     assert.equal(events[1].type, 'paired')
     assert.equal(events[1].appId, 'my-app')
   })
@@ -158,10 +160,15 @@ describe('pairing', () => {
     assert.equal(events[0].type, 'nodeHello')
     assert.equal(events[0].protocolVersion, 'v1')
     assert.deepEqual(events[0].services, { data: true, files: true, ai: false })
+    assert.equal(events[0].capabilities.resources.enabled, true)
+    assert.equal(events[0].capabilities.ai.enabled, false)
     assert.equal(events[1].type, 'paired')
+    assert.deepEqual(events[1].grants.ai, [])
 
     // Client state reflects the advertised services
     assert.deepEqual(client.services, { data: true, files: true, ai: false })
+    assert.equal(client.capabilities.resources.enabled, true)
+    assert.deepEqual(client.grants.ai, [])
     assert.equal(client.protocolVersion, 'v1')
   })
 

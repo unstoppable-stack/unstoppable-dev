@@ -12,7 +12,7 @@
 | F1 | Bare-runtime smoke test in CI | Done — `bin/headless.js` + `scripts/smoke.js` + `.github/workflows/node-smoke.yml` |
 | F2 | Migrate off `Pear.worker.pipe()` | Done — `pear-pipe` in dashboard worker |
 | F3 | Publish prep (no actual publish) | Done — exports map, files list, repo metadata, READMEs, gated `node-publish.yml`; `npm publish --dry-run` passes |
-| F4 | Real-QVAC E2E test | Pending — needs model download in CI; mock path covered by F1 smoke |
+| F4 | Real-QVAC E2E test | Ready for manual validation — opt-in test + workflow added; needs confirmed model source |
 | F5 | Discovery flakiness | Pending — needs reproduction work |
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
@@ -20,6 +20,7 @@
 | F9 | Notifications | Pending |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
+| F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
 | F12 | Storage quotas | Pending |
 | F13 | Export / import | Pending |
 | F14 | Per-app pause/resume | Done |
@@ -35,8 +36,9 @@
 >   1. `planning/features/node.md` — concept
 >   2. `planning/features/node-technical.md` — architecture
 >   3. `planning/features/node-pairing-protocol.md` — wire protocol
->   4. `planning/status/node/README.md` — phase tracker
->   5. `sandbox/node-demo/FINDINGS.md` — May 22 bug report (essential context — explains why we ship lessons)
+>   4. `planning/features/node-capability-api.md` — generic capability-host direction
+>   5. `planning/status/node/README.md` — phase tracker
+>   6. `sandbox/node-demo/FINDINGS.md` — May 22 bug report (essential context — explains why we ship lessons)
 
 ---
 
@@ -228,14 +230,14 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 **Problem.** `--ai-mock` is the only path that has been validated. We don't actually know whether `--ai-model <src>` works against a current `@qvac/sdk` release. The agent pack tells users to set this up; we'd better know it works.
 
 **Acceptance criteria.**
-- A new test under `packages/node/test/e2e/ai-real.test.js` (skipped by default, runs under an opt-in flag like `RUN_QVAC=1`) does:
+- A new test under `packages/node/test/ai-provider-real.test.js` (skipped by default, runs with `RUN_QVAC_E2E=1` / `npm run test:qvac`) does:
   1. Boots a `NodeDaemon` with `{ ai: { modelSrc: '<small model>' } }`.
   2. Connects a client with `requireServices: ['ai']`.
   3. Streams a one-token inference.
   4. Asserts the token is non-empty text (not the mock placeholder).
-- The test downloads a small model on first run (under 500 MB; pick the smallest QVAC-compatible model that produces coherent text — Qwen 0.5B or similar).
+- The test accepts an explicit `QVAC_MODEL_SRC` so validation can use a local path, preset, or URL without committing artifacts.
 - Documented in `packages/node/README.md` and the agent pack `add-ai-chat` skill.
-- A manual GitHub Actions workflow can run the test with an explicit model URL/path secret or input. It must be possible to prove v0.4 against real QVAC without relying on a developer laptop.
+- A manual GitHub Actions workflow can run the test with an explicit model URL/path input. It must be possible to prove v0.4 against real QVAC without relying on a developer laptop.
 
 **Implementation notes.**
 - Don't add the real model test to the default CI matrix — model download is too heavy. Run nightly or on manual trigger.
@@ -243,10 +245,10 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 - If no redistributable model under 500 MB is available, keep the test opt-in with a documented `QVAC_MODEL_SRC` env var and record the tested model in `packages/node/README.md`. Do not commit model artifacts.
 
 **Files.**
-- `packages/node/test/e2e/ai-real.test.js` (new)
+- `packages/node/test/ai-provider-real.test.js` (new)
 - `packages/node/src/ai-provider.js` (possibly)
 - `packages/node/README.md`
-- `.github/workflows/nightly.yml` (new or extend)
+- `.github/workflows/node-qvac.yml` (new)
 
 **Effort.** M (1 day if QVAC API is stable; L if it's drifted).
 
@@ -445,6 +447,53 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 ---
 
 ### Tier 2 — Node management
+
+> Direction: v0.4 may keep the current concrete wire messages, but new config,
+> permissions, and dashboard work should align with `node-capability-api.md`:
+> the Node is a generic capability host, and data/files/AI are first
+> capabilities rather than app-specific features.
+
+#### F12a. Node config store + Settings UI
+
+**Release label.** Target.
+
+**Implementation status.** Partial: `node-config.json`, daemon `getConfig()` / `updateConfig()`, dashboard worker commands, and editable Config UI landed. Stored quota values are not enforced until F12.
+
+**Problem.** The dashboard now has a Config tab, but most node settings are still implicit launch flags or hardcoded behavior. Users should be able to inspect and change supported node configuration from the UI, with clear live-apply vs restart-required behavior.
+
+**Acceptance criteria.**
+- The daemon persists editable config at `<storage>/node-config.json`.
+- Dashboard Config tab can read and update supported config keys without hand-editing files.
+- Initial config keys include:
+  - `ai.enabled`, `ai.mode` (`mock` or `qvac`), `ai.modelSrc`
+  - `storage.globalQuotaBytes`, `storage.perAppQuotaBytes`
+  - `pairing.requireApproval`, `pairing.autoApproveLocal`
+  - `notifications.pairRequests`
+  - `ui.showWelcome`
+- Daemon exposes `getConfig()` and `updateConfig(patch)` methods.
+- Worker supports `get-config` and `update-config` messages.
+- Config updates validate before save; invalid updates return a structured error and do not partially write.
+- Live-applicable settings apply immediately where possible: AI enable/disable/model choice, quotas, pairing policy, notification toggles.
+- Restart-required settings are shown with a clear badge in the Config tab.
+- Export/import (F13) includes `node-config.json`.
+
+**Implementation notes.**
+- Keep config JSON small and explicit. Do not persist derived status snapshots.
+- Prefer one `packages/node/src/config.js` module with `loadConfig`, `saveConfig`, `validateConfig`, and `mergeConfigPatch` helpers.
+- Dashboard should render the current config separately from live status. Status answers "what is running now"; config answers "what should run by default".
+- Existing launch flags should seed config on first run but not silently overwrite user-edited config on later runs unless a flag is explicitly passed again.
+
+**Files.**
+- `packages/node/src/config.js` (new)
+- `packages/node/src/node.js` (`getConfig`, `updateConfig`, live apply hooks)
+- `packages/node-desktop/lib/daemon-host.js` (wire commands)
+- `packages/node-desktop/app/index.js` (editable Config tab)
+- `packages/node/test/config.test.js` (new)
+- `packages/node-desktop/test/config-ui.test.js` or renderer-level test when harness exists
+
+**Effort.** M.
+
+---
 
 #### F12. Storage quotas
 

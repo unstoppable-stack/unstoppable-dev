@@ -1,7 +1,7 @@
 import Hyperswarm from 'hyperswarm'
 import b4a from 'b4a'
 import { EventEmitter } from 'bare-events'
-import { localDiscoveryTopic, localDeviceName, encodeMessage } from './protocol.js'
+import { localDiscoveryTopic, localDeviceName, encodeMessage, buildRequestedCapabilities } from './protocol.js'
 import { ClientClosedError, InferenceError, NodeClientError } from './errors.js'
 
 // How long we'll wait for a peer to send `nodeHello` before deciding it's
@@ -9,6 +9,8 @@ import { ClientClosedError, InferenceError, NodeClientError } from './errors.js'
 // anyone on the same Hyperswarm topic could connect; we only trust peers
 // that identify themselves with the Node greeting.
 const HELLO_TIMEOUT_MS = 2_000
+const DISCOVERY_RETRY_MS = 1_000
+const DISCOVERY_RESET_AFTER_RETRIES = 5
 
 // `process` exists in Node.js and Bare, but Bare does not expose `pid` or
 // `uptime()`. Wrap in guards so the client works across both runtimes.
@@ -37,7 +39,8 @@ export class NodeClient extends EventEmitter {
     swarm: swarmOpts,
     topic: topicOverride,
     deviceName,
-    reconnect
+    reconnect,
+    requestedCapabilities
   }) {
     super()
     this.appId = appId
@@ -48,10 +51,13 @@ export class NodeClient extends EventEmitter {
       ? deviceName
       : localDeviceName()
 
-    this.swarm = new Hyperswarm(swarmOpts)
+    this._swarmOpts = swarmOpts
+    this.swarm = new Hyperswarm(this._swarmOpts)
     this.socket = null
     this.nodePublicKey = null
     this.services = null
+    this.capabilities = null
+    this.grants = null
     this.protocolVersion = null
     this.paired = false
     this.registered = false
@@ -63,6 +69,8 @@ export class NodeClient extends EventEmitter {
     this._requestSeq = 0
     this.lastStatus = null
     this._topic = null
+    this._discoveryTimer = null
+    this._discoveryRetries = 0
 
     this._reconnect = reconnect
       ? { ...DEFAULT_RECONNECT, ...(typeof reconnect === 'object' ? reconnect : {}) }
@@ -70,40 +78,89 @@ export class NodeClient extends EventEmitter {
     this._reconnectAttempt = 0
     this._reconnectTimer = null
     this._wasEverPaired = false
+    this.requestedCapabilities = requestedCapabilities || buildRequestedCapabilities()
   }
 
   async connect () {
     const topic = this._topicOverride || localDiscoveryTopic()
     this._topic = topic
 
+    this._setupSwarm()
     this.swarm.join(topic, { server: false, client: true })
-
-    this.swarm.on('connection', (socket, info) => {
-      if (this.paired) {
-        socket.destroy()
-        return
-      }
-
-      const remoteKey = b4a.toString(info.publicKey, 'hex')
-      // Don't pair until the peer greets us with `nodeHello`. If the
-      // greeting never arrives inside HELLO_TIMEOUT_MS, it's not a Node
-      // (probably another app sharing the local discovery topic) and we
-      // quietly drop the socket. We previously fired `pairRequest` eagerly
-      // here, which worked but gave us no way to advertise service
-      // capabilities and leaked pair attempts to non-Node peers.
-      const helloTimer = setTimeout(() => {
-        this._candidates.delete(remoteKey)
-        socket.destroy()
-      }, HELLO_TIMEOUT_MS)
-
-      this._candidates.set(remoteKey, { socket, helloTimer })
-      this.emit('candidateFound', { publicKey: remoteKey })
-
-      this._setupCandidateSocket(socket, remoteKey)
-    })
 
     await this.swarm.flush()
     this.emit('searching')
+    this._startDiscoveryRefresh()
+  }
+
+  _setupSwarm () {
+    this.swarm.on('connection', (socket, info) => this._handleConnection(socket, info))
+  }
+
+  _handleConnection (socket, info) {
+    if (this.paired) {
+      socket.destroy()
+      return
+    }
+
+    const remoteKey = b4a.toString(info.publicKey, 'hex')
+    // Don't pair until the peer greets us with `nodeHello`. If the
+    // greeting never arrives inside HELLO_TIMEOUT_MS, it's not a Node
+    // (probably another app sharing the local discovery topic) and we
+    // quietly drop the socket. We previously fired `pairRequest` eagerly
+    // here, which worked but gave us no way to advertise service
+    // capabilities and leaked pair attempts to non-Node peers.
+    const helloTimer = setTimeout(() => {
+      this._candidates.delete(remoteKey)
+      socket.destroy()
+    }, HELLO_TIMEOUT_MS)
+
+    this._candidates.set(remoteKey, { socket, helloTimer })
+    this.emit('candidateFound', { publicKey: remoteKey })
+
+    this._setupCandidateSocket(socket, remoteKey)
+  }
+
+  _startDiscoveryRefresh () {
+    if (this._discoveryTimer) return
+    this._discoveryTimer = setInterval(() => {
+      if (this._closing || this.paired || !this._topic) return
+      try {
+        // `flush()` only waits for the current announce/lookup batch; it does
+        // not mean a peer was found. Rejoining the same topic is deduped by
+        // Hyperswarm, but it nudges lookup again while connectToNode's outer
+        // timeout remains the source of truth.
+        this.swarm.join(this._topic, { server: false, client: true })
+        this.swarm.flush().catch(() => {})
+        this.emit('searching')
+        this._discoveryRetries++
+        if (this._discoveryRetries >= DISCOVERY_RESET_AFTER_RETRIES) {
+          this._discoveryRetries = 0
+          this._resetDiscoverySwarm().catch(() => {})
+        }
+      } catch {}
+    }, DISCOVERY_RETRY_MS)
+  }
+
+  async _resetDiscoverySwarm () {
+    if (this._closing || this.paired || !this._topic) return
+    for (const [, entry] of this._candidates) {
+      if (entry.helloTimer) clearTimeout(entry.helloTimer)
+      try { entry.socket.destroy() } catch {}
+    }
+    this._candidates.clear()
+    try { await this.swarm.destroy() } catch {}
+    this.swarm = new Hyperswarm(this._swarmOpts)
+    this._setupSwarm()
+    this.swarm.join(this._topic, { server: false, client: true })
+    await this.swarm.flush().catch(() => {})
+    this.emit('searching')
+  }
+
+  _stopDiscoveryRefresh () {
+    if (!this._discoveryTimer) return
+    clearInterval(this._discoveryTimer)
+    this._discoveryTimer = null
   }
 
   _setupCandidateSocket (socket, remoteKey) {
@@ -165,11 +222,13 @@ export class NodeClient extends EventEmitter {
     // decide whether to proceed even before `paired` fires.
     if (!this.services) {
       this.services = msg.services || null
+      this.capabilities = msg.capabilities || null
       this.protocolVersion = msg.protocolVersion || null
       this.emit('nodeHello', {
         publicKey: remoteKey,
         nodePublicKey: msg.nodePublicKey,
         services: msg.services,
+        capabilities: msg.capabilities,
         protocolVersion: msg.protocolVersion
       })
     }
@@ -184,6 +243,7 @@ export class NodeClient extends EventEmitter {
       appName: this.appName,
       publicKey: b4a.toString(this.swarm.keyPair.publicKey, 'hex'),
       deviceName: this.deviceName || undefined,
+      requestedCapabilities: this.requestedCapabilities,
       pid: _pid
     }))
   }
@@ -200,12 +260,16 @@ export class NodeClient extends EventEmitter {
           return
         }
         this.paired = true
+        this._stopDiscoveryRefresh()
+        this._discoveryRetries = 0
         this.socket = socket
         this.nodePublicKey = msg.nodePublicKey
         // `pairAccepted` carries services too, but nodeHello already filled
         // these in — keep them in sync in case the node updates between
         // hello and pair (e.g. ai comes online mid-session in future).
         if (msg.services) this.services = msg.services
+        if (msg.capabilities) this.capabilities = msg.capabilities
+        if (msg.grants) this.grants = msg.grants
 
         for (const [key, candidate] of this._candidates) {
           if (key !== remoteKey) candidate.socket.destroy()
@@ -214,7 +278,9 @@ export class NodeClient extends EventEmitter {
 
         this.emit('paired', {
           nodePublicKey: msg.nodePublicKey,
-          services: msg.services
+          services: msg.services,
+          capabilities: msg.capabilities,
+          grants: msg.grants
         })
         this._sendRegistration()
         break
@@ -504,6 +570,7 @@ export class NodeClient extends EventEmitter {
       clearTimeout(this._reconnectTimer)
       this._reconnectTimer = null
     }
+    this._stopDiscoveryRefresh()
     for (const [, entry] of this._candidates) {
       if (entry.helloTimer) clearTimeout(entry.helloTimer)
       try { entry.socket.destroy() } catch {}

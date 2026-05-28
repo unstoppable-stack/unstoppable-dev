@@ -21,6 +21,8 @@ describe('node status RPC', () => {
       const status = await node.getStatus()
       assert.equal(status.protocolVersion, 'v1')
       assert.ok(status.services.data)
+      assert.equal(status.capabilities.resources.enabled, true)
+      assert.equal(status.capabilities.ai.enabled, false)
       assert.equal(status.pairedApps, 0)
       assert.deepEqual(status.apps, [])
       assert.equal(status.ai, null)
@@ -39,6 +41,7 @@ describe('node status RPC', () => {
       const status = await client.getNodeStatus()
       assert.equal(status.protocolVersion, 'v1')
       assert.equal(status.pairedApps, 1)
+      assert.equal(status.capabilities.resources.enabled, true)
       assert.equal(status.apps[0].appId, 'status-app')
       assert.equal(status.apps[0].appName, 'Status App')
       // Same shape is now cached locally (same content, separate object).

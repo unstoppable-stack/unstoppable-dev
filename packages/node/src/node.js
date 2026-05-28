@@ -5,7 +5,10 @@ import { EventEmitter } from 'bare-events'
 import { AppRegistry } from './registry.js'
 import { ReplicationEngine } from './replication.js'
 import { AIProvider } from './ai-provider.js'
-import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION } from './protocol.js'
+import { loadConfig, saveConfig, mergeConfigPatch, validateConfig } from './config.js'
+import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION, buildCapabilities, defaultCapabilityGrants } from './protocol.js'
+
+const DEFAULT_DISCOVERY_WARMUP_MS = 0
 
 export class NodeDaemon extends EventEmitter {
   constructor (storagePath, opts = {}) {
@@ -19,6 +22,9 @@ export class NodeDaemon extends EventEmitter {
     this.connections = new Map()
     this._closing = false
     this._topicOverride = opts.topic || null
+    this._discoveryWarmupMs = typeof opts.discoveryWarmupMs === 'number'
+      ? opts.discoveryWarmupMs
+      : DEFAULT_DISCOVERY_WARMUP_MS
 
     // AI provider is opt-in. Accept either an already-constructed provider
     // (for testing) or a config object like `{ mock: true }` that we'll use
@@ -26,11 +32,13 @@ export class NodeDaemon extends EventEmitter {
     // provider starts successfully.
     this._aiOpts = opts.ai || null
     this.ai = opts.aiProvider || null
+    this.config = null
 
     // Which services we're actually running. `files` was bolted onto the
     // protocol before Hyperdrive replication existed — it's always on now.
     // `ai` flips to true when start() successfully brings up an AIProvider.
     this.services = { ...DEFAULT_SERVICES, ...(opts.services || {}) }
+    this.capabilities = buildCapabilities(this.services)
 
     // Optional pair-approval gate. When provided, we await it before
     // accepting a `pairRequest` and registering the app. The callback
@@ -49,6 +57,10 @@ export class NodeDaemon extends EventEmitter {
 
   async start () {
     await this.store.ready()
+    this.config = await loadConfig(this.storagePath, { seed: this._configSeed() })
+    if (!this._aiOpts && this.config.ai.enabled) {
+      this._aiOpts = this._aiOptsFromConfig(this.config)
+    }
 
     const registryCore = this.store.get({ name: 'node-registry' })
     await registryCore.ready()
@@ -81,6 +93,7 @@ export class NodeDaemon extends EventEmitter {
         this.ai.on('error', (e) => this.emit('aiError', e))
         await this.ai.start()
         this.services = { ...this.services, ai: true }
+        this.capabilities = buildCapabilities(this.services)
         this.emit('aiReady', { mock: !!this._aiOpts?.mock, modelId: this.ai.modelId })
       } catch (err) {
         this.emit('aiError', { phase: 'start', error: err.message })
@@ -88,10 +101,60 @@ export class NodeDaemon extends EventEmitter {
       }
     }
 
+    if (this._discoveryWarmupMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, this._discoveryWarmupMs))
+    }
+
     this.emit('ready', {
       topic: b4a.toString(topic, 'hex'),
       publicKey: b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex')
     })
+  }
+
+  _configSeed () {
+    if (!this._aiOpts) return null
+    return {
+      ai: {
+        enabled: true,
+        mode: this._aiOpts.mock ? 'mock' : 'qvac',
+        modelSrc: this._aiOpts.modelSrc || ''
+      }
+    }
+  }
+
+  _aiOptsFromConfig (config = this.config) {
+    if (!config?.ai?.enabled) return null
+    return {
+      mock: config.ai.mode !== 'qvac',
+      ...(config.ai.modelSrc ? { modelSrc: config.ai.modelSrc } : {})
+    }
+  }
+
+  async getConfig () {
+    if (!this.config) this.config = await loadConfig(this.storagePath, { seed: this._configSeed() })
+    return JSON.parse(JSON.stringify(this.config))
+  }
+
+  async updateConfig (patch) {
+    const current = await this.getConfig()
+    const next = validateConfig(mergeConfigPatch(current, patch))
+    await this._applyConfig(current, next)
+    this.config = next
+    await saveConfig(this.storagePath, next)
+    this.emit('configChanged', { config: await this.getConfig() })
+    return this.getConfig()
+  }
+
+  async _applyConfig (previous, next) {
+    const prevAi = previous.ai || {}
+    const nextAi = next.ai || {}
+    const changedAi = prevAi.enabled !== nextAi.enabled || prevAi.mode !== nextAi.mode || prevAi.modelSrc !== nextAi.modelSrc
+    if (!changedAi) return
+    if (!nextAi.enabled) {
+      await this.disableAI()
+      return
+    }
+    await this.enableAI(this._aiOptsFromConfig(next))
   }
 
   async _restoreReplication () {
@@ -129,7 +192,8 @@ export class NodeDaemon extends EventEmitter {
       type: 'nodeHello',
       protocolVersion: PROTOCOL_VERSION,
       nodePublicKey: b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex'),
-      services: this.services
+      services: this.services,
+      capabilities: this.capabilities
     }))
 
     let buffer = ''
@@ -259,6 +323,7 @@ export class NodeDaemon extends EventEmitter {
       appName: msg.appName,
       publicKey: msg.publicKey,
       deviceName: msg.deviceName,
+      requestedCapabilities: msg.requestedCapabilities,
       remoteKey
     })
 
@@ -270,6 +335,7 @@ export class NodeDaemon extends EventEmitter {
           appName: msg.appName,
           publicKey: msg.publicKey,
           deviceName: msg.deviceName,
+          requestedCapabilities: msg.requestedCapabilities,
           remoteKey
         })
       } catch (err) {
@@ -302,7 +368,9 @@ export class NodeDaemon extends EventEmitter {
     socket.write(encodeMessage({
       type: 'pairAccepted',
       nodePublicKey: b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex'),
-      services: this.services
+      services: this.services,
+      capabilities: this.capabilities,
+      grants: defaultCapabilityGrants(this.capabilities)
     }))
 
     this.emit('paired', { appId: msg.appId, appName: msg.appName })
@@ -375,6 +443,7 @@ export class NodeDaemon extends EventEmitter {
         ? b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex')
         : null,
       services: { ...this.services },
+      capabilities: this.capabilities,
       apps,
       pairedApps: apps.length,
       cores: coreStats,
@@ -409,15 +478,17 @@ export class NodeDaemon extends EventEmitter {
     try {
       await this.ai.start()
       this.services = { ...this.services, ai: true }
+      this.capabilities = buildCapabilities(this.services)
       this.emit('aiReady', { mock: !!this._aiOpts?.mock, modelId: this.ai.modelId })
-      this.emit('servicesChanged', { services: { ...this.services } })
+      this.emit('servicesChanged', { services: { ...this.services }, capabilities: this.capabilities })
       return this.ai
     } catch (err) {
       this.emit('aiError', { phase: 'enable', error: err.message })
       try { await this.ai.close() } catch {}
       this.ai = null
       this.services = { ...this.services, ai: false }
-      this.emit('servicesChanged', { services: { ...this.services } })
+      this.capabilities = buildCapabilities(this.services)
+      this.emit('servicesChanged', { services: { ...this.services }, capabilities: this.capabilities })
       throw err
     }
   }
@@ -434,7 +505,8 @@ export class NodeDaemon extends EventEmitter {
       this.ai = null
     }
     this.services = { ...this.services, ai: false }
-    this.emit('servicesChanged', { services: { ...this.services } })
+    this.capabilities = buildCapabilities(this.services)
+    this.emit('servicesChanged', { services: { ...this.services }, capabilities: this.capabilities })
   }
 
   // Walks the storage directory to compute actual bytes-on-disk. Slow on

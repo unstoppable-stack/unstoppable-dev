@@ -13,6 +13,46 @@ export const DEFAULT_SERVICES = Object.freeze({
   ai: false
 })
 
+export function buildCapabilities (services = DEFAULT_SERVICES) {
+  return {
+    resources: {
+      version: 1,
+      enabled: true,
+      kinds: ['hypercore', 'hyperbee', 'hyperdrive'],
+      methods: ['register', 'status', 'pause', 'resume', 'peek']
+    },
+    storage: {
+      version: 1,
+      enabled: true,
+      methods: ['usage']
+    },
+    ai: {
+      version: 1,
+      enabled: !!services.ai,
+      modes: ['mock', 'qvac'],
+      methods: ['completion.stream']
+    },
+    config: {
+      version: 1,
+      enabled: false,
+      methods: []
+    },
+    events: {
+      version: 1,
+      enabled: false,
+      methods: []
+    }
+  }
+}
+
+export function defaultCapabilityGrants (capabilities = buildCapabilities()) {
+  const grants = {}
+  for (const [name, cap] of Object.entries(capabilities)) {
+    grants[name] = cap.enabled ? [...(cap.methods || [])] : []
+  }
+  return grants
+}
+
 // `os` and `process` aren't available in Bare by default — `bare-os` and
 // `bare-env` are separate modules. Load both lazily, preferring the Bare
 // variants, so a Pear Desktop worker and a Node.js client on the same
@@ -38,6 +78,7 @@ const _os = await _loadOs()
 const _env = await _loadEnv()
 
 export function localDiscoveryTopic () {
+  if (_env?.UNSTOPPABLE_NODE_TOPIC) return b4a.from(_env.UNSTOPPABLE_NODE_TOPIC, 'hex')
   const user = _env?.USER || _env?.USERNAME || 'default'
   const host = _os && typeof _os.hostname === 'function' ? _os.hostname() : 'bare-runtime'
   const machineId = `${user}@${host}`

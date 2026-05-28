@@ -1,5 +1,5 @@
 import { NodeClient } from './client.js'
-import { KNOWN_SERVICES } from './protocol.js'
+import { KNOWN_SERVICES, buildRequestedCapabilities } from './protocol.js'
 import {
   NodeClientError,
   NodeNotFoundError,
@@ -59,7 +59,8 @@ export async function connectToNode ({
   timeout: timeoutMs = 15_000,
   requireServices = [],
   deviceName,
-  reconnect
+  reconnect,
+  requestedCapabilities
 }) {
   for (const s of requireServices) {
     if (!KNOWN_SERVICES.includes(s)) {
@@ -67,7 +68,17 @@ export async function connectToNode ({
     }
   }
 
-  const client = new NodeClient({ appId, appName, cores, drives, swarm, topic, deviceName, reconnect })
+  const client = new NodeClient({
+    appId,
+    appName,
+    cores,
+    drives,
+    swarm,
+    topic,
+    deviceName,
+    reconnect,
+    requestedCapabilities: requestedCapabilities || buildRequestedCapabilities({ requireServices })
+  })
 
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {

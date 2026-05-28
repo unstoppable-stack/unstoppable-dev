@@ -8,13 +8,35 @@ alwaysApply: false
 ## Overview
 Expo Bare refers to running Bare runtime inside a React Native/Expo app using `react-native-bare-kit` and `bare-pack` bundles. This lets mobile apps run P2P backends (Hypercore, Hyperswarm, QVAC) in a Bare worklet while the UI stays in React Native.
 
-## Version Notes
-- Verified in local sources: `react-native-bare-kit` ^0.11.5 (qvac-health-dev) and ^0.9.3 (qvac-app-workbench-mobile-main).
-- Verified in local sources: `bare-pack` ^1.5.1 (qvac-health-dev).
+## Version Notes (read before bumping anything)
+
+The Expo + Bare mobile stack is a **coupled set** — Expo SDK, React Native,
+`react-native-bare-kit`, and `bare-pack` only have one validated combination
+at a time. Bumping any single one of them risks breaking the worklet bundle
+pipeline. See `core/verified-versions.mdc` → "Mobile (Expo + Bare)" for the
+authoritative table.
+
+Today's pinned set (last verified 2026-05-21):
+
+| Package | Pinned | Anchor / why |
+|---------|--------|--------------|
+| `bare-pack` | `^1.5.1` | **Anchor.** `2.0.0` (Jan 2026) removed the `--target` CLI flag that our `build:bare` script uses. Do **not** bump to `2.x` until the generator switches the bundler invocation off `--target`. |
+| `react-native-bare-kit` | `0.12.3` (exact) | **Required exact pin by `@qvac/sdk@0.11`.** Newer/older versions break the QVAC mobile worker bundle. |
+| `expo` | `~54.0.33` | Pairs with `react-native@0.81.x`. SDK 55 / 56 ship `react-native@0.83` / `0.85`, neither validated against `bare-pack@1.5.1` + `react-native-bare-kit@0.12.3`. |
+| `react-native` | `0.81.5` (exact) | Bound to Expo SDK 54. |
+| Expo ecosystem (`expo-router`, `expo-build-properties`, `expo-file-system`, `expo-device`, `expo-linking`, `expo-splash-screen`, `expo-status-bar`, `react-native-safe-area-context`, `react-native-screens`) | matching `~5x.x.x` | All bound to Expo SDK 54. |
+
+Historical context: reference apps (`qvac-workbench-mobile`, `qvac-health`)
+still pin `react-native-bare-kit@^0.11.5`, so our `0.12.3` pin (forced by
+`@qvac/sdk@0.11` peer dep) is already one step ahead. The next step — Expo
+SDK 56 + `bare-pack@2.x` — is gated on upstream QVAC reference apps
+migrating first.
 
 ## Installation
 ```bash
-npm i react-native-bare-kit bare-pack
+# Use the scaffold — never hand-install these. The scaffold pins every
+# version against a validated combination. See `setup-mobile-app` skill.
+us scaffold app -p expo-mobile -n <name> -f local-ai
 ```
 
 ## Quick Start
@@ -25,7 +47,9 @@ npm i
 ```
 
 ```bash
-# bundle Bare backend for iOS + Android
+# Bundle Bare backend for iOS + Android. The `--target` flag is bare-pack 1.x
+# only — drop to a bare-pack 2.x invocation when (and only when) the whole
+# coupled set above is re-validated together.
 npx bare-pack --target ios --target android --linked --out app/app.bundle.mjs backend/backend.mjs
 ```
 
@@ -66,6 +90,16 @@ const rpc = new RPC(IPC, onRequest)
 - Android requires minSdkVersion 29+ and NDK alignment (Expo build props).
 - Bundle with `--linked` to use prelinked native addons on mobile.
 - QVAC LLM inference does not run on emulators; use physical devices.
+- **Never bump `bare-pack` past `1.5.1`** until the generator switches off
+  `--target` — the CLI flag was removed in `2.0.0` and builds will fail with
+  `Unknown option '--target'` during `prestart` / `preios` / `preandroid`.
+- **Never bump `react-native-bare-kit`** away from the exact version that
+  the installed `@qvac/sdk` declares as its peer (currently `0.12.3` for
+  `@qvac/sdk@0.11`). Caret ranges silently install a newer pre-1.0 minor
+  and break the SDK's mobile worker bundle with cryptic native errors.
+- **Bump Expo SDK only as a coordinated set.** The Expo monorepo pins each
+  SDK to one specific `react-native` major. Mixing SDK 54 with RN 0.85
+  (SDK 56's RN) is not a supported configuration.
 
 ## Resources
 - https://docs.pear.holepunch.to/guide/making-a-bare-mobile-app

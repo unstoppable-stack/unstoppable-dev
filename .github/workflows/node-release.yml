@@ -1,0 +1,73 @@
+name: Node Release
+
+on:
+  push:
+    tags:
+      - 'v0.4.*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run npm publish --dry-run instead of publishing'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  publish-node-packages:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install node-client deps
+        working-directory: packages/node-client
+        run: npm install
+
+      - name: Test node-client
+        working-directory: packages/node-client
+        run: npm test
+
+      - name: Pack node-client
+        working-directory: packages/node-client
+        run: npm pack --dry-run
+
+      - name: Publish node-client
+        working-directory: packages/node-client
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --dry-run --access public
+          else
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install node deps
+        working-directory: packages/node
+        run: npm install
+
+      - name: Test node
+        working-directory: packages/node
+        run: npm test
+
+      - name: Pack node
+        working-directory: packages/node
+        run: npm pack --dry-run
+
+      - name: Publish node
+        working-directory: packages/node
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
+            npm publish --dry-run --access public
+          else
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

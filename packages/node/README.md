@@ -26,7 +26,7 @@ Or run the [Pear Desktop dashboard](../node-desktop) for a UI.
 ## Install
 
 ```bash
-npm install unstoppable-node
+npm install -g unstoppable-node
 ```
 
 For AI support, also install `@qvac/sdk` (optional peer dep):
@@ -69,7 +69,7 @@ await node.resumeApp('my-app')
 ## CLI usage
 
 ```bash
-unstoppable-node --storage ./my-storage --ai-mock
+unstoppable-node start --storage ./my-storage --ai-mock
 ```
 
 | Flag                | Effect                                        |
@@ -80,11 +80,38 @@ unstoppable-node --storage ./my-storage --ai-mock
 
 Storage path comes from positional arg or `--storage`.
 
+## Quickstart
+
+```bash
+npm install -g unstoppable-node
+npx unstoppable-node start --ai-mock
+```
+
+In another terminal, run an app that uses `@unstoppable/node-client` with
+`requireServices: ['ai']`. The node will pair with the app, register its cores
+and drives, and stream mock inference without downloading a model.
+
 ## Tests
 
 ```bash
-npm test       # 75 tests under Node.js
+npm test       # default Node.js tests; real QVAC test is skipped unless opted in
 ```
+
+Real QVAC validation is opt-in because it requires `@qvac/sdk` and a model
+source. Use a local path, preset, or URL accepted by QVAC:
+
+```bash
+npm install @qvac/sdk
+QVAC_MODEL_SRC=/path/or/url/to/model npm run test:qvac
+```
+
+Optional knobs:
+
+| Env var             | Effect                                  |
+| ------------------- | --------------------------------------- |
+| `QVAC_MODEL_SRC`    | Required model source for real QVAC     |
+| `QVAC_MODEL_TYPE`   | Model type, defaults to `llm`           |
+| `QVAC_TEST_TIMEOUT` | Test timeout in ms, defaults to 300000  |
 
 ## License
 

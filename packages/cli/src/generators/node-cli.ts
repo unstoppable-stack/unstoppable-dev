@@ -55,11 +55,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    // The client library ships from this repo (packages/node-client). Once
-    // published the version range below will resolve from npm; until then
-    // `us init` with this feature expects the user to have either
-    // `npm link`ed the package locally or added a private registry.
-    Object.assign(deps, { '@unstoppable/node-client': '^0.1.0' })
+    Object.assign(deps, { '@unstoppable/node-client': '^0.4.0' })
   }
 
   return {

@@ -109,6 +109,14 @@ export class AIProvider extends EventEmitter {
       history: messages,
       stream
     })
+
+    if (result.events) {
+      for await (const event of result.events) {
+        if (event.type === 'contentDelta' && event.text) yield event.text
+      }
+      return
+    }
+
     for await (const token of result.tokenStream) {
       yield token
     }

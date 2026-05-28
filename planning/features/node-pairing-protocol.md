@@ -441,6 +441,31 @@ us validate the core replication flow without solving cross-device trust.
 
 ---
 
+## v0.4 Discovery Flake Finding
+
+During v0.4 smoke-test work, rapidly restarting the Node on the default
+machine-local topic reproduced `Node not found` failures even when the daemon had
+already emitted `ready`. In failed runs the daemon did **not** emit
+`peerConnected`, so the failure was before `nodeHello`, approval, or
+registration. The likely cause is stale public-DHT records for the shared local
+topic after many short-lived daemon identities announce and exit.
+
+Mitigations added for v0.4:
+
+- `NodeClient.connect()` now keeps nudging discovery while the caller's existing
+  timeout is active, and resets its client swarm after repeated empty lookup
+  cycles.
+- `NodeDaemon` waits for a short discovery warmup before emitting `ready`, so UIs
+  do not prompt apps to connect immediately after `flush()`.
+- Both daemon and client protocol helpers honor `UNSTOPPABLE_NODE_TOPIC`, which
+  lets CI smoke tests use a fresh isolated topic instead of inheriting stale DHT
+  state from previous local runs.
+- `packages/node-desktop/scripts/smoke.js` can run `NODE_SMOKE_RUNS=20` against
+  one long-lived headless daemon. On 2026-05-27 this produced 20/20 successful
+  demo pairings, each under 1 second, with the Bare runtime.
+
+---
+
 ## Open Questions
 
 1. **Should the Node have a persistent identity?** Currently each Node

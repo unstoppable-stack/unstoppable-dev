@@ -9,6 +9,7 @@
 // covers AI.
 
 import { spawn } from 'child_process'
+import { randomBytes } from 'crypto'
 import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import path from 'path'
@@ -21,6 +22,8 @@ const demoRoot = path.join(repoRoot, 'sandbox/node-demo')
 const runtime = process.env.BARE_BIN || 'bare'
 const readyTimeoutMs = Number(process.env.NODE_SMOKE_READY_TIMEOUT_MS || 30_000)
 const demoTimeoutMs = Number(process.env.NODE_SMOKE_DEMO_TIMEOUT_MS || 45_000)
+const runs = Number(process.env.NODE_SMOKE_RUNS || 1)
+const topic = process.env.UNSTOPPABLE_NODE_TOPIC || randomBytes(32).toString('hex')
 
 const storagePath = await mkdtemp(path.join(tmpdir(), 'unstoppable-node-smoke-'))
 let daemon
@@ -29,7 +32,12 @@ try {
   daemon = spawn(
     runtime,
     [path.join(nodeDesktopRoot, 'bin/headless.js'), '--storage', storagePath, '--ai-mock'],
-    { cwd: nodeDesktopRoot, stdio: ['pipe', 'pipe', 'pipe'], detached: true }
+    {
+      cwd: nodeDesktopRoot,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      detached: true,
+      env: { ...process.env, UNSTOPPABLE_NODE_TOPIC: topic }
+    }
   )
   daemon.stderr.on('data', (data) => process.stderr.write(data))
 
@@ -42,7 +50,10 @@ try {
     throw new Error(`Daemon ready without core services: ${JSON.stringify(ready.services)}`)
   }
 
-  await runDemo(demoTimeoutMs)
+  for (let i = 1; i <= runs; i++) {
+    console.log(`[smoke] demo run ${i}/${runs}`)
+    await runDemo(demoTimeoutMs)
+  }
 
   console.log('[smoke] PASS')
 } catch (err) {
@@ -140,7 +151,8 @@ function runDemo (timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, ['demo.js'], {
       cwd: demoRoot,
-      stdio: ['ignore', 'inherit', 'inherit']
+      stdio: ['ignore', 'inherit', 'inherit'],
+      env: { ...process.env, UNSTOPPABLE_NODE_TOPIC: topic }
     })
     const timer = setTimeout(() => {
       child.kill('SIGTERM')

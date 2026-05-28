@@ -25,6 +25,37 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
+  // ====================================================================
+  // MOBILE COUPLED VERSION SET — do NOT bump anything below in isolation.
+  // ====================================================================
+  // The Expo SDK, react-native, react-native-bare-kit, and bare-pack
+  // versions below have been validated as one combination. Bumping any
+  // single entry risks breaking the worklet bundling pipeline that the
+  // scaffolded app depends on at build time.
+  //
+  // The ANCHOR is `bare-pack@^1.5.1` — the last release on the 1.x line.
+  //   - `bare-pack@2.0.0` (Jan 2026) removed the `--target` CLI flag that
+  //     the generated `build:bare` script invokes below. Switching to
+  //     `2.x` requires reworking the bundler invocation in this file.
+  //   - `bare-pack@2.x` also bumps `bare-module-traverse` from `~1.8.0`
+  //     to `~2.0.0`, which has not been validated end-to-end against
+  //     `@qvac/sdk@0.11`'s worker bundle.
+  //
+  // Coupling rules:
+  //   - Expo SDK MAJOR pins react-native MAJOR (SDK 54 → RN 0.81;
+  //     SDK 55 → RN 0.83; SDK 56 → RN 0.85). Never mix.
+  //   - `react-native-bare-kit` is EXACT-pinned (no caret) because
+  //     `@qvac/sdk` declares it as an exact peer (0.12.3 for SDK 0.11);
+  //     caret ranges silently install pre-1.0 minors and break QVAC's
+  //     mobile worker bundle with cryptic native errors.
+  //   - When bumping ANY of these, bump ALL of them and re-run the full
+  //     mobile e2e: `pnpm test:e2e:mobile` (level 4 simulator) +
+  //     manual level 6 on a physical device.
+  //
+  // Authoritative table: `packages/agent-pack/src/core/verified-versions.mdc`
+  // → "Mobile (Expo + Bare) — coupled set" section.
+  // ====================================================================
+  //
   // Bare worklet is always required (P2P is base infrastructure)
   const deps: Record<string, string> = {
     expo: '~54.0.33',
@@ -40,8 +71,8 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'react-native': '0.81.5',
     'react-native-safe-area-context': '~5.6.0',
     'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.12.3',
-    'bare-pack': '^1.5.1',
+    'react-native-bare-kit': '0.12.3', // EXACT — see coupling rules above
+    'bare-pack': '^1.5.1', // ANCHOR — see coupling rules above. Never 2.x.
     'bare-rpc': '^1.1.0',
     // Base P2P + KV infra — always required by bare/index.js worklet
     corestore: '^7.6.0',
@@ -70,6 +101,13 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // module at build time. The bare runtime remaps it to `bare-crypto` at
     // load time. Upstream @qvac/rag references `crypto` (not `bare-crypto`)
     // in some adapters — without `--defer`, bare-pack fails to trace them.
+    //
+    // The `--target` flag is **bare-pack 1.x only** — it was removed in
+    // `bare-pack@2.0.0` (Jan 2026). This script invocation is the reason
+    // the `bare-pack` dep above is pinned to `^1.5.1`. When bumping to
+    // `bare-pack@2.x`, this entire script must be rewritten against the
+    // 2.x CLI surface, and the whole Mobile coupled set (Expo SDK, RN,
+    // react-native-bare-kit) must be re-validated end-to-end against it.
     'build:bare':
       'npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js',
     prebuild: 'npm run build:bare && npx expo prebuild',
@@ -79,6 +117,11 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   const overrides: Record<string, string> = {
+    // Exact-pinned because newer `bare-fs` releases on Bare 4.7.x have
+    // not been validated against the bundle pipeline anchored on
+    // `bare-pack@1.5.1`. Part of the Mobile coupled set — see the
+    // version table at the top of `packageJson()` and
+    // `core/verified-versions.mdc` → "Mobile (Expo + Bare)".
     'bare-fs': '4.5.1',
   }
 
@@ -86,7 +129,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // node-client + its transitive runtime deps. `hyperswarm` already enters
     // the graph via `local-ai` too, so guard so we don't double-declare.
     Object.assign(deps, {
-      '@unstoppable/node-client': '^0.1.0',
+      '@unstoppable/node-client': '^0.4.0',
       hyperswarm: '^4.12.1',
       b4a: '^1.7.3',
       events: '^3.3.0',

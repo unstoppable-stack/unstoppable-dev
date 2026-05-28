@@ -17,33 +17,108 @@ document.getElementById('app').innerHTML = `
       </div>
       <div class="services" id="services"></div>
       <div class="header-actions">
-        <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
         <button class="btn-ghost" id="help-btn" title="Show the welcome guide">?</button>
       </div>
     </header>
     <main class="content">
-      <section class="card" id="summary-card">
-        <h2 class="card-title">Summary</h2>
-        <div class="grid" id="summary-grid">
-          <div class="metric"><span class="metric-label">Apps</span><span class="metric-value" id="m-apps">–</span></div>
-          <div class="metric"><span class="metric-label">Cores</span><span class="metric-value" id="m-cores">–</span></div>
-          <div class="metric"><span class="metric-label">Drives</span><span class="metric-value" id="m-drives">–</span></div>
-          <div class="metric"><span class="metric-label">Peers</span><span class="metric-value" id="m-peers">–</span></div>
-          <div class="metric"><span class="metric-label">Storage</span><span class="metric-value" id="m-storage" title="Sum of replicated core + drive byteLength. Click 'Recalc' for actual disk size.">–</span></div>
-        </div>
+      <nav class="tabs" aria-label="Dashboard sections">
+        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab" data-tab="storage">Storage</button>
+        <button class="tab" data-tab="ai">AI</button>
+        <button class="tab" data-tab="config">Config</button>
+      </nav>
+
+      <section class="tab-panel" id="tab-overview">
+        <section class="card" id="summary-card">
+          <h2 class="card-title">Summary</h2>
+          <div class="grid" id="summary-grid">
+            <div class="metric"><span class="metric-label">Apps</span><span class="metric-value" id="m-apps">–</span></div>
+            <div class="metric"><span class="metric-label">Cores</span><span class="metric-value" id="m-cores">–</span></div>
+            <div class="metric"><span class="metric-label">Drives</span><span class="metric-value" id="m-drives">–</span></div>
+            <div class="metric"><span class="metric-label">Peers</span><span class="metric-value" id="m-peers">–</span></div>
+            <div class="metric"><span class="metric-label">Storage</span><span class="metric-value" id="m-storage" title="Sum of replicated core + drive byteLength. Click 'Recalc' for actual disk size.">–</span></div>
+          </div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Paired Apps</h2>
+          <div id="apps-list" class="apps"></div>
+        </section>
       </section>
-      <section class="card">
-        <h2 class="card-title">Paired Apps</h2>
-        <div id="apps-list" class="apps"></div>
+
+      <section class="tab-panel" id="tab-storage" hidden>
+        <section class="card">
+          <h2 class="card-title">Storage</h2>
+          <p class="dim">Replicated bytes by app. Updated with every daemon status snapshot.</p>
+          <div class="grid storage-grid">
+            <div class="metric"><span class="metric-label">Total</span><span class="metric-value" id="storage-total">–</span></div>
+            <div class="metric"><span class="metric-label">Core bytes</span><span class="metric-value" id="storage-cores">–</span></div>
+            <div class="metric"><span class="metric-label">Drive bytes</span><span class="metric-value" id="storage-drives">–</span></div>
+          </div>
+          <div id="storage-apps" class="apps storage-apps"></div>
+        </section>
       </section>
-      <section class="card" id="trust-card" hidden>
-        <h2 class="card-title">Denied Keys</h2>
-        <p class="dim">Keys the node has been told to reject. Click "Forget" to allow them to request approval again.</p>
-        <div id="denied-list" class="apps"></div>
+
+      <section class="tab-panel" id="tab-ai" hidden>
+        <section class="card">
+          <h2 class="card-title">AI Provider</h2>
+          <p class="dim">Enable delegated inference on this node. Mock mode is instant and safe for demos.</p>
+          <div class="ai-panel">
+            <div>
+              <div class="ai-state" id="ai-state">AI status unknown</div>
+              <div class="dim" id="ai-detail">Waiting for daemon status…</div>
+            </div>
+            <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
+          </div>
+        </section>
       </section>
-      <section class="card">
-        <h2 class="card-title">Event Log</h2>
-        <div id="log" class="log"></div>
+
+      <section class="tab-panel" id="tab-config" hidden>
+        <section class="card">
+          <h2 class="card-title">Config</h2>
+          <dl class="config-list">
+            <dt>Status</dt><dd id="config-status">Starting…</dd>
+            <dt>Node key</dt><dd class="mono mono-wrap" id="config-node-key">–</dd>
+            <dt>Storage path</dt><dd class="mono mono-wrap" id="config-storage-path">–</dd>
+            <dt>Services</dt><dd id="config-services">–</dd>
+          </dl>
+          <form class="config-form" id="config-form">
+            <h3 class="section-title">Editable Settings</h3>
+            <label class="field-check"><input type="checkbox" id="cfg-ai-enabled"> Enable AI by default</label>
+            <label class="field">AI mode
+              <select id="cfg-ai-mode">
+                <option value="mock">mock</option>
+                <option value="qvac">qvac</option>
+              </select>
+            </label>
+            <label class="field">QVAC model source
+              <input id="cfg-ai-model" placeholder="preset, path, or URL">
+            </label>
+            <label class="field">Global storage quota (bytes)
+              <input id="cfg-storage-global" type="number" min="0" placeholder="unlimited">
+            </label>
+            <label class="field">Per-app storage quota (bytes)
+              <input id="cfg-storage-app" type="number" min="0" placeholder="unlimited">
+            </label>
+            <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require pair approval</label>
+            <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
+            <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
+            <label class="field-check"><input type="checkbox" id="cfg-ui-welcome"> Show welcome guide</label>
+            <div class="config-actions">
+              <button class="btn btn-approve" id="config-save" type="submit">Save config</button>
+              <button class="btn btn-approve-once" id="config-refresh" type="button">Refresh</button>
+              <span class="dim" id="config-message"></span>
+            </div>
+          </form>
+        </section>
+        <section class="card" id="trust-card" hidden>
+          <h2 class="card-title">Denied Keys</h2>
+          <p class="dim">Keys the node has been told to reject. Click "Forget" to allow them to request approval again.</p>
+          <div id="denied-list" class="apps"></div>
+        </section>
+        <section class="card">
+          <h2 class="card-title">Event Log</h2>
+          <div id="log" class="log"></div>
+        </section>
       </section>
     </main>
   </div>
@@ -106,6 +181,7 @@ injectStyles()
 
 let lastStatus = null
 let nodePublicKey = null
+let currentConfig = null
 
 // Queue of pair requests. Only the head request is shown in the
 // modal; subsequent requests stack and are revealed one at a time
@@ -117,8 +193,10 @@ onWorkerMessage((msg) => {
   switch (msg.type) {
     case 'ready':
       setText('node-status', '✅ Node is running')
+      setText('config-status', 'Node is running')
       renderServices(msg.services || {})
       if (msg.publicKey) setNodePublicKey(msg.publicKey)
+      if (msg.config) renderConfigForm(msg.config)
       if (msg.trust) renderTrust(msg.trust)
       pushLog(`Node ready (topic ${short(msg.topic)})`, 'ok')
       break
@@ -126,7 +204,19 @@ onWorkerMessage((msg) => {
       lastStatus = msg
       renderSummary(msg)
       renderApps(msg)
+      renderStorage(msg)
+      renderAiPanel(msg)
+      renderConfig(msg)
       if (msg.trust) renderTrust(msg.trust)
+      break
+    case 'config':
+      renderConfigForm(msg.config)
+      setText('config-message', 'Config saved')
+      pushLog('Config updated', 'ok')
+      break
+    case 'config-error':
+      setText('config-message', msg.error || 'Config update failed')
+      pushLog(`Config error: ${msg.error}`, 'err')
       break
     case 'paired':
       pushLog(`Paired with ${msg.appName} (${msg.appId})`, 'ok')
@@ -159,6 +249,7 @@ onWorkerMessage((msg) => {
       break
     case 'servicesChanged':
       renderServices(msg.services || {})
+      renderAiPanel({ ...(lastStatus || {}), services: msg.services || {} })
       pushLog(`Services updated: ${Object.entries(msg.services || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '(none)'}`, 'ok')
       break
     case 'appPaused':
@@ -211,13 +302,16 @@ onWorkerMessage((msg) => {
       break
     case 'fatal':
       setText('node-status', '❌ Node failed to start')
+      setText('config-status', 'Node failed to start')
       pushLog(`Fatal: ${msg.error}`, 'err')
       break
   }
 })
 
 wireApprovalModal()
+wireTabs()
 wireAiToggle()
+wireConfigForm()
 wirePeekModal()
 wireWelcomeModal()
 
@@ -244,6 +338,7 @@ function renderServices (services) {
     .map(([name, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${on ? '+' : '-'}${name}</span>`)
     .join('')
   renderAiToggle(services)
+  setText('config-services', Object.entries(services).map(([k, v]) => `${v ? '+' : '-'}${k}`).join(' '))
 }
 
 function renderAiToggle (services) {
@@ -261,6 +356,66 @@ function renderSummary (status) {
   setText('m-peers', String(status.connectedPeers ?? 0))
   const bytes = status.storage?.total ?? 0
   setText('m-storage', formatBytes(bytes))
+}
+
+function renderStorage (status) {
+  const storage = status.storage || {}
+  setText('storage-total', formatBytes(storage.total || 0))
+  setText('storage-cores', formatBytes(storage.totalCores || 0))
+  setText('storage-drives', formatBytes(storage.totalDrives || 0))
+  const el = document.getElementById('storage-apps')
+  if (!el) return
+  const apps = status.apps || []
+  const perApp = storage.perApp || {}
+  if (apps.length === 0) {
+    el.innerHTML = '<p class="dim">No paired apps yet.</p>'
+    return
+  }
+  el.innerHTML = apps.map((app) => `
+    <div class="app-row">
+      <div class="app-info">
+        <div class="app-name">${escape(app.appName || app.appId)}</div>
+        <div class="app-meta"><span class="mono">${escape(app.appId)}</span></div>
+      </div>
+      <div class="storage-value">${formatBytes(perApp[app.appId] || 0)}</div>
+    </div>
+  `).join('')
+}
+
+function renderAiPanel (status) {
+  const services = status.services || {}
+  const ai = status.ai || null
+  const on = !!services.ai
+  setText('ai-state', on ? 'AI is enabled' : 'AI is disabled')
+  if (!on) {
+    setText('ai-detail', 'Apps that require AI will fail fast until you enable the provider.')
+  } else if (ai?.mock) {
+    setText('ai-detail', `Mock provider ready${ai.modelId ? ` (${ai.modelId})` : ''}.`)
+  } else {
+    setText('ai-detail', ai?.modelId ? `QVAC model: ${ai.modelId}` : 'QVAC provider enabled.')
+  }
+  renderAiToggle(services)
+}
+
+function renderConfig (status) {
+  setText('config-status', 'Node is running')
+  if (nodePublicKey) setText('config-node-key', nodePublicKey)
+  setText('config-storage-path', status.storagePath || '–')
+  renderServices(status.services || {})
+}
+
+function renderConfigForm (config) {
+  if (!config) return
+  currentConfig = config
+  setChecked('cfg-ai-enabled', !!config.ai?.enabled)
+  setValue('cfg-ai-mode', config.ai?.mode || 'mock')
+  setValue('cfg-ai-model', config.ai?.modelSrc || '')
+  setValue('cfg-storage-global', config.storage?.globalQuotaBytes ?? '')
+  setValue('cfg-storage-app', config.storage?.perAppQuotaBytes ?? '')
+  setChecked('cfg-pair-approval', config.pairing?.requireApproval !== false)
+  setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
+  setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
+  setChecked('cfg-ui-welcome', config.ui?.showWelcome !== false)
 }
 
 // Formats bytes for the dashboard tiles. We never need more than one decimal
@@ -418,6 +573,7 @@ function renderTrust (trust) {
 function setNodePublicKey (key) {
   nodePublicKey = key
   setText('node-key-value', short(key))
+  setText('config-node-key', key)
   const el = document.getElementById('node-key')
   if (el && !el._wired) {
     el._wired = true
@@ -434,6 +590,18 @@ function setNodePublicKey (key) {
       pushLog('Copied node public key to clipboard', 'dim')
     })
   }
+}
+
+function wireTabs () {
+  document.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tab = btn.getAttribute('data-tab')
+      document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('active', b === btn))
+      document.querySelectorAll('.tab-panel').forEach((panel) => {
+        panel.hidden = panel.id !== `tab-${tab}`
+      })
+    })
+  })
 }
 
 function enqueueApproval (req) {
@@ -607,6 +775,51 @@ function wireAiToggle () {
   })
 }
 
+function wireConfigForm () {
+  const form = document.getElementById('config-form')
+  const refresh = document.getElementById('config-refresh')
+  if (!form) return
+  form.addEventListener('submit', (event) => {
+    event.preventDefault()
+    try {
+      const patch = collectConfigPatch()
+      setText('config-message', 'Saving…')
+      sendToWorker({ type: 'update-config', patch })
+    } catch (err) {
+      setText('config-message', err.message)
+    }
+  })
+  if (refresh) refresh.addEventListener('click', () => {
+    setText('config-message', 'Refreshing…')
+    sendToWorker({ type: 'get-config' })
+  })
+  sendToWorker({ type: 'get-config' })
+}
+
+function collectConfigPatch () {
+  return {
+    ai: {
+      enabled: getChecked('cfg-ai-enabled'),
+      mode: getValue('cfg-ai-mode') || 'mock',
+      modelSrc: getValue('cfg-ai-model').trim()
+    },
+    storage: {
+      globalQuotaBytes: parseOptionalBytes('cfg-storage-global'),
+      perAppQuotaBytes: parseOptionalBytes('cfg-storage-app')
+    },
+    pairing: {
+      requireApproval: getChecked('cfg-pair-approval'),
+      autoApproveLocal: getChecked('cfg-pair-auto-local')
+    },
+    notifications: {
+      pairRequests: getChecked('cfg-notifications-pair')
+    },
+    ui: {
+      showWelcome: getChecked('cfg-ui-welcome')
+    }
+  }
+}
+
 function wireApprovalModal () {
   const onApprove = (remember) => () => {
     if (!approvalCurrent) return
@@ -645,6 +858,34 @@ function pushLog (text, kind = 'info') {
 function setText (id, text) {
   const el = document.getElementById(id)
   if (el) el.textContent = text
+}
+
+function setValue (id, value) {
+  const el = document.getElementById(id)
+  if (el) el.value = value
+}
+
+function getValue (id) {
+  const el = document.getElementById(id)
+  return el ? el.value : ''
+}
+
+function setChecked (id, value) {
+  const el = document.getElementById(id)
+  if (el) el.checked = !!value
+}
+
+function getChecked (id) {
+  const el = document.getElementById(id)
+  return !!el?.checked
+}
+
+function parseOptionalBytes (id) {
+  const value = getValue(id).trim()
+  if (!value) return null
+  const parsed = Number(value)
+  if (!Number.isSafeInteger(parsed) || parsed < 0) throw new Error(`${id} must be a non-negative integer`)
+  return parsed
 }
 
 function short (hex) {
@@ -691,6 +932,29 @@ function injectStyles () {
       flex-direction: column;
       gap: 16px;
     }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid #30363d;
+      padding-bottom: 10px;
+      position: sticky;
+      top: 0;
+      background: #0d1117;
+      z-index: 2;
+    }
+    .tab {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 999px;
+      color: #8b949e;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 7px 14px;
+    }
+    .tab:hover { border-color: #58a6ff; color: #c9d1d9; }
+    .tab.active { background: rgba(56, 139, 253, 0.15); border-color: #58a6ff; color: #58a6ff; }
+    .tab-panel[hidden] { display: none; }
+    .tab-panel { display: flex; flex-direction: column; gap: 16px; }
     .card {
       background: #161b22;
       border: 1px solid #30363d;
@@ -720,6 +984,42 @@ function injectStyles () {
     }
     .metric-label { font-size: 0.75rem; color: #8b949e; }
     .metric-value { font-size: 1.3rem; font-weight: 600; color: #58a6ff; }
+    .storage-grid { grid-template-columns: repeat(3, 1fr); margin: 12px 0; }
+    .storage-apps { margin-top: 12px; }
+    .storage-value { color: #58a6ff; font-weight: 600; font-family: 'SFMono-Regular', monospace; }
+    .ai-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .ai-state { color: #e6edf3; font-weight: 700; margin-bottom: 4px; }
+    .config-list {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      gap: 8px 14px;
+      margin: 0;
+      font-size: 0.85rem;
+    }
+    .config-list dt { color: #6e7681; }
+    .config-list dd { color: #e6edf3; margin: 0; }
+    .config-form { margin-top: 16px; display: grid; gap: 10px; }
+    .section-title { font-size: 0.85rem; color: #e6edf3; margin: 2px 0 4px; }
+    .field { display: grid; gap: 4px; color: #8b949e; font-size: 0.8rem; }
+    .field input, .field select {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      padding: 7px 9px;
+    }
+    .field-check { display: flex; align-items: center; gap: 8px; color: #c9d1d9; font-size: 0.85rem; }
+    .config-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
 
     .apps { display: flex; flex-direction: column; gap: 8px; }
     .app-row {

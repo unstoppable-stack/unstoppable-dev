@@ -19,6 +19,9 @@ version: "2026-05-21"
 - Optional `qvac.config.json` at the project root (required only when also
   using the `@qvac/cli` HTTP server)
 - Verify model constants against the installed SDK version before coding
+- For Unstoppable Node delegated inference, validate the real provider with
+  `QVAC_MODEL_SRC=<model> npm run test:qvac` in `packages/node` before release;
+  default tests cover only the mock provider.
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
 > (browser context). It MUST run in a **worker process** started via `pear-run`.
