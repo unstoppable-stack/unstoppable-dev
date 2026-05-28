@@ -4,6 +4,7 @@ import os from 'os'
 import path from 'path'
 import chalk from 'chalk'
 import { NodeDaemon } from './node.js'
+import { exportNodeState, importNodeState } from './export.js'
 
 const DEFAULT_STORAGE = path.join(os.homedir(), '.unstoppable-node')
 
@@ -14,6 +15,7 @@ let storagePath = DEFAULT_STORAGE
 let aiEnabled = false
 let aiMock = false
 let aiModelSrc = null
+const positional = []
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--storage' && args[i + 1]) {
@@ -27,9 +29,11 @@ for (let i = 0; i < args.length; i++) {
     aiEnabled = true
     aiModelSrc = args[++i]
   } else if (!args[i].startsWith('-')) {
-    command = args[i]
+    positional.push(args[i])
   }
 }
+command = positional[0] || command
+const commandTarget = positional[1]
 
 // Also honor env vars (useful in docker/launchd/systemd setups where
 // flipping command-line flags is awkward).
@@ -38,12 +42,22 @@ if (process.env.UNSTOPPABLE_AI_MOCK === '1') { aiEnabled = true; aiMock = true }
 
 if (command === 'start') {
   await startNode(storagePath, { aiEnabled, aiMock, aiModelSrc })
+} else if (command === 'export') {
+  if (!commandTarget) usageAndExit('Missing output path for export')
+  const bundle = await exportNodeState({ storagePath, outPath: commandTarget })
+  console.log(chalk.green(`Exported ${bundle.apps.length} app(s) to ${commandTarget}`))
+} else if (command === 'import') {
+  if (!commandTarget) usageAndExit('Missing input path for import')
+  const bundle = await importNodeState({ storagePath, inPath: commandTarget })
+  console.log(chalk.green(`Imported ${bundle.apps.length} app(s) from ${commandTarget}`))
 } else if (command === 'help') {
   console.log(`
 ${chalk.bold('unstoppable-node')} — Personal sync node for Unstoppable Stack apps
 
 ${chalk.bold('Usage:')}
   unstoppable-node start [options]
+  unstoppable-node export <out.uns> [--storage <path>]
+  unstoppable-node import <in.uns> [--storage <path>]
 
 ${chalk.bold('Options:')}
   --storage <path>     Storage directory (default: ~/.unstoppable-node)
@@ -58,6 +72,14 @@ ${chalk.bold('Environment:')}
 ${chalk.dim('The node replicates, backs up, and seeds data from your P2P apps.')}
 ${chalk.dim('With --ai it also offers on-demand inference to paired apps.')}
 `)
+} else {
+  usageAndExit(`Unknown command: ${command}`)
+}
+
+function usageAndExit (message) {
+  console.error(chalk.red(message))
+  console.error(`Run ${chalk.bold('unstoppable-node help')} for usage.`)
+  process.exit(1)
 }
 
 async function startNode (storagePath, cli = {}) {

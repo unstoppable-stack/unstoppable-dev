@@ -9,6 +9,7 @@
     "./node": "./src/node.js",
     "./ai-provider": "./src/ai-provider.js",
     "./config": "./src/config.js",
+    "./export": "./src/export.js",
     "./registry": "./src/registry.js",
     "./replication": "./src/replication.js",
     "./protocol": "./src/protocol.js"

@@ -109,6 +109,18 @@ document.getElementById('app').innerHTML = `
               <span class="dim" id="config-message"></span>
             </div>
           </form>
+          <div class="config-form">
+            <h3 class="section-title">Backup</h3>
+            <p class="dim">Exports config, trust decisions, and paired-app registry as JSON. Full encrypted Corestore archives are planned later.</p>
+            <label class="field">Backup path
+              <input id="backup-path" placeholder="/tmp/unstoppable-node.uns">
+            </label>
+            <div class="config-actions">
+              <button class="btn btn-approve-once" id="backup-export" type="button">Export</button>
+              <button class="btn btn-deny" id="backup-import" type="button">Import</button>
+              <span class="dim" id="backup-message"></span>
+            </div>
+          </div>
         </section>
         <section class="card" id="trust-card" hidden>
           <h2 class="card-title">Denied Keys</h2>
@@ -218,6 +230,22 @@ onWorkerMessage((msg) => {
       setText('config-message', msg.error || 'Config update failed')
       pushLog(`Config error: ${msg.error}`, 'err')
       break
+    case 'export-result':
+      setText('backup-message', `Exported ${msg.apps} app(s)`)
+      pushLog(`Exported node backup to ${msg.path}`, 'ok')
+      break
+    case 'export-error':
+      setText('backup-message', msg.error || 'Export failed')
+      pushLog(`Export error: ${msg.error}`, 'err')
+      break
+    case 'import-result':
+      setText('backup-message', `Imported ${msg.apps} app(s)`)
+      pushLog(`Imported node backup from ${msg.path}`, 'ok')
+      break
+    case 'import-error':
+      setText('backup-message', msg.error || 'Import failed')
+      pushLog(`Import error: ${msg.error}`, 'err')
+      break
     case 'paired':
       pushLog(`Paired with ${msg.appName} (${msg.appId})`, 'ok')
       break
@@ -316,6 +344,7 @@ wireApprovalModal()
 wireTabs()
 wireAiToggle()
 wireConfigForm()
+wireBackupControls()
 wirePeekModal()
 wireWelcomeModal()
 
@@ -836,6 +865,24 @@ function wireConfigForm () {
     sendToWorker({ type: 'get-config' })
   })
   sendToWorker({ type: 'get-config' })
+}
+
+function wireBackupControls () {
+  const exportBtn = document.getElementById('backup-export')
+  const importBtn = document.getElementById('backup-import')
+  if (exportBtn) exportBtn.addEventListener('click', () => {
+    const path = getValue('backup-path').trim()
+    if (!path) return setText('backup-message', 'Enter a backup path')
+    setText('backup-message', 'Exporting…')
+    sendToWorker({ type: 'export-state', path })
+  })
+  if (importBtn) importBtn.addEventListener('click', () => {
+    const path = getValue('backup-path').trim()
+    if (!path) return setText('backup-message', 'Enter a backup path')
+    if (!confirm('Import this backup into the current node storage? Existing apps with the same IDs will be overwritten.')) return
+    setText('backup-message', 'Importing…')
+    sendToWorker({ type: 'import-state', path })
+  })
 }
 
 function collectConfigPatch () {
