@@ -69,6 +69,17 @@ document.getElementById('app').innerHTML = `
             </div>
             <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
           </div>
+          <div class="ai-controls">
+            <label class="field">Mode
+              <select id="ai-mode">
+                <option value="mock">mock</option>
+                <option value="qvac">qvac</option>
+              </select>
+            </label>
+            <label class="field">QVAC model source
+              <input id="ai-model" placeholder="preset, path, or URL">
+            </label>
+          </div>
         </section>
       </section>
 
@@ -379,7 +390,8 @@ function renderAiToggle (services) {
   const btn = document.getElementById('ai-toggle')
   if (!btn) return
   const on = !!services?.ai
-  btn.textContent = on ? 'Disable AI' : 'Enable AI (mock)'
+  const mode = getValue('ai-mode') || currentConfig?.ai?.mode || 'mock'
+  btn.textContent = on ? 'Disable AI' : `Enable AI (${mode})`
   btn.dataset.action = on ? 'disable-ai' : 'enable-ai'
 }
 
@@ -455,6 +467,8 @@ function renderConfigForm (config) {
   setChecked('cfg-ai-enabled', !!config.ai?.enabled)
   setValue('cfg-ai-mode', config.ai?.mode || 'mock')
   setValue('cfg-ai-model', config.ai?.modelSrc || '')
+  setValue('ai-mode', config.ai?.mode || 'mock')
+  setValue('ai-model', config.ai?.modelSrc || '')
   setValue('cfg-storage-global', config.storage?.globalQuotaBytes ?? '')
   setValue('cfg-storage-app', config.storage?.perAppQuotaBytes ?? '')
   setChecked('cfg-pair-approval', config.pairing?.requireApproval !== false)
@@ -846,13 +860,23 @@ function notifyPairRequest (req) {
 
 function wireAiToggle () {
   const btn = document.getElementById('ai-toggle')
+  const mode = document.getElementById('ai-mode')
   if (!btn) return
+  if (mode) mode.addEventListener('change', () => renderAiToggle(lastStatus?.services || {}))
   btn.addEventListener('click', () => {
     const action = btn.dataset.action || 'enable-ai'
     btn.disabled = true
     btn.textContent = action === 'enable-ai' ? 'Enabling…' : 'Disabling…'
     if (action === 'enable-ai') {
-      sendToWorker({ type: 'enable-ai', mock: true })
+      const mode = getValue('ai-mode') || 'mock'
+      const modelSrc = getValue('ai-model').trim()
+      if (mode === 'qvac' && !modelSrc) {
+        btn.disabled = false
+        renderAiToggle(lastStatus?.services || {})
+        setText('ai-detail', 'Enter a QVAC model source before enabling QVAC mode.')
+        return
+      }
+      sendToWorker({ type: 'enable-ai', mock: mode !== 'qvac', modelSrc: modelSrc || undefined })
     } else {
       sendToWorker({ type: 'disable-ai' })
     }
@@ -1104,6 +1128,7 @@ function injectStyles () {
       margin-top: 12px;
     }
     .ai-state { color: #e6edf3; font-weight: 700; margin-bottom: 4px; }
+    .ai-controls { margin-top: 12px; display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
     .config-list {
       display: grid;
       grid-template-columns: 120px 1fr;
