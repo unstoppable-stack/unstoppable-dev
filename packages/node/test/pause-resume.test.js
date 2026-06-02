@@ -1,6 +1,7 @@
 import { describe, it, before, after } from 'node:test'
 import assert from 'node:assert/strict'
 
+import { NodeDaemon } from '../src/node.js'
 import { createTestEnv } from './helpers.js'
 
 describe('per-app pause/resume', () => {
@@ -91,6 +92,42 @@ describe('per-app pause/resume', () => {
       await client.close()
       try { await appSwarm.destroy() } catch {}
       await node.close()
+    }
+  })
+
+  it('persists paused state across daemon restart', async () => {
+    const node = await env.createNode()
+    await node.start()
+
+    const app = await env.createAppWithBee('persist-pause')
+    const client = await env.createConnectedClient({
+      appId: 'persist-pause',
+      appName: 'Persist Pause',
+      cores: [{ key: app.bee.core.key, type: 'hyperbee', name: 'data' }]
+    })
+
+    let restarted
+    try {
+      assert.ok(await node.pauseApp('persist-pause') >= 1)
+      const storagePath = node.storagePath
+      await client.close()
+      await node.close()
+
+      restarted = new NodeDaemon(storagePath, { swarm: { bootstrap: env.bootstrap }, topic: env.topic })
+      await restarted.start()
+      const status = await restarted.getStatus()
+      const core = status.cores.find((entry) => entry.appId === 'persist-pause')
+      assert.equal(core?.paused, true)
+
+      assert.ok(await restarted.resumeApp('persist-pause') >= 1)
+      const resumed = await restarted.getStatus()
+      assert.equal(resumed.cores.find((entry) => entry.appId === 'persist-pause')?.paused, false)
+    } finally {
+      try { await client.close() } catch {}
+      try { await app.swarm.destroy() } catch {}
+      try { await app.store.close() } catch {}
+      try { await node.close() } catch {}
+      if (restarted) await restarted.close()
     }
   })
 })
