@@ -14,7 +14,7 @@ export class ReplicationEngine {
     this.drives = new Map()
   }
 
-  async addCore ({ key, type, name, appId }) {
+  async addCore ({ key, type, name, appId, paused = false }) {
     const keyBuf = b4a.from(key, 'hex')
     const keyHex = b4a.toString(keyBuf, 'hex')
 
@@ -24,9 +24,9 @@ export class ReplicationEngine {
     await core.ready()
 
     const topic = core.discoveryKey
-    this.swarm.join(topic)
+    if (!paused) this.swarm.join(topic)
 
-    this.replicating.set(keyHex, { core, type, name, appId, topic })
+    this.replicating.set(keyHex, { core, type, name, appId, topic, paused })
 
     core.on('append', () => {
       const info = this.replicating.get(keyHex)
@@ -36,7 +36,7 @@ export class ReplicationEngine {
     return { key: keyHex, length: core.length, byteLength: core.byteLength }
   }
 
-  async addDrive ({ key, name, appId }) {
+  async addDrive ({ key, name, appId, paused = false }) {
     const keyBuf = b4a.from(key, 'hex')
     const keyHex = b4a.toString(keyBuf, 'hex')
 
@@ -51,9 +51,9 @@ export class ReplicationEngine {
     await drive.ready()
 
     const topic = drive.discoveryKey
-    this.swarm.join(topic)
+    if (!paused) this.swarm.join(topic)
 
-    this.drives.set(keyHex, { drive, name, appId, topic })
+    this.drives.set(keyHex, { drive, name, appId, topic, paused })
 
     drive.core.on('append', () => {
       const info = this.drives.get(keyHex)

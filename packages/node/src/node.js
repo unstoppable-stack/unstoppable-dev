@@ -497,6 +497,7 @@ export class NodeDaemon extends EventEmitter {
       if (!exceeded || !this.replication) continue
       const touched = await this.replication.pauseApp(appId)
       if (touched > 0) {
+        await this._persistPauseState(appId, true)
         const info = { appId, touched, reason: appStates[appId].reason, used, limit: globalExceeded ? globalLimit : perAppLimit }
         enforced.push(info)
         this.emit('quotaExceeded', info)
@@ -608,6 +609,7 @@ export class NodeDaemon extends EventEmitter {
   async pauseApp (appId) {
     if (!this.replication) return 0
     const touched = await this.replication.pauseApp(appId)
+    await this._persistPauseState(appId, true)
     if (touched > 0) this.emit('appPaused', { appId, touched })
     return touched
   }
@@ -615,8 +617,20 @@ export class NodeDaemon extends EventEmitter {
   async resumeApp (appId) {
     if (!this.replication) return 0
     const touched = await this.replication.resumeApp(appId)
+    await this._persistPauseState(appId, false)
     if (touched > 0) this.emit('appResumed', { appId, touched })
     return touched
+  }
+
+  async _persistPauseState (appId, paused) {
+    if (!this.registry) return
+    const app = await this.registry.getApp(appId)
+    if (!app) return
+    await this.registry.registerApp({
+      ...app,
+      cores: (app.cores || []).map((core) => ({ ...core, paused })),
+      drives: (app.drives || []).map((drive) => ({ ...drive, paused }))
+    })
   }
 
   async close () {
