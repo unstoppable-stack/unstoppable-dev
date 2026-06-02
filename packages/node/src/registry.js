@@ -13,7 +13,7 @@ export class AppRegistry {
     await this.bee.ready()
   }
 
-  async registerApp ({ appId, appName, publicKey, deviceName, cores = [], drives = [] }) {
+  async registerApp ({ appId, appName, publicKey, deviceName, requestedCapabilities, grants, cores = [], drives = [] }) {
     const existing = await this.getApp(appId)
     const record = {
       appId,
@@ -22,6 +22,8 @@ export class AppRegistry {
       // Free-form, user-shown label like `my-laptop.local`. Helps the
       // dashboard differentiate two devices that share an appId.
       deviceName: deviceName || existing?.deviceName || null,
+      requestedCapabilities: requestedCapabilities || existing?.requestedCapabilities || null,
+      grants: grants || existing?.grants || null,
       cores,
       drives,
       pairedAt: existing?.pairedAt || new Date().toISOString(),

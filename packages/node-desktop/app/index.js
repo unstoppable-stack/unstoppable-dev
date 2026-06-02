@@ -143,6 +143,7 @@ document.getElementById('app').innerHTML = `
         <dt>App ID</dt><dd id="modal-app-id" class="mono">–</dd>
         <dt>Device</dt><dd id="modal-device-name">–</dd>
         <dt>Public key</dt><dd id="modal-app-key" class="mono mono-wrap">–</dd>
+        <dt>Requests</dt><dd id="modal-capabilities">–</dd>
       </dl>
       <p class="modal-warn">Only approve apps you launched yourself. Approving means this node will replicate the app's data and (if enabled) serve AI inference for it.</p>
       <div class="modal-actions">
@@ -474,6 +475,17 @@ function formatBytes (n) {
   return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`
 }
 
+function formatCapabilitySummary (capabilities) {
+  if (!capabilities || typeof capabilities !== 'object') return ''
+  const parts = []
+  for (const [name, methods] of Object.entries(capabilities)) {
+    const list = Array.isArray(methods) ? methods : []
+    if (list.length === 0) continue
+    parts.push(`${name}:${list.join(',')}`)
+  }
+  return parts.join(' | ')
+}
+
 function renderApps (status) {
   const el = document.getElementById('apps-list')
   const apps = status.apps || []
@@ -514,12 +526,15 @@ function renderApps (status) {
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
+    const grantLine = formatCapabilitySummary(app.grants || app.requestedCapabilities)
+    const grantsMeta = grantLine ? `<span title="Capability grants">${escape(grantLine)}</span>` : ''
     return `
       <div class="app-row" data-app-id="${escape(app.appId)}">
         <div class="app-info">
           <div class="app-name">${escape(app.appName || app.appId)} ${trustBadge}</div>
           <div class="app-meta">
             ${deviceLine}
+            ${grantsMeta}
             <span>${cores.length} cores</span>
             <span>${drives.length} drives</span>
             <span>${totalEntries} entries</span>
@@ -666,6 +681,7 @@ function showNextApproval () {
   setText('modal-app-id', approvalCurrent.appId || '–')
   setText('modal-device-name', approvalCurrent.deviceName || '(not provided)')
   setText('modal-app-key', approvalCurrent.publicKey || '–')
+  setText('modal-capabilities', formatCapabilitySummary(approvalCurrent.requestedCapabilities) || 'default data + storage')
   modal.hidden = false
   updatePendingCount()
 }
