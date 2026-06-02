@@ -366,11 +366,14 @@ export class NodeDaemon extends EventEmitter {
       }
     }
 
+    const grants = defaultCapabilityGrants(this.capabilities)
     await this.registry.registerApp({
       appId: msg.appId,
       appName: msg.appName,
       publicKey: msg.publicKey,
-      deviceName: msg.deviceName
+      deviceName: msg.deviceName,
+      requestedCapabilities: msg.requestedCapabilities || null,
+      grants
     })
 
     socket.write(encodeMessage({
@@ -378,7 +381,7 @@ export class NodeDaemon extends EventEmitter {
       nodePublicKey: b4a.toString(this.discoverySwarm.keyPair.publicKey, 'hex'),
       services: this.services,
       capabilities: this.capabilities,
-      grants: defaultCapabilityGrants(this.capabilities)
+      grants
     }))
 
     this.emit('paired', { appId: msg.appId, appName: msg.appName })
