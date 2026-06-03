@@ -310,6 +310,23 @@ export class NodeDaemon extends EventEmitter {
       }))
       return
     }
+    const app = msg.appId ? await this.registry.getApp(msg.appId) : null
+    if (!app) {
+      socket.write(encodeMessage({
+        type: 'inference-error',
+        requestId,
+        error: 'App not paired. Send pairRequest first.'
+      }))
+      return
+    }
+    if (app.grants && !(app.grants.ai || []).includes('completion.stream')) {
+      socket.write(encodeMessage({
+        type: 'inference-error',
+        requestId,
+        error: 'AI capability not granted for this app'
+      }))
+      return
+    }
     try {
       for await (const token of this.ai.runStreaming({ messages: msg.messages, stream: true })) {
         socket.write(encodeMessage({ type: 'inference-token', requestId, token }))
@@ -528,6 +545,17 @@ export class NodeDaemon extends EventEmitter {
     await this.registry.registerApp({ ...app, quotaBytes })
     if (this.replication) await this._enforceQuotas(this.replication.getReplicatedBytes())
     this.emit('appQuotaChanged', { appId, quotaBytes })
+    return this.registry.getApp(appId)
+  }
+
+  async setAppGrant (appId, capability, methods) {
+    if (!capability || !Array.isArray(methods)) throw new Error('capability and methods[] are required')
+    const app = await this.registry.getApp(appId)
+    if (!app) throw new Error(`Unknown app: ${appId}`)
+    const grants = { ...(app.grants || defaultCapabilityGrants(this.capabilities)) }
+    grants[capability] = [...methods]
+    await this.registry.registerApp({ ...app, grants })
+    this.emit('appGrantChanged', { appId, capability, methods: grants[capability] })
     return this.registry.getApp(appId)
   }
 
