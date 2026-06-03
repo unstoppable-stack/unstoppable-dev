@@ -467,8 +467,9 @@ Mitigations added for v0.4:
   plain Node.js: one isolated bootstrap DHT, one long-lived `NodeDaemon`, then N
   fresh clients pairing sequentially with a 5-second timeout. Run it with
   `npm run discovery:stress` from `packages/node`; tune with
-  `NODE_DISCOVERY_RUNS`, `NODE_DISCOVERY_TIMEOUT_MS`, and
-  `NODE_DISCOVERY_WARMUP_MS`.
+  `NODE_DISCOVERY_RUNS`, `NODE_DISCOVERY_TIMEOUT_MS`,
+  `NODE_DISCOVERY_WARMUP_MS`, and `NODE_DISCOVERY_TOPIC=default` to validate the
+  real machine-local topic against an isolated bootstrap DHT.
 
 ---
 
