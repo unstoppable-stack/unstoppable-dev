@@ -17,7 +17,7 @@
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
 | F8 | Live AI toggle | Done — `enableAI`/`disableAI` + dashboard button |
-| F9 | Notifications | Pending |
+| F9 | Notifications | Partial — pair-request desktop notifications and permission UI landed; dock bounce, sound, and auto-restore deferred |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
@@ -376,6 +376,8 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 #### F9. Pair-request notification
 
 **Release label.** Stretch.
+
+**Implementation status.** Partial: the dashboard can show browser/Electron desktop notifications for `pairAwaitingApproval` when `notifications.pairRequests` is enabled, and Config now exposes notification permission state plus a permission request button. OS-native dock/taskbar attention, notification sound, and minimized-window auto-restore remain future work.
 
 **Problem.** If the dashboard window isn't focused (or is in another desktop), the pair-request modal appears silently. The user only finds out by checking the window.
 
