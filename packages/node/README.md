@@ -64,6 +64,9 @@ await node.disableAI()
 // Pause / resume per-app replication without unpairing.
 await node.pauseApp('my-app')
 await node.resumeApp('my-app')
+
+// Set an advisory per-app quota in bytes; null returns to the default.
+await node.setAppQuota('my-app', 1024 * 1024 * 1024)
 ```
 
 ## CLI usage
@@ -85,6 +88,26 @@ Storage path comes from positional arg or `--storage`.
 Export/import currently writes a JSON bundle with node config, paired-app
 registry, and dashboard trust decisions. It does not yet include encrypted
 Corestore data archives.
+
+## Storage quotas
+
+Quotas are advisory safety limits, not hard write barriers. The daemon tracks
+replicated bytes, reports quota state in `getStatus().storage.quotas`, and pauses
+app announcements when an app exceeds its configured limit. Existing local data
+is not deleted, and writes already flowing through Hypercore/Corestore may still
+arrive.
+
+Quota sources:
+
+| Scope | Where to set it |
+| ----- | --------------- |
+| Global total | Dashboard Config → Global storage quota |
+| Default per-app | Dashboard Config → Per-app storage quota |
+| Specific app | Dashboard app row → Quota, or `node.setAppQuota(appId, bytes)` |
+
+Use `null` for unlimited/default values. Resume an over-quota app after raising
+or clearing its quota with `node.resumeApp(appId)` or the dashboard Resume
+button.
 
 ## Quickstart
 
