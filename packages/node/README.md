@@ -152,6 +152,7 @@ Optional knobs:
 | `NODE_DISCOVERY_RUNS`        | Pairing attempts, defaults to 20              |
 | `NODE_DISCOVERY_TIMEOUT_MS`  | Per-client timeout, defaults to 5000          |
 | `NODE_DISCOVERY_WARMUP_MS`   | Daemon ready warmup delay, defaults to 0      |
+| `NODE_DISCOVERY_TOPIC`       | `isolated` or `default`, defaults to isolated |
 
 Real QVAC validation is opt-in because it requires `@qvac/sdk` and a model
 source. Use a local path, preset, or URL accepted by QVAC:
