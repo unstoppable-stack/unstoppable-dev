@@ -13,7 +13,7 @@ export class AppRegistry {
     await this.bee.ready()
   }
 
-  async registerApp ({ appId, appName, publicKey, deviceName, requestedCapabilities, grants, cores = [], drives = [] }) {
+  async registerApp ({ appId, appName, publicKey, deviceName, requestedCapabilities, grants, quotaBytes, cores = [], drives = [] }) {
     const existing = await this.getApp(appId)
     const record = {
       appId,
@@ -24,6 +24,7 @@ export class AppRegistry {
       deviceName: deviceName || existing?.deviceName || null,
       requestedCapabilities: requestedCapabilities || existing?.requestedCapabilities || null,
       grants: grants || existing?.grants || null,
+      quotaBytes: quotaBytes === undefined ? (existing?.quotaBytes ?? null) : quotaBytes,
       cores,
       drives,
       pairedAt: existing?.pairedAt || new Date().toISOString(),
