@@ -7,6 +7,7 @@ same node daemon as `unstoppable-node` but with a graphical control panel:
 - Watch peer connections come and go in real time
 - Toggle the AI provider on/off (via `--ai` / `--ai-mock` launch flags)
 - Unpair apps you no longer want to replicate
+- Use the system tray menu to show or quit the dashboard
 
 ## Running
 
@@ -20,6 +21,10 @@ pnpm --filter unstoppable-node-desktop dev
 
 The dashboard binds to the same local discovery topic as `unstoppable-node`,
 so paired apps from either mode will connect to this daemon.
+
+The tray menu is enabled when Pear/Electron supports it. It exposes Show and
+Quit actions; close-to-tray is intentionally not enabled yet because Linux tray
+support varies by desktop environment.
 
 ## Flags
 
