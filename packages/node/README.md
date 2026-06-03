@@ -85,9 +85,21 @@ unstoppable-node import ./node-backup.uns --storage ./restored-storage
 
 Storage path comes from positional arg or `--storage`.
 
-Export/import currently writes a JSON bundle with node config, paired-app
-registry, and dashboard trust decisions. It does not yet include encrypted
-Corestore data archives.
+## Export/import
+
+Export/import currently writes a JSON `.uns` bundle containing:
+
+- Node config (`node-config.json` contents)
+- Paired-app registry records, including registered cores/drives, grants, paused
+  state, and per-app quota overrides
+- Dashboard trust decisions (`trust-registry.json`)
+
+The dashboard previews bundle metadata, app list, config presence, and trust
+counts before importing. Importing overwrites existing paired-app records with
+the same app IDs and replaces config/trust files included in the bundle.
+
+This is not a full data archive yet. It does not include encrypted Corestore
+data, stable node identity seeds, or replicated app payloads.
 
 ## Storage quotas
 
