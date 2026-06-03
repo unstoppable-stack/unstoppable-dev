@@ -140,6 +140,18 @@ document.getElementById('app').innerHTML = `
         </section>
         <section class="card">
           <h2 class="card-title">Event Log</h2>
+          <div class="log-controls">
+            <label class="field">Show
+              <select id="log-filter">
+                <option value="all">all</option>
+                <option value="ok">ok</option>
+                <option value="info">info</option>
+                <option value="err">errors</option>
+                <option value="dim">debug</option>
+              </select>
+            </label>
+            <button class="btn-ghost btn-ghost-neutral" id="log-clear" type="button">Clear</button>
+          </div>
           <div id="log" class="log"></div>
         </section>
       </section>
@@ -206,6 +218,8 @@ injectStyles()
 let lastStatus = null
 let nodePublicKey = null
 let currentConfig = null
+const logEntries = loadLogEntries()
+let logFilter = 'all'
 
 // Queue of pair requests. Only the head request is shown in the
 // modal; subsequent requests stack and are revealed one at a time
@@ -360,8 +374,10 @@ wireTabs()
 wireAiToggle()
 wireConfigForm()
 wireBackupControls()
+wireLogControls()
 wirePeekModal()
 wireWelcomeModal()
+renderLog()
 
 const peekState = {
   appId: null,
@@ -1018,14 +1034,51 @@ function wireApprovalModal () {
 // ---------------------------------------------------------------------------
 
 function pushLog (text, kind = 'info') {
+  logEntries.push({ time: new Date().toLocaleTimeString(), text, kind })
+  while (logEntries.length > 200) logEntries.shift()
+  saveLogEntries()
+  renderLog()
+}
+
+function renderLog () {
   const el = document.getElementById('log')
-  const line = document.createElement('div')
-  line.className = `log-line log-${kind}`
-  const time = new Date().toLocaleTimeString()
-  line.textContent = `[${time}] ${text}`
-  el.appendChild(line)
+  if (!el) return
+  el.innerHTML = ''
+  for (const entry of logEntries) {
+    if (logFilter !== 'all' && entry.kind !== logFilter) continue
+    const line = document.createElement('div')
+    line.className = `log-line log-${entry.kind}`
+    line.textContent = `[${entry.time}] ${entry.text}`
+    el.appendChild(line)
+  }
   el.scrollTop = el.scrollHeight
-  while (el.children.length > 200) el.removeChild(el.firstChild)
+}
+
+function wireLogControls () {
+  const filter = document.getElementById('log-filter')
+  const clear = document.getElementById('log-clear')
+  if (filter) filter.addEventListener('change', () => {
+    logFilter = filter.value || 'all'
+    renderLog()
+  })
+  if (clear) clear.addEventListener('click', () => {
+    logEntries.length = 0
+    saveLogEntries()
+    renderLog()
+  })
+}
+
+function loadLogEntries () {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('unstoppable-node-event-log') || '[]')
+    return Array.isArray(parsed) ? parsed.slice(-200) : []
+  } catch {
+    return []
+  }
+}
+
+function saveLogEntries () {
+  try { localStorage.setItem('unstoppable-node-event-log', JSON.stringify(logEntries.slice(-200))) } catch {}
 }
 
 // ---------------------------------------------------------------------------
@@ -1238,6 +1291,8 @@ function injectStyles () {
       flex-direction: column;
     }
     .log-line { padding: 2px 0; white-space: pre-wrap; word-break: break-word; }
+    .log-controls { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+    .log-controls .field { min-width: 140px; }
     .log-ok { color: #3fb950; }
     .log-info { color: #d2a8ff; }
     .log-dim { color: #8b949e; }
