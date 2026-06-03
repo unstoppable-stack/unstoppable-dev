@@ -113,6 +113,10 @@ document.getElementById('app').innerHTML = `
             <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require pair approval</label>
             <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
+            <div class="config-actions">
+              <button class="btn-ghost btn-ghost-neutral" id="notifications-permission" type="button">Enable desktop notifications</button>
+              <span class="dim" id="notifications-status">Notifications unavailable</span>
+            </div>
             <label class="field-check"><input type="checkbox" id="cfg-ui-welcome"> Show welcome guide</label>
             <div class="config-actions">
               <button class="btn btn-approve" id="config-save" type="submit">Save config</button>
@@ -398,6 +402,7 @@ wireApprovalModal()
 wireTabs()
 wireAiToggle()
 wireConfigForm()
+wireNotificationControls()
 wireBackupControls()
 wireLogControls()
 wireImportModal()
@@ -520,6 +525,7 @@ function renderConfigForm (config) {
   setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
   setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
   setChecked('cfg-ui-welcome', config.ui?.showWelcome !== false)
+  renderNotificationPermission()
   applyWelcomePreference(config)
 }
 
@@ -943,9 +949,54 @@ function notifyPairRequest (req) {
   }
   if (Notification.permission === 'default') {
     Notification.requestPermission().then((permission) => {
+      renderNotificationPermission()
       if (permission === 'granted') new Notification('Unstoppable Node pair request', { body })
     }).catch(() => {})
   }
+}
+
+function wireNotificationControls () {
+  const btn = document.getElementById('notifications-permission')
+  const pairToggle = document.getElementById('cfg-notifications-pair')
+  if (pairToggle) pairToggle.addEventListener('change', renderNotificationPermission)
+  if (!btn) return
+  btn.addEventListener('click', async () => {
+    if (!('Notification' in window)) return renderNotificationPermission()
+    if (Notification.permission !== 'default') return renderNotificationPermission()
+    btn.disabled = true
+    setText('notifications-status', 'Requesting permission…')
+    try {
+      await Notification.requestPermission()
+    } catch {}
+    btn.disabled = false
+    renderNotificationPermission()
+  })
+  renderNotificationPermission()
+}
+
+function renderNotificationPermission () {
+  const btn = document.getElementById('notifications-permission')
+  if (!btn) return
+  if (!('Notification' in window)) {
+    btn.disabled = true
+    setText('notifications-status', 'Notifications are not supported here')
+    return
+  }
+  const pairToggle = document.getElementById('cfg-notifications-pair')
+  const enabled = pairToggle ? pairToggle.checked : currentConfig?.notifications?.pairRequests !== false
+  if (!enabled) {
+    btn.disabled = true
+    setText('notifications-status', 'Pair-request notifications disabled in config')
+    return
+  }
+  const permission = Notification.permission
+  btn.disabled = permission !== 'default'
+  btn.textContent = permission === 'default' ? 'Enable desktop notifications' : 'Desktop notifications'
+  setText('notifications-status', permission === 'granted'
+    ? 'Allowed for pair requests'
+    : permission === 'denied'
+      ? 'Blocked by system/browser settings'
+      : 'Permission not requested')
 }
 
 function wireAiToggle () {
