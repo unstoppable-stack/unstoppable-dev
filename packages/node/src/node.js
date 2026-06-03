@@ -449,7 +449,7 @@ export class NodeDaemon extends EventEmitter {
     let driveStats = this.replication ? this.replication.getDriveStats() : []
     const connectedPeers = this.connections.size
     const replicated = this.replication ? this.replication.getReplicatedBytes() : null
-    const quotas = await this._enforceQuotas(replicated)
+    const quotas = await this._enforceQuotas(replicated, apps)
     if (quotas.enforced.length > 0) {
       coreStats = this.replication ? this.replication.getStats() : []
       driveStats = this.replication ? this.replication.getDriveStats() : []
@@ -477,20 +477,22 @@ export class NodeDaemon extends EventEmitter {
     }
   }
 
-  async _enforceQuotas (replicated) {
+  async _enforceQuotas (replicated, apps = null) {
     const config = await this.getConfig()
     const globalLimit = config.storage.globalQuotaBytes
-    const perAppLimit = config.storage.perAppQuotaBytes
+    const defaultPerAppLimit = config.storage.perAppQuotaBytes
     const perApp = replicated?.perApp || {}
     const enforced = []
     const appStates = {}
     const globalExceeded = globalLimit !== null && (replicated?.total || 0) > globalLimit
+    const appMap = new Map((apps || (this.registry ? await this.registry.listApps() : [])).map((app) => [app.appId, app]))
 
     for (const [appId, used] of Object.entries(perApp)) {
-      const exceeded = (perAppLimit !== null && used > perAppLimit) || globalExceeded
+      const appLimit = appMap.get(appId)?.quotaBytes ?? defaultPerAppLimit
+      const exceeded = (appLimit !== null && used > appLimit) || globalExceeded
       appStates[appId] = {
         used,
-        limit: perAppLimit,
+        limit: appLimit,
         exceeded,
         reason: exceeded ? (globalExceeded ? 'global' : 'per-app') : null
       }
@@ -498,7 +500,7 @@ export class NodeDaemon extends EventEmitter {
       const touched = await this.replication.pauseApp(appId)
       if (touched > 0) {
         await this._persistPauseState(appId, true)
-        const info = { appId, touched, reason: appStates[appId].reason, used, limit: globalExceeded ? globalLimit : perAppLimit }
+        const info = { appId, touched, reason: appStates[appId].reason, used, limit: globalExceeded ? globalLimit : appLimit }
         enforced.push(info)
         this.emit('quotaExceeded', info)
         this.emit('appPaused', { appId, touched, reason: 'quota' })
@@ -511,10 +513,22 @@ export class NodeDaemon extends EventEmitter {
         limit: globalLimit,
         exceeded: globalExceeded
       },
-      perAppLimit,
+      perAppLimit: defaultPerAppLimit,
       perApp: appStates,
       enforced
     }
+  }
+
+  async setAppQuota (appId, quotaBytes) {
+    if (quotaBytes !== null && (!Number.isSafeInteger(quotaBytes) || quotaBytes < 0)) {
+      throw new Error('quotaBytes must be a non-negative integer or null')
+    }
+    const app = await this.registry.getApp(appId)
+    if (!app) throw new Error(`Unknown app: ${appId}`)
+    await this.registry.registerApp({ ...app, quotaBytes })
+    if (this.replication) await this._enforceQuotas(this.replication.getReplicatedBytes())
+    this.emit('appQuotaChanged', { appId, quotaBytes })
+    return this.registry.getApp(appId)
   }
 
   // Bring up the AI provider after start(). Idempotent — calling twice

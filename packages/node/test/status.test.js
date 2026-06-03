@@ -143,6 +143,37 @@ describe('node status RPC', () => {
     }
   })
 
+  it('per-app quota overrides the default quota', async () => {
+    const node = await env.createNode()
+    await node.start()
+
+    const app = await env.createAppWithBee('quota-override')
+    await app.bee.put('large', { value: 'this should exceed an app-specific one byte quota' })
+
+    const client = await env.createConnectedClient({
+      appId: 'quota-override',
+      appName: 'Quota Override',
+      cores: [{ key: app.bee.core.key, type: 'hyperbee', name: 'data' }]
+    })
+
+    try {
+      await new Promise(r => setTimeout(r, 3000))
+      await node.updateConfig({ storage: { perAppQuotaBytes: null } })
+      await node.setAppQuota('quota-override', 1)
+
+      const status = await client.getNodeStatus()
+      assert.equal(status.apps.find((entry) => entry.appId === 'quota-override')?.quotaBytes, 1)
+      assert.equal(status.storage.quotas.perApp['quota-override'].limit, 1)
+      assert.equal(status.storage.quotas.perApp['quota-override'].exceeded, true)
+      assert.equal(status.cores.find((core) => core.appId === 'quota-override')?.paused, true)
+    } finally {
+      await client.close()
+      try { await app.swarm.destroy() } catch {}
+      try { await app.store.close() } catch {}
+      await node.close()
+    }
+  })
+
   it('status surfaces AI readiness when the node has a mock AI provider', async () => {
     const node = await env.createNode({ ai: { mock: true } })
     await node.start()

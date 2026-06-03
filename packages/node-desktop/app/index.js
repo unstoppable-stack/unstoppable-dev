@@ -299,6 +299,9 @@ onWorkerMessage((msg) => {
     case 'quotaExceeded':
       pushLog(`Quota exceeded for ${msg.appId}: ${formatBytes(msg.used)} used (${msg.reason})`, 'err')
       break
+    case 'appQuotaChanged':
+      pushLog(`Updated quota for ${msg.appId}: ${msg.quotaBytes === null ? 'unlimited/default' : formatBytes(msg.quotaBytes)}`, 'ok')
+      break
     case 'appResumed':
       pushLog(`Resumed replication for ${msg.appId} (${msg.touched} units)`, 'ok')
       break
@@ -537,6 +540,11 @@ function renderApps (status) {
     const peekBtn = peekTargets.length > 0
       ? `<button class="btn-ghost" data-peek-app="${escape(app.appId)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Peek data</button>`
       : ''
+    const quota = status.storage?.quotas?.perApp?.[app.appId]
+    const quotaLabel = app.quotaBytes !== null && app.quotaBytes !== undefined
+      ? formatBytes(app.quotaBytes)
+      : (quota?.limit !== null && quota?.limit !== undefined ? `${formatBytes(quota.limit)} default` : 'unlimited')
+    const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-app="${escape(app.appId)}" data-quota-current="${app.quotaBytes ?? ''}" title="Set this app's advisory quota in bytes">Quota: ${escape(quotaLabel)}</button>`
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
@@ -560,6 +568,7 @@ function renderApps (status) {
         <div class="app-actions">
           ${peekBtn}
           ${pauseBtn}
+          ${quotaBtn}
           ${promoteBtn}
           <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
         </div>
@@ -584,6 +593,26 @@ function renderApps (status) {
       const appName = btn.getAttribute('data-appname') || ''
       if (!publicKey) return
       sendToWorker({ type: 'promote-trust', appId, appName, publicKey })
+    })
+  })
+
+  el.querySelectorAll('[data-quota-app]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const appId = btn.getAttribute('data-quota-app')
+      if (!appId) return
+      const current = btn.getAttribute('data-quota-current') || ''
+      const input = prompt('Set advisory quota in bytes. Leave blank to use the default/unlimited quota.', current)
+      if (input === null) return
+      const trimmed = input.trim()
+      let quotaBytes = null
+      if (trimmed) {
+        quotaBytes = Number(trimmed)
+        if (!Number.isSafeInteger(quotaBytes) || quotaBytes < 0) {
+          alert('Quota must be a non-negative integer number of bytes, or blank for default/unlimited.')
+          return
+        }
+      }
+      sendToWorker({ type: 'set-app-quota', appId, quotaBytes })
     })
   })
 
