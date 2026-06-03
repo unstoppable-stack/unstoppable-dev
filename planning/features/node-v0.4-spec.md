@@ -13,7 +13,7 @@
 | F2 | Migrate off `Pear.worker.pipe()` | Done — `pear-pipe` in dashboard worker |
 | F3 | Publish prep (no actual publish) | Done — exports map, files list, repo metadata, READMEs, gated `node-publish.yml`; `npm publish --dry-run` passes |
 | F4 | Real-QVAC E2E test | Ready for manual validation — opt-in test + workflow added; needs confirmed model source |
-| F5 | Discovery flakiness | Pending — needs reproduction work |
+| F5 | Discovery flakiness | Partial — Node stress harness added and passes 20/20 locally; dashboard/default-topic validation still pending |
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
 | F8 | Live AI toggle | Done — `enableAI`/`disableAI` + dashboard button |

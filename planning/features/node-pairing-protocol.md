@@ -463,6 +463,12 @@ Mitigations added for v0.4:
 - `packages/node-desktop/scripts/smoke.js` can run `NODE_SMOKE_RUNS=20` against
   one long-lived headless daemon. On 2026-05-27 this produced 20/20 successful
   demo pairings, each under 1 second, with the Bare runtime.
+- `packages/node/scripts/discovery-stress.js` runs the same release-gate shape in
+  plain Node.js: one isolated bootstrap DHT, one long-lived `NodeDaemon`, then N
+  fresh clients pairing sequentially with a 5-second timeout. Run it with
+  `npm run discovery:stress` from `packages/node`; tune with
+  `NODE_DISCOVERY_RUNS`, `NODE_DISCOVERY_TIMEOUT_MS`, and
+  `NODE_DISCOVERY_WARMUP_MS`.
 
 ---
 
