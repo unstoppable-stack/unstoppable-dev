@@ -2,10 +2,10 @@
 
 > Status: **in progress (16 of 20 features landed)** — see "Implementation status" below
 > Audience: an engineer picking up the Node work cold
-> Last updated: 2026-05-27
+> Last updated: 2026-06-03
 > Scope: turn the current local-only Node slice into a publishable, smoke-tested developer preview
 
-## Implementation status (2026-05-27)
+## Implementation status (2026-06-03)
 
 | ID | Feature | Status |
 |----|---------|--------|
@@ -22,7 +22,7 @@
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
 | F12 | Storage quotas | Partial — global/per-app config, quota status, dashboard badges, and advisory pause enforcement landed |
-| F13 | Export / import | Partial — JSON bundle for config, trust registry, and paired app registry landed |
+| F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, and import preview/confirmation landed |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
 | F16 | Reconnect with backoff | Done — opt-in |
@@ -31,7 +31,7 @@
 | F19 | First-run welcome modal | Done — localStorage-gated + `?` button |
 | F20 | System tray | Pending |
 
-323 tests pass across 4 packages.
+325 tests pass across 4 packages.
 > Predecessor docs (read first, in order):
 >   1. `planning/features/node.md` — concept
 >   2. `planning/features/node-technical.md` — architecture
@@ -528,7 +528,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Stretch.
 
-**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Full encrypted Corestore archive and identity round-trip remain future work.
+**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Dashboard import now previews bundle metadata, app list, config presence, and trust counts before writing to storage. Full encrypted Corestore archive and identity round-trip remain future work.
 
 **Problem.** Users have no way to back up the node's identity + paired apps + AI config. If they lose their machine, they lose their P2P "router."
 
