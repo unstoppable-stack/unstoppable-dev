@@ -46,7 +46,7 @@ Launch flags are picked up from `Pear.config.args`:
 │  │  Live status UI, paired apps, log view │    │
 │  │                                        │    │
 │  └────────────────┬───────────────────────┘    │
-│                   │ Pear.worker.pipe() (NDJSON) │
+│                   │ pear-pipe NDJSON stream      │
 │  ┌────────────────┴───────────────────────┐    │
 │  │                                        │    │
 │  │  Bare worker (worker.js)               │    │
@@ -63,14 +63,17 @@ Launch flags are picked up from `Pear.config.args`:
 
 The worker embeds `NodeDaemon` directly and forwards its events (plus a
 periodic status snapshot) to the renderer over a newline-delimited JSON
-pipe. UI commands (`unpair`, `refresh-status`, `shutdown`) travel back
+pipe. UI commands (`unpair`, `refresh-status`, `shutdown`, config updates,
+quota changes, backup/import, and trust decisions) travel back
 the same way.
 
 ## Status
 
 - Phase 1 (the basics) ✓
-  - App list with unpair, live peer/core/drive counts, event log
+  - App list with unpair, live peer/core/drive counts, persistent event log
+  - Pair approval modal, trust registry, promote/forget controls
+  - Config tab, AI controls, storage quotas, backup/import, tray menu
 - Phase 2 (future)
   - Graphs for bandwidth and replication progress
-  - Model picker UI for AI provider
-  - Pair approval flow (today pairing is always accepted)
+  - Richer model picker UI for QVAC provider
+  - Close-to-tray and richer tray status controls
