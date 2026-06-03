@@ -1,5 +1,5 @@
 import { NodeDaemon } from 'unstoppable-node/node'
-import { importNodeState } from 'unstoppable-node/export'
+import { importNodeState, previewNodeStateImport } from 'unstoppable-node/export'
 import { ApprovalGate } from './approval.js'
 
 const STATUS_INTERVAL_MS = 2_000
@@ -158,6 +158,15 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
           send({ type: 'config', config: await node.getConfig() })
           const status = await node.getStatus()
           send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+        } catch (err) {
+          send({ type: 'import-error', error: err.message })
+        }
+        break
+
+      case 'preview-import':
+        try {
+          const preview = await previewNodeStateImport({ inPath: msg.path })
+          send({ type: 'import-preview', path: msg.path, preview })
         } catch (err) {
           send({ type: 'import-error', error: err.message })
         }

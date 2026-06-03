@@ -66,6 +66,28 @@ export async function importNodeState ({ storagePath, inPath }) {
   return bundle
 }
 
+export async function previewNodeStateImport ({ inPath }) {
+  if (!inPath) throw new Error('inPath is required')
+  const bundle = JSON.parse(await readFile(inPath, 'utf8'))
+  if (bundle.version !== EXPORT_VERSION) throw new Error(`Unsupported export version: ${bundle.version}`)
+  const apps = Array.isArray(bundle.apps) ? bundle.apps : []
+  return {
+    version: bundle.version,
+    exportedAt: bundle.exportedAt || null,
+    appCount: apps.length,
+    apps: apps.map((app) => ({ appId: app.appId, appName: app.appName || app.appId })),
+    hasConfig: !!bundle.config,
+    hasTrust: !!bundle.trust,
+    config: bundle.config || null,
+    trustCounts: bundle.trust
+      ? {
+          approved: Object.keys(bundle.trust.approved || {}).length,
+          denied: Object.keys(bundle.trust.denied || {}).length
+        }
+      : { approved: 0, denied: 0 }
+  }
+}
+
 async function readJson (path, fallback) {
   try {
     return JSON.parse(await readFile(path, 'utf8'))

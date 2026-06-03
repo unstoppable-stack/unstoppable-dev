@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { NodeDaemon } from '../src/node.js'
-import { exportNodeState, importNodeState } from '../src/export.js'
+import { exportNodeState, importNodeState, previewNodeStateImport } from '../src/export.js'
 import { createTestEnv } from './helpers.js'
 
 describe('node export/import', () => {
@@ -47,6 +47,14 @@ describe('node export/import', () => {
     const exported = await source.exportState(outPath)
     assert.equal(exported.apps.length, 1)
 
+    const preview = await previewNodeStateImport({ inPath: outPath })
+    assert.equal(preview.version, 1)
+    assert.equal(preview.appCount, 1)
+    assert.deepEqual(preview.apps, [{ appId: 'export-app', appName: 'Export App' }])
+    assert.equal(preview.hasConfig, true)
+    assert.equal(preview.hasTrust, true)
+    assert.deepEqual(preview.trustCounts, { approved: 1, denied: 0 })
+
     await source.close()
     cleanupItems = cleanupItems.filter((item) => item !== source)
 
@@ -69,5 +77,18 @@ describe('node export/import', () => {
 
     const trust = JSON.parse(await readFile(join(targetDir, 'trust-registry.json'), 'utf8'))
     assert.equal(trust.approved.abc.appId, 'export-app')
+  })
+
+  it('rejects unsupported bundles during preview', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const outPath = join(await env.tmpDir('node-export-invalid-'), 'backup.uns')
+    await writeFile(outPath, JSON.stringify({ version: 999, apps: [] }))
+
+    await assert.rejects(
+      previewNodeStateImport({ inPath: outPath }),
+      /Unsupported export version: 999/
+    )
   })
 })

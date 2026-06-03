@@ -207,6 +207,26 @@ document.getElementById('app').innerHTML = `
       </div>
     </div>
   </div>
+
+  <div class="modal-backdrop" id="import-modal" hidden>
+    <div class="modal modal-wide">
+      <h2 class="modal-title">Import Node Backup</h2>
+      <p class="modal-text dim">Review this backup before importing. Import writes config, trust decisions, and paired-app records into the current node storage.</p>
+      <dl class="modal-info">
+        <dt>Path</dt><dd id="import-path" class="mono mono-wrap">–</dd>
+        <dt>Exported</dt><dd id="import-exported-at">–</dd>
+        <dt>Apps</dt><dd id="import-app-count">–</dd>
+        <dt>Trust</dt><dd id="import-trust-count">–</dd>
+        <dt>Config</dt><dd id="import-config-state">–</dd>
+      </dl>
+      <div id="import-app-list" class="apps"></div>
+      <p class="modal-warn">Existing apps with the same IDs will be overwritten. This JSON backup does not restore replicated Corestore data.</p>
+      <div class="modal-actions">
+        <button class="btn btn-deny" id="import-cancel">Cancel</button>
+        <button class="btn btn-approve" id="import-confirm">Import</button>
+      </div>
+    </div>
+  </div>
 `
 
 injectStyles()
@@ -220,6 +240,7 @@ let nodePublicKey = null
 let currentConfig = null
 const logEntries = loadLogEntries()
 let logFilter = 'all'
+let pendingImportPath = null
 
 // Queue of pair requests. Only the head request is shown in the
 // modal; subsequent requests stack and are revealed one at a time
@@ -266,7 +287,11 @@ onWorkerMessage((msg) => {
       break
     case 'import-result':
       setText('backup-message', `Imported ${msg.apps} app(s)`)
+      closeImportModal()
       pushLog(`Imported node backup from ${msg.path}`, 'ok')
+      break
+    case 'import-preview':
+      showImportPreview(msg.path, msg.preview)
       break
     case 'import-error':
       setText('backup-message', msg.error || 'Import failed')
@@ -375,6 +400,7 @@ wireAiToggle()
 wireConfigForm()
 wireBackupControls()
 wireLogControls()
+wireImportModal()
 wirePeekModal()
 wireWelcomeModal()
 renderLog()
@@ -983,10 +1009,44 @@ function wireBackupControls () {
   if (importBtn) importBtn.addEventListener('click', () => {
     const path = getValue('backup-path').trim()
     if (!path) return setText('backup-message', 'Enter a backup path')
-    if (!confirm('Import this backup into the current node storage? Existing apps with the same IDs will be overwritten.')) return
-    setText('backup-message', 'Importing…')
-    sendToWorker({ type: 'import-state', path })
+    setText('backup-message', 'Reading backup…')
+    sendToWorker({ type: 'preview-import', path })
   })
+}
+
+function wireImportModal () {
+  const cancel = document.getElementById('import-cancel')
+  const confirm = document.getElementById('import-confirm')
+  if (cancel) cancel.addEventListener('click', closeImportModal)
+  if (confirm) confirm.addEventListener('click', () => {
+    if (!pendingImportPath) return
+    setText('backup-message', 'Importing…')
+    sendToWorker({ type: 'import-state', path: pendingImportPath })
+  })
+}
+
+function showImportPreview (path, preview) {
+  pendingImportPath = path
+  setText('backup-message', 'Ready to import')
+  setText('import-path', path)
+  setText('import-exported-at', preview.exportedAt || 'unknown')
+  setText('import-app-count', String(preview.appCount || 0))
+  setText('import-trust-count', `${preview.trustCounts?.approved || 0} approved, ${preview.trustCounts?.denied || 0} denied`)
+  setText('import-config-state', preview.hasConfig ? 'included' : 'not included')
+  const list = document.getElementById('import-app-list')
+  if (list) {
+    const apps = preview.apps || []
+    list.innerHTML = apps.length === 0
+      ? '<p class="dim">No paired apps in this backup.</p>'
+      : apps.map((app) => `<div class="app-row"><div class="app-info"><div class="app-name">${escape(app.appName || app.appId)}</div><div class="app-meta"><span class="mono">${escape(app.appId)}</span></div></div></div>`).join('')
+  }
+  document.getElementById('import-modal').hidden = false
+}
+
+function closeImportModal () {
+  pendingImportPath = null
+  const modal = document.getElementById('import-modal')
+  if (modal) modal.hidden = true
 }
 
 function collectConfigPatch () {
