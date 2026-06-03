@@ -103,6 +103,21 @@ and drives, and stream mock inference without downloading a model.
 npm test       # default Node.js tests; real QVAC test is skipped unless opted in
 ```
 
+Discovery stability can be stress-tested against one long-lived daemon and many
+fresh clients:
+
+```bash
+npm run discovery:stress
+```
+
+Optional knobs:
+
+| Env var                      | Effect                                        |
+| ---------------------------- | --------------------------------------------- |
+| `NODE_DISCOVERY_RUNS`        | Pairing attempts, defaults to 20              |
+| `NODE_DISCOVERY_TIMEOUT_MS`  | Per-client timeout, defaults to 5000          |
+| `NODE_DISCOVERY_WARMUP_MS`   | Daemon ready warmup delay, defaults to 0      |
+
 Real QVAC validation is opt-in because it requires `@qvac/sdk` and a model
 source. Use a local path, preset, or URL accepted by QVAC:
 
