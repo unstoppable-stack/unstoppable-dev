@@ -61,7 +61,7 @@ document.getElementById('app').innerHTML = `
       <section class="tab-panel" id="tab-ai" hidden>
         <section class="card">
           <h2 class="card-title">AI Provider</h2>
-          <p class="dim">Enable delegated inference on this node. Mock mode is instant and safe for demos.</p>
+          <p class="dim">Controls the live provider for this running dashboard session. Persist startup defaults in Config.</p>
           <div class="ai-panel">
             <div>
               <div class="ai-state" id="ai-state">AI status unknown</div>
@@ -93,15 +93,16 @@ document.getElementById('app').innerHTML = `
             <dt>Services</dt><dd id="config-services">–</dd>
           </dl>
           <form class="config-form" id="config-form">
-            <h3 class="section-title">Editable Settings</h3>
-            <label class="field-check"><input type="checkbox" id="cfg-ai-enabled"> Enable AI by default</label>
-            <label class="field">AI mode
+            <h3 class="section-title">Persisted Settings</h3>
+            <p class="dim">Saved to this node's storage. AI changes also apply to the live provider after Save.</p>
+            <label class="field-check"><input type="checkbox" id="cfg-ai-enabled"> Start with AI enabled</label>
+            <label class="field">Startup AI mode
               <select id="cfg-ai-mode">
                 <option value="mock">mock</option>
                 <option value="qvac">qvac</option>
               </select>
             </label>
-            <label class="field">QVAC model source
+            <label class="field">Startup QVAC model source
               <input id="cfg-ai-model" placeholder="preset, path, or URL">
             </label>
             <label class="field">Global storage quota (bytes)
