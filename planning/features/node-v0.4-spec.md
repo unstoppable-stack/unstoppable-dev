@@ -20,7 +20,7 @@
 | F9 | Notifications | Partial — pair-request desktop notifications and permission UI landed; dock bounce, sound, and auto-restore deferred |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
-| F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, and editable dashboard form landed |
+| F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |
 | F12 | Storage quotas | Partial — global/per-app config, quota status, dashboard badges, and advisory pause enforcement landed |
 | F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, and import preview/confirmation landed |
 | F14 | Per-app pause/resume | Done |
