@@ -130,6 +130,39 @@ describe('ai-provider (mock mode)', () => {
     assert.match(text, /^Mock: hi node$/)
   })
 
+  it('requestInference rejects when app AI grant is revoked', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const node = await env.createNode({ ai: { mock: true } })
+    cleanupItems.push(node)
+    await node.start()
+
+    const client = await env.createConnectedClient({
+      appId: 'grant-app',
+      appName: 'Grant App',
+      requireServices: ['ai']
+    })
+    cleanupItems.push(client)
+
+    await node.setAppGrant('grant-app', 'ai', [])
+    await assert.rejects(async () => {
+      // eslint-disable-next-line no-unused-vars
+      for await (const _tok of client.requestInference({
+        messages: [{ role: 'user', content: 'blocked' }]
+      })) { /* empty */ }
+    }, /not granted/)
+
+    await node.setAppGrant('grant-app', 'ai', ['completion.stream'])
+    const tokens = []
+    for await (const tok of client.requestInference({
+      messages: [{ role: 'user', content: 'allowed' }]
+    })) {
+      tokens.push(tok)
+    }
+    assert.match(tokens.join(''), /^Mock: allowed$/)
+  })
+
   it('requestInference rejects if AI service unavailable', async () => {
     env = await createTestEnv()
     cleanupItems = []

@@ -73,6 +73,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('configChanged', (info) => send({ type: 'config', ...info }))
   node.on('quotaExceeded', (info) => send({ type: 'quotaExceeded', ...info }))
   node.on('appQuotaChanged', (info) => send({ type: 'appQuotaChanged', ...info }))
+  node.on('appGrantChanged', (info) => send({ type: 'appGrantChanged', ...info }))
   node.on('inference', (info) => send({ type: 'inference', ...info }))
   node.on('unpaired', (info) => send({ type: 'unpaired', ...info }))
   node.on('appPaused', (info) => send({ type: 'appPaused', ...info }))
@@ -177,6 +178,16 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
           send({ type: 'status', ...status, trust: approvalGate.snapshot() })
         } catch (err) {
           send({ type: 'error', phase: 'set-app-quota', error: err.message })
+        }
+        break
+
+      case 'set-app-grant':
+        try {
+          await node.setAppGrant(msg.appId, msg.capability, msg.methods || [])
+          const status = await node.getStatus()
+          send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+        } catch (err) {
+          send({ type: 'error', phase: 'set-app-grant', error: err.message })
         }
         break
 

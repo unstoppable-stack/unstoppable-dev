@@ -545,6 +545,10 @@ function renderApps (status) {
       ? formatBytes(app.quotaBytes)
       : (quota?.limit !== null && quota?.limit !== undefined ? `${formatBytes(quota.limit)} default` : 'unlimited')
     const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-app="${escape(app.appId)}" data-quota-current="${app.quotaBytes ?? ''}" title="Set this app's advisory quota in bytes">Quota: ${escape(quotaLabel)}</button>`
+    const aiGranted = (app.grants?.ai || []).includes('completion.stream')
+    const aiGrantBtn = app.grants
+      ? `<button class="btn-ghost btn-ghost-neutral" data-ai-grant-app="${escape(app.appId)}" data-ai-granted="${aiGranted ? '1' : '0'}" title="Toggle this app's delegated AI grant">AI ${aiGranted ? 'on' : 'off'}</button>`
+      : ''
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
@@ -569,6 +573,7 @@ function renderApps (status) {
           ${peekBtn}
           ${pauseBtn}
           ${quotaBtn}
+          ${aiGrantBtn}
           ${promoteBtn}
           <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
         </div>
@@ -613,6 +618,20 @@ function renderApps (status) {
         }
       }
       sendToWorker({ type: 'set-app-quota', appId, quotaBytes })
+    })
+  })
+
+  el.querySelectorAll('[data-ai-grant-app]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const appId = btn.getAttribute('data-ai-grant-app')
+      const granted = btn.getAttribute('data-ai-granted') === '1'
+      if (!appId) return
+      sendToWorker({
+        type: 'set-app-grant',
+        appId,
+        capability: 'ai',
+        methods: granted ? [] : ['completion.stream']
+      })
     })
   })
 
