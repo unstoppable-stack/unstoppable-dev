@@ -1,4 +1,5 @@
 import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import ui from 'pear-electron'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -409,6 +410,7 @@ wireLogControls()
 wireImportModal()
 wirePeekModal()
 wireWelcomeModal()
+setupTray()
 renderLog()
 
 const peekState = {
@@ -938,6 +940,24 @@ function applyWelcomePreference (config) {
   let seen = false
   try { seen = localStorage.getItem(WELCOME_KEY) === '1' } catch {}
   if (!seen) showWelcome()
+}
+
+async function setupTray () {
+  try {
+    if (!ui?.app?.tray) return
+    const untray = await ui.app.tray({
+      menu: {
+        show: 'Show Unstoppable Node',
+        quit: 'Quit Unstoppable Node'
+      }
+    })
+    if (typeof Pear !== 'undefined' && Pear.teardown && typeof untray === 'function') {
+      Pear.teardown(() => untray())
+    }
+    pushLog('System tray menu ready', 'dim')
+  } catch (err) {
+    pushLog(`System tray unavailable: ${err.message || err}`, 'dim')
+  }
 }
 
 function notifyPairRequest (req) {
