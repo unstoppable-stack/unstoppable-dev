@@ -781,6 +781,7 @@ function enqueueApproval (req) {
   approvalQueue.push(req)
   if (!approvalCurrent) showNextApproval()
   else updatePendingCount()
+  updateApprovalBadge()
 }
 
 function showNextApproval () {
@@ -788,6 +789,7 @@ function showNextApproval () {
   const modal = document.getElementById('approval-modal')
   if (!approvalCurrent) {
     modal.hidden = true
+    updateApprovalBadge()
     return
   }
   setText('modal-app-name', approvalCurrent.appName || '(unnamed)')
@@ -797,6 +799,7 @@ function showNextApproval () {
   setText('modal-capabilities', formatCapabilitySummary(approvalCurrent.requestedCapabilities) || 'default data + storage')
   modal.hidden = false
   updatePendingCount()
+  updateApprovalBadge()
 }
 
 function updatePendingCount () {
@@ -958,6 +961,12 @@ async function setupTray () {
   } catch (err) {
     pushLog(`System tray unavailable: ${err.message || err}`, 'dim')
   }
+}
+
+function updateApprovalBadge () {
+  if (!ui?.app?.badge) return
+  const pending = (approvalCurrent ? 1 : 0) + approvalQueue.length
+  ui.app.badge(pending > 0 ? pending : 0).catch(() => {})
 }
 
 function notifyPairRequest (req) {

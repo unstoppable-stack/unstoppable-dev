@@ -17,7 +17,7 @@
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
 | F8 | Live AI toggle | Done — `enableAI`/`disableAI` + dashboard button |
-| F9 | Notifications | Partial — pair-request desktop notifications and permission UI landed; dock bounce, sound, and auto-restore deferred |
+| F9 | Notifications | Partial — pair-request desktop notifications, permission UI, and pending-approval app badge landed; sound and auto-restore deferred |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |

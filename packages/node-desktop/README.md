@@ -26,6 +26,9 @@ The tray menu is enabled when Pear/Electron supports it. It exposes Show and
 Quit actions; close-to-tray is intentionally not enabled yet because Linux tray
 support varies by desktop environment.
 
+When pair approvals are pending, supported desktop environments show an app
+badge with the pending request count.
+
 ## Flags
 
 Launch flags are picked up from `Pear.config.args`:
