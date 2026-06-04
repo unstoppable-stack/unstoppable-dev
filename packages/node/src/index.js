@@ -40,22 +40,23 @@ const commandTarget = positional[1]
 if (process.env.UNSTOPPABLE_AI === '1') aiEnabled = true
 if (process.env.UNSTOPPABLE_AI_MOCK === '1') { aiEnabled = true; aiMock = true }
 
-if (command === 'start') {
-  await startNode(storagePath, { aiEnabled, aiMock, aiModelSrc })
-} else if (command === 'export') {
-  if (!commandTarget) usageAndExit('Missing output path for export')
-  const bundle = await exportNodeState({ storagePath, outPath: commandTarget })
-  console.log(chalk.green(`Exported ${bundle.apps.length} app(s) to ${commandTarget}`))
-} else if (command === 'import') {
-  if (!commandTarget) usageAndExit('Missing input path for import')
-  const bundle = await importNodeState({ storagePath, inPath: commandTarget })
-  console.log(chalk.green(`Imported ${bundle.apps.length} app(s) from ${commandTarget}`))
-} else if (command === 'inspect') {
-  if (!commandTarget) usageAndExit('Missing input path for inspect')
-  const preview = await previewNodeStateImport({ inPath: commandTarget })
-  printImportPreview(commandTarget, preview)
-} else if (command === 'help') {
-  console.log(`
+try {
+  if (command === 'start') {
+    await startNode(storagePath, { aiEnabled, aiMock, aiModelSrc })
+  } else if (command === 'export') {
+    if (!commandTarget) usageAndExit('Missing output path for export')
+    const bundle = await exportNodeState({ storagePath, outPath: commandTarget })
+    console.log(chalk.green(`Exported ${bundle.apps.length} app(s) to ${commandTarget}`))
+  } else if (command === 'import') {
+    if (!commandTarget) usageAndExit('Missing input path for import')
+    const bundle = await importNodeState({ storagePath, inPath: commandTarget })
+    console.log(chalk.green(`Imported ${bundle.apps.length} app(s) from ${commandTarget}`))
+  } else if (command === 'inspect') {
+    if (!commandTarget) usageAndExit('Missing input path for inspect')
+    const preview = await previewNodeStateImport({ inPath: commandTarget })
+    printImportPreview(commandTarget, preview)
+  } else if (command === 'help') {
+    console.log(`
 ${chalk.bold('unstoppable-node')} — Personal sync node for Unstoppable Stack apps
 
 ${chalk.bold('Usage:')}
@@ -77,8 +78,12 @@ ${chalk.bold('Environment:')}
 ${chalk.dim('The node replicates, backs up, and seeds data from your P2P apps.')}
 ${chalk.dim('With --ai it also offers on-demand inference to paired apps.')}
 `)
-} else {
-  usageAndExit(`Unknown command: ${command}`)
+  } else {
+    usageAndExit(`Unknown command: ${command}`)
+  }
+} catch (err) {
+  console.error(chalk.red(err.message || err))
+  process.exit(1)
 }
 
 function usageAndExit (message) {
