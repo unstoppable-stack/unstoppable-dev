@@ -30,6 +30,7 @@ describe('node config', () => {
     assert.equal(config.ai.enabled, false)
     assert.equal(config.pairing.requireApproval, true)
     assert.equal(config.notifications.pairRequestSound, false)
+    assert.equal(config.notifications.pairRequestAutoRestore, false)
 
     const saved = JSON.parse(await readFile(join(node.storagePath, 'node-config.json'), 'utf8'))
     assert.deepEqual(saved, config)
@@ -70,17 +71,22 @@ describe('node config', () => {
       node.updateConfig({ notifications: { pairRequestSound: 'yes' } }),
       /notifications.pairRequestSound/
     )
+    await assert.rejects(
+      node.updateConfig({ notifications: { pairRequestAutoRestore: 'yes' } }),
+      /notifications.pairRequestAutoRestore/
+    )
 
     const updated = await node.updateConfig({
       ai: { enabled: true, mode: 'mock' },
       storage: { globalQuotaBytes: 1024 },
       pairing: { requireApproval: false },
-      notifications: { pairRequestSound: true }
+      notifications: { pairRequestSound: true, pairRequestAutoRestore: true }
     })
     assert.equal(updated.ai.enabled, true)
     assert.equal(updated.storage.globalQuotaBytes, 1024)
     assert.equal(updated.pairing.requireApproval, false)
     assert.equal(updated.notifications.pairRequestSound, true)
+    assert.equal(updated.notifications.pairRequestAutoRestore, true)
     assert.equal(node.services.ai, true)
 
     await node.close()
@@ -93,5 +99,6 @@ describe('node config', () => {
     assert.equal(reloaded.storage.globalQuotaBytes, 1024)
     assert.equal(reloaded.pairing.requireApproval, false)
     assert.equal(reloaded.notifications.pairRequestSound, true)
+    assert.equal(reloaded.notifications.pairRequestAutoRestore, true)
   })
 })

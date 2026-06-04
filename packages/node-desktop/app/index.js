@@ -116,6 +116,7 @@ document.getElementById('app').innerHTML = `
             <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-sound"> Play sound for pair requests</label>
+            <label class="field-check"><input type="checkbox" id="cfg-notifications-restore"> Restore window for pair requests</label>
             <div class="config-actions">
               <button class="btn-ghost btn-ghost-neutral" id="notifications-permission" type="button">Enable desktop notifications</button>
               <span class="dim" id="notifications-status">Notifications unavailable</span>
@@ -529,6 +530,7 @@ function renderConfigForm (config) {
   setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
   setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
   setChecked('cfg-notifications-sound', !!config.notifications?.pairRequestSound)
+  setChecked('cfg-notifications-restore', !!config.notifications?.pairRequestAutoRestore)
   setChecked('cfg-ui-welcome', config.ui?.showWelcome !== false)
   renderNotificationPermission()
   applyWelcomePreference(config)
@@ -974,6 +976,7 @@ function updateApprovalBadge () {
 function notifyPairRequest (req) {
   if (currentConfig?.notifications?.pairRequests === false) return
   if (currentConfig?.notifications?.pairRequestSound) playPairRequestSound()
+  if (currentConfig?.notifications?.pairRequestAutoRestore) restoreForPairRequest()
   if (!('Notification' in window)) return
   const body = `${req.appName || req.appId || 'An app'} wants to pair with this node.`
   if (Notification.permission === 'granted') {
@@ -986,6 +989,17 @@ function notifyPairRequest (req) {
       if (permission === 'granted') new Notification('Unstoppable Node pair request', { body })
     }).catch(() => {})
   }
+}
+
+async function restoreForPairRequest () {
+  try {
+    if (!ui?.app) return
+    if (ui.app.show) await ui.app.show()
+    if (ui.app.isMinimized && await ui.app.isMinimized()) {
+      if (ui.app.restore) await ui.app.restore()
+    }
+    if (ui.app.focus) await ui.app.focus({ steal: false })
+  } catch {}
 }
 
 function playPairRequestSound () {
@@ -1170,7 +1184,8 @@ function collectConfigPatch () {
     },
     notifications: {
       pairRequests: getChecked('cfg-notifications-pair'),
-      pairRequestSound: getChecked('cfg-notifications-sound')
+      pairRequestSound: getChecked('cfg-notifications-sound'),
+      pairRequestAutoRestore: getChecked('cfg-notifications-restore')
     },
     ui: {
       showWelcome: getChecked('cfg-ui-welcome')

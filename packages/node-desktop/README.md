@@ -28,7 +28,7 @@ support varies by desktop environment.
 
 When pair approvals are pending, supported desktop environments show an app
 badge with the pending request count. Config can also enable a short generated
-sound for pair requests; it is off by default.
+sound and best-effort window restore for pair requests; both are off by default.
 
 ## Flags
 
