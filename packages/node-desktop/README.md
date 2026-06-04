@@ -23,8 +23,9 @@ The dashboard binds to the same local discovery topic as `unstoppable-node`,
 so paired apps from either mode will connect to this daemon.
 
 The tray menu is enabled when Pear/Electron supports it. It exposes Show and
-Quit actions; close-to-tray is intentionally not enabled yet because Linux tray
-support varies by desktop environment.
+Quit actions. Closing the dashboard hides it to the tray on supported desktop
+platforms; Linux keeps normal close behavior because tray support varies by
+desktop environment.
 
 When pair approvals are pending, supported desktop environments show an app
 badge with the pending request count. Config can also enable a short generated
