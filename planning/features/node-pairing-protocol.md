@@ -463,6 +463,12 @@ Mitigations added for v0.4:
 - `packages/node-desktop/scripts/smoke.js` can run `NODE_SMOKE_RUNS=20` against
   one long-lived headless daemon. On 2026-05-27 this produced 20/20 successful
   demo pairings, each under 1 second, with the Bare runtime.
+- The same smoke harness supports `NODE_SMOKE_TOPIC=default` to leave
+  `UNSTOPPABLE_NODE_TOPIC` unset and validate the real machine-local discovery
+  topic. Use `BARE_BIN=node` locally if Bare is not installed.
+- On 2026-06-04, `BARE_BIN=node NODE_SMOKE_RUNS=20 NODE_SMOKE_TOPIC=default
+  npm run test:smoke` passed 20/20 against the headless dashboard daemon on the
+  default topic; all observed pairings completed within ~1.1 seconds.
 - `packages/node/scripts/discovery-stress.js` runs the same release-gate shape in
   plain Node.js: one isolated bootstrap DHT, one long-lived `NodeDaemon`, then N
   fresh clients pairing sequentially with a 5-second timeout. Run it with
