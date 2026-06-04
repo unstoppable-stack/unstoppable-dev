@@ -22,7 +22,7 @@
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |
 | F12 | Storage quotas | Done for v0.4 — global/default/per-app config, quota status, dashboard badges, per-app quota edits, and advisory pause enforcement landed |
-| F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, and import preview/confirmation landed |
+| F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, dashboard confirmation, and CLI inspect landed |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
 | F16 | Reconnect with backoff | Done — opt-in |
@@ -530,7 +530,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Stretch.
 
-**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Dashboard import now previews bundle metadata, app list, config presence, and trust counts before writing to storage. Full encrypted Corestore archive and identity round-trip remain future work.
+**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Dashboard import now previews bundle metadata, app list, config presence, and trust counts before writing to storage; the CLI exposes the same read-only summary via `unstoppable-node inspect <backup.uns>`. Full encrypted Corestore archive and identity round-trip remain future work.
 
 **Problem.** Users have no way to back up the node's identity + paired apps + AI config. If they lose their machine, they lose their P2P "router."
 

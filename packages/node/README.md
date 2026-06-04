@@ -74,6 +74,7 @@ await node.setAppQuota('my-app', 1024 * 1024 * 1024)
 ```bash
 unstoppable-node start --storage ./my-storage --ai-mock
 unstoppable-node export ./node-backup.uns --storage ./my-storage
+unstoppable-node inspect ./node-backup.uns
 unstoppable-node import ./node-backup.uns --storage ./restored-storage
 ```
 
@@ -95,8 +96,10 @@ Export/import currently writes a JSON `.uns` bundle containing:
 - Dashboard trust decisions (`trust-registry.json`)
 
 The dashboard previews bundle metadata, app list, config presence, and trust
-counts before importing. Importing overwrites existing paired-app records with
-the same app IDs and replaces config/trust files included in the bundle.
+counts before importing. The CLI can print the same read-only summary with
+`unstoppable-node inspect <backup.uns>`. Importing overwrites existing paired-app
+records with the same app IDs and replaces config/trust files included in the
+bundle.
 
 This is not a full data archive yet. It does not include encrypted Corestore
 data, stable node identity seeds, or replicated app payloads.
