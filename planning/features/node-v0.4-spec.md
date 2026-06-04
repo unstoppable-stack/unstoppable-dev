@@ -21,7 +21,7 @@
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |
-| F12 | Storage quotas | Partial — global/default/per-app config, quota status, dashboard badges, per-app quota edits, and advisory pause enforcement landed |
+| F12 | Storage quotas | Done for v0.4 — global/default/per-app config, quota status, dashboard badges, per-app quota edits, and advisory pause enforcement landed |
 | F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, and import preview/confirmation landed |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
@@ -501,7 +501,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Stretch.
 
-**Implementation status.** Partial: daemon status includes `storage.quotas`, configured global/default/per-app limits pause over-quota app announcements, dashboard storage rows show quota state, paired-app rows allow per-app quota edits, and tests cover per-app advisory pause. Hard Corestore-level quota enforcement remains future work.
+**Implementation status.** Done for v0.4: daemon status includes `storage.quotas`, configured global/default/per-app limits pause over-quota app announcements, dashboard storage rows show quota state, paired-app rows allow per-app quota edits, and tests cover per-app advisory pause. Hard Corestore-level quota enforcement remains future work.
 
 **Problem.** A misbehaving (or malicious) app could fill the node's disk by registering huge drives. The dashboard has no defense.
 
