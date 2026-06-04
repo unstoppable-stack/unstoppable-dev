@@ -18,7 +18,8 @@ export const DEFAULT_CONFIG = Object.freeze({
     autoApproveLocal: false
   },
   notifications: {
-    pairRequests: true
+    pairRequests: true,
+    pairRequestSound: false
   },
   ui: {
     showWelcome: true
@@ -70,6 +71,7 @@ export function validateConfig (config) {
   if (typeof next.pairing.requireApproval !== 'boolean') throw new Error('pairing.requireApproval must be a boolean')
   if (typeof next.pairing.autoApproveLocal !== 'boolean') throw new Error('pairing.autoApproveLocal must be a boolean')
   if (typeof next.notifications.pairRequests !== 'boolean') throw new Error('notifications.pairRequests must be a boolean')
+  if (typeof next.notifications.pairRequestSound !== 'boolean') throw new Error('notifications.pairRequestSound must be a boolean')
   if (typeof next.ui.showWelcome !== 'boolean') throw new Error('ui.showWelcome must be a boolean')
   return next
 }

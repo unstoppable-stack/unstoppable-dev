@@ -27,7 +27,8 @@ Quit actions; close-to-tray is intentionally not enabled yet because Linux tray
 support varies by desktop environment.
 
 When pair approvals are pending, supported desktop environments show an app
-badge with the pending request count.
+badge with the pending request count. Config can also enable a short generated
+sound for pair requests; it is off by default.
 
 ## Flags
 
