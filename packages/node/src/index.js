@@ -4,7 +4,7 @@ import os from 'os'
 import path from 'path'
 import chalk from 'chalk'
 import { NodeDaemon } from './node.js'
-import { exportNodeState, importNodeState } from './export.js'
+import { exportNodeState, importNodeState, previewNodeStateImport } from './export.js'
 
 const DEFAULT_STORAGE = path.join(os.homedir(), '.unstoppable-node')
 
@@ -50,6 +50,10 @@ if (command === 'start') {
   if (!commandTarget) usageAndExit('Missing input path for import')
   const bundle = await importNodeState({ storagePath, inPath: commandTarget })
   console.log(chalk.green(`Imported ${bundle.apps.length} app(s) from ${commandTarget}`))
+} else if (command === 'inspect') {
+  if (!commandTarget) usageAndExit('Missing input path for inspect')
+  const preview = await previewNodeStateImport({ inPath: commandTarget })
+  printImportPreview(commandTarget, preview)
 } else if (command === 'help') {
   console.log(`
 ${chalk.bold('unstoppable-node')} — Personal sync node for Unstoppable Stack apps
@@ -57,6 +61,7 @@ ${chalk.bold('unstoppable-node')} — Personal sync node for Unstoppable Stack a
 ${chalk.bold('Usage:')}
   unstoppable-node start [options]
   unstoppable-node export <out.uns> [--storage <path>]
+  unstoppable-node inspect <in.uns>
   unstoppable-node import <in.uns> [--storage <path>]
 
 ${chalk.bold('Options:')}
@@ -80,6 +85,18 @@ function usageAndExit (message) {
   console.error(chalk.red(message))
   console.error(`Run ${chalk.bold('unstoppable-node help')} for usage.`)
   process.exit(1)
+}
+
+function printImportPreview (target, preview) {
+  console.log(chalk.bold(`Backup: ${target}`))
+  console.log(chalk.dim(`  Version:  ${preview.version}`))
+  console.log(chalk.dim(`  Exported: ${preview.exportedAt || 'unknown'}`))
+  console.log(chalk.dim(`  Config:   ${preview.hasConfig ? 'included' : 'not included'}`))
+  console.log(chalk.dim(`  Trust:    ${preview.hasTrust ? `${preview.trustCounts.approved} approved, ${preview.trustCounts.denied} denied` : 'not included'}`))
+  console.log(chalk.dim(`  Apps:     ${preview.appCount}`))
+  for (const app of preview.apps) {
+    console.log(`  - ${app.appName} ${chalk.dim(`(${app.appId})`)}`)
+  }
 }
 
 async function startNode (storagePath, cli = {}) {
