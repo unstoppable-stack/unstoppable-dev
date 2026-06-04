@@ -1,6 +1,6 @@
 # Unstoppable Node v0.4 — Implementation Spec
 
-> Status: **developer-preview scope complete; real-QVAC validation pending** — see "Implementation status" below
+> Status: **developer-preview scope complete; real-QVAC validation blocked on model source** — see "Implementation status" below
 > Audience: an engineer picking up the Node work cold
 > Last updated: 2026-06-04
 > Scope: turn the current local-only Node slice into a publishable, smoke-tested developer preview
@@ -12,7 +12,7 @@
 | F1 | Bare-runtime smoke test in CI | Done — `bin/headless.js` + `scripts/smoke.js` + `.github/workflows/node-smoke.yml` |
 | F2 | Migrate off `Pear.worker.pipe()` | Done — `pear-pipe` in dashboard worker |
 | F3 | Publish prep (no actual publish) | Done — exports map, files list, repo metadata, READMEs, gated `node-publish.yml`; `npm publish --dry-run` passes |
-| F4 | Real-QVAC E2E test | Ready for manual validation — opt-in test + workflow added; needs confirmed model source |
+| F4 | Real-QVAC E2E test | Blocked on external input — opt-in test, docs, and workflow landed; needs `@qvac/sdk` plus confirmed `QVAC_MODEL_SRC` |
 | F5 | Discovery flakiness | Done — Node stress harness and headless/dashboard smoke pass 20/20 locally on default discovery topic |
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
@@ -31,7 +31,7 @@
 | F19 | First-run welcome modal | Done — localStorage-gated + `?` button |
 | F20 | System tray | Done for v0.4 preview — Show/Pause All/Resume All/Quit tray menu and close-to-tray on supported platforms landed; richer status/autostart deferred |
 
-Recent local validation: `packages/node` 84 pass / 1 skipped real-QVAC test, `packages/node-desktop` 20 pass, default-topic dashboard smoke 20/20.
+Recent local validation: `packages/node` 84 pass / 1 skipped real-QVAC test, `packages/node-client` 5 pass, `packages/node-desktop` 20 pass, default-topic dashboard smoke 20/20.
 > Predecessor docs (read first, in order):
 >   1. `planning/features/node.md` — concept
 >   2. `planning/features/node-technical.md` — architecture
@@ -226,6 +226,8 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 #### F4. Real-QVAC end-to-end test
 
 **Release label.** Release gate for manual/nightly validation, not default PR CI.
+
+**Implementation status.** Blocked on external input only: the opt-in real-QVAC test, manual GitHub Actions workflow, README instructions, and agent-pack note are in place. Local validation cannot complete until `@qvac/sdk` is installed for the test run and `QVAC_MODEL_SRC` points at a confirmed model source.
 
 **Problem.** `--ai-mock` is the only path that has been validated. We don't actually know whether `--ai-model <src>` works against a current `@qvac/sdk` release. The agent pack tells users to set this up; we'd better know it works.
 
