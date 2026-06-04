@@ -479,7 +479,7 @@ function renderStorage (status) {
   el.innerHTML = apps.map((app) => `
     ${(() => {
       const q = quota.perApp?.[app.appId]
-      const quotaBadge = q?.exceeded ? '<span class="badge badge-warn">quota</span>' : ''
+      const quotaBadge = q?.exceeded ? '<span class="badge badge-warn">over quota</span>' : ''
       const quotaText = q?.limit !== null && q?.limit !== undefined ? ` / ${formatBytes(q.limit)}` : ''
       return `
     <div class="app-row">
