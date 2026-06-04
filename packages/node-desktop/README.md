@@ -22,8 +22,8 @@ pnpm --filter unstoppable-node-desktop dev
 The dashboard binds to the same local discovery topic as `unstoppable-node`,
 so paired apps from either mode will connect to this daemon.
 
-The tray menu is enabled when Pear/Electron supports it. It exposes Show and
-Quit actions. Closing the dashboard hides it to the tray on supported desktop
+The tray menu is enabled when Pear/Electron supports it. It exposes Show,
+Pause All, and Quit actions. Closing the dashboard hides it to the tray on supported desktop
 platforms; Linux keeps normal close behavior because tray support varies by
 desktop environment.
 

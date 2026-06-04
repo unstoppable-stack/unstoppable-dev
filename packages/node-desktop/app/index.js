@@ -955,8 +955,13 @@ async function setupTray () {
     const untray = await ui.app.tray({
       menu: {
         show: 'Show Unstoppable Node',
+        pauseAll: 'Pause all apps',
         quit: 'Quit Unstoppable Node'
       }
+    }, async (key) => {
+      if (key === 'click' || key === 'show') return showDashboardWindow()
+      if (key === 'pauseAll') return pauseAllApps()
+      if (key === 'quit') sendToWorker({ type: 'shutdown' })
     })
     if (typeof Pear !== 'undefined' && Pear.teardown && typeof untray === 'function') {
       Pear.teardown(() => untray())
@@ -965,6 +970,22 @@ async function setupTray () {
   } catch (err) {
     pushLog(`System tray unavailable: ${err.message || err}`, 'dim')
   }
+}
+
+async function showDashboardWindow () {
+  try {
+    if (!ui?.app) return
+    if (ui.app.show) await ui.app.show()
+    if (ui.app.restore) await ui.app.restore()
+    if (ui.app.focus) await ui.app.focus({ steal: true })
+  } catch {}
+}
+
+function pauseAllApps () {
+  const apps = lastStatus?.apps || []
+  if (apps.length === 0) return pushLog('No paired apps to pause', 'dim')
+  for (const app of apps) sendToWorker({ type: 'pause-app', appId: app.appId })
+  pushLog(`Pause requested for ${apps.length} app(s) from tray`, 'info')
 }
 
 function updateApprovalBadge () {
