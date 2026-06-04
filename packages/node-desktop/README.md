@@ -36,6 +36,17 @@ Launch flags are picked up from `Pear.config.args`:
 - `--ai` — load a real QVAC model and advertise `services.ai = true`
 - `--ai-mock` — echo-mode AI provider, useful for UI development
 
+## Smoke Testing
+
+```bash
+npm run test:smoke
+NODE_SMOKE_RUNS=20 NODE_SMOKE_TOPIC=default BARE_BIN=node npm run test:smoke
+```
+
+`NODE_SMOKE_TOPIC=isolated` is the default and injects a fresh topic for CI.
+`NODE_SMOKE_TOPIC=default` leaves `UNSTOPPABLE_NODE_TOPIC` unset so the headless
+daemon and demo client use the real machine-local discovery topic.
+
 ## Architecture
 
 ```

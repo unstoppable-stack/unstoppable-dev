@@ -23,7 +23,10 @@ const runtime = process.env.BARE_BIN || 'bare'
 const readyTimeoutMs = Number(process.env.NODE_SMOKE_READY_TIMEOUT_MS || 30_000)
 const demoTimeoutMs = Number(process.env.NODE_SMOKE_DEMO_TIMEOUT_MS || 45_000)
 const runs = Number(process.env.NODE_SMOKE_RUNS || 1)
-const topic = process.env.UNSTOPPABLE_NODE_TOPIC || randomBytes(32).toString('hex')
+const topicMode = process.env.NODE_SMOKE_TOPIC === 'default' ? 'default' : 'isolated'
+const topic = topicMode === 'default'
+  ? null
+  : (process.env.UNSTOPPABLE_NODE_TOPIC || randomBytes(32).toString('hex'))
 
 const storagePath = await mkdtemp(path.join(tmpdir(), 'unstoppable-node-smoke-'))
 let daemon
@@ -36,13 +39,13 @@ try {
       cwd: nodeDesktopRoot,
       stdio: ['pipe', 'pipe', 'pipe'],
       detached: true,
-      env: { ...process.env, UNSTOPPABLE_NODE_TOPIC: topic }
+      env: smokeEnv()
     }
   )
   daemon.stderr.on('data', (data) => process.stderr.write(data))
 
   const ready = await waitForReady(daemon, readyTimeoutMs)
-  console.log('[smoke] daemon ready:', JSON.stringify(ready.services))
+  console.log('[smoke] daemon ready:', JSON.stringify({ services: ready.services, topicMode }))
   if (!ready.services?.ai) {
     throw new Error(`Daemon ready without services.ai=true: ${JSON.stringify(ready.services)}`)
   }
@@ -152,7 +155,7 @@ function runDemo (timeoutMs) {
     const child = spawn(process.execPath, ['demo.js'], {
       cwd: demoRoot,
       stdio: ['ignore', 'inherit', 'inherit'],
-      env: { ...process.env, UNSTOPPABLE_NODE_TOPIC: topic }
+      env: smokeEnv()
     })
     const timer = setTimeout(() => {
       child.kill('SIGTERM')
@@ -168,4 +171,11 @@ function runDemo (timeoutMs) {
       else reject(new Error(`Demo failed (code=${code}, signal=${signal})`))
     })
   })
+}
+
+function smokeEnv () {
+  const env = { ...process.env }
+  if (topicMode === 'default') delete env.UNSTOPPABLE_NODE_TOPIC
+  else env.UNSTOPPABLE_NODE_TOPIC = topic
+  return env
 }
