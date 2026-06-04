@@ -956,11 +956,13 @@ async function setupTray () {
       menu: {
         show: 'Show Unstoppable Node',
         pauseAll: 'Pause all apps',
+        resumeAll: 'Resume all apps',
         quit: 'Quit Unstoppable Node'
       }
     }, async (key) => {
       if (key === 'click' || key === 'show') return showDashboardWindow()
       if (key === 'pauseAll') return pauseAllApps()
+      if (key === 'resumeAll') return resumeAllApps()
       if (key === 'quit') sendToWorker({ type: 'shutdown' })
     })
     if (typeof Pear !== 'undefined' && Pear.teardown && typeof untray === 'function') {
@@ -986,6 +988,13 @@ function pauseAllApps () {
   if (apps.length === 0) return pushLog('No paired apps to pause', 'dim')
   for (const app of apps) sendToWorker({ type: 'pause-app', appId: app.appId })
   pushLog(`Pause requested for ${apps.length} app(s) from tray`, 'info')
+}
+
+function resumeAllApps () {
+  const apps = lastStatus?.apps || []
+  if (apps.length === 0) return pushLog('No paired apps to resume', 'dim')
+  for (const app of apps) sendToWorker({ type: 'resume-app', appId: app.appId })
+  pushLog(`Resume requested for ${apps.length} app(s) from tray`, 'info')
 }
 
 function updateApprovalBadge () {
