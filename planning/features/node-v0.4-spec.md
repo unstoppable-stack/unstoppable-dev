@@ -17,7 +17,7 @@
 | F6 | Per-app data browser | Done — `peekCore` / `peekDrive` + tabbed modal |
 | F7 | Disk usage stats | Done — `getDiskUsage()` + per-app + total bytes |
 | F8 | Live AI toggle | Done — `enableAI`/`disableAI` + dashboard button |
-| F9 | Notifications | Partial — pair-request desktop notifications, permission UI, pending-approval app badge, and opt-in sound landed; auto-restore deferred |
+| F9 | Notifications | Done — pair-request desktop notifications, permission UI, pending-approval app badge, opt-in sound, and opt-in auto-restore landed |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
 | F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |
@@ -377,7 +377,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Stretch.
 
-**Implementation status.** Partial: the dashboard can show browser/Electron desktop notifications for `pairAwaitingApproval` when `notifications.pairRequests` is enabled, Config exposes notification permission state plus a permission request button, supported desktop environments show a pending approval badge, and opt-in generated sound is available through `notifications.pairRequestSound`. Minimized-window auto-restore remains future work.
+**Implementation status.** Done for v0.4: the dashboard can show browser/Electron desktop notifications for `pairAwaitingApproval` when `notifications.pairRequests` is enabled, Config exposes notification permission state plus a permission request button, supported desktop environments show a pending approval badge, opt-in generated sound is available through `notifications.pairRequestSound`, and best-effort window restore/focus is available through `notifications.pairRequestAutoRestore`.
 
 **Problem.** If the dashboard window isn't focused (or is in another desktop), the pair-request modal appears silently. The user only finds out by checking the window.
 
@@ -470,7 +470,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
   - `ai.enabled`, `ai.mode` (`mock` or `qvac`), `ai.modelSrc`
   - `storage.globalQuotaBytes`, `storage.perAppQuotaBytes`
   - `pairing.requireApproval`, `pairing.autoApproveLocal`
-  - `notifications.pairRequests`, `notifications.pairRequestSound`
+  - `notifications.pairRequests`, `notifications.pairRequestSound`, `notifications.pairRequestAutoRestore`
   - `ui.showWelcome`
 - Daemon exposes `getConfig()` and `updateConfig(patch)` methods.
 - Worker supports `get-config` and `update-config` messages.
