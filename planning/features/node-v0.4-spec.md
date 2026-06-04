@@ -29,7 +29,7 @@
 | F17 | Typed errors | Done — 6 subclasses with stable `.code` |
 | F18 | `us node` subcommand | Done — start/status/stop, pid file, log tail |
 | F19 | First-run welcome modal | Done — localStorage-gated + `?` button |
-| F20 | System tray | Partial — Pear/Electron tray menu with Show/Pause All/Quit and close-to-tray on supported platforms landed; richer status menu/autostart deferred |
+| F20 | System tray | Partial — Pear/Electron tray menu with Show/Pause All/Resume All/Quit and close-to-tray on supported platforms landed; richer status menu/autostart deferred |
 
 325 tests pass across 4 packages.
 > Predecessor docs (read first, in order):
