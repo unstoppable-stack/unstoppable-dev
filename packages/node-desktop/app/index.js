@@ -115,6 +115,7 @@ document.getElementById('app').innerHTML = `
             <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require pair approval</label>
             <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
+            <label class="field-check"><input type="checkbox" id="cfg-notifications-sound"> Play sound for pair requests</label>
             <div class="config-actions">
               <button class="btn-ghost btn-ghost-neutral" id="notifications-permission" type="button">Enable desktop notifications</button>
               <span class="dim" id="notifications-status">Notifications unavailable</span>
@@ -527,6 +528,7 @@ function renderConfigForm (config) {
   setChecked('cfg-pair-approval', config.pairing?.requireApproval !== false)
   setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
   setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
+  setChecked('cfg-notifications-sound', !!config.notifications?.pairRequestSound)
   setChecked('cfg-ui-welcome', config.ui?.showWelcome !== false)
   renderNotificationPermission()
   applyWelcomePreference(config)
@@ -971,6 +973,7 @@ function updateApprovalBadge () {
 
 function notifyPairRequest (req) {
   if (currentConfig?.notifications?.pairRequests === false) return
+  if (currentConfig?.notifications?.pairRequestSound) playPairRequestSound()
   if (!('Notification' in window)) return
   const body = `${req.appName || req.appId || 'An app'} wants to pair with this node.`
   if (Notification.permission === 'granted') {
@@ -983,6 +986,26 @@ function notifyPairRequest (req) {
       if (permission === 'granted') new Notification('Unstoppable Node pair request', { body })
     }).catch(() => {})
   }
+}
+
+function playPairRequestSound () {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = 880
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.01)
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18)
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.start()
+    osc.stop(ctx.currentTime + 0.2)
+    setTimeout(() => ctx.close().catch(() => {}), 250)
+  } catch {}
 }
 
 function wireNotificationControls () {
@@ -1146,7 +1169,8 @@ function collectConfigPatch () {
       autoApproveLocal: getChecked('cfg-pair-auto-local')
     },
     notifications: {
-      pairRequests: getChecked('cfg-notifications-pair')
+      pairRequests: getChecked('cfg-notifications-pair'),
+      pairRequestSound: getChecked('cfg-notifications-sound')
     },
     ui: {
       showWelcome: getChecked('cfg-ui-welcome')
