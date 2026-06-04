@@ -1,11 +1,11 @@
 # Unstoppable Node v0.4 — Implementation Spec
 
-> Status: **in progress (16 of 20 features landed)** — see "Implementation status" below
+> Status: **developer-preview scope complete; real-QVAC validation pending** — see "Implementation status" below
 > Audience: an engineer picking up the Node work cold
-> Last updated: 2026-06-03
+> Last updated: 2026-06-04
 > Scope: turn the current local-only Node slice into a publishable, smoke-tested developer preview
 
-## Implementation status (2026-06-03)
+## Implementation status (2026-06-04)
 
 | ID | Feature | Status |
 |----|---------|--------|
@@ -20,18 +20,18 @@
 | F9 | Notifications | Done — pair-request desktop notifications, permission UI, pending-approval app badge, opt-in sound, and opt-in auto-restore landed |
 | F10 | Device name in pair modal | Done — `os.hostname()` default, plumbed end-to-end |
 | F11 | "auto-paired" badge + Promote | Done |
-| F12a | Node config store + Settings UI | Partial — config store, daemon API, worker messages, editable dashboard form, and persisted-vs-live UI labels landed |
+| F12a | Node config store + Settings UI | Done for v0.4 — config store, daemon API, worker messages, editable dashboard form, validation, live apply, and persisted-vs-live UI labels landed |
 | F12 | Storage quotas | Done for v0.4 — global/default/per-app config, quota status, dashboard badges, per-app quota edits, and advisory pause enforcement landed |
-| F13 | Export / import | Partial — JSON bundle for config, trust registry, paired app registry, dashboard export/import, dashboard confirmation, and CLI inspect landed |
+| F13 | Export / import | Done for v0.4 preview — JSON bundle for config/trust/app registry, dashboard export/import confirmation, and CLI inspect landed; encrypted Corestore archive deferred |
 | F14 | Per-app pause/resume | Done |
 | F15 | `getNodeStatus()` + event | Done |
 | F16 | Reconnect with backoff | Done — opt-in |
 | F17 | Typed errors | Done — 6 subclasses with stable `.code` |
 | F18 | `us node` subcommand | Done — start/status/stop, pid file, log tail |
 | F19 | First-run welcome modal | Done — localStorage-gated + `?` button |
-| F20 | System tray | Partial — Pear/Electron tray menu with Show/Pause All/Resume All/Quit and close-to-tray on supported platforms landed; richer status menu/autostart deferred |
+| F20 | System tray | Done for v0.4 preview — Show/Pause All/Resume All/Quit tray menu and close-to-tray on supported platforms landed; richer status/autostart deferred |
 
-325 tests pass across 4 packages.
+Recent local validation: `packages/node` 84 pass / 1 skipped real-QVAC test, `packages/node-desktop` 20 pass, default-topic dashboard smoke 20/20.
 > Predecessor docs (read first, in order):
 >   1. `planning/features/node.md` — concept
 >   2. `planning/features/node-technical.md` — architecture
@@ -459,7 +459,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Target.
 
-**Implementation status.** Partial: `node-config.json`, daemon `getConfig()` / `updateConfig()`, dashboard worker commands, and editable Config UI landed. Stored quota values are enforced by F12 advisory pause logic.
+**Implementation status.** Done for v0.4: `node-config.json`, daemon `getConfig()` / `updateConfig()`, dashboard worker commands, validation, live-apply hooks, and editable Config UI landed. Stored quota values are enforced by F12 advisory pause logic. Current settings are all live-applicable or UI-only, so there are no restart-required badges to show in v0.4.
 
 **Problem.** The dashboard now has a Config tab, but most node settings are still implicit launch flags or hardcoded behavior. Users should be able to inspect and change supported node configuration from the UI, with clear live-apply vs restart-required behavior.
 
@@ -530,7 +530,7 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 
 **Release label.** Stretch.
 
-**Implementation status.** Partial: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Dashboard import now previews bundle metadata, app list, config presence, and trust counts before writing to storage; the CLI exposes the same read-only summary via `unstoppable-node inspect <backup.uns>`. Full encrypted Corestore archive and identity round-trip remain future work.
+**Implementation status.** Done for v0.4 preview: CLI and dashboard can export/import a JSON `.uns` bundle containing node config, dashboard trust decisions, and paired app registry. Dashboard import previews bundle metadata, app list, config presence, and trust counts before writing to storage; the CLI exposes the same read-only summary via `unstoppable-node inspect <backup.uns>`. Full encrypted Corestore archive and identity round-trip are explicitly deferred to post-v0.4.
 
 **Problem.** Users have no way to back up the node's identity + paired apps + AI config. If they lose their machine, they lose their P2P "router."
 
@@ -695,6 +695,8 @@ Each feature lists: **problem**, **acceptance criteria** (testable), **implement
 #### F20. System-tray / minimize-to-tray
 
 **Release label.** Stretch.
+
+**Implementation status.** Done for v0.4 preview: Pear/Electron tray setup runs from the renderer, tray menu includes Show, Pause All, Resume All, and Quit, and close-to-tray is enabled on supported platforms with Linux close-hide disabled for safety. Dynamic green/yellow/red tray status and OS autostart remain post-v0.4 work.
 
 **Problem.** A node is a background service. Forcing the user to leave the dashboard window open feels wrong.
 
