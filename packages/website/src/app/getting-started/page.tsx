@@ -13,6 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import { CodeBlock } from "@/components/code-block";
+import { ScaffoldPathSwitch } from "@/components/scaffold-path-switch";
 
 export const metadata = {
   title: "Getting Started — Unstoppable Stack",
@@ -41,10 +42,9 @@ const platforms = [
 ];
 
 const features = [
-  { name: "p2p", description: "Hyperswarm networking for peer discovery" },
-  { name: "kv-storage", description: "Hyperbee key-value database" },
-  { name: "local-ai", description: "QVAC SDK for on-device inference" },
-  { name: "multi-writer", description: "Autobase for collaborative data" },
+  { name: "local-ai", description: "QVAC SDK for offline inference and mockable AI flows" },
+  { name: "node-sync", description: "Register app data with the Unstoppable Node" },
+  { name: "wallet", description: "WDK wallet integration stub where supported" },
 ];
 
 export default function GettingStartedPage() {
@@ -89,16 +89,16 @@ export default function GettingStartedPage() {
             </div>
             <div>
               <div className="text-xs font-mono text-text-muted mb-0.5">Step 1</div>
-              <h2 className="text-2xl font-bold tracking-tight">Install & Run the CLI</h2>
+              <h2 className="text-2xl font-bold tracking-tight">Install the CLI</h2>
             </div>
           </div>
 
           <p className="text-text-secondary mb-6">
-            Install the CLI and run the init command:
+            Install the <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-accent">us</code> command globally:
           </p>
 
           <div className="space-y-3">
-            <CodeBlock code="npm install -g @unstoppable-stack/cli && us init" />
+            <CodeBlock code="npm install -g @unstoppable-stack/cli" />
             <div className="flex items-center gap-4 text-xs text-text-muted">
               <span>Or run directly:</span>
               <code className="rounded bg-surface px-2 py-1 font-mono">
@@ -108,26 +108,78 @@ export default function GettingStartedPage() {
           </div>
         </section>
 
-        {/* Step 2: Scaffold */}
+        {/* Step 2: Init */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <div className="text-xs font-mono text-text-muted mb-0.5">Step 2</div>
+              <h2 className="text-2xl font-bold tracking-tight">Initialize Your Workspace</h2>
+            </div>
+          </div>
+
+          <p className="text-text-secondary mb-6">
+            Run <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-accent">us init</code> first when you want the project configured for Claude, Cursor, OpenCode, or Codex. The generated agent pack tells your assistant how to use the CLI and stack correctly.
+          </p>
+
+          <div className="rounded-xl border border-border bg-surface overflow-hidden mb-8">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-light">
+              <div className="flex gap-1.5">
+                <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                <div className="h-3 w-3 rounded-full bg-[#28c840]" />
+              </div>
+              <span className="text-xs text-text-muted ml-2 font-mono">us init</span>
+            </div>
+            <div className="p-4 font-mono text-sm space-y-3 overflow-x-auto">
+              <div>
+                <span className="text-text-muted">? </span>
+                <span className="text-text-primary">What is your project name? </span>
+                <span className="text-accent">my-workspace</span>
+              </div>
+              <div>
+                <span className="text-text-muted">? </span>
+                <span className="text-text-primary">Select your AI assistant:</span>
+              </div>
+              <div className="pl-4 space-y-1 text-text-secondary">
+                {assistants.map((a, i) => (
+                  <div key={a.name} className={i === 0 ? "text-accent" : ""}>
+                    {i === 0 ? "❯ " : "  "}
+                    {a.name}
+                    <span className="text-text-muted"> — {a.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface-light px-5 py-4">
+            <p className="text-sm text-text-secondary leading-relaxed">
+              You can still skip this step and run <code className="rounded bg-background px-1.5 py-0.5 text-xs font-mono text-accent">us scaffold</code> manually. The init flow is recommended when you want an AI assistant to continue the build from a stack-aware workspace.
+            </p>
+          </div>
+        </section>
+
+        {/* Step 3: Scaffold */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
               <FolderOpen className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-mono text-text-muted mb-0.5">Step 2</div>
+              <div className="text-xs font-mono text-text-muted mb-0.5">Step 3</div>
               <h2 className="text-2xl font-bold tracking-tight">Scaffold Your App</h2>
             </div>
           </div>
 
           <p className="text-text-secondary mb-6">
-            Use <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-accent">us scaffold</code> to
-            generate a full app with your choice of platform and features:
+            You can scaffold manually with the CLI, or initialize a workspace with an agent pack and ask your AI assistant
+            to call <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-accent">us scaffold</code> for you.
           </p>
 
-          <div className="space-y-3 mb-8">
-            <CodeBlock code="us scaffold app -p pear-desktop -n my-chat -f p2p,kv-storage" />
-          </div>
+          <ScaffoldPathSwitch />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div>
@@ -146,47 +198,14 @@ export default function GettingStartedPage() {
             </div>
             <div>
               <h3 className="text-sm font-semibold mb-3 text-text-primary">Features</h3>
+              <p className="text-xs text-text-muted mb-3">
+                Base P2P networking, Corestore, and Hyperbee storage are included in every scaffold. Feature flags add specialized capabilities.
+              </p>
               <div className="rounded-xl border border-border bg-surface overflow-hidden">
                 {features.map((f, i) => (
                   <div key={f.name} className={`px-4 py-3 flex items-start gap-3 ${i > 0 ? "border-t border-border" : ""}`}>
                     <code className="text-accent font-mono text-xs mt-0.5">{f.name}</code>
                     <p className="text-xs text-text-muted">{f.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive init flow */}
-          <p className="text-text-secondary mb-4">
-            Or use the interactive flow to be guided through the setup:
-          </p>
-
-          <div className="rounded-xl border border-border bg-surface overflow-hidden mb-8">
-            <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-light">
-              <div className="flex gap-1.5">
-                <div className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-                <div className="h-3 w-3 rounded-full bg-[#febc2e]" />
-                <div className="h-3 w-3 rounded-full bg-[#28c840]" />
-              </div>
-              <span className="text-xs text-text-muted ml-2 font-mono">us init</span>
-            </div>
-            <div className="p-4 font-mono text-sm space-y-3 overflow-x-auto">
-              <div>
-                <span className="text-text-muted">? </span>
-                <span className="text-text-primary">What is your project name? </span>
-                <span className="text-accent">my-app</span>
-              </div>
-              <div>
-                <span className="text-text-muted">? </span>
-                <span className="text-text-primary">Select your AI assistant:</span>
-              </div>
-              <div className="pl-4 space-y-1 text-text-secondary">
-                {assistants.map((a, i) => (
-                  <div key={a.name} className={i === 0 ? "text-accent" : ""}>
-                    {i === 0 ? "❯ " : "  "}
-                    {a.name}
-                    <span className="text-text-muted"> — {a.description}</span>
                   </div>
                 ))}
               </div>
@@ -206,7 +225,7 @@ export default function GettingStartedPage() {
               </div>
               <div>
                 <span className="text-accent">✓</span>{" "}
-                <span className="text-text-secondary">Features: <span className="text-text-primary">p2p, kv-storage</span></span>
+                <span className="text-text-secondary">Features: <span className="text-text-primary">local-ai, node-sync</span></span>
               </div>
               <div>
                 <span className="text-accent">✓</span>{" "}
@@ -218,19 +237,20 @@ export default function GettingStartedPage() {
               </div>
               <div className="pt-2 text-text-primary">Next steps:</div>
               <div className="text-accent pl-2">cd my-app</div>
-              <div className="text-accent pl-2">pnpm dev</div>
+              <div className="text-accent pl-2">npm install</div>
+              <div className="text-accent pl-2">npm run dev</div>
             </div>
           </div>
         </section>
 
-        {/* Step 3: Vibe-Code with AI */}
+        {/* Step 4: Vibe-Code with AI */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
               <Bot className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-mono text-text-muted mb-0.5">Step 3</div>
+              <div className="text-xs font-mono text-text-muted mb-0.5">Step 4</div>
               <h2 className="text-2xl font-bold tracking-tight">
                 Vibe-Code with Your AI Assistant
               </h2>
@@ -280,14 +300,14 @@ export default function GettingStartedPage() {
           </div>
         </section>
 
-        {/* Step 4: Connect to Your Node */}
+        {/* Step 5: Connect to Your Node */}
         <section className="mb-16">
           <div className="flex items-center gap-3 mb-6">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
               <Server className="h-5 w-5" />
             </div>
             <div>
-              <div className="text-xs font-mono text-text-muted mb-0.5">Step 4</div>
+              <div className="text-xs font-mono text-text-muted mb-0.5">Step 5</div>
               <h2 className="text-2xl font-bold tracking-tight">
                 Connect to Your Unstoppable Node
               </h2>
