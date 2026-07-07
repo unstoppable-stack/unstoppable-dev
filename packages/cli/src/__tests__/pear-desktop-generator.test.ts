@@ -282,15 +282,15 @@ describe('pear-desktop generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('adds @unstoppable/node-client dependency', () => {
+    it('adds @unstoppable-stack/node-client dependency', () => {
       const files = fileMap(make(['node-sync']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable/node-client']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeDefined()
     })
 
     it('wires connectToNode into the worker after db.ready()', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain("from '@unstoppable/node-client'")
+      expect(worker).toContain("from '@unstoppable-stack/node-client'")
       expect(worker).toContain('connectToNode(')
       expect(worker).toContain("service: 'node-sync'")
       expect(worker).toContain('main-db')
@@ -313,8 +313,8 @@ describe('pear-desktop generator', () => {
     it('bare variant does not include node-client', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable/node-client']).toBeUndefined()
-      expect(files['worker.js']).not.toContain('@unstoppable/node-client')
+      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-client')
     })
   })
 })

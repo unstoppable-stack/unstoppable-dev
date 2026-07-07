@@ -1,10 +1,19 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-04-22
+> **Last updated:** 2026-06-21
 
 ---
 
 ## Recently Completed
+
+- **2026-06 — Developer Preview release prep** — `packages/cli/`, `packages/node/`, `packages/website/`
+  - **Release shape decided**: one "Developer Preview" launch = `@unstoppable-stack/cli` **0.3.0** + `unstoppable-node` **0.4.0** + `@unstoppable/node-client` **0.4.0** + website deploy. Full plan: [`release-plan-2026-06-12.md`](./release-plan-2026-06-12.md); audit: [`release-review-2026-06-12.md`](./release-review-2026-06-12.md).
+  - **Unstoppable Memory excluded** from this release pending E2E + a security pass (MCP DNS-rebinding guard, notification handling). `US_FEAT_MEMORY` is off in the minimal profile and the `file:` memory dep was removed from the CLI so global installs don't break. Ships later as a separate v0.1 preview.
+  - **CLI bumped to 0.3.0**; version now injected from `package.json` at build time (`__US_VERSION__`) so `us --version` can't drift. Added a guard test. Added `LICENSE` + `README`/`LICENSE` to the CLI `files` array.
+  - **CHANGELOG.md** created at repo root covering CLI 0.3.0 and Node 0.4.0.
+  - **Release acceptance gate** scripted at [`scripts/release-smoke.sh`](../../scripts/release-smoke.sh): isolated global install of all three tarballs, asserts `us --version`, command surface (memory excluded), `us init`/`scaffold`/`doctor`, and `unstoppable-node help`. Passes locally in ~33s.
+  - **Website copy reconciled**: unshipped surfaces (WDK payments, Unstoppable Agent) now labelled "Coming soon" instead of present-tense "built in". Production build passes.
+  - **Remaining launch gates** (owner actions): claim `@unstoppable` + `@unstoppable-stack` npm orgs, run the smoke gate on a clean machine, publish in dep order (node-client → node → cli), tag, deploy.
 
 - **2026-04-22**: **Unstoppable Node full slice — usable for apps** — `packages/node/`, `packages/node-client/`, `packages/node-desktop/`, `packages/cli/`
   - **`node-sync` rolled out to all generators**: `pear-desktop` worker and `expo-mobile` bare worklet now both support the opt-in `node-sync` feature flag — scaffolded apps dial the Node on boot, register their Hyperbee, and surface a `searching / connected / disconnected / unavailable` status section in the UI (best-effort; apps keep working offline if the Node isn't running).

@@ -1,4 +1,12 @@
 import { defineConfig } from 'tsup'
+import { readFileSync } from 'node:fs'
+
+// Single source of truth for the CLI version. Injected as a build-time
+// constant so `us --version` can never drift from package.json (it did:
+// package.json said 0.3.0 while us.ts hardcoded 0.2.0).
+const pkgVersion = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
+).version as string
 
 // -----------------------------------------------------------------------------
 // Build profiles
@@ -22,6 +30,7 @@ type Flag =
   | 'US_FEAT_RESEARCH'
   | 'US_FEAT_SEARCH'
   | 'US_FEAT_NODE'
+  | 'US_FEAT_MEMORY'
 
 type ProfileName = 'minimal' | 'full'
 
@@ -35,6 +44,9 @@ const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
     US_FEAT_RESEARCH: false,
     US_FEAT_SEARCH: false,
     US_FEAT_NODE: true,
+    // Excluded from the 0.3.0 release: Memory is not yet E2E-validated.
+    // Tracked in planning/status/release-plan-2026-06-12.md (fast-follow).
+    US_FEAT_MEMORY: false,
   },
   // Everything we've built. Used for `pnpm dev`, integration tests, and
   // internal installs that need `us remote` / `us research` / `us search`.
@@ -46,6 +58,7 @@ const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
     US_FEAT_RESEARCH: true,
     US_FEAT_SEARCH: true,
     US_FEAT_NODE: true,
+    US_FEAT_MEMORY: true,
   },
 }
 
@@ -89,6 +102,7 @@ const { name: profileName, flags } = resolveProfile()
 // `define` wants string values (they're injected verbatim into the source).
 const define: Record<string, string> = {
   __US_BUILD_PROFILE__: JSON.stringify(profileName),
+  __US_VERSION__: JSON.stringify(pkgVersion),
 }
 for (const [k, v] of Object.entries(flags)) define[k] = v ? 'true' : 'false'
 

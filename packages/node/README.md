@@ -54,7 +54,7 @@ node.on('paired', (info) => console.log('paired', info.appId))
 await node.start()
 
 // Headless snapshot — also available over the wire via
-// `client.getNodeStatus()` from `@unstoppable/node-client`.
+// `client.getNodeStatus()` from `@unstoppable-stack/node-client`.
 const status = await node.getStatus()
 
 // Toggle services live.
@@ -131,7 +131,7 @@ npm install -g unstoppable-node
 npx unstoppable-node start --ai-mock
 ```
 
-In another terminal, run an app that uses `@unstoppable/node-client` with
+In another terminal, run an app that uses `@unstoppable-stack/node-client` with
 `requireServices: ['ai']`. The node will pair with the app, register its cores
 and drives, and stream mock inference without downloading a model.
 

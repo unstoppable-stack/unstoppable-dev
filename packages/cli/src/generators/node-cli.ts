@@ -12,7 +12,7 @@ import { has, tsconfig, gitignore, readme, planningReadme } from './common.js'
  *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
  *   - wallet    → WDK stub
  *   - node-sync → register cores with the local Unstoppable Node for
- *                 replication + backup via @unstoppable/node-client
+ *                 replication + backup via @unstoppable-stack/node-client
  */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -55,7 +55,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable/node-client': '^0.4.0' })
+    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.4.0' })
   }
 
   return {
@@ -286,7 +286,7 @@ function nodeSyncManager(opts: GeneratorOptions): GeneratedFile {
  * To add more cores or drives later, call setupNodeSync with them in the
  * \`cores\` / \`drives\` arrays.
  */
-import { connectToNode } from '@unstoppable/node-client'
+import { connectToNode } from '@unstoppable-stack/node-client'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
@@ -362,7 +362,7 @@ const UNTYPED_MODULES = [
 
 function typeDeclarations(opts: GeneratorOptions): GeneratedFile {
   const modules = [...UNTYPED_MODULES]
-  if (has(opts, 'node-sync')) modules.push('@unstoppable/node-client')
+  if (has(opts, 'node-sync')) modules.push('@unstoppable-stack/node-client')
   const decls = modules.map((m) => `declare module '${m}'`).join('\n')
   return { path: 'src/types.d.ts', content: decls + '\n' }
 }

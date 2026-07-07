@@ -129,7 +129,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // node-client + its transitive runtime deps. `hyperswarm` already enters
     // the graph via `local-ai` too, so guard so we don't double-declare.
     Object.assign(deps, {
-      '@unstoppable/node-client': '^0.4.0',
+      '@unstoppable-stack/node-client': '^0.4.0',
       hyperswarm: '^4.12.1',
       b4a: '^1.7.3',
       events: '^3.3.0',
@@ -1093,12 +1093,12 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (hasNodeSync) {
-    // @unstoppable/node-client is ESM-only; wrap the dynamic import lazily so
+    // @unstoppable-stack/node-client is ESM-only; wrap the dynamic import lazily so
     // bare-pack still traces it but we control timing (node-client calls
     // Hyperswarm on construct — we want to defer until init() has given us
     // a Hyperbee to register).
     imports.push(
-      `// node-client is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable/node-client' is installed.`,
+      `// node-client is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/node-client' is installed.`,
     )
   }
 
@@ -1174,7 +1174,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable/node-client')
+          const mod = await import('@unstoppable-stack/node-client')
           nodeClient = await mod.connectToNode({
             appId: '${opts.projectName}',
             appName: '${opts.projectName}',

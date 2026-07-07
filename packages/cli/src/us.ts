@@ -19,7 +19,7 @@ async function main() {
   program
     .name('us')
     .description('The Unstoppable Stack CLI')
-    .version(`0.2.0 (${__US_BUILD_PROFILE__})`)
+    .version(`${__US_VERSION__} (${__US_BUILD_PROFILE__})`)
 
   if (US_FEAT_INIT) {
     const { registerInitCommand } = await import('./commands/init.js')
@@ -48,6 +48,10 @@ async function main() {
   if (US_FEAT_NODE) {
     const { registerNodeCommand } = await import('./commands/node.js')
     registerNodeCommand(program)
+  }
+  if (US_FEAT_MEMORY) {
+    const { registerMemoryCommand } = await import('./commands/memory.js')
+    registerMemoryCommand(program)
   }
 
   await program.parseAsync()
