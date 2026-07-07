@@ -88,6 +88,20 @@ cp -r packages/agent-pack/src/* packages/cli/agent-pack-src/
 
 Do not edit only `packages/cli/agent-pack-src/` unless intentionally fixing the bundled copy as part of a sync.
 
+## Documentation Hygiene
+
+When changing public behavior, CLI commands, scaffolded output, package APIs, setup flows, agent-pack capabilities, or user-facing product status, check whether docs need updates.
+
+Docs to consider:
+- `packages/website/src/lib/docs.ts` for website documentation content.
+- `packages/website/src/app/getting-started/` for the getting started flow.
+- `packages/website/src/app/roadmap/` for roadmap and status claims.
+- `planning/status/` for project tracker updates.
+- `packages/agent-pack/src/` for assistant-facing implementation guidance.
+- `packages/cli/agent-pack-src/` for the CLI-bundled agent-pack copy.
+
+If docs are affected, update them in the same change. If docs are intentionally deferred, mention that in the final response with the reason.
+
 ## CLI Testing
 
 When testing CLI changes, use the real global command path:
