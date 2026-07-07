@@ -2,7 +2,7 @@
 
 **Goal:** Developer-facing site with polished landing, getting started, docs, roadmap, showcase.
 
-**Current state:** All major pages complete. Landing, Getting Started, Docs, and Roadmap fully built with Node/Search/Agent coverage. Showcase is a placeholder.
+**Current state:** All major pages complete. Docs now use a generated multi-page structure with navigation, platform/module/recipe pages, and AI-readable `llms.txt` exports. Showcase is a placeholder.
 
 **Key files:**
 - `packages/website/src/app/page.tsx` — Landing
@@ -20,7 +20,7 @@
 |------|--------|--------|
 | Landing (`/`) | Yes | Complete — hero, value pillars (4), powered by, how it works (4 steps), modules grid, Node architecture, ecosystem, CTA |
 | Getting Started (`/getting-started`) | Yes | Complete — prerequisites, install, scaffold (platforms + features), vibe-code, connect to Node, what's next |
-| Docs (`/docs`) | Yes | Complete — products (Node, Search, Agent), modules (P2P, Data, AI, Mobile), quick links |
+| Docs (`/docs`) | Yes | Complete — generated docs section with quickstart, CLI, platforms, Node, modules, agent-pack, recipes, and `llms.txt` exports |
 | Roadmap (`/roadmap`) | Yes | Complete — workstreams, phases timeline, Node architecture, stack coverage with progress bars |
 | Showcase (`/showcase`) | Yes | Placeholder — "coming soon" with GitHub submission link |
 
@@ -33,14 +33,14 @@
 | 1 | **Logo assets** | Real Holepunch + Tether logos instead of letter placeholders | Small |
 | 2 | **SEO / meta tags** | Open Graph images, Twitter cards | Small |
 | 3 | **Showcase content** | Populate with reference apps once stable | Medium |
-| 4 | **Per-module doc pages** | Deep docs per module when agent pack content matures | Large |
+| 4 | **Deep module content** | Expand generated docs with full per-module guides and stable code examples from agent-pack/reference apps | Large |
 
 ---
 
 ## Blocked / Dependencies
 
 - Logo assets needed (Holepunch, Tether, Pear, QVAC, WDK)
-- Per-module deep docs deferred until agent pack content is mature
+- Deep per-module code examples still depend on mature agent-pack/reference-app coverage
 - Showcase depends on real community apps
 
 ---
@@ -49,6 +49,7 @@
 
 | Date | Task |
 |------|------|
+| 2026-06-12 | Docs foundation: generated multi-page docs, platform/module/recipe pages, AI-readable `llms.txt` + `llms-full.txt`, OpenCode docs hygiene rule |
 | 2026-03-27 | Docs page: products section (Node, Search, Agent), expanded modules (Hypercore, Corestore, SecretStream, Hyperbee), fixed quick links |
 | 2026-03-27 | Getting Started: platforms + features, `us scaffold` command, Step 4 (Connect to Node), Codex added |
 | 2026-03-27 | Landing: 4th value pillar (Node), Step 4 (Connect to Node), Node architecture section with 4 services, ecosystem cards, Node typing prompts |

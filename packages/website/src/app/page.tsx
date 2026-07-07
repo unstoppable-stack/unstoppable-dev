@@ -44,9 +44,10 @@ const valuePillars = [
   },
   {
     icon: Wallet,
-    title: "Crypto Payments Built In",
+    title: "Crypto Payments",
     description:
-      "Self-custodial wallets for humans and machines with Tether's WDK. Accept payments without intermediaries.",
+      "Self-custodial wallets for humans and machines with Tether's WDK — accept payments without intermediaries. Coming soon.",
+    badge: "Coming soon",
   },
 ];
 
@@ -156,7 +157,7 @@ const modules = [
   {
     icon: Wallet,
     name: "WDK Wallet",
-    description: "Crypto payments",
+    description: "Crypto payments · coming soon",
     parent: "tether" as const,
   },
   {
@@ -270,7 +271,14 @@ export default function Home() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent mb-6 transition-colors group-hover:bg-accent/15">
                   <pillar.icon className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{pillar.title}</h3>
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="text-xl font-semibold">{pillar.title}</h3>
+                  {"badge" in pillar && pillar.badge ? (
+                    <span className="rounded-full border border-border-light bg-surface-light px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+                      {pillar.badge}
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-text-secondary text-sm leading-relaxed">
                   {pillar.description}
                 </p>
