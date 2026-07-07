@@ -1,0 +1,27 @@
+{
+  "name": "@unstoppable/memory-client",
+  "version": "0.1.0",
+  "description": "Client helpers for syncing Unstoppable Memory through Unstoppable Node",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./node-sync": "./src/node-sync.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test --test-force-exit test/*.test.js"
+  },
+  "dependencies": {
+    "@unstoppable-stack/node-client": "file:../node-client",
+    "hyperswarm": "^4.17.0"
+  },
+  "license": "MIT"
+}
