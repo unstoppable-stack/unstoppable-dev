@@ -2014,7 +2014,7 @@ const { IPC } = BareKit
 const Corestore = require('corestore')
 const Hyperbee = require('hyperbee')
 // node-client is ESM; bare supports dynamic import and the @unstoppable
-// scope resolves once '@unstoppable/node-client' is installed.
+// scope resolves once '@unstoppable-stack/node-client' is installed.
 
 let storagePath = null
 let store = null
@@ -2062,7 +2062,7 @@ const rpc = new RPC(IPC, async (request) => {
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable/node-client')
+          const mod = await import('@unstoppable-stack/node-client')
           nodeClient = await mod.connectToNode({
             appId: 'snap-test',
             appName: 'snap-test',
@@ -2210,7 +2210,7 @@ module.exports = config
     "bare-rpc": "^1.1.0",
     "corestore": "^7.6.0",
     "hyperbee": "^2.22.0",
-    "@unstoppable/node-client": "^0.4.0",
+    "@unstoppable-stack/node-client": "^0.4.0",
     "hyperswarm": "^4.12.1",
     "b4a": "^1.7.3",
     "events": "^3.3.0"
@@ -3172,7 +3172,7 @@ dist/
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@unstoppable/node-client": "^0.4.0"
+    "@unstoppable-stack/node-client": "^0.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -3282,7 +3282,7 @@ main().catch((err) => {
  * To add more cores or drives later, call setupNodeSync with them in the
  * \`cores\` / \`drives\` arrays.
  */
-import { connectToNode } from '@unstoppable/node-client'
+import { connectToNode } from '@unstoppable-stack/node-client'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
@@ -3371,7 +3371,7 @@ declare module 'corestore'
 declare module 'hyperbee'
 declare module 'hypercore-crypto'
 declare module 'b4a'
-declare module '@unstoppable/node-client'
+declare module '@unstoppable-stack/node-client'
 ",
     "path": "src/types.d.ts",
   },
@@ -5644,7 +5644,7 @@ Pear.teardown(() => pipe.destroy())
     "hyperbee": "^2.22.0",
     "b4a": "^1.7.3",
     "hypercore-crypto": "^3.4.0",
-    "@unstoppable/node-client": "^0.4.0"
+    "@unstoppable-stack/node-client": "^0.4.0"
   },
   "devDependencies": {}
 }",
@@ -5710,7 +5710,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { connectToNode } from '@unstoppable/node-client'
+import { connectToNode } from '@unstoppable-stack/node-client'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage

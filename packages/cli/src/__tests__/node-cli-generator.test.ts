@@ -99,14 +99,14 @@ describe('node-cli generator', () => {
       const files = fileMap(make(['node-sync']))
       const sync = files['src/node-sync.ts']
       expect(sync).toBeDefined()
-      expect(sync).toContain("from '@unstoppable/node-client'")
+      expect(sync).toContain("from '@unstoppable-stack/node-client'")
       expect(sync).toContain('connectToNode')
       expect(sync).toContain('db.core.key')
     })
 
-    it('includes @unstoppable/node-client dependency', () => {
+    it('includes @unstoppable-stack/node-client dependency', () => {
       const pkg = JSON.parse(fileMap(make(['node-sync']))['package.json'])
-      expect(pkg.dependencies['@unstoppable/node-client']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeDefined()
     })
 
     it('entry point imports setupNodeSync', () => {
@@ -115,9 +115,9 @@ describe('node-cli generator', () => {
       expect(entry).toContain('nodeSync.close()')
     })
 
-    it('type declarations include @unstoppable/node-client', () => {
+    it('type declarations include @unstoppable-stack/node-client', () => {
       const decls = fileMap(make(['node-sync']))['src/types.d.ts']
-      expect(decls).toContain("declare module '@unstoppable/node-client'")
+      expect(decls).toContain("declare module '@unstoppable-stack/node-client'")
     })
 
     it('README explains how to run unstoppable-node', () => {

@@ -1,5 +1,5 @@
 {
-  "name": "@unstoppable/node-client",
+  "name": "@unstoppable-stack/node-client",
   "version": "0.4.0",
   "description": "Client library to connect Unstoppable Stack apps to the Node for data replication and sync",
   "type": "module",

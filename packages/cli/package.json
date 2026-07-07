@@ -1,6 +1,6 @@
 {
   "name": "@unstoppable-stack/cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "The Unstoppable Stack CLI (us) — scaffold, research, and doctor P2P apps",
   "type": "module",
   "bin": {
@@ -9,7 +9,9 @@
   "files": [
     "dist",
     "templates",
-    "agent-pack-src"
+    "agent-pack-src",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup",

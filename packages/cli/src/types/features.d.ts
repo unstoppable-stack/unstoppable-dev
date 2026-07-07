@@ -17,8 +17,13 @@ declare const US_FEAT_REMOTE: boolean
 declare const US_FEAT_RESEARCH: boolean
 declare const US_FEAT_SEARCH: boolean
 declare const US_FEAT_NODE: boolean
+declare const US_FEAT_MEMORY: boolean
 
 // Name of the profile that was used to build this bundle
 // ("minimal" | "full" | custom). Surfaced via `us --version` so bug
 // reports carry it for free.
 declare const __US_BUILD_PROFILE__: string
+
+// CLI version, injected from package.json at build time (see tsup.config.ts).
+// Keeps `us --version` from drifting out of sync with the published version.
+declare const __US_VERSION__: string

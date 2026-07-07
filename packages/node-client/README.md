@@ -1,4 +1,4 @@
-# @unstoppable/node-client
+# @unstoppable-stack/node-client
 
 > SDK for [Unstoppable Stack](https://unstoppable.dev) apps to connect to a
 > local [`unstoppable-node`](https://www.npmjs.com/package/unstoppable-node)
@@ -10,7 +10,7 @@ ships Hyperswarm.
 ## Install
 
 ```bash
-npm install @unstoppable/node-client
+npm install @unstoppable-stack/node-client
 ```
 
 Start a local node in another terminal:
@@ -22,7 +22,7 @@ npx unstoppable-node start --ai-mock
 ## Usage
 
 ```js
-import { connectToNode } from '@unstoppable/node-client'
+import { connectToNode } from '@unstoppable-stack/node-client'
 
 const client = await connectToNode({
   appId: 'my-app',
@@ -77,7 +77,7 @@ import {
   InvalidOptionError,
   ClientClosedError,
   InferenceError,
-} from '@unstoppable/node-client'
+} from '@unstoppable-stack/node-client'
 
 try {
   await connectToNode({ appId, appName, requireServices: ['ai'] })

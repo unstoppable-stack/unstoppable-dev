@@ -6,7 +6,7 @@ name: Node Publish
 # and pick which packages to publish.
 #
 # Required secret: NPM_TOKEN (npm automation token with publish scope for the
-# `unstoppable-node` package and the `@unstoppable` org).
+# `unstoppable-node` package and the `@unstoppable-stack` org).
 
 on:
   workflow_dispatch:

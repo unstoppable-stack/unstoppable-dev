@@ -35,7 +35,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable/node-client': '^0.4.0' })
+    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.4.0' })
   }
 
   const unrouted = ['/worker.js']
@@ -162,7 +162,7 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
   const cleanupCode: string[] = [`  if (swarm) await swarm.destroy()`]
 
   if (has(opts, 'node-sync')) {
-    imports.push(`import { connectToNode } from '@unstoppable/node-client'`)
+    imports.push(`import { connectToNode } from '@unstoppable-stack/node-client'`)
     moduleState.push(`let nodeClient = null`)
     initCode.push(`
   send({ type: 'status', service: 'node-sync', status: 'searching' })
