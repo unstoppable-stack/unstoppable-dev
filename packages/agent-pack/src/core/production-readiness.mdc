@@ -16,7 +16,7 @@ This checklist is based on patterns observed in existing apps:
 - Document trust prompts for `pear run` on new machines.
 
 ## Mobile Packaging (Expo + Bare)
-- Bundle Bare backend with `bare-pack --target ios --target android --linked`.
+- Bundle Bare backend with `bare-pack --host ios --host android --linked` (bare-pack 2.x; `--target` was removed in 2.0.0).
 - Use physical devices for QVAC LLM; emulators are unsupported.
 - Disable or clearly limit hot reload for Bare-dependent code paths.
 - For Android downloads, use a foreground service with progress notifications.

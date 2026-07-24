@@ -38,28 +38,19 @@ Default port is `11434` (same as Ollama) — most OpenAI clients can point at it
 with just a `baseURL` override.
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
-- `@qvac/cli` (`^0.5.0`) installed as a dev dep
+- `@qvac/sdk` (`^0.15.0`) installed
+- `@qvac/cli` (`^0.8.1`) installed as a dev dep
 - A `qvac.config.json` at the project root — **required** for the server
 
 ## Steps
 
 1. **Install the CLI**:
    ```bash
-   # @qvac/sdk@0.11.0's declared peerOptional range for @qvac/cli is
-   # ^0.4.0. The latest CLI line is 0.5.x, which is runtime-compatible
-   # with the SDK (no addon-side changes between 0.4 and 0.5) but npm
-   # strict peer resolution rejects it — use --legacy-peer-deps once.
-   # 0.4.x is the first CLI release that ships `qvac verify bundle`,
-   # which @qvac/sdk@0.11 auto-runs during Expo prebuild.
-   npm install -D '@qvac/cli@^0.5.0' --legacy-peer-deps
-   ```
-
-   If you want a clean peer resolution without the flag, pin to the
-   range that satisfies the SDK peer exactly:
-
-   ```bash
-   npm install -D '@qvac/cli@^0.4.0'
+   # @qvac/sdk@0.15 no longer declares @qvac/cli as a peer dependency,
+   # so the latest CLI line installs cleanly — no --legacy-peer-deps
+   # workaround needed. `qvac verify bundle` (auto-run during Expo
+   # prebuild) ships on all current CLI lines.
+   npm install -D '@qvac/cli@^0.8.1'
    ```
 
 2. **Define `serve.models` in `qvac.config.json`** — each key is the name the

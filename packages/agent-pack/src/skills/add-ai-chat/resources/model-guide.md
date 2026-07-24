@@ -1,6 +1,6 @@
 # QVAC Model Selection Guide
 
-## Verified Model Constants (`@qvac/sdk@0.11.0`)
+## Verified Model Constants (`@qvac/sdk@0.15.0`)
 
 These are the **exact import names** from `@qvac/sdk`. Only use constants listed
 here. For anything else, use the model registry (`modelRegistryList()`,
@@ -78,9 +78,9 @@ import {
 
 ## Important Notes
 
-> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.11.0`. The SDK exports Qwen 3 / Qwen3.5 family models instead.
+> **DO NOT** use `QWEN_2_5_*` or `QWEN_2_5_CODER_*` constants — these do not exist in `@qvac/sdk@0.15.0`. The SDK exports Qwen 3 / Qwen3.5 family models instead.
 
-> **GPT-OSS note**: GPT-OSS-20B emits tool calls in the Harmony protocol (`<|channel|>analysis<|message|>…`, `<|start|>assistant`, `<|return|>`). In `@qvac/sdk@0.11` set `toolDialect: "harmony"` on `completion()` — the built-in Harmony parser streams the final channel incrementally and drops protocol markers from `contentDelta`. No custom parser needed anymore.
+> **GPT-OSS note**: GPT-OSS-20B emits tool calls in the Harmony protocol (`<|channel|>analysis<|message|>…`, `<|start|>assistant`, `<|return|>`). In `@qvac/sdk@0.15` set `toolDialect: "harmony"` on `completion()` — the built-in Harmony parser streams the final channel incrementally and drops protocol markers from `contentDelta`. No custom parser needed anymore.
 
 > **Tool calling reliability by size**: 1B models are unreliable for tool calling. Use 3B+ minimum, 7B recommended. Each additional tool increases grammar complexity and reduces reliability on smaller models.
 

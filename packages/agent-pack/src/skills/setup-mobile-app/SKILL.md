@@ -17,7 +17,7 @@ version: "2026-05-21"
 
 The `us scaffold app -p expo-mobile` command generates all of this correctly:
 
-- `package.json` with pinned dependency versions (`bare-pack@^1.5.1`, `@qvac/cli@^0.5.0`, `expo-build-properties@~1.0.9`)
+- `package.json` with pinned dependency versions (`bare-pack@^2.2.1`, `@qvac/cli@^0.8.1`, `expo-build-properties@~1.0.9`)
 - `app.json` with Expo plugins in the correct order, memory entitlements, and NDK config
 - `metro.config.js` with native module mocking (sodium-native, hyperswarm, etc.)
 - Custom Expo plugins (`withAndroidNdkVersion.js`, `withAndroidArchitecture.js`)
@@ -92,21 +92,21 @@ cd my-mobile-app
 
 For **QVAC-only** apps (no custom Bare worklet):
 ```bash
-npm i @qvac/sdk expo-file-system expo-device react-native-bare-kit@0.12.3
+npm i @qvac/sdk expo-file-system expo-device react-native-bare-kit@0.15.0
 npx expo install expo-build-properties
 ```
 
 For **P2P apps** (with Bare worklet):
 ```bash
-npm i react-native-bare-kit@0.12.3 bare-rpc@1.1.0 expo-file-system
-npm i -D bare-pack@1.5.1
+npm i react-native-bare-kit@0.15.0 bare-rpc@1.1.0 expo-file-system
+npm i -D bare-pack@2.2.1
 npx expo install expo-build-properties
 ```
 
 For **P2P + AI combined**:
 ```bash
-npm i react-native-bare-kit@0.12.3 bare-rpc@1.1.0 @qvac/sdk expo-file-system expo-device
-npm i -D bare-pack@1.5.1
+npm i react-native-bare-kit@0.15.0 bare-rpc@1.1.0 @qvac/sdk expo-file-system expo-device
+npm i -D bare-pack@2.2.1
 npx expo install expo-build-properties
 ```
 
@@ -343,7 +343,7 @@ achieve this with `postinstall` scripts.
 {
   "scripts": {
     "start": "expo start",
-    "build:bare": "npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --out bare/app.bundle.js bare/index.js",
+    "build:bare": "npx bare-pack --host ios-arm64 --host ios-arm64-simulator --host ios-x64-simulator --host android-arm64 --linked --out bare/app.bundle.js bare/index.js",
     "postinstall": "npm run build:bare && npx expo prebuild",
     "ios": "expo run:ios",
     "ios:clean": "rm -rf ios android && npm run postinstall && expo run:ios",
@@ -733,7 +733,7 @@ Running in Expo Go or using a stale native build. BareKit requires:
 - `npx expo run:ios` (or `run:android`)
 
 ### `useBareKit is not a function`
-Wrong API for `react-native-bare-kit@0.12.3`. Use `Worklet` + `IPC` + `bare-rpc`.
+Wrong API for `react-native-bare-kit@0.15.0`. Use `Worklet` + `IPC` + `bare-rpc`.
 
 ### `source must be a string or typed array`
 Metro returned an asset ID (number) instead of bundle source text. Import the

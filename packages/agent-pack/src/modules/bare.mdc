@@ -18,7 +18,7 @@ also run in Bare.
 ## Version Notes
 
 - Bare runtime version not pinned in local sources.
-- Mobile tooling: `bare-pack` 1.5.1, `react-native-bare-kit` 0.11.5.
+- Mobile tooling: `bare-pack` ^2.2.1 (2.x, uses `--host`), `react-native-bare-kit` 0.15.0.
 
 ## Installation
 
@@ -192,8 +192,8 @@ const swarm = new Hyperswarm()
 ```
 
 ```bash
-# Bundle Bare backend for mobile
-npx bare-pack --target ios --target android --linked --out app/app.bundle.mjs backend/backend.mjs
+# Bundle Bare backend for mobile (bare-pack 2.x: `--host`, not `--target`)
+npx bare-pack --host ios --host android --linked --out app/app.bundle.mjs backend/backend.mjs
 ```
 
 ## Pitfalls & Gotchas

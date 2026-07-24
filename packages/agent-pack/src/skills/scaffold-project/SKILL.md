@@ -130,30 +130,30 @@ together.
 
 | Package | Version | Notes |
 |---------|---------|-------|
-| `bare-pack` | `^1.5.1` | **Anchor pin. Do NOT bump to 2.x** — `2.0.0` removed the `--target` CLI flag that the generated `build:bare` script uses. Every other mobile entry in this table has been validated against this anchor. |
-| `expo` | `~54.0.33` | Expo SDK 54. Pairs with `react-native@0.81.x`; SDK 55 (RN 0.83) / 56 (RN 0.85) not validated against `bare-pack@1.5.1`. |
+| `bare-pack` | `^2.2.1` | Bundler (2.x). Matches `@qvac/sdk@0.15`'s internal `bare-pack@^2.0.1`. 2.x uses `--host <triple>` (the `--target` flag was removed in `2.0.0`); the generated `build:bare` script uses `--host`. |
+| `expo` | `~54.0.33` | Expo SDK 54. Pairs with `react-native@0.81.x`. **Kept on 54** — the QVAC bump does not require Expo 55/56 (RN 0.83/0.85), a separate migration. |
 | `expo-build-properties` | `~1.0.9` | Matches SDK 54. **Must be in dependencies**, not just `app.json` plugins. |
 | `expo-router` | `~6.0.23` | Matches SDK 54. |
 | `expo-file-system` | `^19.0.15` | Matches SDK 54. Also the optional peer of `@qvac/sdk` for model caching. |
 | `expo-device` | `~8.0.10` | Matches SDK 54. Used to detect simulator vs physical device for QVAC. |
-| `react-native` | `0.81.5` (exact) | Exact pin — Expo SDK 54 + `react-native-bare-kit@0.12.3` only validated against this. |
+| `react-native` | `0.81.5` (exact) | Exact pin — Expo SDK 54 ships this. |
 | `react` | `19.1.0` (exact) | Exact pin — Expo SDK 54 ships this. |
-| `react-native-bare-kit` | `0.12.3` (exact) | **Required exact pin by `@qvac/sdk@0.11`** — caret ranges silently install pre-1.0 minors and break the QVAC mobile worker bundle. |
-| `bare-fs` (override) | `4.5.1` (exact) | Mobile-only `package.json` `overrides` entry. Newer `bare-fs` on Bare 4.7.x has not been validated against the bundle pipeline. |
-| `@qvac/sdk` | `^0.11.0` | Local AI inference. |
-| `@qvac/cli` | `^0.5.0` | **Required as devDep for QVAC mobile** — auto-runs `qvac verify bundle` during Expo prebuild (since SDK 0.11). |
+| `react-native-bare-kit` | `0.15.0` (exact) | Exact-pinned to match the SDK generation. `@qvac/sdk@0.15` declares it as an optional `*` peer; caret ranges silently install pre-1.0 minors and break the QVAC mobile worker bundle. |
+| `bare-fs` | resolved transitively | **No override** on 2.x — resolves to satisfy `@qvac/sdk@0.15`'s `bare-fs@^4.5.1` (currently `4.7.4`). |
+| `@qvac/sdk` | `^0.15.0` | Local AI inference. |
+| `@qvac/cli` | `^0.8.1` | Optional devDep for QVAC mobile bundling. No longer a declared peer of `@qvac/sdk@0.15` — installs cleanly. |
 | `zod` | `^4.3.0` | Required by `@qvac/sdk@0.10+` — install v4.3+ explicitly when using tool calling. |
 | `bare-rpc` | `^1.1.0` | P2P RPC. |
-| `hyperswarm` | `^4.16.0` | P2P networking. |
+| `hyperswarm` | `^4.17.0` | P2P networking. |
 | `autobase` | `^7.27.0` | Multi-writer consensus. |
 
 ## Known Issues (from research)
 
-1. **`bare-pack@2.x` breaks mobile builds** — the `--target` CLI flag was removed in 2.x. Always use `^1.5.1`. This is the **anchor pin** for the whole Mobile/Expo coupled set — the moment we move off it, every Expo / RN / bare-kit pin in the table must be re-validated together.
-2. **`react-native-bare-kit` caret ranges are dangerous** — pin exact (`0.12.3`, no caret). Pre-1.0 minors break the QVAC mobile worker bundle with cryptic native errors. Always use the exact version that the installed `@qvac/sdk` declares as its peer.
-3. **Expo SDK upgrades are all-or-nothing** — Expo SDK pins one specific `react-native` major. Mixing SDK 54 with RN 0.85 (SDK 56's RN) is not supported. Bump the whole Mobile table together or not at all.
+1. **`bare-pack` 2.x uses `--host`, not `--target`** — the `--target` flag was removed in `2.0.0`. The generated `build:bare` script uses `--host <triple>` (same triple values). `@qvac/sdk@0.15` depends on `bare-pack@^2.0.1` internally, so app and SDK share one `bare-pack`. ⚠️ This 2.x migration has passed dependency resolution but **not** a full native e2e build — validate on simulator + device before shipping.
+2. **`react-native-bare-kit` caret ranges are dangerous** — pin exact (`0.15.0`, no caret). Pre-1.0 minors break the QVAC mobile worker bundle with cryptic native errors. Track it to the release contemporaneous with the installed `@qvac/sdk` (0.15 declares it only as an optional `*` peer, so the pin is ours to maintain).
+3. **Expo SDK upgrades are all-or-nothing** — Expo SDK pins one specific `react-native` major. Mixing SDK 54 with RN 0.85 (SDK 56's RN) is not supported. Bump the whole Mobile table together or not at all. We stay on SDK 54; the QVAC 0.15 bump does not require moving off it.
 4. **`expo-build-properties` must be a dependency** — listing it only in `app.json` plugins without installing it causes prebuild to fail.
-5. **`@qvac/cli` must be ≥ 0.4.0 for SDK 0.11** — `@qvac/sdk@0.11.x` declares `@qvac/cli@^0.4.0` as the peerOptional range. We use `^0.5.0` (latest line) which is runtime-compatible but requires `--legacy-peer-deps` because npm strict semver doesn't treat `0.5.x` as satisfying `^0.4.0`. Pin `^0.4.0` if you need clean peer resolution. Avoid older lines (`^0.1.2` / `^0.2.4`) — they predate `qvac verify bundle` which 0.11 auto-runs during Expo prebuild.
+5. **`@qvac/cli` installs cleanly on SDK 0.15** — `@qvac/sdk@0.15` no longer declares `@qvac/cli` as a peer, so no `--legacy-peer-deps` workaround is needed. Use the latest line (`^0.8.1`).
 6. **QVAC expo plugin needs local `@qvac/cli`** — without it, npx downloads a mismatched version that can't bundle.
 7. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobase` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
 

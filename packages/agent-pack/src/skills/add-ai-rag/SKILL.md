@@ -15,7 +15,7 @@ version: "2026-05-21"
 - User wants to index and query local files
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - An LLM for generation (see `add-ai-chat`)
 - An embedding model (defaults: `GTE_LARGE_FP16`, `EMBEDDINGGEMMA_300M_Q4_0`)
 

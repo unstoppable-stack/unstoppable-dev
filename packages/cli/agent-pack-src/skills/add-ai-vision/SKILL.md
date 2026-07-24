@@ -14,7 +14,7 @@ version: "2026-05-21"
 - User needs to extract text, identify objects, or describe images
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - A multimodal model + its paired projection file
 - Familiarity with `add-ai-chat` (model loading, completion API)
 

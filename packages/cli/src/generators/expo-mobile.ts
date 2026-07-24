@@ -33,24 +33,33 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   // single entry risks breaking the worklet bundling pipeline that the
   // scaffolded app depends on at build time.
   //
-  // The ANCHOR is `bare-pack@^1.5.1` — the last release on the 1.x line.
-  //   - `bare-pack@2.0.0` (Jan 2026) removed the `--target` CLI flag that
-  //     the generated `build:bare` script invokes below. Switching to
-  //     `2.x` requires reworking the bundler invocation in this file.
-  //   - `bare-pack@2.x` also bumps `bare-module-traverse` from `~1.8.0`
-  //     to `~2.0.0`, which has not been validated end-to-end against
-  //     `@qvac/sdk@0.11`'s worker bundle.
+  // BUNDLER: `bare-pack@^2.2.1` (the 2.x line). `@qvac/sdk@0.15` depends on
+  // `bare-pack@^2.0.1` internally, so the app and the SDK now share the 2.x
+  // toolchain. The 2.x CLI replaced the `--target <triple>` flag (removed in
+  // `bare-pack@2.0.0`, Jan 2026) with `--host <triple>`; the `build:bare`
+  // script below has been reworked accordingly. The host triples themselves
+  // are unchanged (`ios-arm64`, `ios-arm64-simulator`, etc. — the values of
+  // `Bare.Addon.host`).
   //
   // Coupling rules:
   //   - Expo SDK MAJOR pins react-native MAJOR (SDK 54 → RN 0.81;
-  //     SDK 55 → RN 0.83; SDK 56 → RN 0.85). Never mix.
-  //   - `react-native-bare-kit` is EXACT-pinned (no caret) because
-  //     `@qvac/sdk` declares it as an exact peer (0.12.3 for SDK 0.11);
-  //     caret ranges silently install pre-1.0 minors and break QVAC's
-  //     mobile worker bundle with cryptic native errors.
+  //     SDK 55 → RN 0.83; SDK 56 → RN 0.85). Never mix. We stay on Expo
+  //     SDK 54 / RN 0.81 — the QVAC SDK bump does NOT require moving off it,
+  //     and Expo 55/56 are a separate, larger migration.
+  //   - `react-native-bare-kit` is still EXACT-pinned (no caret) because it
+  //     ships a specific Bare runtime that must match `@qvac/sdk`'s worker
+  //     bundle; caret ranges silently install pre-1.0 minors and break QVAC's
+  //     mobile worker bundle with cryptic native errors. `@qvac/sdk@0.15` no
+  //     longer *declares* it as an exact peer (it's now an optional `*` peer),
+  //     so we track it to `0.15.0` — the release contemporaneous with the SDK.
   //   - When bumping ANY of these, bump ALL of them and re-run the full
   //     mobile e2e: `pnpm test:e2e:mobile` (level 4 simulator) +
   //     manual level 6 on a physical device.
+  //
+  // ⚠️ NOT YET RE-VALIDATED END-TO-END: this set was migrated from the
+  //    `bare-pack@1.5.1` anchor to 2.x alongside the `@qvac/sdk` 0.11 → 0.15
+  //    bump without a full native e2e pass. Run `pnpm test:e2e:mobile` on an
+  //    iOS Simulator and a physical device before relying on it in anger.
   //
   // Authoritative table: `packages/agent-pack/src/core/verified-versions.mdc`
   // → "Mobile (Expo + Bare) — coupled set" section.
@@ -71,12 +80,12 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'react-native': '0.81.5',
     'react-native-safe-area-context': '~5.6.0',
     'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.12.3', // EXACT — see coupling rules above
-    'bare-pack': '^1.5.1', // ANCHOR — see coupling rules above. Never 2.x.
+    'react-native-bare-kit': '0.15.0', // EXACT — see coupling rules above
+    'bare-pack': '^2.2.1', // 2.x — matches @qvac/sdk@0.15's bundler. See notes above.
     'bare-rpc': '^1.1.0',
     // Base P2P + KV infra — always required by bare/index.js worklet
-    corestore: '^7.6.0',
-    hyperbee: '^2.22.0',
+    corestore: '^7.8.0',
+    hyperbee: '^2.27.3',
   }
 
   const devDeps: Record<string, string> = {
@@ -102,36 +111,35 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // load time. Upstream @qvac/rag references `crypto` (not `bare-crypto`)
     // in some adapters — without `--defer`, bare-pack fails to trace them.
     //
-    // The `--target` flag is **bare-pack 1.x only** — it was removed in
-    // `bare-pack@2.0.0` (Jan 2026). This script invocation is the reason
-    // the `bare-pack` dep above is pinned to `^1.5.1`. When bumping to
-    // `bare-pack@2.x`, this entire script must be rewritten against the
-    // 2.x CLI surface, and the whole Mobile coupled set (Expo SDK, RN,
-    // react-native-bare-kit) must be re-validated end-to-end against it.
+    // `--host <triple>` is the **bare-pack 2.x** spelling of what 1.x called
+    // `--target <triple>` (renamed when `--target` was removed in
+    // `bare-pack@2.0.0`, Jan 2026). The triple values are the same
+    // `Bare.Addon.host` strings, and `--host` may be repeated to build a
+    // combined multi-platform bundle. `--linked` (mobile links native addons
+    // ahead of time) and `--defer` are unchanged in 2.x.
     'build:bare':
-      'npx bare-pack --target ios-arm64 --target ios-arm64-simulator --target ios-x64-simulator --target android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js',
+      'npx bare-pack --host ios-arm64 --host ios-arm64-simulator --host ios-x64-simulator --host android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js',
     prebuild: 'npm run build:bare && npx expo prebuild',
     prestart: 'npm run build:bare',
     preios: 'npm run build:bare',
     preandroid: 'npm run build:bare',
   }
 
-  const overrides: Record<string, string> = {
-    // Exact-pinned because newer `bare-fs` releases on Bare 4.7.x have
-    // not been validated against the bundle pipeline anchored on
-    // `bare-pack@1.5.1`. Part of the Mobile coupled set — see the
-    // version table at the top of `packageJson()` and
-    // `core/verified-versions.mdc` → "Mobile (Expo + Bare)".
-    'bare-fs': '4.5.1',
-  }
+  // No `overrides` needed on the 2.x bundler. The previous `bare-fs@4.5.1`
+  // exact override existed only because newer `bare-fs` (Bare 4.7.x) had not
+  // been validated against the old `bare-pack@1.5.1` pipeline. Now that we're
+  // on `bare-pack@2.x` and `@qvac/sdk@0.15` depends on `bare-fs@^4.5.1`, we let
+  // the resolver pick a compatible `bare-fs` transitively rather than forcing
+  // a stale exact pin that could conflict with the 2.x toolchain.
+  const overrides: Record<string, string> = {}
 
   if (has(opts, 'node-sync')) {
     // node-client + its transitive runtime deps. `hyperswarm` already enters
     // the graph via `local-ai` too, so guard so we don't double-declare.
     Object.assign(deps, {
       '@unstoppable-stack/node-client': '^0.4.0',
-      hyperswarm: '^4.12.1',
-      b4a: '^1.7.3',
+      hyperswarm: '^4.17.0',
+      b4a: '^1.8.0',
       events: '^3.3.0',
     })
   }
@@ -147,12 +155,12 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // because any pin range that didn't perfectly overlap with @qvac/sdk's
     // peer-dep range produced a hard ERESOLVE error.
     Object.assign(deps, {
-      '@qvac/sdk': '^0.11.0',
+      '@qvac/sdk': '^0.15.0',
       // Zod v4.3+ — @qvac/sdk@0.10 bumped its zod floor from ^4.0.17 to
       // ^4.3.0 because finetune schemas use z.union/z.nan combinations
       // only available in 4.3+. Pinning lower causes runtime
       // `z.xor is not a function` crashes when finetune schemas load.
-      // 0.11 keeps the same zod floor.
+      // 0.15 keeps the same `zod@^4.3.0` floor.
       zod: '^4.3.0',
       // expo-file-system: where @qvac/sdk caches model files. Optional
       // peer of @qvac/sdk but always required in practice.
@@ -163,23 +171,18 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       'expo-device': '~8.0.10',
     })
     // NOTE: @qvac/cli is intentionally NOT listed here. It's an optional
-    // peer of @qvac/sdk used for two scenarios: (1) running an
-    // OpenAI-compatible HTTP server (`qvac serve openai`), (2) bundling
-    // a tree-shaken SDK worker (`qvac bundle sdk`). The default scaffold
-    // doesn't need either — the @qvac/sdk Expo plugin handles bundling
-    // automatically during `expo prebuild`.
+    // tool used for two scenarios: (1) running an OpenAI-compatible HTTP
+    // server (`qvac serve openai`), (2) bundling a tree-shaken SDK worker
+    // (`qvac bundle sdk`). The default scaffold doesn't need either — the
+    // @qvac/sdk Expo plugin handles bundling automatically during
+    // `expo prebuild`.
     //
-    // When you DO want it, install with:
-    //   npm i -D '@qvac/cli@^0.5.0' --legacy-peer-deps
-    // The --legacy-peer-deps is needed only because @qvac/sdk@0.11.0's
-    // declared peer range (^0.4.0) hasn't caught up to the actual cli
-    // release line (^0.5.0). Both versions are runtime-compatible with
-    // @qvac/sdk@0.11 — no addon-side differences. 0.4.x is the first
-    // CLI line that ships `qvac verify bundle`, which SDK 0.11 auto-runs
-    // during Expo prebuild against the emitted worker.mobile.bundle.js
-    // (failure preserves the last known-good artifact and aborts with
-    // BundleVerificationFailedError, code 50609).
-    // See the add-openai-server skill for the opt-in flow.
+    // When you DO want it, install the latest line:
+    //   npm i -D '@qvac/cli@^0.8.1'
+    // Unlike the 0.11 era, `@qvac/sdk@0.15` no longer declares `@qvac/cli`
+    // as a peer dependency at all, so no `--legacy-peer-deps` workaround is
+    // needed — it installs cleanly. See the add-openai-server skill for the
+    // opt-in flow.
   }
 
   return {
@@ -193,7 +196,9 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         scripts,
         dependencies: deps,
         devDependencies: devDeps,
-        overrides,
+        // Only emit `overrides` when non-empty (keeps generated package.json
+        // clean now that the bare-fs override is gone).
+        ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
       },
       null,
       2,

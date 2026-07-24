@@ -15,7 +15,7 @@ version: "2026-05-21"
 - User needs offline image generation (privacy, no API keys, no rate limits)
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - A diffusion model in GGUF format (e.g., FLUX2-Klein, Stable Diffusion XL)
 - `diffusion-cpp` plugin enabled (listed in `qvac.config.plugins` or using
   the default plugin set)

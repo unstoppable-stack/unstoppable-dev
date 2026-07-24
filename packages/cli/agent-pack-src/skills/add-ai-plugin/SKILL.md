@@ -18,7 +18,7 @@ version: "2026-05-21"
   or wants to add `invokePlugin()` / `invokePluginStream()` handlers
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - `zod` (`^4.3.0`) — request/response schemas are Zod v4.3+ (required by 0.10+)
 - Bare-compatible code for the worker-side entrypoint (no Node-only APIs,
   no dynamic imports)
@@ -55,7 +55,7 @@ and the browser worker boundary.
        }
      },
      "dependencies": {
-       "@qvac/sdk": "^0.11.0",
+       "@qvac/sdk": "^0.15.0",
        "zod": "^4.3.0"
      }
    }

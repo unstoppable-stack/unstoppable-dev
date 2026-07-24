@@ -14,7 +14,7 @@ version: "2026-05-21"
 - User needs offline AI capabilities without cloud APIs
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) and `zod` (`^4.3.0`) installed
+- `@qvac/sdk` (`^0.15.0`) and `zod` (`^4.3.0`) installed
 - Node.js ≥ 22.17, Bare ≥ 1.24, or Expo ≥ 54 (Expo needs a native dev build)
 - Optional `qvac.config.json` at the project root (required only when also
   using the `@qvac/cli` HTTP server)
@@ -48,11 +48,11 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
    ```bash
    npm i @qvac/sdk 'zod@^4.3'
    ```
-   > **IMPORTANT**: Install Zod v4.3+ (not v3, not v4.0–4.2) — `@qvac/sdk@0.11`
+   > **IMPORTANT**: Install Zod v4.3+ (not v3, not v4.0–4.2) — `@qvac/sdk@0.15`
    > requires zod ≥ 4.3 because finetune schemas use APIs only available there
    > (older minor versions crash at runtime with `z.xor is not a function`).
 
-2. **Choose the right model** (verified constants from `@qvac/sdk@0.11.0`):
+2. **Choose the right model** (verified constants from `@qvac/sdk@0.15.0`):
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
