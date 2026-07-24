@@ -14,7 +14,7 @@ version: "2026-05-21"
 - User needs to process audio files or record from microphone
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - A Whisper model **or** a Parakeet GGUF model (the legacy multi-file
   Parakeet ONNX bundles were removed in 0.11)
 

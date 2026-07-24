@@ -15,23 +15,28 @@ generation, fine-tuning, and workspace-based RAG.
 
 ## Version Notes
 
-- Latest npm: `@qvac/sdk@0.11.0` (verified 2026-05-21).
-- Companion CLI: `@qvac/cli@^0.5.0` provides `qvac serve openai` (OpenAI-compatible
+- Latest npm: `@qvac/sdk@0.15.0` (verified 2026-07-23). The API deep-dive below
+  was last fully surveyed at `0.11`; `0.12`–`0.15` are minor increments on the
+  same API surface (`loadModel` / `completion` / `unloadModel` / model constants
+  unchanged) and have not been individually re-audited here.
+- Companion CLI: `@qvac/cli@^0.8.1` provides `qvac serve openai` (OpenAI-compatible
   HTTP server with `response_format` passthrough), `qvac bundle sdk` (tree-shaken
-  Bare worker bundler), and `qvac verify bundle` (now auto-runs in Expo prebuild
-  in SDK 0.11; required for the mobile bundle to update).
-- `@qvac/sdk@0.11` declares `@qvac/cli@^0.4.0` as its peerOptional range. Pin
-  `^0.5.0` for the latest CLI (install with `--legacy-peer-deps`) or `^0.4.0`
-  to satisfy the peer cleanly — both are runtime-compatible with the SDK.
-- The npm version line is `0.x` again — `1.0.0` and `1.1.0` were published in
-  Nov 2025 and superseded; the npm `latest` dist-tag points at `0.11.0` and
+  Bare worker bundler), and `qvac verify bundle` (auto-runs in Expo prebuild;
+  required for the mobile bundle to update).
+- `@qvac/sdk@0.15` no longer declares `@qvac/cli` as a peer dependency at all,
+  so the CLI installs cleanly — no `--legacy-peer-deps` workaround needed. Use
+  the latest line (`^0.8.1`).
+- The npm version line is `0.x` — `1.0.0` and `1.1.0` were published in
+  Nov 2025 and superseded; the npm `latest` dist-tag points at `0.15.0` and
   the maintainers continue on the `0.x` line. Do not chase `1.x`.
 - Minimum runtimes: Node.js ≥ 22.17, Bare ≥ 1.24, Expo ≥ 54.
 - Required `zod ^4.3.0` (was `^4.0.17` in 0.9 — 0.10+ finetune schemas use
-  `z.union/z.nan` combinations only available in 4.3+).
-- Required `react-native-bare-kit` exact `0.12.3` for Expo apps.
-- Reference apps (workbench, qvac-health) still on older versions (`^0.6.1`);
-  new apps should pin `^0.11.0` directly.
+  `z.union/z.nan` combinations only available in 4.3+; 0.15 keeps this floor).
+- `react-native-bare-kit` for Expo apps: exact-pin `0.15.0` (matches the SDK
+  generation). 0.15 declares it as an optional `*` peer, so the pin is ours to
+  maintain rather than forced by the SDK.
+- Mobile bundler is now `bare-pack@^2.2.1` (2.x uses `--host`, not `--target`);
+  `@qvac/sdk@0.15` depends on `bare-pack@^2.0.1` internally.
 - File-based configuration (`qvac.config.*`) since 0.5.0 — see Configuration.
 
 ### 0.10 → 0.11 migration cheatsheet

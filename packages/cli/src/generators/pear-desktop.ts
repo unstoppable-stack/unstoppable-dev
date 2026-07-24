@@ -20,18 +20,18 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
 function packageJson(opts: GeneratorOptions): GeneratedFile {
   const deps: Record<string, string> = {
     'pear-electron': '^1.7.0',
-    'pear-bridge': '^1.2.4',
+    'pear-bridge': '^1.2.5',
     'pear-run': '^1.0.7',
     'bare-rpc': '^1.1.0',
-    hyperswarm: '^4.16.0',
-    corestore: '^7.6.0',
-    hyperbee: '^2.22.0',
-    b4a: '^1.7.3',
-    'hypercore-crypto': '^3.4.0',
+    hyperswarm: '^4.17.0',
+    corestore: '^7.8.0',
+    hyperbee: '^2.27.3',
+    b4a: '^1.8.0',
+    'hypercore-crypto': '^3.7.0',
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.11.0', zod: '^4.3.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync')) {
@@ -205,7 +205,7 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (has(opts, 'local-ai')) {
-    // QWEN3_600M_INST_Q4 is the smallest verified LLM in @qvac/sdk@0.11
+    // QWEN3_600M_INST_Q4 is the smallest verified LLM in @qvac/sdk@0.15
     // (~400MB download vs ~770MB for LLAMA_3_2_1B). Qwen 3 emits
     // `<think>...</think>` reasoning blocks by default; we suppress them
     // with `/no_think` in the system prompt and also strip any that leak

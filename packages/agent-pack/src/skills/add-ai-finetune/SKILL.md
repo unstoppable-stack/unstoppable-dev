@@ -17,7 +17,7 @@ version: "2026-05-21"
 
 ## What QVAC 0.11 supports
 
-As of `@qvac/sdk@0.11.0`, the shipping path is **LoRA adapter loading**, not
+As of `@qvac/sdk@0.15.0`, the shipping path is **LoRA adapter loading**, not
 on-device training:
 
 - Provide a trained LoRA `.gguf`/`.bin`/`.safetensors` adapter via
@@ -44,7 +44,7 @@ consumes the resulting adapter file.
 > `finetune()` op's decorated promise.
 
 ## Prerequisites
-- `@qvac/sdk` (`^0.11.0`) installed
+- `@qvac/sdk` (`^0.15.0`) installed
 - A base LLM constant (e.g., `LLAMA_3_2_1B_INST_Q4_0`, `QWEN_3_1_7B_INST_Q4`)
 - A LoRA adapter file on disk (trained against the same base architecture)
 - Adapter paths must be **absolute** (relative paths are rejected by the

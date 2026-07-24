@@ -37,11 +37,11 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
   const deps: Record<string, string> = {
-    hyperswarm: '^4.16.0',
-    corestore: '^7.6.0',
-    hyperbee: '^2.22.0',
-    b4a: '^1.7.3',
-    'hypercore-crypto': '^3.4.0',
+    hyperswarm: '^4.17.0',
+    corestore: '^7.8.0',
+    hyperbee: '^2.27.3',
+    b4a: '^1.8.0',
+    'hypercore-crypto': '^3.7.0',
   }
 
   const devDeps: Record<string, string> = {
@@ -51,7 +51,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.11.0', zod: '^4.3.0' })
+    Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync')) {
