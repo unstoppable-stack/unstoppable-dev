@@ -831,19 +831,92 @@ async function buildCodex(
 ): Promise<BuildResult> {
   const files: string[] = []
 
-  // Codex uses AGENTS.md as its primary config. It auto-discovers AGENTS.md
-  // files in subdirectories. No .codex/ config files needed.
+  // Codex uses AGENTS.md as its primary config and, since v0.140+, natively
+  // discovers skills under `.agents/skills/`. It merges the AGENTS.md chain
+  // from the git root down to the working directory, capped at
+  // `project_doc_max_bytes` (32 KiB default). So we keep every AGENTS.md lean
+  // and emit all heavy guidance as progressively-loaded skills instead of
+  // inlining it (which previously blew past the cap and got silently truncated).
 
-  // 1. Build comprehensive root AGENTS.md
-  // Codex can't progressively load skills, so we inline more context here.
-  const coreContent = content.core.map((c: any) => stripFrontmatter(c.content)).join('\n\n---\n\n')
+  const skillsRoot = join(options.outputDir, '.agents', 'skills')
 
-  const skillList = content.skills.map((s: any) => {
+  // ── 1. Emit all authored skills to `.agents/skills/` (Codex-native) ─────────
+  for (const skill of content.skills) {
+    const skillDir = join(skillsRoot, skill.id)
+    await mkdir(skillDir, { recursive: true })
+    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
+    files.push(`.agents/skills/${skill.id}/SKILL.md`)
+
+    if (skill.resources.length > 0) {
+      const resDir = join(skillDir, 'resources')
+      await mkdir(resDir, { recursive: true })
+      for (const res of skill.resources) {
+        await writeFile(join(resDir, res.name), res.content)
+        files.push(`.agents/skills/${skill.id}/resources/${res.name}`)
+      }
+    }
+  }
+
+  // ── 2. Synthetic "foundations" skill — core principles/patterns/versions ────
+  const foundationsDir = join(skillsRoot, 'unstoppable-foundations')
+  await mkdir(join(foundationsDir, 'resources'), { recursive: true })
+  const foundationRefs: string[] = []
+  for (const c of content.core) {
+    const name = `${c.id}.md`
+    await writeFile(join(foundationsDir, 'resources', name), stripFrontmatter(c.content))
+    files.push(`.agents/skills/unstoppable-foundations/resources/${name}`)
+    foundationRefs.push(`- \`resources/${name}\``)
+  }
+  const foundationsSkill = `---
+name: unstoppable-foundations
+description: Core architecture, principles, patterns, and verified dependency versions for Unstoppable Stack apps. Load before designing, scaffolding, or reviewing any P2P, local-AI, or wallet code.
+---
+
+# Unstoppable Stack — Foundations
+
+Read the reference files below before writing or reviewing code. Each covers a
+distinct area (principles, patterns, architecture, verified versions, and more):
+
+${foundationRefs.join('\n')}
+`
+  await writeFile(join(foundationsDir, 'SKILL.md'), foundationsSkill)
+  files.push('.agents/skills/unstoppable-foundations/SKILL.md')
+
+  // ── 3. Synthetic "modules" skill — per-module API references ────────────────
+  const modulesDir = join(skillsRoot, 'unstoppable-modules')
+  await mkdir(join(modulesDir, 'resources'), { recursive: true })
+  const moduleRefName = (id: string) => `${id}.md`
+  for (const m of content.modules) {
+    await writeFile(
+      join(modulesDir, 'resources', moduleRefName(m.id)),
+      stripFrontmatter(m.content)
+    )
+    files.push(`.agents/skills/unstoppable-modules/resources/${moduleRefName(m.id)}`)
+  }
+  const moduleRefs = content.modules
+    .map((m: any) => `- \`resources/${moduleRefName(m.id)}\``)
+    .join('\n')
+  const modulesSkill = `---
+name: unstoppable-modules
+description: API reference, patterns, and gotchas for each Unstoppable Stack module (Hyperswarm, Hypercore, HyperDB, Hyperdrive, QVAC local AI, WDK wallet, and more). Load the relevant module reference before implementing against that module.
+---
+
+# Unstoppable Stack — Module References
+
+Open the reference for whichever module you are implementing against:
+
+${moduleRefs}
+`
+  await writeFile(join(modulesDir, 'SKILL.md'), modulesSkill)
+  files.push('.agents/skills/unstoppable-modules/SKILL.md')
+
+  // ── 4. Lean root AGENTS.md (well under the 32 KiB merge cap) ─────────────────
+  const skillIndex = content.skills.map((s: any) => {
     const { data } = parseFrontmatter(s.skillMd)
-    return `- **${s.id}** — ${data.description || s.id}`
+    return `- **$${s.id}** — ${data.description || s.id}`
   }).join('\n')
 
-  let agentsMd = `# ${options.projectName}
+  const agentsMd = `# ${options.projectName}
 
 ## Overview
 This is an Unstoppable Stack project using the ${options.template} template.
@@ -871,7 +944,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 
 **You MUST follow this process:**
 
-1. **Ask the pre-implementation checklist questions** (see Core Principles below)
+1. **Load the \`$unstoppable-foundations\` skill** and ask the pre-implementation checklist questions
 2. **Propose an architecture** listing all apps to be created
 3. **Get user confirmation** before writing any code
 4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
@@ -884,9 +957,18 @@ us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
 us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
 \`\`\`
 
-## Available Implementation Guides
+## Skills
 
-${skillList}
+This project ships Codex skills in \`.agents/skills/\`. Codex loads them
+automatically when relevant, or you can invoke one explicitly with \`/skills\`
+or by mentioning it as \`$skill-name\`.
+
+- **$unstoppable-foundations** — architecture, principles, patterns, verified versions (load first)
+- **$unstoppable-modules** — per-module API references (Hyperswarm, QVAC, WDK, …)
+
+Implementation guides:
+
+${skillIndex}
 
 ## P2P Development Rules
 
@@ -912,20 +994,17 @@ ${skillList}
 
 ---
 
-## Core Principles
-
-${coreContent}
-
----
-
-See directory-scoped \`AGENTS.md\` files in \`src/p2p/\`, \`src/data/\`, and \`src/ai/\` for module-specific guidance.
+For full principles and patterns, load the **$unstoppable-foundations** skill.
+See directory-scoped \`AGENTS.md\` files in \`src/p2p/\`, \`src/data/\`, \`src/ai/\`, and \`src/wallet/\` for module-specific pointers.
 `
 
   await writeFile(join(options.outputDir, 'AGENTS.md'), agentsMd)
   files.push('AGENTS.md')
 
-  // 2. Create directory-scoped AGENTS.md files for auto-discovery
-  // Codex finds these automatically when working in these directories.
+  // ── 5. Thin directory-scoped AGENTS.md files ────────────────────────────────
+  // Auto-discovered per directory; kept lean so the merged root+scoped chain
+  // stays under the cap. Full module docs live in the `$unstoppable-modules`
+  // skill and are pointed to here rather than inlined.
   const scopedDirs: Record<string, { modules: string[], description: string }> = {
     'src/p2p': {
       modules: ['hyperswarm', 'hypercore', 'hyperdht', 'corestore'],
@@ -949,10 +1028,17 @@ See directory-scoped \`AGENTS.md\` files in \`src/p2p/\`, \`src/data/\`, and \`s
     const dirModules = content.modules.filter((m: any) => config.modules.includes(m.id))
     if (dirModules.length === 0) continue
 
-    const moduleContent = dirModules.map((m: any) => stripFrontmatter(m.content)).join('\n\n---\n\n')
+    const refList = dirModules
+      .map((m: any) => `- \`.agents/skills/unstoppable-modules/resources/${moduleRefName(m.id)}\``)
+      .join('\n')
     const dirAgentsMd = `# ${config.description}
 
-${moduleContent}
+Working in this directory involves these Unstoppable Stack modules:
+${dirModules.map((m: any) => `- **${m.id}**`).join('\n')}
+
+Load the **$unstoppable-modules** skill and read the matching reference(s)
+before implementing:
+${refList}
 `
     const fullDir = join(options.outputDir, dir)
     await mkdir(fullDir, { recursive: true })

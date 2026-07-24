@@ -230,10 +230,10 @@ The agent pack provides AI assistants with context about:
 - Agent configuration
 - Skill definitions
 
-**Codex** (`AGENTS.md` + `.codex/`):
-- Project instructions in `AGENTS.md`
-- Skills in `.codex/skills/`
-- Project config in `.codex/config.toml`
+**Codex** (`AGENTS.md` + `.agents/skills/`):
+- Project instructions in root + directory-scoped `AGENTS.md` (kept lean; Codex caps the merged chain at `project_doc_max_bytes`, 32 KiB default)
+- Skills in `.agents/skills/<name>/SKILL.md` (+ `resources/`) — Codex auto-discovers these and loads them progressively; invoke with `/skills` or `$skill-name`
+- Heavy guidance (core principles, per-module API docs) is emitted as the `$unstoppable-foundations` and `$unstoppable-modules` skills rather than inlined
 
 ---
 
