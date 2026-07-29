@@ -110,6 +110,36 @@ async function loadContent() {
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 
+/**
+ * Frontmatter descriptions are often YAML-quoted and prefixed with "Recipe:".
+ * Strip both so index lines read cleanly.
+ */
+function recipeDescription(recipe: { id: string; content: string }): string {
+  const { data } = parseFrontmatter(recipe.content)
+  return String(data.description || recipe.id)
+    .replace(/^\s*["']|["']\s*$/g, '')
+    .replace(/^Recipe:\s*/i, '')
+    .trim()
+}
+
+/**
+ * One-line-per-recipe index so an agent can pick the right file without
+ * loading all of them.
+ */
+function recipeIndex(recipes: { id: string; content: string }[], dir: string): string {
+  const rows = recipes.map((r) => {
+    return `- [\`${r.id}\`](${dir}/${r.id}.md) — ${recipeDescription(r)}`
+  }).join('\n')
+
+  return `# Recipes
+
+Working patterns for common tasks. Read the one that matches what you are
+building — they are reference material, not always-on instructions.
+
+${rows}
+`
+}
+
 function stripFrontmatter(content: string): string {
   if (!content.trimStart().startsWith('---')) return content
   const match = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/)
@@ -181,7 +211,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -209,6 +239,8 @@ ${content.skills.map((s: any) => {
 - **Offline AI**: Local inference via QVAC, no API calls needed
 
 For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
+For working patterns (P2P sync, conflict resolution, local inference, …), see
+\`.claude/recipes/INDEX.md\` and read the recipe that matches your task.
 For specialized agents, see \`.claude/agents/\`.
 `
 
@@ -282,6 +314,18 @@ ${body}
     await writeFile(join(claudeDir, 'rules', `module-${mod.id}.md`), pathScoped)
     files.push(`.claude/rules/module-${mod.id}.md`)
   }
+
+  // 5b. Write ALL recipes to .claude/recipes/ as on-demand reference.
+  // Recipes are situational (pick one when the task matches), so they are NOT
+  // emitted as always-loaded rules — CLAUDE.md carries a one-line index and
+  // the agent reads the file it needs.
+  await mkdir(join(claudeDir, 'recipes'), { recursive: true })
+  for (const recipe of content.recipes) {
+    await writeFile(join(claudeDir, 'recipes', `${recipe.id}.md`), stripFrontmatter(recipe.content))
+    files.push(`.claude/recipes/${recipe.id}.md`)
+  }
+  await writeFile(join(claudeDir, 'recipes', 'INDEX.md'), recipeIndex(content.recipes, '.claude/recipes'))
+  files.push('.claude/recipes/INDEX.md')
 
   // 6. Write ALL skills with resources (progressive disclosure)
   for (const skill of content.skills) {
@@ -442,7 +486,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
 \`\`\`
 
 ## Core Principles
@@ -495,6 +539,23 @@ ${body}
 `
     await writeFile(join(rulesDir, `module-${mod.id}.mdc`), modMdc)
     files.push(`.cursor/rules/module-${mod.id}.mdc`)
+  }
+
+  // 3b. ALL recipes as description-triggered rules. The source frontmatter
+  // already carries `alwaysApply: false` + a description, which is exactly
+  // Cursor's on-demand mechanism — so preserve the description and let Cursor
+  // pull the recipe in when the task matches.
+  for (const recipe of content.recipes) {
+    const { body } = parseFrontmatter(recipe.content)
+    const recipeMdc = `---
+description: ${recipeDescription(recipe)}
+alwaysApply: false
+---
+
+${body}
+`
+    await writeFile(join(rulesDir, `recipe-${recipe.id}.mdc`), recipeMdc)
+    files.push(`.cursor/rules/recipe-${recipe.id}.mdc`)
   }
 
   // 4. ALL skills as description-triggered rules + their resources
@@ -671,7 +732,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -699,11 +760,25 @@ ${content.skills.map((s: any) => {
 - Use Hyperswarm topics for discoverability
 - Replicate data structures over connections
 
-For detailed module docs and patterns, use the relevant skill or agent.
+For detailed module docs, use the relevant skill or agent.
+For working patterns, see \`.opencode/recipes/INDEX.md\` and read the recipe
+that matches your task.
 `
 
   await writeFile(join(openCodeDir, 'instructions.md'), instructions)
   files.push('.opencode/instructions.md')
+
+  // 2b. Recipes as on-demand reference files.
+  await mkdir(join(openCodeDir, 'recipes'), { recursive: true })
+  for (const recipe of content.recipes) {
+    await writeFile(join(openCodeDir, 'recipes', `${recipe.id}.md`), stripFrontmatter(recipe.content))
+    files.push(`.opencode/recipes/${recipe.id}.md`)
+  }
+  await writeFile(
+    join(openCodeDir, 'recipes', 'INDEX.md'),
+    recipeIndex(content.recipes, '.opencode/recipes'),
+  )
+  files.push('.opencode/recipes/INDEX.md')
 
   // 3. Write agent files
   await writeFile(join(openCodeDir, 'agents', 'planner.md'), `---
@@ -910,6 +985,29 @@ ${moduleRefs}
   await writeFile(join(modulesDir, 'SKILL.md'), modulesSkill)
   files.push('.agents/skills/unstoppable-modules/SKILL.md')
 
+  // ── 3b. Synthetic "recipes" skill — working patterns ────────────────────────
+  const recipesDir = join(skillsRoot, 'unstoppable-recipes')
+  await mkdir(join(recipesDir, 'resources'), { recursive: true })
+  const recipeRefs: string[] = []
+  for (const r of content.recipes) {
+    await writeFile(join(recipesDir, 'resources', `${r.id}.md`), stripFrontmatter(r.content))
+    files.push(`.agents/skills/unstoppable-recipes/resources/${r.id}.md`)
+    recipeRefs.push(`- \`resources/${r.id}.md\` — ${recipeDescription(r)}`)
+  }
+  const recipesSkill = `---
+name: unstoppable-recipes
+description: Working patterns for common Unstoppable Stack tasks — P2P sync and conflict resolution, multi-writer data, local inference, tool calling, KV cache, mobile Expo setup, and more. Load the recipe matching the task before implementing it.
+---
+
+# Unstoppable Stack — Recipes
+
+Read the recipe that matches what you are building:
+
+${recipeRefs.join('\n')}
+`
+  await writeFile(join(recipesDir, 'SKILL.md'), recipesSkill)
+  files.push('.agents/skills/unstoppable-recipes/SKILL.md')
+
   // ── 4. Lean root AGENTS.md (well under the 32 KiB merge cap) ─────────────────
   const skillIndex = content.skills.map((s: any) => {
     const { data } = parseFrontmatter(s.skillMd)
@@ -954,7 +1052,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
 \`\`\`
 
 ## Skills
@@ -965,6 +1063,7 @@ or by mentioning it as \`$skill-name\`.
 
 - **$unstoppable-foundations** — architecture, principles, patterns, verified versions (load first)
 - **$unstoppable-modules** — per-module API references (Hyperswarm, QVAC, WDK, …)
+- **$unstoppable-recipes** — working patterns (P2P sync, conflict resolution, local inference, …)
 
 Implementation guides:
 

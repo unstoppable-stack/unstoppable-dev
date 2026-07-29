@@ -17,5 +17,5 @@
 
 ## Multiple writers
 - Hypercore is single-writer by default
-- For multi-writer, use Autobase or HyperDB instead
+- For multi-writer, use Autobee (optionally with HyperDB over its view) instead
 - Use a shared Hyperswarm topic for peer discovery when multiple cores are involved

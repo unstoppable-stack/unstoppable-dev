@@ -1,227 +1,192 @@
-# Full Two-Peer Autobase Example
+# Full Two-Peer Autobee Example
 
-A complete example of two peers sharing a key-value store via Autobase.
+A complete key-value store shared by two peers over Hyperswarm.
 
-## Shared Code
+Verified against `autobee@1.0.10` + `corestore@7.12` + `hyperswarm@4` as two
+separate Node processes (2026-07-29).
+
+## Install
+
+```bash
+npm i autobee corestore hyperswarm b4a
+```
+
+## Shared Module
 
 ```js
-// shared.js
-const Corestore = require('corestore')
-const Autobase = require('autobase')
-const Hyperbee = require('hyperbee')
-const Hyperswarm = require('hyperswarm')
+// shared.mjs
+import Corestore from 'corestore'
+import Autobee from 'autobee'
+import Hyperswarm from 'hyperswarm'
+import b4a from 'b4a'
 
-async function createPeer(storagePath, bootstrapKey = null) {
+const enc = (obj) => b4a.from(JSON.stringify(obj))
+const dec = (buf) => JSON.parse(b4a.toString(buf))
+
+export async function createPeer (storagePath, bootstrapKey = null) {
   const store = new Corestore(storagePath)
 
-  const base = new Autobase(store, bootstrapKey, {
-    open(store) {
-      return new Hyperbee(store.get('shared-kv'), {
-        keyEncoding: 'utf-8',
-        valueEncoding: 'json',
-        extension: false,
-      })
-    },
-
-    async apply(nodes, view, host) {
+  const db = new Autobee(store, bootstrapKey, {
+    async apply (nodes, view, host) {
       for (const node of nodes) {
-        if (node.value === null) continue
-        const op = JSON.parse(node.value.toString())
+        const op = dec(node.value)
 
-        switch (op.type) {
-          case 'add-writer':
-            await host.addWriter(Buffer.from(op.key, 'hex'), {
-              indexer: !!op.indexer,
-            })
-            break
-          case 'put':
-            await view.put(op.key, op.value)
-            break
-          case 'del':
-            await view.del(op.key)
-            break
+        if (op.type === 'add-writer') {
+          await host.addWriter(b4a.from(op.key, 'hex'), { isIndexer: true })
+          continue
         }
+
+        // hyperbee2 batch API — no view.put() / view.del()
+        const w = view.write()
+        if (op.type === 'put') w.tryPut(b4a.from(op.key), enc(op.value))
+        if (op.type === 'del') w.tryDelete(b4a.from(op.key))
+        await w.flush()
       }
     },
-
-    ackInterval: 5000,
-    ackThreshold: 0,
   })
 
-  await base.ready()
+  await db.ready()
+  return { store, db }
+}
 
+export function joinSwarm (db) {
   const swarm = new Hyperswarm()
-  swarm.join(base.discoveryKey)
-  swarm.on('connection', (conn) => store.replicate(conn))
-
-  return { store, base, swarm }
+  swarm.join(db.discoveryKey)
+  // db.replicate — NOT store.replicate. Autobee layers its wakeup session
+  // on top of store replication; using store.replicate loses writer wakeup.
+  swarm.on('connection', (conn) => db.replicate(conn))
+  return swarm
 }
 
-module.exports = { createPeer }
-```
-
-## Peer 1 (Creator)
-
-```js
-// peer1.js
-const { createPeer } = require('./shared')
-
-async function main() {
-  const { base, swarm } = await createPeer('./data-peer1')
-
-  console.log('=== Peer 1 (Creator) ===')
-  console.log('Base key:', base.key.toString('hex'))
-  console.log('Writer key:', base.local.key.toString('hex'))
-
-  // Write some initial data
-  await base.append(JSON.stringify({
-    type: 'put',
-    key: 'greeting',
-    value: { message: 'Hello from Peer 1', timestamp: 'init' },
-  }))
-
-  console.log('Wrote initial data. Waiting for connections...')
-  console.log('Share these with Peer 2:')
-  console.log('  Base key:', base.key.toString('hex'))
-
-  // Listen for new writer requests on stdin
-  process.stdin.on('data', async (data) => {
-    const writerKey = data.toString().trim()
-    if (writerKey.length === 64) {
-      console.log('Adding writer:', writerKey)
-      await base.append(JSON.stringify({
-        type: 'add-writer',
-        key: writerKey,
-        indexer: true,
-      }))
-      console.log('Writer added!')
-    }
-  })
-
-  // Periodically show the view
-  setInterval(async () => {
-    await base.update()
-    console.log('\n--- View (Peer 1) ---')
-    for await (const entry of base.view.createReadStream()) {
-      console.log(`  ${entry.key} = ${JSON.stringify(entry.value)}`)
-    }
-    console.log(`Signed length: ${base.signedLength}`)
-  }, 5000)
-
-  process.on('SIGINT', async () => {
-    await swarm.destroy()
-    await base.close()
-    process.exit(0)
-  })
-}
-
-main().catch(console.error)
-```
-
-## Peer 2 (Joiner)
-
-```js
-// peer2.js
-const { createPeer } = require('./shared')
-
-async function main() {
-  const bootstrapKey = process.argv[2]
-  if (!bootstrapKey) {
-    console.error('Usage: node peer2.js <base-key>')
-    process.exit(1)
+export async function waitUntilWritable (db, timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs
+  while (!db.writable) {
+    if (Date.now() > deadline) throw new Error('timed out waiting to become writable')
+    await db.update()
+    await new Promise(r => setTimeout(r, 100))
   }
-
-  const { base, swarm } = await createPeer(
-    './data-peer2',
-    Buffer.from(bootstrapKey, 'hex')
-  )
-
-  console.log('=== Peer 2 (Joiner) ===')
-  console.log('Writer key:', base.local.key.toString('hex'))
-  console.log('Give this key to Peer 1 to add you as a writer.')
-
-  base.on('is-indexer', async () => {
-    console.log('\nI am now an indexer! Writing data...')
-
-    await base.append(JSON.stringify({
-      type: 'put',
-      key: 'greeting-p2',
-      value: { message: 'Hello from Peer 2!' },
-    }))
-
-    await base.append(JSON.stringify({
-      type: 'put',
-      key: 'counter',
-      value: { count: 42 },
-    }))
-
-    console.log('Data written by Peer 2.')
-  })
-
-  // Periodically show the view
-  setInterval(async () => {
-    await base.update()
-    console.log('\n--- View (Peer 2) ---')
-    for await (const entry of base.view.createReadStream()) {
-      console.log(`  ${entry.key} = ${JSON.stringify(entry.value)}`)
-    }
-    console.log(`Signed length: ${base.signedLength}`)
-  }, 5000)
-
-  process.on('SIGINT', async () => {
-    await swarm.destroy()
-    await base.close()
-    process.exit(0)
-  })
 }
 
-main().catch(console.error)
+export async function put (db, key, value) {
+  await db.append(enc({ type: 'put', key, value }))
+}
+
+export async function del (db, key) {
+  await db.append(enc({ type: 'del', key }))
+}
+
+export async function get (db, key) {
+  await db.update()
+  const node = await db.view.get(b4a.from(key))
+  return node ? dec(node.value) : null
+}
 ```
 
-## Running the Example
+## Peer 1 — creates the database
 
-Terminal 1:
+```js
+// peer1.mjs
+import b4a from 'b4a'
+import { createPeer, joinSwarm, put, get } from './shared.mjs'
+
+const { db } = await createPeer('./data-peer1')
+joinSwarm(db)
+
+console.log('Database key (give this to peer 2):')
+console.log(db.key.toString('hex'))
+
+// Peer 2 prints its LOCAL writer key — paste it here to promote it.
+const peer2WriterKey = process.argv[2]
+if (peer2WriterKey) {
+  await db.append(b4a.from(JSON.stringify({
+    type: 'add-writer',
+    key: peer2WriterKey,
+  })))
+  console.log('Promoted peer 2 to writer')
+}
+
+await put(db, 'from-peer1', 'hello')
+
+setInterval(async () => {
+  console.log('from-peer2 =', await get(db, 'from-peer2'))
+}, 2000)
+```
+
+## Peer 2 — joins the database
+
+```js
+// peer2.mjs
+import b4a from 'b4a'
+import { createPeer, joinSwarm, waitUntilWritable, put, get } from './shared.mjs'
+
+const dbKey = b4a.from(process.argv[2], 'hex')   // key printed by peer 1
+const { db } = await createPeer('./data-peer2', dbKey)
+joinSwarm(db)
+
+// Give THIS to peer 1 — the local writer key, not db.key.
+console.log('My writer key (give this to peer 1):')
+console.log(db.local.key.toString('hex'))
+
+console.log('writable:', db.writable)            // false until promoted
+await waitUntilWritable(db, 60_000)
+console.log('writable:', db.writable)            // true
+
+await put(db, 'from-peer2', 'world')
+
+setInterval(async () => {
+  console.log('from-peer1 =', await get(db, 'from-peer1'))
+}, 2000)
+```
+
+## Running it
+
 ```bash
-node peer1.js
-# Outputs: Base key: abc123...
-# Outputs: Writer key: def456...
+# Terminal 1 — prints the database key
+node peer1.mjs
+
+# Terminal 2 — join with that key, prints its writer key
+node peer2.mjs <database-key>
+
+# Terminal 1 again — restart with peer 2's writer key to promote it
+node peer1.mjs <peer2-writer-key>
 ```
 
-Terminal 2:
-```bash
-node peer2.js abc123...
-# Outputs: Writer key: ghi789...
+Once promoted, both peers write independently and converge:
+
+```
+[peer2] writable before promo: false
+[peer2] writable after promo: true
+[peer2] sees from-peer1: hello
+[peer1] sees from-peer2: world
 ```
 
-Terminal 1 (paste Peer 2's writer key):
-```
-ghi789...
-# Outputs: Adding writer: ghi789...
-# Outputs: Writer added!
+## Two keys, two jobs
+
+The single most common mistake in this flow:
+
+| Key | Where from | Used for |
+|---|---|---|
+| `db.key` | Peer 1 (creator) | Peers pass it to `new Autobee(store, key)` to **join** |
+| `db.local.key` | Each peer, individually | Passed to `host.addWriter()` to **promote that peer** |
+
+Promoting `db.key` instead of `db.local.key` fails silently — no error, the
+peer simply never becomes writable.
+
+## Testing offline merge
+
+```js
+// 1. Both peers writable and connected
+// 2. Kill the swarm on peer 2:  await swarm.destroy()
+// 3. Write on both peers independently
+// 4. Rejoin:  joinSwarm(db)
+// 5. Poll db.update() — both writes are present on both sides
 ```
 
-Terminal 2 will show:
-```
-I am now an indexer! Writing data...
-Data written by Peer 2.
-```
+If both peers wrote the *same* key while partitioned, one wins by last-write.
+To control which, see `recipes/p2p-conflict-resolution.mdc`.
 
-Both terminals will converge to the same view:
-```
---- View ---
-  counter = {"count":42}
-  greeting = {"message":"Hello from Peer 1","timestamp":"init"}
-  greeting-p2 = {"message":"Hello from Peer 2!"}
-Signed length: 5
-```
+## Next Steps
 
-## Key Observations
-
-1. **Same view on both peers** — despite writing independently, the Hyperbee
-   view converges to identical state
-2. **Signed length advances** — once both indexers ack, the ordering becomes
-   permanent
-3. **Offline resilience** — kill one peer, write on the other, restart —
-   the views will merge when they reconnect
-4. **Read-only clients** could replicate `base.view.core` and query without
-   being writers
+- Typed binary operations: `resources/hyperdispatch-pattern.md`
+- Schema'd collections and indexes instead of raw KV:
+  `recipes/p2p-hyperdb-autobee-sync.mdc`

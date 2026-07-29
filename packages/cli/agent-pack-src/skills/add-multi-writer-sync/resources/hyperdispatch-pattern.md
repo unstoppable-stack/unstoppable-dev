@@ -2,7 +2,7 @@
 
 ## Overview
 
-For production Autobase apps, use **Hyperdispatch** + **Hyperschema** for
+For production Autobee apps, use **Hyperdispatch** + **Hyperschema** for
 typed, binary-encoded operations instead of raw JSON. This gives you:
 
 - Type-safe operation encoding/decoding
@@ -72,8 +72,8 @@ const buf = encode('@my-app/put-item', {
   data: Buffer.from('extra metadata'),
 })
 
-// Append to Autobase
-await base.append(buf)
+// Append to Autobee
+await db.append(buf)
 ```
 
 ## Step 4: Route in Apply
@@ -84,25 +84,27 @@ const { Router } = schema.hyperdispatchSpec
 const router = new Router()
 
 router.add('@my-app/put-item', async (data, ctx) => {
-  await ctx.view.put(data.id, {
-    name: data.name,
-    data: data.data,
-  })
+  // hyperbee2 batch API — Autobee views have no view.put()
+  const w = ctx.view.write()
+  w.tryPut(b4a.from(data.id), encodeValue(data))
+  await w.flush()
 })
 
 router.add('@my-app/delete-item', async (data, ctx) => {
-  await ctx.view.del(data.id)
+  const w = ctx.view.write()
+  w.tryDelete(b4a.from(data.id))
+  await w.flush()
 })
 
 router.add('@my-app/add-indexer', async (data, ctx) => {
-  await ctx.base.addWriter(Buffer.from(data.key, 'hex'), { indexer: true })
+  // `isIndexer` — Autobee's spelling (Autobase used `indexer`)
+  await ctx.host.addWriter(b4a.from(data.key, 'hex'), { isIndexer: true })
 })
 
-// In the Autobase apply function:
-async function apply(nodes, view, base) {
+// In the Autobee apply function:
+async function apply (nodes, view, host) {
   for (const node of nodes) {
-    if (node.value === null) continue
-    await router.dispatch(node.value, { view, base })
+    await router.dispatch(node.value, { view, host })
   }
 }
 ```
