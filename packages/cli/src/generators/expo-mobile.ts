@@ -819,17 +819,17 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   if (hasNodeSync) {
     sections.push(`
         <View style={styles.section} testID="node-sync-section">
-          <Text style={styles.sectionTitle}>Unstoppable Node</Text>
+          <Text style={styles.sectionTitle}>Data Protection</Text>
           <Text style={styles.mono} testID="node-sync-status">
-            {nodeStatus === 'idle' && '⏳ Waiting for worklet...'}
-            {nodeStatus === 'searching' && '⏳ Searching for local node...'}
-            {nodeStatus === 'connected' && '✅ Connected — replicating to node'}
-            {nodeStatus === 'disconnected' && '⚠️ Node disconnected'}
-            {nodeStatus === 'unavailable' && '❌ No node found on local network'}
+            {nodeStatus === 'idle' && '⏳ Preparing data protection…'}
+            {nodeStatus === 'searching' && '⏳ Looking for your Personal Node…'}
+            {nodeStatus === 'connected' && '✅ Protected — background replication is active'}
+            {nodeStatus === 'disconnected' && '⚠️ Protection paused — reconnecting…'}
+            {nodeStatus === 'unavailable' && 'Device only — Personal Node not found'}
           </Text>
           {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
             <Text style={[styles.mono, { marginTop: 4 }]}>
-              Run <Text style={{ color: '#58a6ff' }}>npx unstoppable-node</Text> on a nearby machine
+              Your data stays on this device. Remote device linking must be configured by the app developer.
             </Text>
           )}
         </View>`)
@@ -1165,10 +1165,14 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
             appId: '${opts.projectName}',
             appName: '${opts.projectName}',
             cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-            timeout: 5_000
+            timeout: 5_000,
+            reconnect: true
           })
           nodeStatus = 'connected'
           nodeClient.on('disconnected', () => { nodeStatus = 'disconnected' })
+          nodeClient.on('reconnecting', () => { nodeStatus = 'disconnected' })
+          nodeClient.on('reconnected', () => { nodeStatus = 'connected' })
+          nodeClient.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'
