@@ -41,6 +41,20 @@ export function registerScaffoldCommand(program: Command) {
         }
       }
 
+      // node-sync registers a single Hyperbee core with the Unstoppable Node.
+      // An Autobee view is a derived index that gets truncated and re-applied
+      // during ordinary merges, so seeding it is not equivalent — the Node
+      // would need every writer's core instead. Untested, so refuse rather
+      // than emit something that looks wired up but is not.
+      if (features.includes('multi-writer') && features.includes('node-sync')) {
+        output({
+          success: false,
+          error: 'Features "multi-writer" and "node-sync" cannot be combined yet — ' +
+            'Node registration of an Autobee mesh is not implemented. Pick one.',
+        })
+        process.exit(1)
+      }
+
       const projectName = options.name
       const outputDir = options.output || join(process.cwd(), projectName)
 

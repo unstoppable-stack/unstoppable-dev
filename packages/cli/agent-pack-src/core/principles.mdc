@@ -120,20 +120,20 @@ us scaffold app -p <platform> -n <name> [-f features]
 
 # See what's available
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync
+us scaffold list-features    # local-ai, wallet, node-sync, multi-writer
 ```
 
 ### Examples
 
 ```bash
 # Desktop P2P app with local AI
-us scaffold app -p pear-desktop -n my-desktop -f p2p,qvac
+us scaffold app -p pear-desktop -n my-desktop -f local-ai
 
-# Mobile app with P2P and storage
-us scaffold app -p expo-mobile -n my-mobile -f p2p,kv-storage
+# Mobile app (P2P + KV storage are always included)
+us scaffold app -p expo-mobile -n my-mobile
 
-# Node.js CLI tool with P2P
-us scaffold app -p node-cli -n my-server -f p2p,kv-storage
+# Node.js CLI with multi-writer sync across devices
+us scaffold app -p node-cli -n my-server -f multi-writer
 ```
 
 ### Multi-App Projects
