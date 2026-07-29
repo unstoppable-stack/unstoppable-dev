@@ -57,6 +57,250 @@ export function llmModelConfig(indent = '    '): string {
   ].join('\n')
 }
 
+/** Dependencies added by the `multi-writer` feature, shared by all platforms. */
+export const MULTI_WRITER_DEPS: Record<string, string> = {
+  // Pinned exact: upstream marks Autobee experimental and expects breaking
+  // changes. Verified working at 1.0.10 (Node + Bare, two-writer convergence).
+  autobee: '1.0.10',
+  hyperdb: '^6.7.0',
+  hyperschema: '^1.21.0',
+}
+
+/**
+ * `schema/build.js` — declares the replicated (`@app`) and device-private
+ * (`@local`) collections, then generates `schema/spec/`.
+ *
+ * Runs under plain Node (verified), so it can be an npm `postinstall` step
+ * rather than needing the Bare toolchain.
+ */
+export function schemaBuilder(): GeneratedFile {
+  return {
+    path: 'schema/build.js',
+    content: `// Regenerates ./schema/spec from the definitions below.
+//   npm run build:schema
+//
+// Two namespaces, split by trust boundary:
+//   @app   — replicated to every device in the mesh
+//   @local — device-private, never leaves this machine
+//
+// Put credentials, tokens, device identity, and per-device derived state in
+// @local. Anything in @app is visible to every peer you sync with.
+//
+// ESM — this package is "type": "module". Both builders ship an \`import\`
+// entry, so no .cjs shim is needed.
+import Hyperschema from 'hyperschema'
+import HyperDB from 'hyperdb/builder'
+
+const SCHEMA_DIR = './schema/spec/hyperschema'
+const APP_DIR = './schema/spec/app'
+const LOCAL_DIR = './schema/spec/local'
+
+const schema = Hyperschema.from(SCHEMA_DIR)
+
+// ─── @app — replicated ───────────────────────────────────────────────────────
+const app = schema.namespace('app')
+app.register({
+  name: 'entry',
+  compact: false,
+  fields: [
+    { name: 'key', type: 'string', required: true },
+    { name: 'value', type: 'string', required: false },
+    { name: 'authorId', type: 'string', required: false },
+    // Optional uints decode to 0 when absent — guard with \`||\`, never \`??\`.
+    { name: 'updatedAt', type: 'uint', required: false },
+    // There is no replicating DELETE, so deletes are tombstones.
+    { name: 'deletedAt', type: 'uint', required: false },
+  ],
+})
+
+// ─── @local — device-private ─────────────────────────────────────────────────
+const local = schema.namespace('local')
+local.register({
+  name: 'config',
+  compact: false,
+  fields: [
+    { name: 'key', type: 'string', required: true },
+    { name: 'value', type: 'string', required: false },
+  ],
+})
+
+Hyperschema.toDisk(schema)
+
+// ─── Collections + indexes ───────────────────────────────────────────────────
+const appDb = HyperDB.from(SCHEMA_DIR, APP_DIR)
+const appNs = appDb.namespace('app')
+appNs.collections.register({
+  name: 'entries',
+  schema: '@app/entry',
+  key: ['key'],
+})
+// Secondary lookups need a registered index — there is no WHERE clause.
+appNs.indexes.register({
+  name: 'entries-by-author',
+  collection: '@app/entries',
+  unique: false,
+  key: ['authorId'],
+})
+HyperDB.toDisk(appDb)
+
+const localDb = HyperDB.from(SCHEMA_DIR, LOCAL_DIR)
+const localNs = localDb.namespace('local')
+localNs.collections.register({
+  name: 'config',
+  schema: '@local/config',
+  key: ['key'],
+})
+HyperDB.toDisk(localDb)
+
+console.log('schema written to ./schema/spec')
+`,
+  }
+}
+
+/**
+ * The multi-writer store, as JS source. Emitted as `.ts` for node-cli and
+ * `.js` for pear-desktop (the Pear worker is plain ESM), so this returns the
+ * body and each generator picks the path/extension.
+ *
+ * `specPath` is the relative import prefix to `schema/spec` from the file's
+ * own location.
+ */
+export function multiWriterStoreSource(specPath: string, typed: boolean): string {
+  const t = (s: string) => (typed ? s : '')
+  return `import Autobee from 'autobee'
+import HyperDB from 'hyperdb'
+import b4a from 'b4a'
+import AppSpec from '${specPath}/app/index.js'
+import LocalSpec from '${specPath}/local/index.js'
+
+const encode = (op${t(': any')}) => b4a.from(JSON.stringify(op))
+const decode = (buf${t(': any')}) => JSON.parse(b4a.toString(buf))
+
+/**
+ * Build the replicated view. MUST be synchronous — Autobee assigns
+ * \`view = open(bee)\` without awaiting and hands the same value to apply.
+ * \`bee2\` is the hyperbee2 constructor, which is what an Autobee view is.
+ */
+function open(bee${t(': any')}) {
+  return { db: HyperDB.bee2(bee, AppSpec, { autoUpdate: true }) }
+}
+
+/**
+ * Merge ops into the view. Runs on every device over the same linearized
+ * order, so it must be deterministic: no Date.now(), no randomness, no I/O.
+ */
+async function apply(nodes${t(': any')}, view${t(': any')}, host${t(': any')}) {
+  for (const node of nodes) {
+    const op = decode(node.value)
+
+    if (op.type === 'add-writer') {
+      await host.addWriter(b4a.from(op.key, 'hex'))
+      continue
+    }
+
+    if (op.type === 'upsert') {
+      const existing = await view.db.get('@app/entries', { key: op.doc.key })
+      // Optional uints decode to 0, not null — \`||\`, never \`??\`.
+      // NOTE: comparing wall-clock stamps across devices is only safe here
+      // because it is a tiebreak of last resort. For anything where losing a
+      // write matters, use a hybrid logical clock — clocks on different
+      // devices are not comparable. See the p2p-conflict-resolution recipe.
+      if (existing && (op.doc.updatedAt || 0) < (existing.updatedAt || 0)) continue
+      await view.db.insert('@app/entries', op.doc)
+      await view.db.flush()
+    }
+  }
+}
+
+export async function createStore(store${t(': any')}, storagePath${t(': string')}, bootstrapKey${t(': any')} = null) {
+  const autobee = new Autobee(store, bootstrapKey, { open, apply })
+  await autobee.ready()
+
+  // Device-private. Separate engine, separate file, never replicated.
+  const local = HyperDB.rocks(\`\${storagePath}/local\`, LocalSpec)
+
+  const authorId = autobee.local.key.toString('hex').slice(0, 8)
+
+  return {
+    autobee,
+    local,
+
+    /**
+      * Database key — share so other devices can join.
+      *
+      * On the device that CREATED the database this equals \`writerKey\`,
+      * because the creator's own core roots the base. On every device that
+      * JOINED, the two differ — and passing the wrong one to \`addWriter\`
+      * fails silently (no error, the peer just never becomes writable).
+      */
+    get key() { return autobee.key.toString('hex') },
+    /** This device's writer key — another device passes it to addWriter. */
+    get writerKey() { return autobee.local.key.toString('hex') },
+    /** False until an existing writer promotes this device. */
+    get writable() { return autobee.writable },
+
+    async put(key${t(': string')}, value${t(': string')}) {
+      if (!autobee.writable) throw new Error('Not yet a writer — ask a peer to add this device')
+      await autobee.append(encode({
+        type: 'upsert',
+        doc: { key, value, authorId, updatedAt: Date.now(), deletedAt: 0 },
+      }))
+    },
+
+    async get(key${t(': string')}) {
+      await autobee.update()
+      const row = await autobee.view.db.get('@app/entries', { key })
+      // Tombstones stay in the view; filter them on read.
+      if (!row || (row.deletedAt || 0) > 0) return null
+      return row.value
+    },
+
+    async del(key${t(': string')}) {
+      const row = await autobee.view.db.get('@app/entries', { key })
+      if (!row) return
+      await autobee.append(encode({
+        type: 'upsert',
+        doc: { ...row, deletedAt: Date.now(), updatedAt: Date.now() },
+      }))
+    },
+
+    /**
+     * Index queries take RANGES — \`{ authorId: x }\` on its own silently
+     * matches every row instead of erroring, so always give both bounds.
+     */
+    async listByAuthor(author${t(': string')}) {
+      await autobee.update()
+      const rows = await autobee.view.db
+        .find('@app/entries-by-author', { gte: { authorId: author }, lte: { authorId: author } })
+        .toArray()
+      // Tombstones live in the view; filter them here so this agrees with get().
+      return rows.filter((r${t(': any')}) => !(r.deletedAt || 0))
+    },
+
+    /** Promote another device. Pass ITS writerKey, not its database key. */
+    async addWriter(writerKeyHex${t(': string')}) {
+      await autobee.append(encode({ type: 'add-writer', key: writerKeyHex }))
+    },
+
+    async setLocal(key${t(': string')}, value${t(': string')}) {
+      await local.insert('@local/config', { key, value })
+      await local.flush()
+    },
+
+    async getLocal(key${t(': string')}) {
+      const row = await local.get('@local/config', { key })
+      return row ? row.value : null
+    },
+
+    async close() {
+      await local.close()
+      await autobee.close()
+    },
+  }
+}
+`
+}
+
 export function tsconfig(): GeneratedFile {
   return {
     path: 'tsconfig.json',
@@ -97,18 +341,25 @@ export function gitignore(): GeneratedFile {
 }
 
 export function readme(opts: GeneratorOptions): GeneratedFile {
+  const multiWriter = has(opts, 'multi-writer')
   const baseFeatures = [
     '- **P2P Networking** — Hyperswarm for peer discovery and connections',
-    '- **KV Storage** — Hyperbee for persistent local key-value data',
+    multiWriter
+      ? '- **Multi-Writer Storage** — Autobee + HyperDB; every device reads and writes'
+      : '- **KV Storage** — Hyperbee for persistent local key-value data',
   ]
-  const optionalFeatures = opts.features.map((f) => {
+  const optionalFeatures = opts.features.flatMap((f) => {
     switch (f) {
       case 'local-ai':
-        return '- **Local AI** — QVAC SDK for offline inference with streaming chat'
+        return ['- **Local AI** — QVAC SDK for offline inference with streaming chat']
       case 'wallet':
-        return '- **Wallet** — WDK wallet integration (stub — coming soon)'
+        return ['- **Wallet** — WDK wallet integration (stub — coming soon)']
       case 'node-sync':
-        return '- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding'
+        return ['- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding']
+      // multi-writer is reflected in baseFeatures above (it replaces the
+      // default KV store rather than adding to it).
+      default:
+        return []
     }
   })
   const features = [...baseFeatures, ...optionalFeatures].join('\n')
@@ -118,6 +369,50 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
     'expo-mobile': 'Expo Mobile (iOS/Android)',
     'node-cli': 'Node.js CLI',
   }[opts.platform]
+
+  const multiWriterSection = multiWriter
+    ? `
+
+## Multi-Writer Sync
+
+Data lives in an [Autobee](https://www.npmjs.com/package/autobee) — a
+multi-writer Hyperbee — with [HyperDB](https://www.npmjs.com/package/hyperdb)
+collections on top. Every device can write; writes converge on reconnect.
+
+Two namespaces, split by trust boundary:
+
+| Namespace | Engine | Replicated? |
+|---|---|---|
+| \`@app\` | \`HyperDB.bee2\` over Autobee | Yes — every peer sees it |
+| \`@local\` | \`HyperDB.rocks\` | No — device-private |
+
+Put credentials, device identity, and per-device derived state in \`@local\`.
+
+### Adding a second device
+
+A joining device is **read-only** until an existing writer promotes it:
+
+1. Device A prints its **database key**. Device B starts with
+   \`BOOTSTRAP_KEY=<that key>\` to join.
+2. Device B prints its **writer key**.
+3. Device A promotes it: \`await db.addWriter('<B writer key>')\`.
+4. Device B flips to writable and its writes now replicate.
+
+> The database key and the writer key are different things. On the device that
+> created the database they happen to be equal, which makes this easy to get
+> wrong — passing a database key to \`addWriter\` fails silently.
+
+### Changing the schema
+
+Edit \`schema/build.js\`, then:
+
+\`\`\`bash
+npm run build:schema
+\`\`\`
+
+\`schema/spec/\` is generated — do not edit it by hand. It is rebuilt on
+\`npm install\` via \`postinstall\`.`
+    : ''
 
   const nodeSyncSection = opts.features.includes('node-sync')
     ? `
@@ -152,7 +447,7 @@ ${platformName}
 
 ${features}
 
-${gettingStarted}${nodeSyncSection}
+${gettingStarted}${multiWriterSection}${nodeSyncSection}
 
 ## Project Structure
 
