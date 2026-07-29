@@ -61,7 +61,16 @@ export async function connectToNode ({
   deviceName,
   reconnect,
   requestedCapabilities
-}) {
+} = {}) {
+  if (typeof appId !== 'string' || !appId.trim()) {
+    throw new InvalidOptionError('appId must be a non-empty string')
+  }
+  if (appName !== undefined && typeof appName !== 'string') {
+    throw new InvalidOptionError('appName must be a string when provided')
+  }
+  if (!Array.isArray(cores) || !Array.isArray(drives)) {
+    throw new InvalidOptionError('cores and drives must be arrays')
+  }
   for (const s of requireServices) {
     if (!KNOWN_SERVICES.includes(s)) {
       throw new InvalidOptionError(`Unknown service "${s}" — known: ${KNOWN_SERVICES.join(', ')}`)

@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import b4a from 'b4a'
-import { localDiscoveryTopic, parseMessages, encodeMessage } from '../src/protocol.js'
+import { localDiscoveryTopic, parseMessages, encodeMessage, buildCapabilities, requestedCapabilityGrants } from '../src/protocol.js'
 
 describe('protocol', () => {
   describe('localDiscoveryTopic', () => {
@@ -55,6 +55,20 @@ describe('protocol', () => {
     it('returns empty array for invalid data', () => {
       const msgs = parseMessages(b4a.from('not json'))
       assert.deepEqual(msgs, [])
+    })
+  })
+
+  describe('requestedCapabilityGrants', () => {
+    it('grants only requested methods that are currently available', () => {
+      const grants = requestedCapabilityGrants(buildCapabilities({ data: true, files: true, ai: true }), {
+        resources: ['register', 'peek', 'not-real'],
+        ai: ['completion.stream'],
+        config: ['update']
+      })
+      assert.deepEqual(grants.resources, ['register', 'peek'])
+      assert.deepEqual(grants.ai, ['completion.stream'])
+      assert.deepEqual(grants.config, [])
+      assert.deepEqual(grants.storage, [])
     })
   })
 })

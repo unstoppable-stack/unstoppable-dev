@@ -1,9 +1,29 @@
 # Unstoppable Node API and Resource Review
 
-> Status: draft — second-model review complete, findings incorporated
-> Date: 2026-06-12
+> Status: reviewed — release-critical security findings implemented; larger v0.5 protocol work remains
+> Reviewed: 2026-06-12; implementation update: 2026-07-29
 > Scope: app-facing Node API, data/file resources, sync, AI, status, permissions,
 > storage policy, export/import, and robustness/safety risks
+
+## Implementation Update — 2026-07-29
+
+The current implementation now addresses the review's immediate safety chain:
+
+- Pair identity is bound to the Noise transport key, and post-pair requests use
+  the authenticated socket session instead of message-supplied app IDs.
+- Status, logical storage usage, registration, inspection, heartbeat, and AI
+  handlers require their corresponding grant.
+- App-facing status and storage responses are scoped to the requesting app;
+  full management state remains local to the daemon/dashboard.
+- Pairing grants only the intersection of requested and available capabilities.
+- Inspection is limited to app-owned resources with server-side hard limits.
+- Control frames are size-limited, and pending client requests fail cleanly on
+  disconnect. Streaming AI supports timeout and caller cancellation.
+
+Still intentionally deferred: the canonical v0.5 capability envelope,
+installation IDs and safe cross-device linking, app-owned restore APIs,
+encrypted payload backup, explicit retention/delete semantics, AI scheduling
+and rate limits, and resource manifests/redaction.
 
 ## Reviewer Prompt
 

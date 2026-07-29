@@ -9,10 +9,10 @@ document.getElementById('app').innerHTML = `
   <div class="layout">
     <header class="hdr">
       <div class="hdr-main">
-        <h1 class="title">Unstoppable Node</h1>
+        <h1 class="title">Personal Node</h1>
         <p class="subtitle" id="node-status">⏳ Starting...</p>
-        <div class="hdr-key" id="node-key" title="Click to copy node public key">
-          <span class="hdr-key-label">node:</span>
+        <div class="hdr-key" id="node-key" title="Copy this Personal Node's technical device ID">
+          <span class="hdr-key-label">device ID:</span>
           <span class="hdr-key-value" id="node-key-value">…</span>
         </div>
       </div>
@@ -23,25 +23,25 @@ document.getElementById('app').innerHTML = `
     </header>
     <main class="content">
       <nav class="tabs" aria-label="Dashboard sections">
-        <button class="tab active" data-tab="overview">Overview</button>
+        <button class="tab active" data-tab="overview">Home</button>
         <button class="tab" data-tab="storage">Storage</button>
         <button class="tab" data-tab="ai">AI</button>
-        <button class="tab" data-tab="config">Config</button>
+        <button class="tab" data-tab="config">Advanced</button>
       </nav>
 
       <section class="tab-panel" id="tab-overview">
         <section class="card" id="summary-card">
-          <h2 class="card-title">Summary</h2>
+          <h2 class="card-title">Protection status</h2>
           <div class="grid" id="summary-grid">
-            <div class="metric"><span class="metric-label">Apps</span><span class="metric-value" id="m-apps">–</span></div>
-            <div class="metric"><span class="metric-label">Cores</span><span class="metric-value" id="m-cores">–</span></div>
-            <div class="metric"><span class="metric-label">Drives</span><span class="metric-value" id="m-drives">–</span></div>
-            <div class="metric"><span class="metric-label">Peers</span><span class="metric-value" id="m-peers">–</span></div>
-            <div class="metric"><span class="metric-label">Storage</span><span class="metric-value" id="m-storage" title="Sum of replicated core + drive byteLength. Click 'Recalc' for actual disk size.">–</span></div>
+            <div class="metric"><span class="metric-label">Protected apps</span><span class="metric-value" id="m-apps">–</span></div>
+            <div class="metric"><span class="metric-label">Data sources</span><span class="metric-value" id="m-cores">–</span></div>
+            <div class="metric"><span class="metric-label">File libraries</span><span class="metric-value" id="m-drives">–</span></div>
+            <div class="metric"><span class="metric-label">Connections</span><span class="metric-value" id="m-peers">–</span></div>
+            <div class="metric"><span class="metric-label">Protected data</span><span class="metric-value" id="m-storage" title="Data currently held by this Personal Node.">–</span></div>
           </div>
         </section>
         <section class="card">
-          <h2 class="card-title">Paired Apps</h2>
+          <h2 class="card-title">Protected apps</h2>
           <div id="apps-list" class="apps"></div>
         </section>
       </section>
@@ -49,11 +49,11 @@ document.getElementById('app').innerHTML = `
       <section class="tab-panel" id="tab-storage" hidden>
         <section class="card">
           <h2 class="card-title">Storage</h2>
-          <p class="dim">Replicated bytes by app. Updated with every daemon status snapshot.</p>
+          <p class="dim">Data held on this computer for each connected app.</p>
           <div class="grid storage-grid">
             <div class="metric"><span class="metric-label">Total</span><span class="metric-value" id="storage-total">–</span></div>
-            <div class="metric"><span class="metric-label">Core bytes</span><span class="metric-value" id="storage-cores">–</span></div>
-            <div class="metric"><span class="metric-label">Drive bytes</span><span class="metric-value" id="storage-drives">–</span></div>
+            <div class="metric"><span class="metric-label">App data</span><span class="metric-value" id="storage-cores">–</span></div>
+            <div class="metric"><span class="metric-label">Files</span><span class="metric-value" id="storage-drives">–</span></div>
           </div>
           <div id="storage-apps" class="apps storage-apps"></div>
         </section>
@@ -61,20 +61,20 @@ document.getElementById('app').innerHTML = `
 
       <section class="tab-panel" id="tab-ai" hidden>
         <section class="card">
-          <h2 class="card-title">AI Provider</h2>
-          <p class="dim">Controls the live provider for this running dashboard session. Persist startup defaults in Config.</p>
+          <h2 class="card-title">AI on this computer</h2>
+          <p class="dim">Let approved apps request private inference from this Personal Node. Prompts stay on the machines participating in the request.</p>
           <div class="ai-panel">
             <div>
               <div class="ai-state" id="ai-state">AI status unknown</div>
               <div class="dim" id="ai-detail">Waiting for daemon status…</div>
             </div>
-            <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Toggle the on-node AI provider. Use mock for quick demos.">Enable AI (mock)</button>
+            <button class="btn-ghost btn-ghost-neutral" id="ai-toggle" data-action="enable-ai" title="Turn AI for approved apps on or off.">Turn on AI (demo)</button>
           </div>
           <div class="ai-controls">
             <label class="field">Mode
               <select id="ai-mode">
-                <option value="mock">mock</option>
-                <option value="qvac">qvac</option>
+                <option value="mock">Developer demo</option>
+                <option value="qvac">Local QVAC model</option>
               </select>
             </label>
             <label class="field">QVAC model source
@@ -86,7 +86,7 @@ document.getElementById('app').innerHTML = `
 
       <section class="tab-panel" id="tab-config" hidden>
         <section class="card">
-          <h2 class="card-title">Config</h2>
+          <h2 class="card-title">Advanced settings</h2>
           <dl class="config-list">
             <dt>Status</dt><dd id="config-status">Starting…</dd>
             <dt>Node key</dt><dd class="mono mono-wrap" id="config-node-key">–</dd>
@@ -94,13 +94,13 @@ document.getElementById('app').innerHTML = `
             <dt>Services</dt><dd id="config-services">–</dd>
           </dl>
           <form class="config-form" id="config-form">
-            <h3 class="section-title">Persisted Settings</h3>
+            <h3 class="section-title">Startup settings</h3>
             <p class="dim">Saved to this node's storage. AI changes also apply to the live provider after Save.</p>
             <label class="field-check"><input type="checkbox" id="cfg-ai-enabled"> Start with AI enabled</label>
             <label class="field">Startup AI mode
               <select id="cfg-ai-mode">
-                <option value="mock">mock</option>
-                <option value="qvac">qvac</option>
+                <option value="mock">Developer demo</option>
+                <option value="qvac">Local QVAC model</option>
               </select>
             </label>
             <label class="field">Startup QVAC model source
@@ -112,7 +112,7 @@ document.getElementById('app').innerHTML = `
             <label class="field">Per-app storage quota (bytes)
               <input id="cfg-storage-app" type="number" min="0" placeholder="unlimited">
             </label>
-            <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require pair approval</label>
+            <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require app approval</label>
             <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-sound"> Play sound for pair requests</label>
@@ -129,14 +129,14 @@ document.getElementById('app').innerHTML = `
             </div>
           </form>
           <div class="config-form">
-            <h3 class="section-title">Backup</h3>
-            <p class="dim">Exports config, trust decisions, and paired-app registry as JSON. Full encrypted Corestore archives are planned later.</p>
-            <label class="field">Backup path
+            <h3 class="section-title">Export settings</h3>
+            <p class="dim">Exports settings, trust decisions, and the app list as JSON. It does not export app data or files.</p>
+            <label class="field">Export file
               <input id="backup-path" placeholder="/tmp/unstoppable-node.uns">
             </label>
             <div class="config-actions">
-              <button class="btn btn-approve-once" id="backup-export" type="button">Export</button>
-              <button class="btn btn-deny" id="backup-import" type="button">Import</button>
+              <button class="btn btn-approve-once" id="backup-export" type="button">Export settings</button>
+              <button class="btn btn-deny" id="backup-import" type="button">Import settings</button>
               <span class="dim" id="backup-message"></span>
             </div>
           </div>
@@ -166,21 +166,21 @@ document.getElementById('app').innerHTML = `
     </main>
   </div>
   <div class="modal-backdrop" id="approval-modal" hidden>
-    <div class="modal">
-      <h2 class="modal-title">Pair request</h2>
-      <p class="modal-text">An app wants to pair with this node and replicate data through it.</p>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title">
+      <h2 class="modal-title" id="approval-title">Allow this app?</h2>
+      <p class="modal-text">This app wants to use your Personal Node for data protection or AI.</p>
       <dl class="modal-info">
         <dt>App</dt><dd id="modal-app-name">–</dd>
         <dt>App ID</dt><dd id="modal-app-id" class="mono">–</dd>
         <dt>Device</dt><dd id="modal-device-name">–</dd>
         <dt>Public key</dt><dd id="modal-app-key" class="mono mono-wrap">–</dd>
-        <dt>Requests</dt><dd id="modal-capabilities">–</dd>
+        <dt>Access requested</dt><dd id="modal-capabilities">–</dd>
       </dl>
-      <p class="modal-warn">Only approve apps you launched yourself. Approving means this node will replicate the app's data and (if enabled) serve AI inference for it.</p>
+      <p class="modal-warn">Only allow an app you recognize. You can pause protection, remove the app, or change its AI access later.</p>
       <div class="modal-actions">
-        <button class="btn btn-deny" id="modal-deny">Deny &amp; remember</button>
-        <button class="btn btn-approve-once" id="modal-approve-once">Approve once</button>
-        <button class="btn btn-approve" id="modal-approve">Approve &amp; remember</button>
+        <button class="btn btn-deny" id="modal-deny">Don't allow</button>
+        <button class="btn btn-approve-once" id="modal-approve-once">Allow once</button>
+        <button class="btn btn-approve" id="modal-approve">Always allow</button>
       </div>
       <p class="modal-pending dim" id="modal-pending-count" hidden></p>
     </div>
@@ -188,15 +188,15 @@ document.getElementById('app').innerHTML = `
 
   <div class="modal-backdrop" id="welcome-modal" hidden>
     <div class="modal modal-wide">
-      <h2 class="modal-title">Welcome to Unstoppable Node</h2>
-      <p class="modal-text">This window keeps a P2P data hub running on your machine. Apps you launch with <code>us init</code> will pair with it automatically.</p>
+      <h2 class="modal-title">Welcome to your Personal Node</h2>
+      <p class="modal-text">This app keeps approved app data available on your computer and can provide private AI when you enable it.</p>
       <ul class="welcome-list">
-        <li><strong>Data + files</strong> always available — your cores and drives replicate in the background while this window is open.</li>
-        <li><strong>AI</strong> is opt-in. Click <em>Enable AI</em> in the header (mock is fine for demos), or run with <code>--ai</code> for QVAC.</li>
-        <li><strong>Trust gate</strong> — every first-time pair request shows up as a modal. Approve it once, or remember the decision.</li>
-        <li><strong>Peek + pause</strong> — every paired app gets a row with a "Peek data" and Pause/Resume button so you can poke without leaving the dashboard.</li>
+        <li><strong>Data protection</strong> runs in the background while this app is open.</li>
+        <li><strong>Private AI</strong> is optional and must be enabled before approved apps can use it.</li>
+        <li><strong>You stay in control</strong> — new apps ask permission before using this computer.</li>
+        <li><strong>Advanced controls</strong> let you inspect data, pause replication, set limits, and view technical details.</li>
       </ul>
-      <p class="modal-text dim">You can re-open this any time from the header. Nothing is sent off your machine.</p>
+      <p class="modal-text dim">You can re-open this guide from the ? button. Data moves only between peers you connect; no central cloud account is required.</p>
       <div class="modal-actions">
         <button class="btn btn-approve" id="welcome-dismiss">Got it</button>
       </div>
@@ -206,7 +206,7 @@ document.getElementById('app').innerHTML = `
   <div class="modal-backdrop" id="peek-modal" hidden>
     <div class="modal modal-wide">
       <h2 class="modal-title" id="peek-title">Peek data</h2>
-      <p class="modal-text dim">A live, read-only view of the data this app is replicating through the node.</p>
+      <p class="modal-text dim">A live, read-only view of the data this app is protecting on this computer.</p>
       <div class="peek-tabs" id="peek-tabs"></div>
       <div class="peek-body" id="peek-body"><p class="dim">Loading…</p></div>
       <div class="modal-actions">
@@ -218,8 +218,8 @@ document.getElementById('app').innerHTML = `
 
   <div class="modal-backdrop" id="import-modal" hidden>
     <div class="modal modal-wide">
-      <h2 class="modal-title">Import Node Backup</h2>
-      <p class="modal-text dim">Review this backup before importing. Import writes config, trust decisions, and paired-app records into the current node storage.</p>
+      <h2 class="modal-title">Import Personal Node settings</h2>
+      <p class="modal-text dim">Review this settings file before importing. It contains configuration, trust decisions, and app records.</p>
       <dl class="modal-info">
         <dt>Path</dt><dd id="import-path" class="mono mono-wrap">–</dd>
         <dt>Exported</dt><dd id="import-exported-at">–</dd>
@@ -228,7 +228,7 @@ document.getElementById('app').innerHTML = `
         <dt>Config</dt><dd id="import-config-state">–</dd>
       </dl>
       <div id="import-app-list" class="apps"></div>
-      <p class="modal-warn">Existing apps with the same IDs will be overwritten. This JSON backup does not restore replicated Corestore data.</p>
+      <p class="modal-warn">Existing apps with the same IDs will be overwritten. This JSON file does not restore protected app data or files.</p>
       <div class="modal-actions">
         <button class="btn btn-deny" id="import-cancel">Cancel</button>
         <button class="btn btn-approve" id="import-confirm">Import</button>
@@ -287,7 +287,7 @@ onWorkerMessage((msg) => {
       break
     case 'export-result':
       setText('backup-message', `Exported ${msg.apps} app(s)`)
-      pushLog(`Exported node backup to ${msg.path}`, 'ok')
+      pushLog(`Exported Personal Node settings to ${msg.path}`, 'ok')
       break
     case 'export-error':
       setText('backup-message', msg.error || 'Export failed')
@@ -296,7 +296,7 @@ onWorkerMessage((msg) => {
     case 'import-result':
       setText('backup-message', `Imported ${msg.apps} app(s)`)
       closeImportModal()
-      pushLog(`Imported node backup from ${msg.path}`, 'ok')
+      pushLog(`Imported Personal Node settings from ${msg.path}`, 'ok')
       break
     case 'import-preview':
       showImportPreview(msg.path, msg.preview)
@@ -434,8 +434,13 @@ workerReady.catch((err) => {
 
 function renderServices (services) {
   const el = document.getElementById('services')
+  const labels = {
+    p2p: ['Network ready', 'Network offline'],
+    storage: ['Storage ready', 'Storage unavailable'],
+    ai: ['AI ready', 'AI off']
+  }
   el.innerHTML = Object.entries(services)
-    .map(([name, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${on ? '+' : '-'}${name}</span>`)
+    .map(([name, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${escape(labels[name]?.[on ? 0 : 1] || name)}</span>`)
     .join('')
   renderAiToggle(services)
   setText('config-services', Object.entries(services).map(([k, v]) => `${v ? '+' : '-'}${k}`).join(' '))
@@ -446,7 +451,7 @@ function renderAiToggle (services) {
   if (!btn) return
   const on = !!services?.ai
   const mode = getValue('ai-mode') || currentConfig?.ai?.mode || 'mock'
-  btn.textContent = on ? 'Disable AI' : `Enable AI (${mode})`
+  btn.textContent = on ? 'Turn off AI' : `Turn on AI${mode === 'mock' ? ' (demo)' : ''}`
   btn.dataset.action = on ? 'disable-ai' : 'enable-ai'
 }
 
@@ -473,7 +478,7 @@ function renderStorage (status) {
     setText('storage-total', `${formatBytes(storage.total || 0)} / ${formatBytes(quota.global.limit)}${quota.global.exceeded ? ' over quota' : ''}`)
   }
   if (apps.length === 0) {
-    el.innerHTML = '<p class="dim">No paired apps yet.</p>'
+    el.innerHTML = '<p class="dim">No protected apps yet.</p>'
     return
   }
   el.innerHTML = apps.map((app) => `
@@ -485,7 +490,7 @@ function renderStorage (status) {
     <div class="app-row">
       <div class="app-info">
         <div class="app-name">${escape(app.appName || app.appId)} ${quotaBadge}</div>
-        <div class="app-meta"><span class="mono">${escape(app.appId)}</span></div>
+        <div class="app-meta"><span>${escape(app.deviceName || 'This app')}</span></div>
       </div>
       <div class="storage-value">${formatBytes(perApp[app.appId] || 0)}${quotaText}</div>
     </div>
@@ -500,11 +505,11 @@ function renderAiPanel (status) {
   const on = !!services.ai
   setText('ai-state', on ? 'AI is enabled' : 'AI is disabled')
   if (!on) {
-    setText('ai-detail', 'Apps that require AI will fail fast until you enable the provider.')
+    setText('ai-detail', 'Approved apps cannot run inference here until you turn AI on.')
   } else if (ai?.mock) {
-    setText('ai-detail', `Mock provider ready${ai.modelId ? ` (${ai.modelId})` : ''}.`)
+    setText('ai-detail', 'Developer demo mode is ready. Responses are simulated, not generated by a model.')
   } else {
-    setText('ai-detail', ai?.modelId ? `QVAC model: ${ai.modelId}` : 'QVAC provider enabled.')
+    setText('ai-detail', ai?.modelId ? `Local model ready: ${ai.modelId}` : 'Local AI is ready.')
   }
   renderAiToggle(services)
 }
@@ -549,13 +554,41 @@ function formatBytes (n) {
 
 function formatCapabilitySummary (capabilities) {
   if (!capabilities || typeof capabilities !== 'object') return ''
+  const labels = {
+    'resources:register': 'protect its app data',
+    'resources:status': 'view its own protection status',
+    'resources:peek': 'inspect its own protected data',
+    'storage:usage': 'view its own storage use',
+    'ai:completion.stream': 'use AI on this computer'
+  }
   const parts = []
   for (const [name, methods] of Object.entries(capabilities)) {
     const list = Array.isArray(methods) ? methods : []
-    if (list.length === 0) continue
-    parts.push(`${name}:${list.join(',')}`)
+    for (const method of list) parts.push(labels[`${name}:${method}`] || `${name}: ${method}`)
   }
-  return parts.join(' | ')
+  return parts.join(', ')
+}
+
+function formatLastActivity (units) {
+  const latest = units.reduce((value, unit) => {
+    const source = unit.lastSync || unit.updatedAt || ''
+    const timestamp = typeof source === 'number' ? source : Date.parse(source)
+    return Number.isFinite(timestamp) ? Math.max(value, timestamp) : value
+  }, 0)
+  if (!latest) return 'waiting for first sync'
+  const seconds = Math.max(0, Math.round((Date.now() - latest) / 1000))
+  if (seconds < 60) return 'active just now'
+  if (seconds < 3600) return `active ${Math.floor(seconds / 60)}m ago`
+  if (seconds < 86400) return `active ${Math.floor(seconds / 3600)}h ago`
+  return `active ${Math.floor(seconds / 86400)}d ago`
+}
+
+function parseByteAmount (value) {
+  const match = String(value).trim().match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb|tb)?$/i)
+  if (!match) return null
+  const units = { b: 1, kb: 1024, mb: 1024 ** 2, gb: 1024 ** 3, tb: 1024 ** 4 }
+  const amount = Number(match[1]) * units[(match[2] || 'b').toLowerCase()]
+  return Number.isSafeInteger(amount) && amount >= 0 ? amount : null
 }
 
 function renderApps (status) {
@@ -565,7 +598,7 @@ function renderApps (status) {
   const perApp = status.storage?.perApp || {}
 
   if (apps.length === 0) {
-    el.innerHTML = '<p class="dim">No apps paired yet. Start one with `us init` and it will appear here.</p>'
+    el.innerHTML = '<p class="dim">No protected apps yet. An app will appear here after you allow its first connection.</p>'
     return
   }
   el.innerHTML = apps.map((app) => {
@@ -578,51 +611,64 @@ function renderApps (status) {
     const allPaused = appUnits.length > 0 && appUnits.every((u) => u.paused)
     const trusted = !!approved[app.publicKey]
     const trustBadge = trusted
-      ? '<span class="badge badge-ok" title="Approved by user via the pair-request modal">trusted</span>'
-      : '<span class="badge badge-neutral" title="Paired before the trust gate ran. Not a security problem — click Promote to mark it user-approved.">auto-paired</span>'
+      ? '<span class="badge badge-ok">allowed</span>'
+      : '<span class="badge badge-neutral" title="This app was connected before remembered approvals were introduced.">review access</span>'
     const promoteBtn = trusted
       ? ''
-      : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Promote</button>`
-    const pauseLabel = allPaused ? 'Resume' : 'Pause'
+      : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Mark allowed</button>`
+    const pauseLabel = allPaused ? 'Resume protection' : 'Pause protection'
     const pauseAction = allPaused ? 'resume-app' : 'pause-app'
     const pauseBtn = appUnits.length > 0
-      ? `<button class="btn-ghost" data-pause-action="${pauseAction}" data-app-id="${escape(app.appId)}" title="Toggle replication for this app's cores/drives">${pauseLabel}</button>`
+      ? `<button class="btn-ghost" data-pause-action="${pauseAction}" data-app-id="${escape(app.appId)}">${pauseLabel}</button>`
       : ''
     const peekTargets = [
       ...cores.map((c) => ({ kind: 'core', key: c.key, name: c.name, type: c.type })),
       ...drives.map((d) => ({ kind: 'drive', key: d.key, name: d.name }))
     ]
     const peekBtn = peekTargets.length > 0
-      ? `<button class="btn-ghost" data-peek-app="${escape(app.appId)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Peek data</button>`
+      ? `<button class="btn-ghost btn-ghost-neutral" data-peek-app="${escape(app.appId)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Inspect data</button>`
       : ''
     const quota = status.storage?.quotas?.perApp?.[app.appId]
     const quotaLabel = app.quotaBytes !== null && app.quotaBytes !== undefined
       ? formatBytes(app.quotaBytes)
       : (quota?.limit !== null && quota?.limit !== undefined ? `${formatBytes(quota.limit)} default` : 'unlimited')
-    const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-app="${escape(app.appId)}" data-quota-current="${app.quotaBytes ?? ''}" title="Set this app's advisory quota in bytes">Quota: ${escape(quotaLabel)}</button>`
+    const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-app="${escape(app.appId)}" data-quota-current="${app.quotaBytes ?? ''}">Storage limit: ${escape(quotaLabel)}</button>`
     const aiGranted = (app.grants?.ai || []).includes('completion.stream')
     const aiGrantBtn = app.grants
-      ? `<button class="btn-ghost btn-ghost-neutral" data-ai-grant-app="${escape(app.appId)}" data-ai-granted="${aiGranted ? '1' : '0'}" title="Toggle this app's delegated AI grant">AI ${aiGranted ? 'on' : 'off'}</button>`
+      ? `<button class="btn-ghost btn-ghost-neutral" data-ai-grant-app="${escape(app.appId)}" data-ai-granted="${aiGranted ? '1' : '0'}">${aiGranted ? 'Block AI' : 'Allow AI'}</button>`
       : ''
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
     const grantLine = formatCapabilitySummary(app.grants || app.requestedCapabilities)
-    const grantsMeta = grantLine ? `<span title="Capability grants">${escape(grantLine)}</span>` : ''
+    const grantsMeta = grantLine ? `<span>${escape(grantLine)}</span>` : ''
+    const stateBadge = appUnits.length === 0
+      ? '<span class="badge badge-neutral">connected</span>'
+      : (allPaused
+          ? '<span class="badge badge-warn">paused</span>'
+          : '<span class="badge badge-ok">protected</span>')
+    const activity = appUnits.length === 0 ? 'no data registered' : formatLastActivity(appUnits)
     return `
       <div class="app-row" data-app-id="${escape(app.appId)}">
         <div class="app-info">
-          <div class="app-name">${escape(app.appName || app.appId)} ${trustBadge}</div>
+          <div class="app-name">${escape(app.appName || app.appId)} ${stateBadge} ${trustBadge}</div>
           <div class="app-meta">
             ${deviceLine}
-            ${grantsMeta}
-            <span>${cores.length} cores</span>
-            <span>${drives.length} drives</span>
-            <span>${totalEntries} entries</span>
-            <span>${totalPeers} peers</span>
-            <span title="Replicated bytes for this app">${formatBytes(appBytes)}</span>
-            <span class="mono dim" title="${escape(app.publicKey || '')}">key ${short(app.publicKey)}</span>
+            <span>${cores.length} data source${cores.length === 1 ? '' : 's'}</span>
+            <span>${drives.length} file librar${drives.length === 1 ? 'y' : 'ies'}</span>
+            <span>${escape(activity)}</span>
+            <span>${formatBytes(appBytes)}</span>
           </div>
+          <details class="technical-details">
+            <summary>Technical details</summary>
+            <div class="app-meta">
+              ${grantsMeta}
+              <span>${totalEntries} entries</span>
+              <span>${totalPeers} peer connections</span>
+              <span class="mono dim" title="${escape(app.publicKey || '')}">key ${short(app.publicKey)}</span>
+              <span class="mono dim">ID ${escape(app.appId)}</span>
+            </div>
+          </details>
         </div>
         <div class="app-actions">
           ${peekBtn}
@@ -630,7 +676,7 @@ function renderApps (status) {
           ${quotaBtn}
           ${aiGrantBtn}
           ${promoteBtn}
-          <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Unpair &amp; revoke</button>
+          <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Remove app</button>
         </div>
       </div>
     `
@@ -641,7 +687,7 @@ function renderApps (status) {
       const appId = btn.getAttribute('data-unpair')
       const publicKey = btn.getAttribute('data-pubkey') || null
       if (!appId) return
-      if (!confirm(`Unpair ${appId}? Its data will stop replicating and this key will be denied on future pair attempts.`)) return
+      if (!confirm(`Remove ${appId}? Protection will stop and future connections from this installation will be blocked. Existing replicated bytes remain on this computer until data cleanup is available.`)) return
       sendToWorker({ type: 'unpair', appId, publicKey })
     })
   })
@@ -661,14 +707,14 @@ function renderApps (status) {
       const appId = btn.getAttribute('data-quota-app')
       if (!appId) return
       const current = btn.getAttribute('data-quota-current') || ''
-      const input = prompt('Set advisory quota in bytes. Leave blank to use the default/unlimited quota.', current)
+      const input = prompt('Set a storage limit such as 500 MB or 5 GB. Leave blank to use the default/unlimited limit.', current)
       if (input === null) return
       const trimmed = input.trim()
       let quotaBytes = null
       if (trimmed) {
-        quotaBytes = Number(trimmed)
-        if (!Number.isSafeInteger(quotaBytes) || quotaBytes < 0) {
-          alert('Quota must be a non-negative integer number of bytes, or blank for default/unlimited.')
+        quotaBytes = parseByteAmount(trimmed)
+        if (quotaBytes === null) {
+          alert('Use a value such as 500 MB or 5 GB, or leave it blank.')
           return
         }
       }
@@ -800,8 +846,9 @@ function showNextApproval () {
   setText('modal-app-id', approvalCurrent.appId || '–')
   setText('modal-device-name', approvalCurrent.deviceName || '(not provided)')
   setText('modal-app-key', approvalCurrent.publicKey || '–')
-  setText('modal-capabilities', formatCapabilitySummary(approvalCurrent.requestedCapabilities) || 'default data + storage')
+  setText('modal-capabilities', formatCapabilitySummary(approvalCurrent.requestedCapabilities) || 'protect its data and view its own status')
   modal.hidden = false
+  document.getElementById('modal-deny')?.focus()
   updatePendingCount()
   updateApprovalBadge()
 }
@@ -954,10 +1001,10 @@ async function setupTray () {
     if (!ui?.app?.tray) return
     const untray = await ui.app.tray({
       menu: {
-        show: 'Show Unstoppable Node',
+        show: 'Show Personal Node',
         pauseAll: 'Pause all apps',
         resumeAll: 'Resume all apps',
-        quit: 'Quit Unstoppable Node'
+        quit: 'Quit Personal Node'
       }
     }, async (key) => {
       if (key === 'click' || key === 'show') return showDashboardWindow()
@@ -1008,15 +1055,15 @@ function notifyPairRequest (req) {
   if (currentConfig?.notifications?.pairRequestSound) playPairRequestSound()
   if (currentConfig?.notifications?.pairRequestAutoRestore) restoreForPairRequest()
   if (!('Notification' in window)) return
-  const body = `${req.appName || req.appId || 'An app'} wants to pair with this node.`
+  const body = `${req.appName || req.appId || 'An app'} wants to use your Personal Node.`
   if (Notification.permission === 'granted') {
-    new Notification('Unstoppable Node pair request', { body })
+    new Notification('Personal Node app request', { body })
     return
   }
   if (Notification.permission === 'default') {
     Notification.requestPermission().then((permission) => {
       renderNotificationPermission()
-      if (permission === 'granted') new Notification('Unstoppable Node pair request', { body })
+      if (permission === 'granted') new Notification('Personal Node app request', { body })
     }).catch(() => {})
   }
 }
@@ -1150,14 +1197,14 @@ function wireBackupControls () {
   const importBtn = document.getElementById('backup-import')
   if (exportBtn) exportBtn.addEventListener('click', () => {
     const path = getValue('backup-path').trim()
-    if (!path) return setText('backup-message', 'Enter a backup path')
+    if (!path) return setText('backup-message', 'Enter an export file path')
     setText('backup-message', 'Exporting…')
     sendToWorker({ type: 'export-state', path })
   })
   if (importBtn) importBtn.addEventListener('click', () => {
     const path = getValue('backup-path').trim()
-    if (!path) return setText('backup-message', 'Enter a backup path')
-    setText('backup-message', 'Reading backup…')
+    if (!path) return setText('backup-message', 'Enter a settings file path')
+    setText('backup-message', 'Reading settings…')
     sendToWorker({ type: 'preview-import', path })
   })
 }
@@ -1185,7 +1232,7 @@ function showImportPreview (path, preview) {
   if (list) {
     const apps = preview.apps || []
     list.innerHTML = apps.length === 0
-      ? '<p class="dim">No paired apps in this backup.</p>'
+      ? '<p class="dim">No app records in this settings file.</p>'
       : apps.map((app) => `<div class="app-row"><div class="app-info"><div class="app-name">${escape(app.appName || app.appId)}</div><div class="app-meta"><span class="mono">${escape(app.appId)}</span></div></div></div>`).join('')
   }
   document.getElementById('import-modal').hidden = false
@@ -1410,7 +1457,7 @@ function injectStyles () {
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
     }
     .metric {
@@ -1464,7 +1511,7 @@ function injectStyles () {
 
     .apps { display: flex; flex-direction: column; gap: 8px; }
     .app-row {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
       padding: 10px 12px;
       background: #0d1117;
       border: 1px solid #30363d;
@@ -1472,11 +1519,15 @@ function injectStyles () {
     }
     .app-name { font-weight: 600; color: #e6edf3; }
     .app-meta {
-      display: flex; gap: 10px;
+      display: flex; gap: 10px; flex-wrap: wrap;
       margin-top: 2px;
       font-size: 0.75rem;
       color: #8b949e;
     }
+    .app-info { min-width: min(100%, 320px); flex: 1; }
+    .app-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .technical-details { margin-top: 7px; color: #8b949e; font-size: 0.75rem; }
+    .technical-details summary { cursor: pointer; color: #58a6ff; }
     .btn-ghost {
       background: transparent;
       color: #f85149;

@@ -31,17 +31,25 @@ const client = await connectToNode({
   drives: [{ key: drive.key, name: 'files' }],
   requireServices: ['data'],   // fail fast if the node doesn't offer this
   reconnect: true,             // opt-in: re-pair on disconnect with backoff
+  requestedCapabilities: {
+    resources: ['register', 'status'],
+    storage: ['usage'],
+    ai: ['completion.stream']
+  }
 })
 
-// Snapshot of the node's state (paired apps, services, storage, AI).
+// This app's resources and logical storage use; other apps are never included.
 const status = await client.getNodeStatus()
 
-// Walk the storage directory for actual bytes-on-disk (slow).
+// This app's logical replicated bytes (not the node's path or global use).
 const usage = await client.getDiskUsage()
 
-// Stream AI tokens through the node.
+// Stream AI tokens through the node. AbortSignal and a timeout are supported.
+const controller = new AbortController()
 for await (const token of client.requestInference({
-  messages: [{ role: 'user', content: 'hi' }]
+  messages: [{ role: 'user', content: 'hi' }],
+  signal: controller.signal,
+  timeout: 120_000
 })) {
   process.stdout.write(token)
 }
@@ -58,7 +66,7 @@ await client.close()
 | `nodeHello`        | `{ nodePublicKey, services, protocolVersion }`                         |
 | `registered`       | `{ replicating }` — pairing + registration done                        |
 | `pairDenied`       | `{ reason }`                                                           |
-| `nodeStatus`       | full status snapshot (also returned by `getNodeStatus()`)              |
+| `nodeStatus`       | app-scoped status snapshot (also returned by `getNodeStatus()`)        |
 | `disconnected`     | nothing — socket dropped                                               |
 | `reconnecting`     | `{ attempt, delayMs }` — only when `reconnect` is enabled              |
 | `reconnected`      | `{ attempts }`                                                         |
@@ -105,6 +113,11 @@ By default the client and node both compute the topic from
 `${user}@${hostname}` so two processes on the same machine pair automatically
 with zero configuration. Override with `topic: Buffer` if you need a
 non-default rendezvous (multi-user, custom deployments, tests).
+
+The default topic is intentionally machine-local. A phone or second computer
+will not discover it automatically. A product should add an explicit,
+authenticated device-linking flow before sharing an override topic between
+devices; the SDK does not yet provide that onboarding flow.
 
 ## License
 
