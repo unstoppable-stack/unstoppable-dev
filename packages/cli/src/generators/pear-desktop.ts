@@ -2,7 +2,7 @@ import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
   DEFAULT_LLM_CONST, DEFAULT_LLM_LABEL, DEFAULT_LLM_SIZE_MB, DEFAULT_CTX_SIZE,
-  llmModelConfig,
+  llmModelConfig, MULTI_WRITER_DEPS, schemaBuilder, multiWriterStoreSource,
 } from './common.js'
 
 export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
@@ -17,6 +17,15 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     appBridgeJs(),
     appComponent(opts),
   ]
+
+  if (has(opts, 'multi-writer')) {
+    files.push(schemaBuilder(), {
+      // Sits next to worker.js at the project root — the Pear worker is plain
+      // ESM, so this is .js not .ts.
+      path: 'multi-writer-store.js',
+      content: multiWriterStoreSource('./schema/spec', false),
+    })
+  }
 
   return files
 }
@@ -42,7 +51,17 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     Object.assign(deps, { '@unstoppable-stack/node-client': '^0.4.0' })
   }
 
-  const unrouted = ['/worker.js']
+  if (has(opts, 'multi-writer')) {
+    Object.assign(deps, MULTI_WRITER_DEPS)
+    delete deps.hyperbee
+  }
+
+  // worker.js is unrouted (loaded by pear-run, not the renderer). The
+  // multi-writer store and its generated spec are imported BY the worker, so
+  // they must be unrouted too or Pear will not stage them for the worker.
+  const unrouted = has(opts, 'multi-writer')
+    ? ['/worker.js', '/multi-writer-store.js', '/schema']
+    : ['/worker.js']
 
   return {
     path: 'package.json',
@@ -60,6 +79,14 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         gui: { backgroundColor: '#1a1a2e', height: 720, width: 1100 },
       },
       scripts: {
+        ...(has(opts, 'multi-writer')
+          ? {
+              'build:schema': 'node schema/build.js',
+              // schema/spec is imported at worker start, so generate it on
+              // install rather than letting `pear run` fail on a missing spec.
+              postinstall: 'npm run build:schema',
+            }
+          : {}),
         dev: 'pear run -d .',
         stage: 'pear stage .',
         release: 'pear release .',
@@ -131,11 +158,15 @@ Pear.teardown(() => pipe.destroy())
 }
 
 function workerJs(opts: GeneratorOptions): GeneratedFile {
+  const multiWriter = has(opts, 'multi-writer')
+
   // Base (always-on) imports: P2P + KV storage
   const imports: string[] = [
     `import Corestore from 'corestore'`,
     `import Hyperswarm from 'hyperswarm'`,
-    `import Hyperbee from 'hyperbee'`,
+    multiWriter
+      ? `import { createStore } from './multi-writer-store.js'`
+      : `import Hyperbee from 'hyperbee'`,
     `import crypto from 'hypercore-crypto'`,
   ]
 
@@ -147,23 +178,42 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
     `let db = null`,
   ]
 
+  // Autobee brings its own replication (store replication plus a wakeup
+  // session), so the swarm hands connections to it rather than to Corestore.
+  const replicateLine = multiWriter
+    ? `    if (db) db.autobee.replicate(conn)\n    else store.replicate(conn)`
+    : `    store.replicate(conn)`
+
+  const storageInit = multiWriter
+    ? `
+  // BOOTSTRAP_KEY joins an existing mesh; unset creates a new one.
+  const bootstrapHex = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.BOOTSTRAP_KEY) ||
+    (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.BOOTSTRAP_KEY) || null
+  db = await createStore(store, storagePath, bootstrapHex ? Buffer.from(bootstrapHex, 'hex') : null)
+  send({
+    type: 'status', service: 'storage', status: 'ready',
+    dbKey: db.key, writerKey: db.writerKey, writable: db.writable,
+  })`
+    : `
+  const core = store.get({ name: 'main-db' })
+  db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
+  await db.ready()
+  send({ type: 'status', service: 'storage', status: 'ready' })`
+
   const initCode: string[] = [
     `  store = new Corestore(storagePath)`,
     `
   swarm = new Hyperswarm()
   swarm.on('connection', (conn) => {
-    store.replicate(conn)
+${replicateLine}
     conn.on('error', () => {})
   })
   send({ type: 'status', service: 'p2p', status: 'ready' })`,
-    `
-  const core = store.get({ name: 'main-db' })
-  db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
-  await db.ready()
-  send({ type: 'status', service: 'storage', status: 'ready' })`,
+    storageInit,
   ]
 
   const cleanupCode: string[] = [`  if (swarm) await swarm.destroy()`]
+  if (multiWriter) cleanupCode.push(`  if (db) await db.close()`)
 
   if (has(opts, 'node-sync')) {
     imports.push(`import { connectToNode } from '@unstoppable-stack/node-client'`)
@@ -195,7 +245,29 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
       send({ type: 'joined', topic: msg.topic })
       break
     }`,
-    `
+    multiWriter
+      ? `
+    case 'db-put': {
+      await db.put(msg.key, msg.value)
+      send({ type: 'db-put-ok', key: msg.key })
+      break
+    }
+    case 'db-get': {
+      const value = await db.get(msg.key)
+      send({ type: 'db-get-ok', key: msg.key, value })
+      break
+    }
+    case 'mesh-info': {
+      send({ type: 'mesh-info-ok', dbKey: db.key, writerKey: db.writerKey, writable: db.writable })
+      break
+    }
+    case 'add-writer': {
+      // Pass the OTHER device's writerKey here, not its database key.
+      await db.addWriter(msg.writerKey)
+      send({ type: 'add-writer-ok', writerKey: msg.writerKey })
+      break
+    }`
+      : `
     case 'db-put': {
       await db.put(msg.key, msg.value)
       send({ type: 'db-put-ok', key: msg.key })
@@ -435,9 +507,24 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       </section>`)
 
   // KV Storage section — always shown (base infrastructure)
+  if (has(opts, 'multi-writer')) {
+    sectionHtml.push(`
+      <section data-testid="mesh-section" class="card">
+        <h2 class="card-title">Multi-Writer Mesh</h2>
+        <p class="card-hint">Every device reads and writes; writes converge on reconnect.</p>
+        <p class="mono" id="mesh-status">⏳ Starting...</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px">Database key (share to let a device join):</p>
+        <p class="mono" id="mesh-db-key" data-testid="mesh-db-key" style="word-break:break-all">—</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px">This device's writer key (give to a peer to be promoted):</p>
+        <p class="mono" id="mesh-writer-key" data-testid="mesh-writer-key" style="word-break:break-all">—</p>
+        <input id="mesh-add-writer" class="inp" placeholder="Peer's writer key" data-testid="mesh-add-writer-input" />
+        <button id="mesh-add-btn" class="btn" data-testid="mesh-add-writer-btn">Add Writer</button>
+      </section>`)
+  }
+
   sectionHtml.push(`
       <section data-testid="kv-section" class="card">
-        <h2 class="card-title">KV Storage</h2>
+        <h2 class="card-title">${has(opts, 'multi-writer') ? 'Shared Data' : 'KV Storage'}</h2>
         <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
         <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
@@ -520,6 +607,17 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     sendToWorker({ type: 'db-get', key })
   })`)
 
+  if (has(opts, 'multi-writer')) {
+    featureHandlers.push(`
+  // Multi-writer mesh
+  document.getElementById('mesh-add-btn').addEventListener('click', () => {
+    const writerKey = document.getElementById('mesh-add-writer').value.trim()
+    if (!writerKey) return
+    sendToWorker({ type: 'add-writer', writerKey })
+    document.getElementById('mesh-add-writer').value = ''
+  })`)
+  }
+
   if (hasQvac) {
     featureHandlers.push(`
   // AI Assistant
@@ -589,6 +687,25 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       const val = msg.value
       showResult('kv-result', val !== null ? '"' + msg.key + '" → ' + JSON.stringify(val) : '"' + msg.key + '" not found')
     }`)
+
+  if (has(opts, 'multi-writer')) {
+    msgCases.push(`
+    if (msg.type === 'status' && msg.service === 'storage' && msg.dbKey) {
+      setText('mesh-db-key', msg.dbKey)
+      setText('mesh-writer-key', msg.writerKey)
+      setText('mesh-status', msg.writable
+        ? '✅ Writable — this device can write'
+        : '⏳ Read-only — give your writer key to a peer so they can add you')
+    }
+    if (msg.type === 'mesh-info-ok') {
+      setText('mesh-db-key', msg.dbKey)
+      setText('mesh-writer-key', msg.writerKey)
+      setText('mesh-status', msg.writable ? '✅ Writable' : '⏳ Read-only')
+    }
+    if (msg.type === 'add-writer-ok') {
+      showResult('kv-result', 'Added writer ' + msg.writerKey.slice(0, 12) + '…')
+    }`)
+  }
 
   if (hasWallet) {
     msgCases.push(`

@@ -332,4 +332,62 @@ describe('pear-desktop generator', () => {
       expect(files['worker.js']).not.toContain('@unstoppable-stack/node-client')
     })
   })
+
+  describe('multi-writer feature', () => {
+    it('emits the schema builder and a plain-ESM store beside worker.js', () => {
+      const files = fileMap(make(['multi-writer']))
+      expect(files['schema/build.js']).toBeDefined()
+      // .js, not .ts — the Pear worker is plain ESM with no build step.
+      expect(files['multi-writer-store.js']).toBeDefined()
+      expect(files['multi-writer-store.ts']).toBeUndefined()
+    })
+
+    it('worker imports the store instead of Hyperbee', () => {
+      const worker = fileMap(make(['multi-writer']))['worker.js']
+      expect(worker).toContain("import { createStore } from './multi-writer-store.js'")
+      expect(worker).not.toContain("import Hyperbee from 'hyperbee'")
+    })
+
+    it('swarm hands connections to Autobee, not Corestore', () => {
+      const worker = fileMap(make(['multi-writer']))['worker.js']
+      // Autobee's replicate adds its wakeup session on top of store
+      // replication; store.replicate alone loses writer wakeup.
+      expect(worker).toContain('db.autobee.replicate(conn)')
+    })
+
+    it('exposes mesh info and writer promotion over the pipe', () => {
+      const worker = fileMap(make(['multi-writer']))['worker.js']
+      expect(worker).toContain("case 'mesh-info'")
+      expect(worker).toContain("case 'add-writer'")
+      expect(worker).toContain('db.addWriter(msg.writerKey)')
+    })
+
+    it('surfaces both keys separately in the UI', () => {
+      const app = fileMap(make(['multi-writer']))['app/index.js']
+      expect(app).toContain('data-testid="mesh-db-key"')
+      expect(app).toContain('data-testid="mesh-writer-key"')
+      expect(app).toContain('data-testid="mesh-add-writer-btn"')
+    })
+
+    it('unroutes the store and schema so the worker can load them', () => {
+      const pkg = JSON.parse(fileMap(make(['multi-writer']))['package.json'])
+      expect(pkg.pear.unrouted).toContain('/worker.js')
+      expect(pkg.pear.unrouted).toContain('/multi-writer-store.js')
+      expect(pkg.pear.unrouted).toContain('/schema')
+    })
+
+    it('builds the spec on install and closes the store on shutdown', () => {
+      const files = fileMap(make(['multi-writer']))
+      const pkg = JSON.parse(files['package.json'])
+      expect(pkg.scripts.postinstall).toBe('npm run build:schema')
+      expect(files['worker.js']).toContain('await db.close()')
+    })
+
+    it('bare variant keeps the single-writer Hyperbee path', () => {
+      const files = fileMap(make([]))
+      expect(files['schema/build.js']).toBeUndefined()
+      expect(files['multi-writer-store.js']).toBeUndefined()
+      expect(files['worker.js']).toContain("import Hyperbee from 'hyperbee'")
+    })
+  })
 })

@@ -211,7 +211,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -486,7 +486,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
 \`\`\`
 
 ## Core Principles
@@ -732,7 +732,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
 \`\`\`
 
 ## Available Agents
@@ -1052,7 +1052,7 @@ Build truly unstoppable apps: P2P networking, local-first data, offline AI, and 
 \`\`\`bash
 us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync (P2P + KV storage are always included)
+us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
 \`\`\`
 
 ## Skills

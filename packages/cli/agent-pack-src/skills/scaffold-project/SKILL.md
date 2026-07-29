@@ -51,8 +51,12 @@ optional features are:
 | `local-ai` | QVAC SDK for local inference + streaming chat UI | All |
 | `wallet` | WDK wallet integration (stub — not yet validated) | pear-desktop, node-cli |
 | `node-sync` | Register cores with the Unstoppable Node for replication + backup | All |
+| `multi-writer` | Autobee + HyperDB — every device reads and writes, converging | pear-desktop, node-cli |
 
-Multi-writer sync (Autobee) is not a scaffold flag — add it afterwards with the
+`multi-writer` **replaces** the default single-writer Hyperbee KV rather than
+adding to it, and emits `schema/build.js` (the `@app` / `@local` collection
+definitions) plus a store module. It cannot currently be combined with
+`node-sync`. For adding it to an existing app instead, use the
 `add-multi-writer-sync` skill.
 
 ## Examples
