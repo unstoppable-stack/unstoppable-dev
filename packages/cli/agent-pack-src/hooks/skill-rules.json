@@ -50,10 +50,10 @@
       "message": "This looks like a data sync task. Consider /add-p2p-sync for Hypercore replication."
     },
     {
-      "keywords": ["multi-writer", "collaborative", "autobase", "converge", "concurrent writes"],
+      "keywords": ["multi-writer", "collaborative", "autobee", "autobase", "converge", "concurrent writes"],
       "files": ["src/p2p/**", "src/data/**"],
       "skill": "add-multi-writer-sync",
-      "message": "This needs multi-writer sync. Consider /add-multi-writer-sync for Autobase convergent state."
+      "message": "This needs multi-writer sync. Consider /add-multi-writer-sync for Autobee convergent state."
     },
     {
       "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream", "protomux"],

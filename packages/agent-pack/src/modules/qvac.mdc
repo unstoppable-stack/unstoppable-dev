@@ -124,7 +124,7 @@ for the lifetime of the instance.
   "serve": {
     "models": {
       "my-llm": {
-        "model": "QWEN3_600M_INST_Q4",
+        "model": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
         "default": true,
         "preload": true,
         "config": { "ctx_size": 8192, "tools": true }
@@ -202,7 +202,8 @@ await unloadModel({ modelId }); // on Bare, pass `autoClose: true` to also tear 
 | General chat (small)            | `LLAMA_3_2_1B_INST_Q4_0`                                       | Small footprint, fast startup.                        |
 | General chat (higher quality)   | `SALAMANDRATA_2B_INST_Q8`                                      | Larger model, better quality while still lightweight. |
 | Highest quality (desktop)       | `GPT_OSS_20B_INST_Q4_K_M`                                      | ~12GB, desktop only. Non-standard tool call format.   |
-| Mobile/small footprint          | `QWEN3_600M_INST_Q4` or `LLAMA_3_2_1B_INST_Q4_0`                | Smaller GGUFs fit mobile storage/ram budgets.         |
+| Mobile/small footprint          | `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` (~0.5GB)                      | Smallest LLM in the registry; qvac-app's tiny tier.   |
+| Balanced / tool calling         | `QWEN3_5_2B_MULTIMODAL_Q4_K_M` / `QWEN3_5_4B_MULTIMODAL_Q4_K_M` | qvac-app's low and mid tiers.                        |
 | Multimodal (vision)             | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection                 | Requires paired projection file.                      |
 | Embeddings                      | `GTE_LARGE_FP16` or `EMBEDDINGGEMMA_300M_Q4_0`                 | Embedding models for RAG and search.                  |
 | Speech-to-text (Whisper)        | `WHISPER_TINY` (fast) or `WHISPER_LARGE_V3_TURBO` (quality)    | Trade off speed vs accuracy.                          |
@@ -577,25 +578,46 @@ for (const call of await result.toolCalls) {
   `node_modules`. See `packages/cli/src/generators/expo-mobile.ts` for the
   full pinned list.
 
-## Qwen 3 `<think>` Token Handling
+## Reasoning Control (`reasoning_budget`)
 
-Qwen 3 models (`QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, `QWEN3_600M_INST_Q4`)
-emit `<think>...</think>` blocks for internal reasoning before generating their
-response.
+Qwen models emit `<think>...</think>` blocks for internal reasoning before
+generating their response. **Control this with `reasoning_budget`, not with
+prompt text.**
 
-- **Suppress reasoning**: Add `/no_think` to the end of your system prompt.
-- **Filter from output**: `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
-- **Context impact**: Think tokens count against the context window even when
-  suppressed or filtered from display.
-- **Streaming**: When streaming, check if you're inside a think block before
-  displaying tokens:
-  ```ts
-  function isInsideThinkBlock(text: string): boolean {
-    const lastOpen = text.lastIndexOf('<think>')
-    const lastClose = text.lastIndexOf('</think>')
-    return lastOpen > lastClose
-  }
-  ```
+```ts
+await loadModel({
+  modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+  modelType: 'llm',
+  modelConfig: {
+    ctx_size: 4096,
+    reasoning_budget: 0,   // 0 = off, -1 = unlimited
+  },
+})
+
+// Or per-call, overriding the load-time setting:
+completion({ modelId, history, stream: true, generationParams: { reasoning_budget: -1 } })
+```
+
+`reasoning_budget` is valid in both `loadModel().modelConfig` and
+`completion().generationParams` (verified against the SDK's `load-model` and
+`completion-stream` schemas, 0.15.0).
+
+### Do not use the legacy workaround
+
+Older guidance was to append `/no_think` to the system prompt and strip
+`<think>` blocks out of the token stream. Avoid both:
+
+- `/no_think` is prompt-level, so the model can ignore it — which is why the
+  workaround always needed a stripper as a safety net.
+- Stripping a streamed token stream requires carrying partial tags across chunk
+  boundaries. Getting it wrong leaks `<thi` fragments into the UI.
+- Reasoning tokens still consume context when merely filtered from display.
+  `reasoning_budget: 0` stops them being generated at all.
+
+`tetherto/qvac-app` uses `reasoning_budget` throughout
+(`core/src/services/model/llm-load-presets.ts`), paired with per-model sampler
+presets. If you *do* want reasoning visible, use `-1` and parse the blocks
+deliberately rather than mid-stream.
 
 ## Context Management
 
@@ -607,6 +629,8 @@ Context settings go in `loadModel().modelConfig`. Sampling goes in
 | `ctx_size` | `loadModel().modelConfig` | Context window size |
 | `n_discarded` | `loadModel().modelConfig` | Sliding window (rule of thumb: `ctx_size / 10`) |
 | `tools: true` | `loadModel().modelConfig` | Enable native tool-calling template |
+| `toolsMode: 'dynamic'` | `loadModel().modelConfig` | Anchor the tool block per-turn instead of baking it into the KV-cache system prefix (`'static'` is the SDK default) |
+| `reasoning_budget` | `loadModel().modelConfig` | `0` = no reasoning, `-1` = unlimited. Also accepted per-call in `generationParams` |
 | `system_prompt` | `loadModel().modelConfig` | System prompt |
 | `temp`, `top_p`, `top_k`, `predict`, `seed` | `completion().generationParams` | Per-call sampling |
 | `kvCache` | `completion().kvCache` | Session caching |
@@ -721,8 +745,11 @@ const result = completion({
 - On Linux, Vulkan runtime and compatible GPU drivers are required for GPU
   inference.
 - Context overflows are common on small models when history grows. Use
-  `n_discarded` for automatic sliding window, or `kvCache` + manual trimming.
-- **Qwen 3 models emit `<think>` blocks** — filter or suppress with `/no_think`.
+  `n_discarded` for an automatic sliding window. Do **not** hand-trim history:
+  the SDK reuses its KV cache by message count, so dropping old messages makes
+  it re-prefill the whole conversation in one batch and overflow anyway.
+- **Qwen models emit `<think>` blocks** — disable with `reasoning_budget: 0` at
+  load time. Do not use `/no_think` or stream-stripping.
 - **1B models are unreliable for tool calling** — use 3B+ minimum, 7B recommended.
 - **RAG**: default workspace is `"default"`. For multi-topic apps, use named
   workspaces and call `ragCloseWorkspace()` when switching topics to free memory.

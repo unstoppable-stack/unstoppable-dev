@@ -33,13 +33,17 @@ Ask: "What UI approach?"
 Ask: "Which AI model and use case?"
 | Use Case | Recommended Model Constant (`@qvac/sdk`) |
 |----------|------------------------------------------|
-| Tool calling (best) | `QWEN_3_1_7B_INST_Q4` |
-| Tool calling (lighter) | `QWEN_3_4B_INST_Q4_K_M` |
-| Tool calling (small) | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` |
-| General chat | `LLAMA_3_2_1B_INST_Q4_0` or `SALAMANDRATA_2B_INST_Q8` |
-| Mobile (tiny) | `QWEN3_600M_INST_Q4` |
+| Default / mobile / tiny | `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` (~0.5GB) |
+| Balanced | `QWEN3_5_2B_MULTIMODAL_Q4_K_M` (~1.3GB) |
+| Tool calling / quality | `QWEN3_5_4B_MULTIMODAL_Q4_K_M` (~2.7GB) |
+| Desktop, high quality | `QWEN3_5_9B_MULTIMODAL_Q4_K_M` (~5.7GB) |
+| General chat (legacy) | `LLAMA_3_2_1B_INST_Q4_0` or `SALAMANDRATA_2B_INST_Q8` |
 
-> **Note**: `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in `@qvac/sdk@0.15.0`. Use Qwen 3 (or Qwen3.5 — auto-detected as `toolDialect: "qwen35"`) models. 1B models are unreliable for tool calling; use 3B+ minimum.
+> **Prefer the Qwen3.5 family.** It is what `tetherto/qvac-app` ships across
+> every device tier, and it supports `reasoning_budget` for reasoning control.
+> The older `QWEN_3_*` / `QWEN3_600M_INST_Q4` constants still exist but predate
+> that. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist in the SDK.
+> 1B-class models are unreliable for tool calling; use 3B+ minimum.
 
 ### 5. Data Storage
 Ask: "What data persistence do you need?"
@@ -116,7 +120,7 @@ us scaffold app -p <platform> -n <name> [-f features]
 
 # See what's available
 us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # p2p, kv-storage, qvac, autobase
+us scaffold list-features    # local-ai, wallet, node-sync
 ```
 
 ### Examples
