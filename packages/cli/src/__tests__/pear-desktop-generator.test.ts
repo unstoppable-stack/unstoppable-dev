@@ -133,13 +133,28 @@ describe('pear-desktop generator', () => {
       })
     }
 
-    it('local-ai: uses ESM import for @qvac/sdk and supports QVAC_MOCK', () => {
+    it('local-ai: lazy-imports @qvac/sdk (ESM) and supports QVAC_MOCK', () => {
       const worker = fileMap(make(['local-ai']))['worker.js']
-      expect(worker).toContain("from '@qvac/sdk'")
+      // The SDK must NOT be imported at module scope: a static import runs
+      // native-module resolution when worker.js loads, so an SDK failure
+      // kills the worker before it can report anything on its pipe — taking
+      // P2P and KV storage down with it. It is imported inside 'load-ai'.
+      expect(worker).toContain("await import('@qvac/sdk')")
       expect(worker).not.toContain("require('@qvac/sdk')")
+      expect(worker).not.toMatch(/^import .* from '@qvac\/sdk'$/m)
       expect(worker).toContain('QVAC_MOCK')
       expect(worker).toContain('MOCK_AI')
       expect(worker).toContain("'mock-model'")
+    })
+
+    it('local-ai: disables reasoning via reasoning_budget, not prompt hacks', () => {
+      const worker = fileMap(make(['local-ai']))['worker.js']
+      expect(worker).toContain('reasoning_budget: 0')
+      expect(worker).toContain('n_discarded')
+      // The old approach — '/no_think' in the system prompt plus a manual
+      // <think> stripping state machine over the token stream.
+      expect(worker).not.toContain('/no_think')
+      expect(worker).not.toContain('<think>')
     })
 
     it('bare variant: does NOT import @qvac/sdk', () => {

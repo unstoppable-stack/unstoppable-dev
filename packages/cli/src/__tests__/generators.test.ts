@@ -196,7 +196,15 @@ describe('expo-mobile generator', () => {
       expect(index).toContain("from '@qvac/sdk'")
       expect(index).toContain('loadModel(')
       expect(index).toContain('completion(')
-      expect(index).toContain('QWEN3_600M_INST_Q4')
+      expect(index).toContain('QWEN3_5_0_8B_MULTIMODAL_Q4_K_M')
+    })
+
+    it('disables reasoning via reasoning_budget, not prompt hacks', () => {
+      const index = fileMap(make(['local-ai']))['app/index.tsx']
+      expect(index).toContain('reasoning_budget: 0')
+      expect(index).toContain('n_discarded')
+      expect(index).not.toContain('/no_think')
+      expect(index).not.toContain('<think>')
     })
 
     it('react-native side supports EXPO_PUBLIC_QVAC_MOCK for tests', () => {
