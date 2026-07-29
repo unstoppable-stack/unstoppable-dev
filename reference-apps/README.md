@@ -2,7 +2,35 @@
 
 Curated upstream applications added as **git submodules**. These are the ground truth for battle-tested patterns used in the Unstoppable Stack agent pack.
 
-## Apps
+## Primary reference
+
+| App | Description | Platform | Key Patterns |
+|-----|-------------|----------|--------------|
+| [qvac-app](https://github.com/tetherto/qvac-app) | QV.AC — P2P AI assistant. Bun monorepo: `core/`, `desktop/`, `mobile/`, `ui/`, `app-runtime/`. | Desktop (Electron + Bare) + Mobile (Expo) | HyperDB over Autobee, `@qvac`/`@local` collection split, bare-rpc worker protocol, `reasoning_budget`, agent runs + delegation, HLC conflict resolution |
+
+**Prefer this app** when sourcing patterns. It is the current generation and is
+actively developed.
+
+Useful entry points:
+
+- `docs/architecture.md` — packages, boundaries, runtime shape
+- `docs/hyperdb-migration-report.md` — the SQLite→HyperDB move and the
+  convergence hazards it surfaced. The single densest doc in the repo.
+- `docs/sync-architecture.md` — replication flow
+- `docs/decisions/` — ADRs (hybrid logical clock, append-only history, …)
+- `core/src/services/model/` — QVAC SDK usage: load presets, streaming,
+  KV cache, GPU selection
+
+> **Caution:** the repo has known doc drift. `.ai/cursor/rules/*.mdc` and parts
+> of `docs/` still describe SQLite as the local materialized view, but
+> `hyperdb-migration-report.md` records SQLite being removed from core except
+> for RAG. When docs and code disagree, trust the code.
+
+## Legacy references (pre-2026-07)
+
+These are the previous generation, superseded by `qvac-app`. Its own
+`CLAUDE.md` lists them as *"retained legacy package directories"* to exclude
+from searches. Keep them for historical patterns; do not treat them as current.
 
 | App | Description | Platform | Key Patterns |
 |-----|-------------|----------|--------------|

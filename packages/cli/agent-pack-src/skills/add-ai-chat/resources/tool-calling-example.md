@@ -254,7 +254,8 @@ const sessionId = `session-${Date.now()}`
 const history: Array<{ role: string; content: string }> = [
   {
     role: 'system',
-    content: 'You are a helpful assistant that can check the time and do math. /no_think',
+    // Reasoning is disabled at load time via `reasoning_budget: 0`.
+    content: 'You are a helpful assistant that can check the time and do math.',
   },
   { role: 'user', content: 'What time is it, and what is 12 + 30?' },
 ]
@@ -303,6 +304,6 @@ loadModel() config:           completion() params:
 | Parallel streams | `Promise.all([tokenTask, toolCallTask])` |
 | Token filtering | `createTokenFilter()` strips `<tool_call>` blocks from visible output |
 | Fallback parsing | `parseFallbackToolCalls()` with `repairJson()` for malformed JSON |
-| Think filtering | `stripThinkBlocks()` + `/no_think` in system prompt |
+| Reasoning control | `reasoning_budget: 0` in `modelConfig` — not prompt text, not stream stripping |
 | Context management | `n_discarded` at load time + `kvCache: sessionId` at completion time |
 | No "respond" tool | Model generates free text naturally alongside tool calls |

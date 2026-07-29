@@ -28,9 +28,10 @@ unstoppable-stack/
 │   ├── modules/                 # Per-module documentation
 │   └── recipes/                 # Common patterns and recipes
 ├── reference-apps/              # Upstream apps as git submodules (tracked)
-│   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
-│   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
-│   └── qvac-health/             # Mobile health app with local AI
+│   ├── qvac-app/                # PRIMARY — QV.AC P2P AI assistant (desktop + mobile)
+│   ├── qvac-workbench-desktop/  # Legacy: Pear Desktop AI workbench
+│   ├── qvac-workbench-mobile/   # Legacy: Expo Bare AI workbench
+│   └── qvac-health/             # Legacy: Mobile health app with local AI
 ├── research/                    # Fetched docs and SDK examples
 │   ├── qvac-docs/               # QVAC SDK documentation
 │   └── qvac-examples/           # QVAC SDK examples
@@ -125,10 +126,20 @@ Upstream applications added as **git submodules**. These are the ground truth fo
 
 ```
 reference-apps/
-├── qvac-workbench-desktop/   # Pear Desktop: worker pattern, streaming, tool calling
-├── qvac-workbench-mobile/    # Expo Bare: mobile AI, model management
-└── qvac-health/              # Expo Bare: RAG, embeddings, health data
+├── qvac-app/                 # PRIMARY: HyperDB-over-Autobee, bare-rpc worker,
+│                             #   reasoning_budget, agent runs, HLC conflict resolution
+├── qvac-workbench-desktop/   # Legacy: Pear Desktop worker pattern, streaming, tool calling
+├── qvac-workbench-mobile/    # Legacy: Expo Bare mobile AI, model management
+└── qvac-health/              # Legacy: Expo Bare RAG, embeddings, health data
 ```
+
+**Prefer `qvac-app`** — it is the current generation and supersedes the other
+three, which its own `CLAUDE.md` marks as retained legacy directories. Start
+with `docs/hyperdb-migration-report.md` and `docs/architecture.md`.
+
+Note it has known doc drift: some `.ai/cursor/rules/*.mdc` and `docs/` files
+still describe SQLite as the local materialized view, which the HyperDB
+migration removed. When docs and code disagree, trust the code.
 
 Update submodules to pull latest upstream changes:
 ```bash

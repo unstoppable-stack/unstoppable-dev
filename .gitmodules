@@ -7,3 +7,6 @@
 [submodule "reference-apps/qvac-health"]
 	path = reference-apps/qvac-health
 	url = https://github.com/tetherto/qvac-health.git
+[submodule "reference-apps/qvac-app"]
+	path = reference-apps/qvac-app
+	url = https://github.com/tetherto/qvac-app.git

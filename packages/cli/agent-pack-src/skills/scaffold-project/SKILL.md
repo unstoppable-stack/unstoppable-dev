@@ -42,24 +42,30 @@ us doctor
 
 ## Features
 
+P2P networking (Hyperswarm + Corestore) and KV storage (Hyperbee) are **always
+included** — every Unstoppable app needs them, so they are not flags. The
+optional features are:
+
 | Feature | Description | Platforms |
 |---------|-------------|-----------|
-| `p2p` | Hyperswarm + Corestore networking | All |
-| `kv-storage` | Hyperbee key-value database | All |
-| `qvac` | QVAC SDK for local AI inference | All |
-| `autobase` | Autobase multi-writer sync | pear-desktop, node-cli |
+| `local-ai` | QVAC SDK for local inference + streaming chat UI | All |
+| `wallet` | WDK wallet integration (stub — not yet validated) | pear-desktop, node-cli |
+| `node-sync` | Register cores with the Unstoppable Node for replication + backup | All |
+
+Multi-writer sync (Autobee) is not a scaffold flag — add it afterwards with the
+`add-multi-writer-sync` skill.
 
 ## Examples
 
 ```bash
-# Mobile chat app with P2P and local AI
-us scaffold app -p expo-mobile -n my-chat -f p2p,qvac
+# Mobile chat app with local AI
+us scaffold app -p expo-mobile -n my-chat -f local-ai
 
-# Desktop P2P app with collaborative storage
-us scaffold app -p pear-desktop -n my-sync -f p2p,kv-storage,autobase
+# Desktop app with AI and node sync
+us scaffold app -p pear-desktop -n my-sync -f local-ai,node-sync
 
 # Node.js CLI with AI
-us scaffold app -p node-cli -n my-tool -f qvac
+us scaffold app -p node-cli -n my-tool -f local-ai
 
 # Minimal mobile app (no features — just the shell)
 us scaffold app -p expo-mobile -n my-app
@@ -69,7 +75,7 @@ us scaffold app -p expo-mobile -n my-app
 
 ### expo-mobile
 
-The scaffold produces a **fully buildable** Expo project. All 7 feature combinations (bare, p2p, qvac, kv-storage, p2p+qvac, p2p+kv-storage, p2p+kv-storage+qvac) have been validated to:
+The scaffold produces a **fully buildable** Expo project. Feature combinations (bare, `local-ai`, `node-sync`, and their combos) have been validated to:
 - `npm install` without errors
 - `expo prebuild` succeeds
 - iOS build (xcodebuild) succeeds
@@ -107,7 +113,7 @@ Generated files:
 - `tsconfig.json` — strict mode, ES2022 target
 - `src/index.ts` — entry with graceful startup/shutdown
 - `src/types.d.ts` — module declarations for untyped P2P libraries
-- Feature managers as needed (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`, `autobase-manager.ts`)
+- Feature managers as needed (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`)
 
 ## After Scaffolding
 
@@ -145,7 +151,7 @@ together.
 | `zod` | `^4.3.0` | Required by `@qvac/sdk@0.10+` — install v4.3+ explicitly when using tool calling. |
 | `bare-rpc` | `^1.1.0` | P2P RPC. |
 | `hyperswarm` | `^4.17.0` | P2P networking. |
-| `autobase` | `^7.27.0` | Multi-writer consensus. |
+| `autobee` | `1.0.10` (pin exact) | Multi-writer convergent Hyperbee. Experimental upstream. |
 
 ## Known Issues (from research)
 
@@ -155,7 +161,7 @@ together.
 4. **`expo-build-properties` must be a dependency** — listing it only in `app.json` plugins without installing it causes prebuild to fail.
 5. **`@qvac/cli` installs cleanly on SDK 0.15** — `@qvac/sdk@0.15` no longer declares `@qvac/cli` as a peer, so no `--legacy-peer-deps` workaround is needed. Use the latest line (`^0.8.1`).
 6. **QVAC expo plugin needs local `@qvac/cli`** — without it, npx downloads a mismatched version that can't bundle.
-7. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobase` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
+7. **Untyped P2P modules** — `hyperswarm`, `corestore`, `hypercore-crypto`, `hyperbee`, `autobee` have no TypeScript types. The scaffold generates `src/types.d.ts` with module declarations.
 
 ## Discovery Commands
 

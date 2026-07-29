@@ -1,9 +1,20 @@
 ---
-description: Autobase: multi-writer consensus for Hypercore — event sourcing over P2P
+description: "Autobase: low-level multi-writer consensus for Hypercore. Prefer Autobee for new work."
 alwaysApply: false
 ---
 
 # Autobase
+
+> **For new multi-writer work, use [Autobee](autobee.mdc) instead.** Autobee is
+> a multi-writer Hyperbee with a smaller surface, and it is what
+> `reference-apps/qvac-app` runs in production. This page covers the older,
+> lower-level primitive — read it when working with existing Autobase code or
+> when you need raw control over the view type.
+>
+> Autobee is **not** built on Autobase (no dependency on it; it is a separate
+> implementation over `hyperbee2`). The APIs are different and must not be
+> mixed — notably Autobee's view uses `view.write()` / `w.tryPut()` batches,
+> while Autobase views use `view.append()`.
 
 ## Overview
 

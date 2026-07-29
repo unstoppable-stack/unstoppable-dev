@@ -1,12 +1,12 @@
 ---
 name: add-multi-writer-sync
-description: Multi-writer data sync using Autobase for convergent state.
+description: Multi-writer data sync using Autobee for convergent state.
 when_to_use: Multiple peers or devices need to write to the same database and converge. Requires add-p2p-networking.
 paths: ["src/p2p/**", "src/data/**"]
-version: "2026-04-14"
+version: "2026-07-29"
 ---
 
-# Add Multi-Writer Sync (Autobase)
+# Add Multi-Writer Sync (Autobee)
 
 ## When to Use
 - User wants multiple peers to write to the same database simultaneously
@@ -17,6 +17,11 @@ version: "2026-04-14"
 > **Not this skill?** If only ONE peer writes and others read, use
 > `add-p2p-sync` instead (single-writer Hypercore replication).
 
+> **Autobee, not Autobase.** Autobee is a multi-writer Hyperbee and is what
+> `reference-apps/qvac-app` runs in production. It is a separate
+> implementation, *not* a wrapper over Autobase — the APIs differ and must not
+> be mixed. For existing Autobase code see `modules/autobase.mdc`.
+
 ## Prerequisites
 - Hyperswarm and Corestore installed (via `add-p2p-networking`)
 - Node.js or Bare runtime
@@ -24,8 +29,9 @@ version: "2026-04-14"
 
 ## Architecture Overview
 
-Autobase takes multiple independent Hypercore writers, linearizes their
-operations into a deterministic order, and produces a single consistent view.
+Each peer appends to its own local Hypercore. Autobee merges those writes into
+a shared Hyperbee view via your `apply` function. Once peers replicate, every
+peer's view is identical.
 
 ```
 ┌─── Writer A ──────┐  ┌─── Writer B ──────┐  ┌─── Writer C ──────┐
@@ -36,16 +42,11 @@ operations into a deterministic order, and produces a single consistent view.
          └───────────┬───────────┴───────────────────────┘
                      │
               ┌──────▼───────┐
-              │  Linearizer  │   Causal DAG → deterministic order
+              │  apply()     │   Your reducer — deterministic
               └──────┬───────┘
                      │
               ┌──────▼───────┐
-              │  apply()     │   Your reducer function
-              └──────┬───────┘
-                     │
-              ┌──────▼───────┐
-              │  View        │   The database clients query
-              │  (Hyperbee)  │   Same on all peers
+              │  view        │   Hyperbee — same on all peers
               └──────────────┘
 ```
 
@@ -54,90 +55,78 @@ operations into a deterministic order, and produces a single consistent view.
 ### Step 1: Install Dependencies
 
 ```bash
-npm i autobase corestore hyperswarm b4a
+npm i autobee corestore hyperswarm b4a
 ```
+
+> Autobee is marked **experimental, expect breaking changes** upstream. Pin an
+> exact version rather than a caret range.
 
 ### Step 2: Define Your Operations
 
-Decide what operations your app needs. Each operation is an action that
-gets appended to a writer core and applied to the view.
+Each operation is a value appended to a writer core and merged by `apply`.
 
-Common operations:
-- `put-item` / `delete-item` — CRUD on your data
-- `add-writer` / `remove-writer` — membership management
-
-For simple apps, JSON-encode operations:
 ```js
-await base.append(JSON.stringify({ type: 'put-item', id: '123', name: 'Test' }))
+await db.append(b4a.from(JSON.stringify({ type: 'put-item', id: '123', name: 'Test' })))
 ```
 
-For production apps, use Hyperdispatch for typed binary encoding. See
+For production apps, use Hyperdispatch for typed binary encoding — see
 `resources/hyperdispatch-pattern.md`.
 
-### Step 3: Create the Autobase
+Design operations so concurrent writers do not clobber each other. Prefer
+targeted ops (`add-reaction`) over whole-document upserts when two devices can
+append to the same collection at once. See
+`recipes/p2p-hyperdb-autobee-sync.mdc`.
+
+### Step 3: Create the Autobee
 
 ```js
-const Corestore = require('corestore')
-const Autobase = require('autobase')
-const Hyperbee = require('hyperbee')
+import Autobee from 'autobee'
+import Corestore from 'corestore'
+import b4a from 'b4a'
 
-function createAutobase(storagePath, bootstrapKey = null) {
+function createDb (storagePath, bootstrapKey = null) {
   const store = new Corestore(storagePath)
 
-  const base = new Autobase(store, bootstrapKey, {
-    open(store) {
-      return new Hyperbee(store.get('view'), {
-        keyEncoding: 'utf-8',
-        valueEncoding: 'json',
-        extension: false,
-      })
-    },
-
-    async apply(nodes, view, host) {
+  const db = new Autobee(store, bootstrapKey, {
+    async apply (nodes, view, host) {
       for (const node of nodes) {
-        if (node.value === null) continue
-
-        const op = JSON.parse(node.value.toString())
+        const op = JSON.parse(b4a.toString(node.value))
 
         switch (op.type) {
           case 'add-writer':
-            await host.addWriter(
-              Buffer.from(op.key, 'hex'),
-              { indexer: !!op.indexer }
-            )
+            // NOTE: `isIndexer` (not `indexer`). Defaults to true.
+            await host.addWriter(b4a.from(op.key, 'hex'), { isIndexer: true })
             break
-          case 'put-item':
-            await view.put(op.id, { name: op.name, updatedBy: op.writerId })
+
+          case 'put-item': {
+            // hyperbee2 batch API — there is no view.put()
+            const w = view.write()
+            w.tryPut(b4a.from(op.id), b4a.from(JSON.stringify({ name: op.name })))
+            await w.flush()
             break
-          case 'delete-item':
-            await view.del(op.id)
-            break
+          }
         }
       }
     },
-
-    ackInterval: 5000,
-    ackThreshold: 0,
   })
 
-  return { store, base }
+  return { store, db }
 }
 ```
-
-> **CRITICAL**: `extension: false` is required for Hyperbee/HyperDB when
-> used as an Autobase view. Autobase manages its own protocol extensions.
 
 ### Step 4: Wire Up Replication
 
 ```js
-const Hyperswarm = require('hyperswarm')
+import Hyperswarm from 'hyperswarm'
 
-async function startReplication(store, base) {
-  await base.ready()
+async function startReplication (db) {
+  await db.ready()
 
   const swarm = new Hyperswarm()
-  swarm.join(base.discoveryKey)
-  swarm.on('connection', (conn) => store.replicate(conn))
+  swarm.join(db.discoveryKey)
+  // Autobee's replicate() is store-level replication PLUS its wakeup session.
+  // Do not call store.replicate(conn) here instead — you lose writer wakeup.
+  swarm.on('connection', (conn) => db.replicate(conn))
 
   return swarm
 }
@@ -145,160 +134,150 @@ async function startReplication(store, base) {
 
 ### Step 5: Bootstrap Multi-Writer
 
-**First instance** (creates the base):
+**First instance** (creates the database):
 ```js
-const { store, base } = createAutobase('./data-peer1')
-await base.ready()
-console.log('Base key:', base.key.toString('hex'))
-console.log('Local writer key:', base.local.key.toString('hex'))
+const { db } = createDb('./data-peer1')
+await db.ready()
+console.log('Database key:', db.key.toString('hex'))       // peers join with this
+console.log('Local writer key:', db.local.key.toString('hex'))
 ```
 
-**Second instance** (joins the base):
+**Second instance** (joins):
 ```js
-const bootstrapKey = Buffer.from('<base-key-from-peer1>', 'hex')
-const { store, base } = createAutobase('./data-peer2', bootstrapKey)
-await base.ready()
-console.log('Local writer key:', base.local.key.toString('hex'))
+const { db } = createDb('./data-peer2', b4a.from('<database-key>', 'hex'))
+await db.ready()
+console.log('writable:', db.writable)                       // false — not yet promoted
+console.log('Local writer key:', db.local.key.toString('hex'))
 ```
 
-**Peer 1 adds Peer 2 as a writer**:
+**Peer 1 promotes Peer 2**:
 ```js
-await base.append(JSON.stringify({
+await db.append(b4a.from(JSON.stringify({
   type: 'add-writer',
-  key: '<peer2-local-writer-key>',
-  indexer: true,
-}))
+  key: '<peer2-LOCAL-writer-key>',
+})))
 ```
 
-**Peer 2 waits for confirmation**:
+> `db.local.key` is the **writer** key — that is what `addWriter` takes.
+> `db.key` is the **database** key that peers join with. Passing `db.key` to
+> `addWriter` silently does nothing.
+
+**Peer 2 waits to become writable.** Autobee has no `is-indexer` event; poll
+`db.writable`, optionally driven by the `'update'` event:
+
 ```js
-base.on('is-indexer', () => {
-  console.log('I am now an indexer — can write and build the view')
-})
+while (!db.writable) {
+  await db.update()
+  await new Promise(r => setTimeout(r, 100))
+}
 ```
 
 ### Step 6: Write and Read
 
 ```js
-// Any writer can append
-await base.append(JSON.stringify({
-  type: 'put-item',
-  id: 'item-1',
-  name: 'Coffee',
-  writerId: base.local.key.toString('hex').slice(0, 8),
-}))
+await db.append(b4a.from(JSON.stringify({ type: 'put-item', id: 'item-1', name: 'Coffee' })))
 
-// Read from the view (same on all peers)
-await base.update()
-const entry = await base.view.get('item-1')
-console.log(entry.value) // { name: 'Coffee', writerId: '...' }
+await db.update()
+const node = await db.view.get(b4a.from('item-1'))   // keys are Buffers
+console.log(JSON.parse(b4a.toString(node.value)))
 ```
 
 ### Step 7: Graceful Shutdown
 
 ```js
-async function shutdown(swarm, base) {
+async function shutdown (swarm, db) {
   await swarm.destroy()
-  await base.close()
+  await db.close()
 }
-
-process.on('SIGINT', () => shutdown(swarm, base))
 ```
 
 ## Idempotent Operations
 
-Because Autobase may reorder operations when causal forks are discovered,
-your `apply` function must handle operations arriving in any order.
+Autobee may reorder operations when causal forks are discovered, so `apply`
+must handle operations arriving in any order.
 
 ```js
-// BAD: assumes create happened before update
-case 'update-item':
-  const existing = await view.get(op.id)
-  existing.value.name = op.name  // crashes if item doesn't exist yet
-  await view.put(op.id, existing.value)
-  break
+// BAD — assumes create happened before update
+case 'update-item': {
+  const existing = await view.get(b4a.from(op.id))
+  const val = JSON.parse(b4a.toString(existing.value))   // throws if absent
+  ...
+}
 
-// GOOD: idempotent upsert — works regardless of order
-case 'put-item':
-  await view.put(op.id, { name: op.name, updatedBy: op.writerId })
+// GOOD — idempotent upsert, order-independent
+case 'put-item': {
+  const w = view.write()
+  w.tryPut(b4a.from(op.id), b4a.from(JSON.stringify({ name: op.name })))
+  await w.flush()
   break
+}
 ```
 
 **Rules for `apply`:**
 1. Only modify the `view` — never external state
 2. No `Date.now()`, `Math.random()`, or I/O
 3. Use upserts, not create-then-update
-4. Handle `null` values (ack nodes) — skip them
-
-## Clients (Read-Only Peers)
-
-Not all peers need to be writers. Clients can replicate just the view:
-
-```js
-const swarm = new Hyperswarm()
-swarm.join(viewDiscoveryKey)
-swarm.on('connection', (conn) => store.replicate(conn))
-
-// Query the view like a regular Hyperbee
-const result = await viewBee.get('item-1')
-```
+4. Never call `db.append()` from inside `apply`
 
 ## Critical Rules
 
-1. **`apply` must be deterministic** — same ops + same order = same view. No external state, no timestamps, no randomness
-2. **Always set `extension: false`** on Hyperbee/HyperDB views — Autobase manages its own extensions
-3. **Use idempotent operations** — operations may be reordered before the signed length. Never assume create-before-update
-4. **Wait for `is-indexer` before writing** — after `addWriter`, the new peer must receive the event before appending
-5. **Use odd numbers of indexers** (3, 5, 7) — even numbers can deadlock on quorum
-6. **Set `ackInterval`** in production — without acks, the signed length never advances and peers can't fast-forward
-7. **Don't use `base.append()` in the `apply` handler** — apply must only modify the view, not generate new operations
-8. **Handle `null` node values** — these are ack nodes and must be skipped in `apply`
+1. **`apply` must be deterministic** — same ops + same order = same view
+2. **`open` must be synchronous** — Autobee assigns `view = open(bee)` without awaiting
+3. **Buffer keys and values** — `view.get()` / `tryPut()` do not take strings
+4. **Use `view.write()` batches** — `w.tryPut(...)` then `await w.flush()`
+5. **Gate writes on `db.writable`** — a joining peer is read-only until promoted
+6. **`db.local.key` ≠ `db.key`** — see above
+7. **Call `db.update()` after replication** — data arriving does not by itself advance the view
+8. **Use odd numbers of indexers** (3, 5, 7) — even counts can deadlock on quorum
+9. **Timestamps do not order writes across devices** — see `recipes/p2p-conflict-resolution.mdc`
 
 ## Validation
 
-1. [ ] First instance creates an Autobase and outputs its `base.key`
-2. [ ] Second instance joins with the bootstrap key and connects via Hyperswarm
-3. [ ] First instance adds second as a writer — second receives `is-indexer` event
-4. [ ] Both writers append independently — view converges to same state
-5. [ ] Offline writes work: disconnect one peer, write on both, reconnect — views merge
-6. [ ] View is queryable: `base.view.get('key')` returns correct data on all peers
-7. [ ] Restart preserves state: kill and restart peers — Autobase recovers from disk
-8. [ ] `base.signedLength` advances as indexers ack
-9. [ ] Read-only client can replicate and query the view without being a writer
+1. [ ] First instance creates a database and outputs its `db.key`
+2. [ ] Second instance joins with that key and connects via Hyperswarm
+3. [ ] Second instance reports `writable === false` before promotion
+4. [ ] First instance appends `add-writer` with the second's **local** key
+5. [ ] Second instance flips to `writable === true`
+6. [ ] Both writers append independently — views converge to the same state
+7. [ ] Offline writes work: disconnect, write on both, reconnect — views merge
+8. [ ] Restart preserves state — Autobee recovers from disk
+9. [ ] Read-only peer can replicate and query without being a writer
 
 ## Troubleshooting
 
-### Writer can append but view doesn't update
-The writer may not be an indexer. Check `base.isIndexer`. If false, use
-`host.addWriter(key, { indexer: true })` from an existing indexer.
+### Second peer never becomes writable
+Check you passed `db.local.key` (the writer key), not `db.key`. Confirm the
+peers are actually connected, and that you are calling `db.update()` in the
+wait loop.
 
 ### View is different on different peers
-The `apply` function is non-deterministic. Check for `Date.now()`,
-`Math.random()`, or external state reads. Apply must produce identical
-output given identical input.
+`apply` is non-deterministic. Check for `Date.now()`, `Math.random()`, or
+external state reads.
 
-### Signed length stuck at 0
-No quorum of indexers is acking. Ensure `ackInterval` is set and multiple
-indexers are online and connected.
+### `view.put is not a function`
+You are using the Hyperbee v1 API. Autobee's view is hyperbee2: use
+`const w = view.write(); w.tryPut(k, v); await w.flush()`.
 
-### "Cannot remove writer" error
-The last indexer cannot be removed. Use `host.removeable(key)` to check
-before calling `removeWriter`.
+### Writes vanish under concurrency
+Two devices are upserting the same document. Model the change as a targeted,
+merge-by-id operation instead. See `recipes/p2p-hyperdb-autobee-sync.mdc`.
 
-### Operations appear to be "lost" after reconnection
-They may have been reordered. This is expected behavior before the signed
-length. Check if the data appears in the view after `base.update()`.
+### Nothing replicates
+You called `store.replicate(conn)` instead of `db.replicate(conn)`. Autobee's
+replicate adds its wakeup session on top of store replication.
 
 ## Deep Dive
 - Hyperdispatch pattern for typed operations: read `resources/hyperdispatch-pattern.md`
 - Full two-peer example: read `resources/full-example.md`
+- Schema'd collections and indexes: `recipes/p2p-hyperdb-autobee-sync.mdc`
+- Which write wins: `recipes/p2p-conflict-resolution.mdc`
 
 ## Reference Apps
 
-- `reference-apps/qvac-workbench-desktop/` — Uses Autobase for project/thread/settings
-  sync between desktop and mobile. See `src/store/listeners/autobaseListener.ts` for
-  the reactive UI update pattern.
+- `reference-apps/qvac-app/core/src/services/networking/worker/` — Autobee in
+  production: mesh setup, writer exchange over Protomux, HyperDB view via
+  `HyperDB.bee2()`, and the apply-level guards that stop terminal records being
+  resurrected.
 
-> **Status**: Based on Autobase v7.27.3, QVAC registry patterns, and reference
-> app analysis. The workbench desktop/mobile use Autobase in production for
-> cross-device data sync.
+> **Status**: Verified against `autobee@1.0.10` (2026-07-29) with a live
+> two-writer convergence test. Upstream marks Autobee experimental.

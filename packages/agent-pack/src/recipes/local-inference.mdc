@@ -88,7 +88,10 @@ Small local models need different prompting than cloud APIs:
 - If streaming stalls, verify the runtime has access to model storage and enough
   disk space.
 - If you hit context overflow errors, use `n_discarded: N` in `modelConfig` for
-  automatic sliding window, or shorten history manually.
+  an automatic sliding window. Do not shorten history manually — the SDK reuses
+  its KV cache by message count, so trimming forces a full re-prefill that
+  overflows the window anyway.
 - Use `kvCache: sessionId` for multi-turn conversations.
-- Qwen 3 models emit `<think>` blocks — add `/no_think` to system prompt or
-  filter with `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`.
+- Qwen models emit `<think>` blocks — disable with `reasoning_budget: 0` in
+  `modelConfig` (`-1` for unlimited). Do not use `/no_think` in the prompt or
+  strip the blocks out of the token stream.

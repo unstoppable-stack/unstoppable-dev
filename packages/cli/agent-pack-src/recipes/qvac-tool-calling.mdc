@@ -65,6 +65,11 @@ const modelId = await loadModel({
     ctx_size: CTX_SIZE,
     n_discarded: Math.floor(CTX_SIZE / 10), // 10% sliding window
     tools: true, // REQUIRED — activates tool-calling template
+    // Anchors the tool block per-turn. The SDK default ('static') bakes tools
+    // into the KV-cache system prefix, which hides the newer Qwen tool-call
+    // format. qvac-app sets 'dynamic' for every LLM load.
+    toolsMode: 'dynamic',
+    reasoning_budget: 0, // 0 = off, -1 = unlimited
   },
 })
 ```
@@ -131,7 +136,9 @@ async function runToolCallingLoop(opts: {
 ```ts
 const sessionId = `session-${Date.now()}`
 const history = [
-  { role: 'system', content: 'You are a helpful assistant. /no_think' },
+  // Reasoning is disabled at load time via `reasoning_budget: 0` — see
+  // Step 1's modelConfig. Do not put `/no_think` in the prompt.
+  { role: 'system', content: 'You are a helpful assistant.' },
   { role: 'user', content: "What's the weather in Paris?" },
 ]
 
