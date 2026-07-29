@@ -45,19 +45,42 @@ console.log(maf)
 
 ## Multi-Writer Support
 
-HyperDB's multi-writer capability is powered by **Autobase** under the hood.
-When multiple peers need to write to the same HyperDB, Autobase linearizes
-their independent writes into a consistent view.
+**HyperDB is not multi-writer by itself.** It has no dependency on Autobase or
+Autobee — it is a schema/index/query layer over a storage engine. Multi-writer
+comes from *composing* it onto a convergent view.
 
-For direct Autobase usage (custom multi-writer apps, server clusters, or
-apps needing fine-grained control over the consensus layer), see:
-- Module: `modules/autobase.mdc`
+Three constructors, three storage engines:
+
+| Constructor | Engine | Writers |
+|---|---|---|
+| `HyperDB.rocks(path, spec)` | Local RocksDB | Single, device-local, not replicated |
+| `HyperDB.bee(core, spec)` | Hyperbee over a Hypercore | Single writer, replicated |
+| `HyperDB.bee2(bee, spec)` | hyperbee2 — **an Autobee view** | Multi-writer, replicated |
+
+For multi-writer, build the HyperDB inside Autobee's `open` handler:
+
+```js
+const db = new Autobee(store, key, {
+  open (bee) {                                    // must be synchronous
+    return { db: HyperDB.bee2(bee, Spec, { autoUpdate: true }) }
+  },
+  apply,
+})
+```
+
+See:
+- Module: `modules/autobee.mdc` (recommended), `modules/autobase.mdc` (legacy)
+- Recipe: `recipes/p2p-hyperdb-autobee-sync.mdc`
 - Skill: `add-multi-writer-sync`
+
+`reference-apps/qvac-app` uses exactly this split: `@qvac/*` collections on a
+`bee2` HyperDB over Autobee for replicated state, and `@local/*` collections on
+a `rocks` HyperDB for device-private state.
 
 ## Integration with Other Modules
 - For P2P mode, use Hyperbee + Hypercore replication over Hyperswarm.
 - Hypercore discovery key can be used to connect peers to the same DB state.
-- For multi-writer, Autobase manages the consensus layer — see `modules/autobase.mdc`.
+- For multi-writer, Autobee provides the convergent view — see `modules/autobee.mdc`.
 
 ## Common Patterns
 ```js

@@ -14,7 +14,7 @@ version: "2026-04-14"
 - User needs an append-only log shared across peers
 
 > **Multi-writer?** If multiple peers need to **write** to the same database
-> and converge, use `add-multi-writer-sync` (Autobase) instead of this skill.
+> and converge, use `add-multi-writer-sync` (Autobee) instead of this skill.
 > This skill covers **single-writer** replication — one peer writes, others read.
 
 ## Prerequisites

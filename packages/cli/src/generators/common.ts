@@ -4,6 +4,59 @@ export function has(opts: GeneratorOptions, feature: Feature): boolean {
   return opts.features.includes(feature)
 }
 
+/**
+ * Default LLM for scaffolded apps.
+ *
+ * `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` is the smallest LLM in `@qvac/sdk@0.15`'s
+ * model registry (532MB, engine `llamacpp-completion`, addon `llm`). It
+ * resolves to the same pinned Hugging Face revision that `tetherto/qvac-app`
+ * hardcodes in its own `llm-catalog.ts` — so we get their validated model
+ * without maintaining a parallel `registry://` catalog.
+ *
+ * Supersedes `QWEN3_600M_INST_Q4` (Qwen 3 0.6B, 382MB). That constant still
+ * exists in the SDK, but Qwen 3 emits `<think>` blocks that had to be stripped
+ * from the token stream by hand; Qwen 3.5 supports `reasoning_budget` instead.
+ */
+export const DEFAULT_LLM_CONST = 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M'
+export const DEFAULT_LLM_LABEL = 'Qwen 3.5 0.8B'
+export const DEFAULT_LLM_SIZE_MB = 532
+export const DEFAULT_CTX_SIZE = 4096
+
+/**
+ * `modelConfig` passed to `loadModel`, as JS source (generators inline this
+ * into the app they emit). Mirrors `buildLlmModelConfig` in qvac-app's
+ * `core/src/services/model/model-load-config.ts`, minus the hardware-probe
+ * keys (`device`, `gpu_layers`, `main-gpu`) that need a GPU probe we don't
+ * scaffold.
+ *
+ * - `reasoning_budget: 0` disables Qwen thinking at the engine level. This is
+ *   the supported replacement for putting `/no_think` in the system prompt and
+ *   regex-stripping `<think>...</think>` out of the token stream — that hack
+ *   leaked partial tags across chunk boundaries. Use `-1` for unlimited
+ *   thinking. Valid in `modelConfig` (load) and in `generationParams`
+ *   (per-completion) — verified against the SDK's `load-model` and
+ *   `completion-stream` schemas.
+ * - `n_discarded` enables the engine's sliding context window: on overflow it
+ *   evicts the oldest ~10% instead of throwing `ContextOverflowError`. With
+ *   this set, never hand-trim history — the SDK reuses its KV cache by message
+ *   count, so dropping old messages forces a full re-prefill that overflows.
+ *   (qvac-app ADR-2026-06-23-append-only-history.)
+ */
+export function llmModelConfig(indent = '    '): string {
+  const i = indent
+  return [
+    '{',
+    `${i}  ctx_size: CTX_SIZE,`,
+    `${i}  // Sliding window — evict oldest ~10% on overflow instead of throwing.`,
+    `${i}  n_discarded: Math.floor(CTX_SIZE / 10),`,
+    `${i}  // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks`,
+    `${i}  // and no stripping reasoning blocks back out of the token stream.`,
+    `${i}  reasoning_budget: 0,`,
+    `${i}  system_prompt: 'You are a helpful assistant.',`,
+    `${i}}`,
+  ].join('\n')
+}
+
 export function tsconfig(): GeneratedFile {
   return {
     path: 'tsconfig.json',

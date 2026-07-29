@@ -1,5 +1,9 @@
 import type { GeneratedFile, GeneratorOptions } from './types.js'
-import { has, gitignore, readme, planningReadme } from './common.js'
+import {
+  has, gitignore, readme, planningReadme,
+  DEFAULT_LLM_CONST, DEFAULT_LLM_LABEL, DEFAULT_LLM_SIZE_MB, DEFAULT_CTX_SIZE,
+  llmModelConfig,
+} from './common.js'
 
 export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -205,15 +209,16 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (has(opts, 'local-ai')) {
-    // QWEN3_600M_INST_Q4 is the smallest verified LLM in @qvac/sdk@0.15
-    // (~400MB download vs ~770MB for LLAMA_3_2_1B). Qwen 3 emits
-    // `<think>...</think>` reasoning blocks by default; we suppress them
-    // with `/no_think` in the system prompt and also strip any that leak
-    // into the token stream so the chat bubbles stay clean.
-    imports.push(
-      `import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'`,
-    )
+    // The SDK is NOT imported at module scope. A static import runs the
+    // SDK's native-module resolution as a side effect of loading worker.js,
+    // so any SDK problem kills the worker at import time — before it can
+    // write anything on its pipe, which surfaces to the UI as a silent hang
+    // with P2P and KV storage never coming up either. Loading it lazily in
+    // the 'load-ai' handler keeps that failure scoped to the AI feature and
+    // reportable over the pipe.
+    moduleState.push(`let sdk = null`)
     moduleState.push(`let modelId = null`)
+    moduleState.push(`const CTX_SIZE = ${DEFAULT_CTX_SIZE}`)
     moduleState.push(`let modelLoading = false`)
     // QVAC_MOCK is read at module load (not inside init) so handleCommand
     // can use it too. The worker runs in two different runtimes:
@@ -232,7 +237,7 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
   send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
   `)
     cleanupCode.push(
-      `  if (modelId && modelId !== 'mock-model') await unloadModel({ modelId })`,
+      `  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })`,
     )
 
     commandHandlers.push(`
@@ -249,13 +254,11 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        modelId = await loadModel({
-          modelSrc: QWEN3_600M_INST_Q4,
+        sdk = await import('@qvac/sdk')
+        modelId = await sdk.loadModel({
+          modelSrc: sdk.${DEFAULT_LLM_CONST},
           modelType: 'llm',
-          modelConfig: {
-            ctx_size: 4096,
-            system_prompt: 'You are a helpful assistant. /no_think',
-          },
+          modelConfig: ${llmModelConfig('          ')},
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
         send({ type: 'status', service: 'ai', status: 'ready', modelId })
@@ -279,40 +282,12 @@ function workerJs(opts: GeneratorOptions): GeneratedFile {
         break
       }
       try {
-        const result = completion({ modelId, history: msg.history, stream: true })
-        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
-        // /no_think in the system prompt, small models occasionally leak a
-        // few tokens. Track depth so partial tags across chunks still hide.
-        let inThink = false
-        let carry = ''
+        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
+        // tokens arrive as plain content — no reasoning-block filtering needed.
+        const result = sdk.completion({ modelId, history: msg.history, stream: true })
         for await (const token of result.tokenStream) {
-          carry += token
-          let out = ''
-          while (carry.length) {
-            if (!inThink) {
-              const open = carry.indexOf('<think>')
-              if (open === -1) {
-                // Keep up to 7 chars (length of "<think>") in carry in case
-                // the tag is split across tokens; emit the rest.
-                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
-                break
-              }
-              out += carry.slice(0, open)
-              carry = carry.slice(open + 7)
-              inThink = true
-            } else {
-              const close = carry.indexOf('</think>')
-              if (close === -1) {
-                if (carry.length > 8) carry = carry.slice(-8)
-                break
-              }
-              carry = carry.slice(close + 8)
-              inThink = false
-            }
-          }
-          if (out) send({ type: 'chat-token', token: out })
+          send({ type: 'chat-token', token })
         }
-        if (!inThink && carry) send({ type: 'chat-token', token: carry })
         send({ type: 'chat-done' })
       } catch (err) {
         send({ type: 'chat-error', error: String(err && err.message || err) })
@@ -494,7 +469,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     sectionHtml.push(`
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
+        <p class="card-hint">${DEFAULT_LLM_LABEL} · ~${DEFAULT_LLM_SIZE_MB}MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>

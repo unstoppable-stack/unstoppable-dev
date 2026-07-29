@@ -1,0 +1,208 @@
+---
+description: "Recipe: replicated app state with HyperDB over Autobee — collection split, and the convergence hazards that bite when you leave SQL"
+alwaysApply: false
+---
+
+# Recipe: HyperDB over Autobee
+
+## Problem
+
+You want multi-device app state that converges without a server: every device
+reads and writes, works offline, and merges on reconnect.
+
+The tempting design is "local SQL database + a replication layer that ships row
+changes." `reference-apps/qvac-app` shipped exactly that (SQLite + Drizzle +
+explicit row ops over Autobee) and then removed it, replacing it with HyperDB
+directly over Autobee. Their migration report
+(`reference-apps/qvac-app/docs/hyperdb-migration-report.md`) is the source for
+this recipe.
+
+## When to Use
+
+- Multi-device sync where every device is a writer
+- Offline-first apps that must merge cleanly on reconnect
+- You want indexed queries, not raw key-value
+
+**Not this recipe** if only one peer writes (use Hyperbee/Hypercore
+replication) or if the data is device-local derived state (use
+`HyperDB.rocks`).
+
+## Architecture
+
+```
+      ┌── Device A ──┐   ┌── Device B ──┐   ┌── Device C ──┐
+      │ local writer │   │ local writer │   │ local writer │
+      └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
+             └─────────── Hyperswarm ──────────────┘
+                              │
+                        ┌─────▼──────┐
+                        │  Autobee   │  deterministic merge (apply)
+                        └─────┬──────┘
+                              │
+                    ┌─────────▼──────────┐
+                    │ HyperDB.bee2(view) │  @qvac/*  — replicated
+                    └────────────────────┘
+
+                    ┌────────────────────┐
+                    │ HyperDB.rocks(...) │  @local/* — device-private
+                    └────────────────────┘
+```
+
+## Step 1: Split your collections by trust boundary
+
+Decide **per collection** whether it replicates. This is the highest-leverage
+decision in the design, and it is hard to change later.
+
+| Namespace | Engine | Holds |
+|---|---|---|
+| `@app/*` | `HyperDB.bee2` over Autobee | Shared truth: domain records every device should see |
+| `@local/*` | `HyperDB.rocks` | Device identity, keys, model prefs, per-device progress, audit logs |
+
+**Credentials, refresh tokens, and API keys never go in replicated state.**
+Nor does derived per-device state (search indexes, caches) — recompute it
+instead of syncing it.
+
+## Step 2: Compose the stores
+
+```js
+import Autobee from 'autobee'
+import HyperDB from 'hyperdb'
+import Corestore from 'corestore'
+import AppSpec from './spec/app/index.js'
+import LocalSpec from './spec/local/index.js'
+
+const store = new Corestore('./data')
+
+const autobee = new Autobee(store, key, {
+  // Synchronous — Autobee assigns view = open(bee) without awaiting.
+  open (bee) {
+    return { db: HyperDB.bee2(bee, AppSpec, { autoUpdate: true }) }
+  },
+  apply,
+})
+await autobee.ready()
+
+// Device-private, never replicated
+const local = HyperDB.rocks('./data/local', LocalSpec)
+```
+
+## Step 3: Guard the apply function
+
+`apply` is where convergence is won or lost. It runs on every device over the
+same linearized ops, so it must be deterministic — and it must reject ops that
+would move state backwards.
+
+```js
+async function apply (nodes, view, host) {
+  for (const node of nodes) {
+    const op = decode(node.value)
+
+    if (op.type === 'addWriter') { await host.addWriter(op.key); continue }
+
+    if (op.type === 'upsert') {
+      const existing = await view.db.get(op.collection, { id: op.doc.id })
+
+      // Guard 1 — never resurrect a terminal record.
+      if (existing && isTerminal(existing) && !isTerminal(op.doc)) continue
+
+      // Guard 2 — drop stale writes. Requires a monotonic field; see below.
+      if (existing && op.doc.hlc <= existing.hlc) continue
+
+      await view.db.insert(op.collection, merge(existing, op.doc))
+    }
+  }
+}
+```
+
+## The five hazards
+
+These are the concrete failure modes qvac-app hit moving off SQL. Each is a
+guarantee SQLite gave for free that a convergent store does not.
+
+### 1. Optional fields decode to zero values, not null
+
+An absent optional decodes as `0` / `null` / `false` depending on type — it
+does **not** round-trip as `undefined`.
+
+```js
+if (doc.updatedAt ?? 0)      // WRONG — 0 is not nullish, passes when unset
+if (doc.updatedAt)           // right — truthy guard
+```
+
+Use `||` and truthy checks for timestamps and counters. Never `??` or
+`=== null`. If you need real tri-state (inherit / on / off), declare an actual
+enum in the schema rather than leaning on `boolean | null`.
+
+### 2. No foreign keys, uniqueness, cascades, JOIN, or ORDER BY
+
+Every secondary lookup needs a **registered index**. Ordering and filtering
+become index keys or in-memory work. Cascade deletes must be written by hand.
+Uniqueness must be enforced in application code — and cannot be enforced
+across concurrent writers at all.
+
+There is also no `DELETE` that replicates. Use soft deletes (`deletedAt`) and
+filter on read.
+
+### 3. Concurrent appends to embedded arrays clobber each other
+
+Embedding children in a parent doc (attachments on a message, reactions on a
+post) is atomic for one writer. Two devices appending concurrently produces
+last-write-wins — one append silently vanishes.
+
+Fix: named ops that **merge by id** at apply time, rather than whole-document
+upserts.
+
+```js
+// Instead of: upsert(message with reactions: [...all])
+{ type: 'add-reaction', messageId, reaction }   // merged by reaction.id
+```
+
+### 4. Terminal-state resurrection
+
+An in-flight op written before a record finished can arrive after it finished
+and move it back to a live state. Guard 1 above blocks the terminal→live
+direction.
+
+Backward *live-to-live* transitions (`executing` → `queued`) still overwrite
+unless you have a monotonic field — which is hazard 5.
+
+### 5. No causal ordering reaches your code
+
+Autobee linearizes the oplog, but that order does not cross into the apply
+function's conflict decisions. Wall-clock timestamps from different devices are
+not comparable — every such comparison is a clock-skew bug.
+
+Use a **hybrid logical clock**. See `recipes/p2p-conflict-resolution.mdc`.
+
+## Cross-device claims
+
+If devices race to claim work (a queue item, a lock), a whole-document upsert
+cannot express "claim if unclaimed." Model the claim as its own op so that
+first-writer-in-linearization wins deterministically at apply time:
+
+```js
+{ type: 'claim', itemId, deviceId }
+```
+
+Two remaining caveats qvac-app documents as open:
+
+- Both devices may have already *done* the work before the claim resolves. The
+  loser still holds a result. Dedupe results, or assign ownership up front.
+- A "release" that rewrites the whole item can un-claim something another
+  device just claimed. Make release a targeted op too.
+
+## Performance
+
+- **Stream, never `toArray()`** on collections that grow without bound. Check a
+  `closing` flag per row so shutdown is not blocked.
+- **Use registered indexes** rather than scanning and filtering in memory.
+- **Make migrations idempotent** and re-runnable. There is no transactional
+  schema version to lean on; an interrupted migration must be safe to re-run on
+  next boot, driven by a flag in `@local/*`.
+
+## Related
+
+- Module: `modules/autobee.mdc`, `modules/hyperdb.mdc`
+- Recipe: `recipes/p2p-conflict-resolution.mdc`
+- Skill: `add-multi-writer-sync`
+- Reference: `reference-apps/qvac-app/docs/hyperdb-migration-report.md`

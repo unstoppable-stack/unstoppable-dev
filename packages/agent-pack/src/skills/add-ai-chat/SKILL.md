@@ -56,15 +56,17 @@ project's `src/ai/` if needed. For simple apps, using `@qvac/sdk` directly is ea
 
    | Use Case | Model Constant | Size |
    |----------|---------------|------|
-   | Tool calling (best) | `QWEN_3_1_7B_INST_Q4` | ~4GB |
-   | Tool calling (lighter) | `QWEN_3_4B_INST_Q4_K_M` | ~2.5GB |
-   | Tool calling (small) | `LLAMA_TOOL_CALLING_3_2_1B_INST_Q4_K` | ~1GB |
-   | General chat (small) | `LLAMA_3_2_1B_INST_Q4_0` | ~1GB |
-   | General chat (quality) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
-   | Mobile (tiny) | `QWEN3_600M_INST_Q4` | ~0.5GB |
+   | Default / mobile / tiny | `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` | ~0.5GB |
+   | Balanced | `QWEN3_5_2B_MULTIMODAL_Q4_K_M` | ~1.3GB |
+   | Tool calling / quality | `QWEN3_5_4B_MULTIMODAL_Q4_K_M` | ~2.7GB |
+   | Desktop, high quality | `QWEN3_5_9B_MULTIMODAL_Q4_K_M` | ~5.7GB |
+   | General chat (legacy) | `LLAMA_3_2_1B_INST_Q4_0` | ~1GB |
+   | General chat (quality, legacy) | `SALAMANDRATA_2B_INST_Q8` | ~2GB |
    | Multimodal | `SMOLVLM2_2_500M_MULTIMODAL_Q8_0` + projection | ~500MB + ~100MB |
 
-   > **IMPORTANT**: Only use model constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist. The SDK exports Qwen 3 models.
+   > **IMPORTANT**: Prefer the Qwen 3.5 family — it is what `tetherto/qvac-app`
+   > ships on every tier, and it supports `reasoning_budget`. Only use model
+   > constants listed above. `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist.
    >
    > To enumerate every model at runtime: `modelRegistryList()`, `modelRegistrySearch({ query })`, `modelRegistryGetModel({ name })`.
 
@@ -336,17 +338,22 @@ For non-JSON DSLs (regex-like grammars, custom syntaxes), use the lower-level
 
 ---
 
-## Qwen 3 Models: `<think>` Token Handling
+## Qwen Models: Reasoning Control
 
-Qwen 3 models emit `<think>...</think>` blocks for internal reasoning.
+Qwen models emit `<think>...</think>` blocks for internal reasoning.
 
-- **Preferred (0.10)**: pass `captureThinking: true` to `completion()` — the
+- **Suppress entirely**: `reasoning_budget: 0` in `loadModel().modelConfig`
+  (`-1` = unlimited). Engine-level, so the tokens are never generated and cost
+  no context. Also accepted per-call in `completion().generationParams`.
+- **Keep, but separated**: pass `captureThinking: true` to `completion()` — the
   SDK splits content and thinking into separate event channels, no regex
   needed. `final.thinkingText` holds the full thinking transcript.
-- **Suppress entirely**: add `/no_think` to the end of your system prompt
-- **Manual filter (legacy paths only)**: `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
-- **Context impact**: think tokens count against the context window even when
-  filtered/captured
+- **Do not** add `/no_think` to the system prompt (advisory only, the model can
+  ignore it) or strip the blocks out of a token stream by hand (partial tags
+  split across chunks leak into the UI).
+- **Context impact**: reasoning tokens count against the context window whenever
+  they are generated, even if filtered from display. Only `reasoning_budget: 0`
+  avoids the cost.
 
 ## System Prompt Engineering for Local Models
 

@@ -21,9 +21,9 @@ The `us scaffold app -p node-cli` command generates:
 - `tsconfig.json` with strict mode, ES2022, NodeNext resolution
 - `src/index.ts` with graceful startup/shutdown and feature initialization
 - `src/types.d.ts` with `declare module` for untyped P2P libraries (hyperswarm, corestore, etc.)
-- Feature-specific managers (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`, `autobase-manager.ts`)
+- Feature-specific managers (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`)
 
-All feature combinations (p2p, kv-storage, qvac, autobase, and their combos) are validated to typecheck and run.
+All feature combinations (local-ai, wallet, node-sync, and their combos) are validated to typecheck and run.
 
 ## When to Read This Skill
 - You already scaffolded and need to **add custom commands or features**

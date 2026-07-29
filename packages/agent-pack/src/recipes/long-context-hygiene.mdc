@@ -23,6 +23,45 @@ sessions healthy over dozens or hundreds of turns.
 - Sessions that accumulate large tool outputs (file reads, grep results)
 - Any session lasting more than ~20 turns
 
+## ⚠ Does NOT apply to local QVAC inference
+
+**This recipe targets remote-API agent runtimes** (Claude API and similar),
+where you control the prompt and the provider re-reads it every turn.
+
+For `@qvac/sdk` local inference, history trimming is actively harmful. Send the
+**full** model-visible history every turn and let the engine evict:
+
+```js
+await loadModel({
+  modelSrc: MODEL,
+  modelType: 'llm',
+  modelConfig: {
+    ctx_size: CTX_SIZE,
+    n_discarded: Math.floor(CTX_SIZE / 10),   // engine-owned sliding window
+  },
+})
+```
+
+Why trimming breaks it: the SDK reuses its per-chat KV cache **by message
+count** — each turn it prefills only `history.slice(savedCount)`, trusting the
+first `savedCount` messages are byte-identical to what is cached. Drop old
+messages and the sent list falls below `savedCount`, so the SDK can no longer
+slice and re-prefills the *entire* conversation in one batch. The addon rejects
+any single batch exceeding the context window before the sliding window can run
+— so you get `ContextOverflowError` on a long chat even when only a one-line
+new turn needed to fit.
+
+Character-budget estimates make it worse: code, JSON, and CJK tokenize well
+below the usual ~2.5 chars/token assumption, so a "trimmed" window can itself
+exceed the real one.
+
+Apply only coherence transforms to local history — filtering hidden/cancelled
+turns, dedup, tool-row expansion, trimming leading orphan tool results — and no
+token or character budget.
+
+Source: `reference-apps/qvac-app/docs/decisions/2026-06-23-append-only-history.md`.
+See also `recipes/qvac-kv-cache.mdc`.
+
 ## Concept: Layered Pressure Relief
 
 Production agent runtimes use multiple layers, each catching different

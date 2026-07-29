@@ -3,7 +3,9 @@
 ## Model constant not found
 - Only use constants from `@qvac/sdk@0.15.0` — see the model guide
 - `QWEN_2_5_*` and `QWEN_2_5_CODER_*` do NOT exist
-- Use `QWEN_3_1_7B_INST_Q4`, `QWEN_3_4B_INST_Q4_K_M`, or `QWEN3_600M_INST_Q4`
+- Prefer the Qwen 3.5 family: `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` (tiny),
+  `QWEN3_5_2B_MULTIMODAL_Q4_K_M`, `QWEN3_5_4B_MULTIMODAL_Q4_K_M`,
+  `QWEN3_5_9B_MULTIMODAL_Q4_K_M`
 - Legacy multi-file Parakeet constants (`PARAKEET_TDT_ENCODER_INT8`, etc.) and 32 `NMT_Q0F16*`/`NMT_Q4_0*` Marian Opus constants were REMOVED in 0.11 — use the GGUF Parakeet constants and IndicTrans/Bergamot instead
 - Enumerate at runtime: `modelRegistryList()` / `modelRegistrySearch({ query })`
 
@@ -71,10 +73,13 @@
 - `n_discarded` eliminates the need for manual history trimming
 
 ## `<think>` blocks appearing in output
-- Add `/no_think` to the end of the system prompt
-- Filter with `text.replace(/<think>[\s\S]*?<\/think>/g, '').trim()`
-- Use `createTokenFilter()` or `isInsideThinkBlock()` during streaming
-- Think tokens still count against context window
+- Set `reasoning_budget: 0` in `loadModel().modelConfig` (`-1` = unlimited).
+  This is engine-level, so the blocks are never generated.
+- Can also be overridden per-call via `completion().generationParams`.
+- Do **not** use `/no_think` in the system prompt, and do not strip the blocks
+  out of the token stream: prompt-level suppression is advisory, stream
+  stripping leaks partial tags across chunk boundaries, and filtered reasoning
+  tokens still consume context.
 
 ## Memory not freed after conversation
 - Call `await deleteCache({ kvCacheKey: sessionId })` when done
