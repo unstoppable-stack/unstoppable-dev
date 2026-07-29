@@ -1,12 +1,14 @@
 # Unstoppable Node Desktop
 
-Pear Desktop dashboard for the [Unstoppable Node](../node/). This is the
-same node daemon as `unstoppable-node` but with a graphical control panel:
+Pear Desktop home for a user's **Personal Node**. It runs the same daemon as
+`unstoppable-node`, with a control panel intended to make protection and local
+AI understandable without requiring protocol knowledge:
 
-- See which apps are paired, what cores and drives they're syncing
-- Watch peer connections come and go in real time
-- Toggle the AI provider on/off (via `--ai` / `--ai-mock` launch flags)
-- Unpair apps you no longer want to replicate
+- See which apps are protected and whether protection is active or paused
+- Review each app's storage use and choose a human-readable storage limit
+- Allow or block AI access per app and turn local AI on or off globally
+- Inspect technical details only when needed
+- Remove apps that should no longer connect
 - Use the system tray menu to show or quit the dashboard
 
 ## Running
@@ -19,16 +21,18 @@ pnpm install
 pnpm --filter unstoppable-node-desktop dev
 ```
 
-The dashboard binds to the same local discovery topic as `unstoppable-node`,
-so paired apps from either mode will connect to this daemon.
+The dashboard binds to the same machine-local discovery topic as
+`unstoppable-node`, so apps on this computer connect without setup. Discovery
+across a phone or second computer requires an explicit shared topic; a safe
+end-user device-linking flow is not implemented yet.
 
 The tray menu is enabled when Pear/Electron supports it. It exposes Show,
 Pause All, Resume All, and Quit actions. Closing the dashboard hides it to the tray on supported desktop
 platforms; Linux keeps normal close behavior because tray support varies by
 desktop environment.
 
-When pair approvals are pending, supported desktop environments show an app
-badge with the pending request count. Config can also enable a short generated
+When app approvals are pending, supported desktop environments show an app
+badge with the pending request count. Advanced settings can enable a short generated
 sound and best-effort window restore for pair requests; both are off by default.
 
 ## Flags
@@ -83,10 +87,12 @@ the same way.
 ## Status
 
 - Phase 1 (the basics) ✓
-  - App list with unpair, live peer/core/drive counts, persistent event log
-  - Pair approval modal, trust registry, promote/forget controls
-  - Config tab, AI controls, storage quotas, backup/import, tray menu
+  - Protected-app list with plain-language state and expandable technical details
+  - Permission modal with least-privilege capability summaries
+  - Advanced settings, AI controls, storage limits, settings export/import, tray menu
 - Phase 2 (future)
+  - QR/device-code linking for phones and additional computers
+  - Encrypted app-data backup, restore, retention, and delete controls
   - Graphs for bandwidth and replication progress
   - Richer model picker UI for QVAC provider
   - Close-to-tray and richer tray status controls

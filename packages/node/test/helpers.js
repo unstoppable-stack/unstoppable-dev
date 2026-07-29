@@ -69,9 +69,10 @@ export async function createTestEnv () {
       drives: opts.drives || [],
       swarm: { bootstrap },
       topic,
-      timeout: opts.timeout,
+      ...(opts.timeout === undefined ? {} : { timeout: opts.timeout }),
       requireServices: opts.requireServices,
-      reconnect: opts.reconnect
+      reconnect: opts.reconnect,
+      requestedCapabilities: opts.requestedCapabilities
     })
   }
 

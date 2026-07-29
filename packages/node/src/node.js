@@ -7,9 +7,12 @@ import { ReplicationEngine } from './replication.js'
 import { AIProvider } from './ai-provider.js'
 import { loadConfig, saveConfig, mergeConfigPatch, validateConfig } from './config.js'
 import { writeNodeStateBundle } from './export.js'
-import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION, buildCapabilities, defaultCapabilityGrants } from './protocol.js'
+import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION, buildCapabilities, defaultCapabilityGrants, requestedCapabilityGrants } from './protocol.js'
 
 const DEFAULT_DISCOVERY_WARMUP_MS = 0
+const MAX_CONTROL_FRAME_CHARS = 1024 * 1024
+const MAX_CORE_PEEK_BLOCKS = 10
+const MAX_DRIVE_PEEK_ENTRIES = 100
 
 export class NodeDaemon extends EventEmitter {
   constructor (storagePath, opts = {}) {
@@ -21,6 +24,9 @@ export class NodeDaemon extends EventEmitter {
     this.registry = null
     this.replication = null
     this.connections = new Map()
+    this.sessions = new Map()
+    this._activeInferences = new Set()
+    this._cancelledInferences = new Set()
     this._closing = false
     this._topicOverride = opts.topic || null
     this._discoveryWarmupMs = typeof opts.discoveryWarmupMs === 'number'
@@ -191,6 +197,7 @@ export class NodeDaemon extends EventEmitter {
   _handleDiscoveryConnection (socket, info) {
     const remoteKey = b4a.toString(info.publicKey, 'hex')
     this.connections.set(remoteKey, socket)
+    this.sessions.set(socket, { remoteKey, appId: null, publicKey: null, grants: null })
     this.emit('peerConnected', { publicKey: remoteKey })
 
     // Greet the peer immediately so the client can confirm it's talking to a
@@ -207,13 +214,21 @@ export class NodeDaemon extends EventEmitter {
     let buffer = ''
     socket.on('data', (data) => {
       buffer += b4a.toString(data)
+      if (buffer.length > MAX_CONTROL_FRAME_CHARS) {
+        this.emit('error', { type: 'protocol', from: remoteKey, error: 'control frame exceeds maximum size' })
+        socket.destroy()
+        return
+      }
       const lines = buffer.split('\n')
       buffer = lines.pop()
       for (const line of lines) {
         if (!line.trim()) continue
         try {
           const msg = JSON.parse(line)
-          this._handleMessage(msg, socket, remoteKey)
+          this._handleMessage(msg, socket, remoteKey).catch((err) => {
+            this.emit('error', { type: 'message', from: remoteKey, error: err.message })
+            this._writeError(socket, null, 'REQUEST_FAILED', 'Request failed')
+          })
         } catch {
           // ignore malformed
         }
@@ -222,6 +237,10 @@ export class NodeDaemon extends EventEmitter {
 
     socket.on('close', () => {
       this.connections.delete(remoteKey)
+      this.sessions.delete(socket)
+      for (const inferenceKey of this._activeInferences) {
+        if (inferenceKey.startsWith(`${remoteKey}:`)) this._cancelledInferences.add(inferenceKey)
+      }
       this.emit('peerDisconnected', { publicKey: remoteKey })
     })
 
@@ -239,11 +258,18 @@ export class NodeDaemon extends EventEmitter {
         await this._handleRegister(msg, socket, remoteKey)
         break
       case 'heartbeat':
-        this.emit('heartbeat', { appId: msg.appId, uptime: msg.uptime })
+        if (!this._authorize(socket, 'resources', 'status', msg.requestId)) break
+        this.emit('heartbeat', { appId: this.sessions.get(socket).appId, uptime: msg.uptime })
         break
       case 'inference':
         await this._handleInference(msg, socket, remoteKey)
         break
+      case 'inference-cancel': {
+        const session = this._authorize(socket, 'ai', 'completion.stream', msg.requestId, 'inference-error')
+        const inferenceKey = session && `${session.publicKey}:${msg.requestId}`
+        if (inferenceKey && this._activeInferences.has(inferenceKey)) this._cancelledInferences.add(inferenceKey)
+        break
+      }
       case 'status-request':
         await this._handleStatusRequest(msg, socket)
         break
@@ -262,24 +288,39 @@ export class NodeDaemon extends EventEmitter {
   }
 
   async _handleStatusRequest (msg, socket) {
+    const session = this._authorize(socket, 'resources', 'status', msg.requestId)
+    if (!session) return
+    const status = this._statusForApp(await this.getStatus(), session.appId)
     socket.write(encodeMessage({
       type: 'status',
       requestId: msg.requestId,
-      status: await this.getStatus()
+      status
     }))
   }
 
   async _handleDiskUsageRequest (msg, socket) {
+    const session = this._authorize(socket, 'storage', 'usage', msg.requestId)
+    if (!session) return
+    const status = await this.getStatus()
+    const bytes = status.storage?.perApp?.[session.appId] || 0
     socket.write(encodeMessage({
       type: 'disk-usage',
       requestId: msg.requestId,
-      usage: await this.getDiskUsage()
+      usage: { bytes, files: null, path: null, scope: 'self' }
     }))
   }
 
   async _handlePeekCore (msg, socket) {
+    const session = this._authorize(socket, 'resources', 'peek', msg.requestId)
+    if (!session) return
+    const app = await this.registry.getApp(session.appId)
+    if (!(app?.cores || []).some((core) => core.key === msg.key)) {
+      this._writeError(socket, msg.requestId, 'RESOURCE_FORBIDDEN', 'Core is not registered to this app')
+      return
+    }
+    const limit = clampInteger(msg.limit, 1, MAX_CORE_PEEK_BLOCKS, 5)
     const result = this.replication
-      ? await this.replication.peekCore(msg.key, { limit: msg.limit })
+      ? await this.replication.peekCore(msg.key, { limit })
       : null
     socket.write(encodeMessage({
       type: 'peek-core-result',
@@ -289,8 +330,17 @@ export class NodeDaemon extends EventEmitter {
   }
 
   async _handlePeekDrive (msg, socket) {
+    const session = this._authorize(socket, 'resources', 'peek', msg.requestId)
+    if (!session) return
+    const app = await this.registry.getApp(session.appId)
+    if (!(app?.drives || []).some((drive) => drive.key === msg.key)) {
+      this._writeError(socket, msg.requestId, 'RESOURCE_FORBIDDEN', 'Drive is not registered to this app')
+      return
+    }
+    const limit = clampInteger(msg.limit, 1, MAX_DRIVE_PEEK_ENTRIES, 50)
+    const dir = typeof msg.dir === 'string' && msg.dir.length <= 1024 ? msg.dir : '/'
     const result = this.replication
-      ? await this.replication.peekDrive(msg.key, { dir: msg.dir, limit: msg.limit })
+      ? await this.replication.peekDrive(msg.key, { dir, limit })
       : null
     socket.write(encodeMessage({
       type: 'peek-drive-result',
@@ -302,6 +352,12 @@ export class NodeDaemon extends EventEmitter {
 
   async _handleInference (msg, socket /* , remoteKey */) {
     const requestId = msg.requestId
+    const session = this._authorize(socket, 'ai', 'completion.stream', requestId, 'inference-error')
+    if (!session) return
+    if (typeof requestId !== 'string' || !requestId || !Array.isArray(msg.messages)) {
+      this._writeError(socket, requestId, 'INVALID_REQUEST', 'Inference requires a requestId and messages array', 'inference-error')
+      return
+    }
     if (!this.ai || !this.services.ai) {
       socket.write(encodeMessage({
         type: 'inference-error',
@@ -310,39 +366,44 @@ export class NodeDaemon extends EventEmitter {
       }))
       return
     }
-    const app = msg.appId ? await this.registry.getApp(msg.appId) : null
-    if (!app) {
-      socket.write(encodeMessage({
-        type: 'inference-error',
-        requestId,
-        error: 'App not paired. Send pairRequest first.'
-      }))
-      return
-    }
-    if (app.grants && !(app.grants.ai || []).includes('completion.stream')) {
-      socket.write(encodeMessage({
-        type: 'inference-error',
-        requestId,
-        error: 'AI capability not granted for this app'
-      }))
-      return
-    }
+    const inferenceKey = `${session.publicKey}:${requestId}`
+    this._activeInferences.add(inferenceKey)
     try {
       for await (const token of this.ai.runStreaming({ messages: msg.messages, stream: true })) {
+        if (this._cancelledInferences.has(inferenceKey)) break
         socket.write(encodeMessage({ type: 'inference-token', requestId, token }))
       }
-      socket.write(encodeMessage({ type: 'inference-done', requestId }))
-      this.emit('inference', { requestId, appId: msg.appId })
+      if (!this._cancelledInferences.has(inferenceKey)) {
+        socket.write(encodeMessage({ type: 'inference-done', requestId }))
+        this.emit('inference', { requestId, appId: session.appId })
+      }
     } catch (err) {
       socket.write(encodeMessage({
         type: 'inference-error',
         requestId,
         error: err.message
       }))
+    } finally {
+      this._activeInferences.delete(inferenceKey)
+      this._cancelledInferences.delete(inferenceKey)
     }
   }
 
   async _handlePairRequest (msg, socket, remoteKey) {
+    const currentSession = this.sessions.get(socket)
+    if (currentSession?.appId) {
+      socket.write(encodeMessage({ type: 'pairDenied', reason: 'this connection is already paired' }))
+      return
+    }
+    if (typeof msg.publicKey !== 'string' || msg.publicKey !== remoteKey) {
+      socket.write(encodeMessage({ type: 'pairDenied', reason: 'identity key does not match secure transport' }))
+      this.emit('pairDenied', { appId: msg.appId, appName: msg.appName, publicKey: msg.publicKey, reason: 'identity mismatch' })
+      return
+    }
+    if (typeof msg.appId !== 'string' || !msg.appId.trim()) {
+      socket.write(encodeMessage({ type: 'pairDenied', reason: 'invalid app identity' }))
+      return
+    }
     this.emit('pairRequest', {
       appId: msg.appId,
       appName: msg.appName,
@@ -383,7 +444,7 @@ export class NodeDaemon extends EventEmitter {
       }
     }
 
-    const grants = defaultCapabilityGrants(this.capabilities)
+    const grants = requestedCapabilityGrants(this.capabilities, msg.requestedCapabilities)
     await this.registry.registerApp({
       appId: msg.appId,
       appName: msg.appName,
@@ -392,6 +453,7 @@ export class NodeDaemon extends EventEmitter {
       requestedCapabilities: msg.requestedCapabilities || null,
       grants
     })
+    this.sessions.set(socket, { remoteKey, appId: msg.appId, publicKey: remoteKey, grants })
 
     socket.write(encodeMessage({
       type: 'pairAccepted',
@@ -405,32 +467,27 @@ export class NodeDaemon extends EventEmitter {
   }
 
   async _handleRegister (msg, socket, remoteKey) {
-    const app = await this.registry.getApp(msg.appId)
-    if (!app) {
-      socket.write(encodeMessage({
-        type: 'error',
-        message: 'App not paired. Send pairRequest first.'
-      }))
-      return
-    }
+    const session = this._authorize(socket, 'resources', 'register', msg.requestId)
+    if (!session) return
+    const app = await this.registry.getApp(session.appId)
 
     const replicating = []
     for (const core of msg.cores || []) {
       try {
-        await this.replication.addCore({ ...core, appId: msg.appId })
+        await this.replication.addCore({ ...core, appId: session.appId })
         replicating.push(core.key)
       } catch (err) {
-        this.emit('error', { type: 'replication', appId: msg.appId, core: core.name, error: err.message })
+        this.emit('error', { type: 'replication', appId: session.appId, core: core.name, error: err.message })
       }
     }
 
     const replicatingDrives = []
     for (const drive of msg.drives || []) {
       try {
-        await this.replication.addDrive({ ...drive, appId: msg.appId })
+        await this.replication.addDrive({ ...drive, appId: session.appId })
         replicatingDrives.push(drive.key)
       } catch (err) {
-        this.emit('error', { type: 'replication', appId: msg.appId, drive: drive.name, error: err.message })
+        this.emit('error', { type: 'replication', appId: session.appId, drive: drive.name, error: err.message })
       }
     }
 
@@ -447,7 +504,7 @@ export class NodeDaemon extends EventEmitter {
     }))
 
     this.emit('appRegistered', {
-      appId: msg.appId,
+      appId: session.appId,
       coreCount: (msg.cores || []).length,
       driveCount: (msg.drives || []).length
     })
@@ -455,10 +512,62 @@ export class NodeDaemon extends EventEmitter {
     await this._enforceQuotas(this.replication.getReplicatedBytes())
   }
 
+  _authorize (socket, capability, method, requestId = null, errorType = 'error') {
+    const session = this.sessions.get(socket)
+    if (!session?.appId) {
+      this._writeError(socket, requestId, 'NOT_PAIRED', 'App not paired. Send pairRequest first.', errorType)
+      return null
+    }
+    if (!(session.grants?.[capability] || []).includes(method)) {
+      this._writeError(socket, requestId, 'CAPABILITY_DENIED', `${capability}.${method} is not granted for this app`, errorType)
+      return null
+    }
+    return session
+  }
+
+  _writeError (socket, requestId, code, message, type = 'error') {
+    const payload = type === 'inference-error'
+      ? { type, requestId, code, error: message }
+      : { type, requestId, code, message }
+    try { socket.write(encodeMessage(payload)) } catch {}
+  }
+
+  _statusForApp (status, appId) {
+    const app = status.apps.find((entry) => entry.appId === appId)
+    const cores = status.cores.filter((entry) => entry.appId === appId)
+    const drives = status.drives.filter((entry) => entry.appId === appId)
+    const bytes = status.storage?.perApp?.[appId] || 0
+    const quota = status.storage?.quotas?.perApp?.[appId] || null
+    return {
+      protocolVersion: status.protocolVersion,
+      nodePublicKey: status.nodePublicKey,
+      services: status.services,
+      capabilities: status.capabilities,
+      apps: app ? [app] : [],
+      pairedApps: app ? 1 : 0,
+      cores,
+      drives,
+      connectedPeers: status.connectedPeers,
+      storagePath: null,
+      storage: {
+        total: bytes,
+        totalCores: cores.reduce((sum, core) => sum + (core.byteLength || 0), 0),
+        totalDrives: drives.reduce((sum, drive) => sum + (drive.byteLength || 0) + (drive.blobsByteLength || 0), 0),
+        perApp: { [appId]: bytes },
+        quotas: {
+          global: null,
+          perAppLimit: quota?.limit ?? null,
+          perApp: quota ? { [appId]: quota } : {},
+          enforced: []
+        }
+      },
+      ai: status.ai
+    }
+  }
+
   // Snapshot of the daemon's current state. Stable shape — consumed by:
   //   - the dashboard worker (full detail)
-  //   - `NodeClient.getNodeStatus()` over the wire (full detail; safe to
-  //     send to the same client that already paired)
+  //   - `NodeClient.getNodeStatus()` over the wire after per-app filtering
   //   - `us node status` and other headless tools
   async getStatus () {
     const apps = this.registry ? await this.registry.listApps() : []
@@ -555,6 +664,10 @@ export class NodeDaemon extends EventEmitter {
     const grants = { ...(app.grants || defaultCapabilityGrants(this.capabilities)) }
     grants[capability] = [...methods]
     await this.registry.registerApp({ ...app, grants })
+    for (const [socket, session] of this.sessions) {
+      if (session.appId !== appId) continue
+      this.sessions.set(socket, { ...session, grants })
+    }
     this.emit('appGrantChanged', { appId, capability, methods: grants[capability] })
     return this.registry.getApp(appId)
   }
@@ -645,6 +758,11 @@ export class NodeDaemon extends EventEmitter {
   async unpairApp (appId) {
     await this.replication.removeAppCores(appId)
     await this.registry.removeApp(appId)
+    for (const [socket, session] of this.sessions) {
+      if (session.appId !== appId) continue
+      this.sessions.delete(socket)
+      try { socket.destroy() } catch {}
+    }
     this.emit('unpaired', { appId })
   }
 
@@ -695,4 +813,9 @@ export class NodeDaemon extends EventEmitter {
 
     this.emit('closed')
   }
+}
+
+function clampInteger (value, min, max, fallback) {
+  if (!Number.isSafeInteger(value)) return fallback
+  return Math.max(min, Math.min(max, value))
 }

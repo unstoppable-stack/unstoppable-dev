@@ -4,8 +4,12 @@
   "description": "Client library to connect Unstoppable Stack apps to the Node for data replication and sync",
   "type": "module",
   "main": "src/index.js",
+  "types": "src/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
     "./errors": "./src/errors.js",
     "./protocol": "./src/protocol.js"
   },
