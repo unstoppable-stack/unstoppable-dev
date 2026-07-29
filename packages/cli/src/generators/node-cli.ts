@@ -1,5 +1,9 @@
 import type { GeneratedFile, GeneratorOptions } from './types.js'
-import { has, tsconfig, gitignore, readme, planningReadme } from './common.js'
+import {
+  has, tsconfig, gitignore, readme, planningReadme,
+  DEFAULT_LLM_CONST, DEFAULT_LLM_LABEL, DEFAULT_LLM_SIZE_MB, DEFAULT_CTX_SIZE,
+  llmModelConfig,
+} from './common.js'
 
 /**
  * Node CLI generator.
@@ -200,16 +204,19 @@ function aiManager(): GeneratedFile {
  * echoes input back — useful for E2E tests where loading a real model
  * is impractical.
  */
-import {
-  loadModel,
-  completion,
-  unloadModel,
-  QWEN3_600M_INST_Q4,
-} from '@qvac/sdk'
+
+// The SDK is imported lazily, inside setupAI(), rather than at module
+// scope. A top-level import runs the SDK's native-module resolution as a
+// side effect of loading this file, so an SDK problem takes down the whole
+// CLI before it can print anything useful. Deferring it keeps the failure
+// local to AI setup and keeps mock mode free of any SDK dependency.
+type QvacSdk = typeof import('@qvac/sdk')
 
 const MOCK_MODE = process.env.QVAC_MOCK === '1'
+const CTX_SIZE = ${DEFAULT_CTX_SIZE}
 
 let modelId: string | null = null
+let sdk: QvacSdk | null = null
 
 export async function setupAI() {
   if (MOCK_MODE) {
@@ -233,11 +240,14 @@ export async function setupAI() {
     }
   }
 
-  console.log('Loading AI model (Qwen 3 0.6B, ~400MB on first run)...')
+  sdk = await import('@qvac/sdk')
+  const { loadModel, ${DEFAULT_LLM_CONST} } = sdk
+
+  console.log('Loading AI model (${DEFAULT_LLM_LABEL}, ~${DEFAULT_LLM_SIZE_MB}MB on first run)...')
   modelId = await loadModel({
-    modelSrc: QWEN3_600M_INST_Q4,
+    modelSrc: ${DEFAULT_LLM_CONST},
     modelType: 'llm',
-    modelConfig: { ctx_size: 4096, system_prompt: 'You are a helpful assistant. /no_think' },
+    modelConfig: ${llmModelConfig('    ')},
     onProgress: (progress: any) => {
       if (progress.percentage) {
         process.stdout.write(
@@ -250,8 +260,8 @@ export async function setupAI() {
 
   return {
     async chat(message: string) {
-      if (!modelId) throw new Error('Model not loaded')
-      const result = completion({
+      if (!modelId || !sdk) throw new Error('Model not loaded')
+      const result = sdk.completion({
         modelId,
         history: [{ role: 'user', content: message }],
         stream: true,
@@ -259,9 +269,15 @@ export async function setupAI() {
       return result
     },
 
+    /** Stop an in-flight completion. Safe to call when nothing is running. */
+    async abort() {
+      if (!modelId || !sdk) return
+      await sdk.cancel({ operation: 'inference', modelId })
+    },
+
     async cleanup() {
-      if (modelId && modelId !== 'mock-model') {
-        await unloadModel({ modelId })
+      if (modelId && modelId !== 'mock-model' && sdk) {
+        await sdk.unloadModel({ modelId })
       }
       modelId = null
     },

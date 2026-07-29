@@ -803,7 +803,7 @@ export default function NotFound() {
     "content": "import React, { useState, useRef } from 'react'
 import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
-import { downloadAsset, loadModel, completion, unloadModel, QWEN3_600M_INST_Q4, VERBOSITY } from '@qvac/sdk'
+import { downloadAsset, loadModel, completion, unloadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M, VERBOSITY } from '@qvac/sdk'
 import * as Device from 'expo-device'
 
 export default function Home() {
@@ -848,6 +848,7 @@ export default function Home() {
   }
 
   const QVAC_MOCK = process.env.EXPO_PUBLIC_QVAC_MOCK === '1'
+  const CTX_SIZE = 4096
 
   async function loadAI() {
     setAiError(null)
@@ -884,7 +885,7 @@ export default function Home() {
       // the GGUF engine).
       setAiProgress('Downloading model...')
       await downloadAsset({
-        assetSrc: QWEN3_600M_INST_Q4,
+        assetSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
         onProgress: (p: any) => {
           if (typeof p?.percentage === 'number') {
             setAiProgress('Downloading ' + Math.round(p.percentage) + '%')
@@ -893,7 +894,7 @@ export default function Home() {
       })
       setAiProgress('Loading model into memory...')
       const id = await loadModel({
-        modelSrc: QWEN3_600M_INST_Q4,
+        modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
         modelType: 'llm',
         modelConfig: {
           // Device choice is exposed to users via the GPU toggle in the
@@ -901,8 +902,17 @@ export default function Home() {
           // faster). CPU = portable fallback (older hardware,
           // experimentation).
           device: aiDevice,
-          ctx_size: 4096,
-          system_prompt: 'You are a helpful assistant. /no_think',
+          ctx_size: CTX_SIZE,
+          // Sliding window — evict oldest ~10% on overflow instead of
+          // throwing. With this set, never hand-trim history: the SDK
+          // reuses its KV cache by message count, so dropping old messages
+          // forces a full re-prefill that overflows the window.
+          n_discarded: Math.floor(CTX_SIZE / 10),
+          // 0 = no reasoning, -1 = unlimited. Replaces the old approach of
+          // asking for no reasoning in the prompt and stripping the blocks
+          // back out of the token stream by hand.
+          reasoning_budget: 0,
+          system_prompt: 'You are a helpful assistant.',
           // VERBOSITY.ERROR keeps the JS console quiet — flip to .DEBUG
           // when chasing model-loading issues.
           verbosity: VERBOSITY.ERROR,
@@ -947,43 +957,11 @@ export default function Home() {
         history: next,
         stream: true,
       })
-      // Strip Qwen 3 <think>...</think> blocks from the live token stream
-      // so the chat bubble shows only the user-facing answer. We track
-      // depth and carry partial tags across chunks. /no_think in the
-      // system prompt usually suppresses them; this is a safety net.
-      let inThink = false
-      let carry = ''
+      // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
+      // tokens arrive as plain content — no reasoning-block filtering needed.
       let visible = ''
       for await (const token of result.tokenStream) {
-        carry += token
-        let outChunk = ''
-        while (carry.length) {
-          if (!inThink) {
-            const open = carry.indexOf('<think>')
-            if (open === -1) {
-              if (carry.length > 7) { outChunk += carry.slice(0, -7); carry = carry.slice(-7) }
-              break
-            }
-            outChunk += carry.slice(0, open)
-            carry = carry.slice(open + 7)
-            inThink = true
-          } else {
-            const close = carry.indexOf('</think>')
-            if (close === -1) {
-              if (carry.length > 8) carry = carry.slice(-8)
-              break
-            }
-            carry = carry.slice(close + 8)
-            inThink = false
-          }
-        }
-        if (outChunk) {
-          visible += outChunk
-          setMessages([...next, { role: 'assistant', content: visible }])
-        }
-      }
-      if (!inThink && carry) {
-        visible += carry
+        visible += token
         setMessages([...next, { role: 'assistant', content: visible }])
       }
     } catch (e: any) {
@@ -1043,7 +1021,7 @@ export default function Home() {
         <View style={styles.section} testID="ai-section">
           <Text style={styles.sectionTitle}>AI Assistant</Text>
           <Text style={styles.hint}>
-            Qwen 3 0.6B · ~400MB download on first run, cached after.{'\\n'}
+            Qwen 3.5 0.8B · ~532MB download on first run, cached after.{'\\n'}
             <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
             — QVAC inference does not run on the iOS Simulator or Android
             Emulator. Set{' '}
@@ -2952,16 +2930,19 @@ See \`planning/\` for architecture decisions and feature plans.
  * echoes input back — useful for E2E tests where loading a real model
  * is impractical.
  */
-import {
-  loadModel,
-  completion,
-  unloadModel,
-  QWEN3_600M_INST_Q4,
-} from '@qvac/sdk'
+
+// The SDK is imported lazily, inside setupAI(), rather than at module
+// scope. A top-level import runs the SDK's native-module resolution as a
+// side effect of loading this file, so an SDK problem takes down the whole
+// CLI before it can print anything useful. Deferring it keeps the failure
+// local to AI setup and keeps mock mode free of any SDK dependency.
+type QvacSdk = typeof import('@qvac/sdk')
 
 const MOCK_MODE = process.env.QVAC_MOCK === '1'
+const CTX_SIZE = 4096
 
 let modelId: string | null = null
+let sdk: QvacSdk | null = null
 
 export async function setupAI() {
   if (MOCK_MODE) {
@@ -2985,11 +2966,22 @@ export async function setupAI() {
     }
   }
 
-  console.log('Loading AI model (Qwen 3 0.6B, ~400MB on first run)...')
+  sdk = await import('@qvac/sdk')
+  const { loadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M } = sdk
+
+  console.log('Loading AI model (Qwen 3.5 0.8B, ~532MB on first run)...')
   modelId = await loadModel({
-    modelSrc: QWEN3_600M_INST_Q4,
+    modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
     modelType: 'llm',
-    modelConfig: { ctx_size: 4096, system_prompt: 'You are a helpful assistant. /no_think' },
+    modelConfig: {
+      ctx_size: CTX_SIZE,
+      // Sliding window — evict oldest ~10% on overflow instead of throwing.
+      n_discarded: Math.floor(CTX_SIZE / 10),
+      // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
+      // and no stripping reasoning blocks back out of the token stream.
+      reasoning_budget: 0,
+      system_prompt: 'You are a helpful assistant.',
+    },
     onProgress: (progress: any) => {
       if (progress.percentage) {
         process.stdout.write(
@@ -3002,8 +2994,8 @@ export async function setupAI() {
 
   return {
     async chat(message: string) {
-      if (!modelId) throw new Error('Model not loaded')
-      const result = completion({
+      if (!modelId || !sdk) throw new Error('Model not loaded')
+      const result = sdk.completion({
         modelId,
         history: [{ role: 'user', content: message }],
         stream: true,
@@ -3011,9 +3003,15 @@ export async function setupAI() {
       return result
     },
 
+    /** Stop an in-flight completion. Safe to call when nothing is running. */
+    async abort() {
+      if (!modelId || !sdk) return
+      await sdk.cancel({ operation: 'inference', modelId })
+    },
+
     async cleanup() {
-      if (modelId && modelId !== 'mock-model') {
-        await unloadModel({ modelId })
+      if (modelId && modelId !== 'mock-model' && sdk) {
+        await sdk.unloadModel({ modelId })
       }
       modelId = null
     },
@@ -4136,7 +4134,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
+        <p class="card-hint">Qwen 3.5 0.8B · ~532MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
@@ -4502,7 +4500,6 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
@@ -4511,7 +4508,9 @@ const storagePath = Pear.config.storage
 let store = null
 let swarm = null
 let db = null
+let sdk = null
 let modelId = null
+const CTX_SIZE = 4096
 let modelLoading = false
 const MOCK_AI = (
   (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
@@ -4564,12 +4563,18 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        modelId = await loadModel({
-          modelSrc: QWEN3_600M_INST_Q4,
+        sdk = await import('@qvac/sdk')
+        modelId = await sdk.loadModel({
+          modelSrc: sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
           modelType: 'llm',
           modelConfig: {
-            ctx_size: 4096,
-            system_prompt: 'You are a helpful assistant. /no_think',
+            ctx_size: CTX_SIZE,
+            // Sliding window — evict oldest ~10% on overflow instead of throwing.
+            n_discarded: Math.floor(CTX_SIZE / 10),
+            // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
+            // and no stripping reasoning blocks back out of the token stream.
+            reasoning_budget: 0,
+            system_prompt: 'You are a helpful assistant.',
           },
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
@@ -4594,40 +4599,12 @@ async function handleCommand(msg) {
         break
       }
       try {
-        const result = completion({ modelId, history: msg.history, stream: true })
-        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
-        // /no_think in the system prompt, small models occasionally leak a
-        // few tokens. Track depth so partial tags across chunks still hide.
-        let inThink = false
-        let carry = ''
+        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
+        // tokens arrive as plain content — no reasoning-block filtering needed.
+        const result = sdk.completion({ modelId, history: msg.history, stream: true })
         for await (const token of result.tokenStream) {
-          carry += token
-          let out = ''
-          while (carry.length) {
-            if (!inThink) {
-              const open = carry.indexOf('<think>')
-              if (open === -1) {
-                // Keep up to 7 chars (length of "<think>") in carry in case
-                // the tag is split across tokens; emit the rest.
-                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
-                break
-              }
-              out += carry.slice(0, open)
-              carry = carry.slice(open + 7)
-              inThink = true
-            } else {
-              const close = carry.indexOf('</think>')
-              if (close === -1) {
-                if (carry.length > 8) carry = carry.slice(-8)
-                break
-              }
-              carry = carry.slice(close + 8)
-              inThink = false
-            }
-          }
-          if (out) send({ type: 'chat-token', token: out })
+          send({ type: 'chat-token', token })
         }
-        if (!inThink && carry) send({ type: 'chat-token', token: carry })
         send({ type: 'chat-done' })
       } catch (err) {
         send({ type: 'chat-error', error: String(err && err.message || err) })
@@ -4648,7 +4625,7 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
-  if (modelId && modelId !== 'mock-model') await unloadModel({ modelId })
+  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Pear.exit()
 }
 
@@ -4783,7 +4760,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">Qwen 3 0.6B · ~400MB download on first run, cached after.</p>
+        <p class="card-hint">Qwen 3.5 0.8B · ~532MB download on first run, cached after.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
@@ -5144,7 +5121,6 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'
 
 const pipe = Pear.worker.pipe()
 const storagePath = Pear.config.storage
@@ -5153,7 +5129,9 @@ const storagePath = Pear.config.storage
 let store = null
 let swarm = null
 let db = null
+let sdk = null
 let modelId = null
+const CTX_SIZE = 4096
 let modelLoading = false
 const MOCK_AI = (
   (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
@@ -5206,12 +5184,18 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        modelId = await loadModel({
-          modelSrc: QWEN3_600M_INST_Q4,
+        sdk = await import('@qvac/sdk')
+        modelId = await sdk.loadModel({
+          modelSrc: sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
           modelType: 'llm',
           modelConfig: {
-            ctx_size: 4096,
-            system_prompt: 'You are a helpful assistant. /no_think',
+            ctx_size: CTX_SIZE,
+            // Sliding window — evict oldest ~10% on overflow instead of throwing.
+            n_discarded: Math.floor(CTX_SIZE / 10),
+            // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
+            // and no stripping reasoning blocks back out of the token stream.
+            reasoning_budget: 0,
+            system_prompt: 'You are a helpful assistant.',
           },
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
@@ -5236,40 +5220,12 @@ async function handleCommand(msg) {
         break
       }
       try {
-        const result = completion({ modelId, history: msg.history, stream: true })
-        // Filter out Qwen 3 reasoning blocks (<think>...</think>). Even with
-        // /no_think in the system prompt, small models occasionally leak a
-        // few tokens. Track depth so partial tags across chunks still hide.
-        let inThink = false
-        let carry = ''
+        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
+        // tokens arrive as plain content — no reasoning-block filtering needed.
+        const result = sdk.completion({ modelId, history: msg.history, stream: true })
         for await (const token of result.tokenStream) {
-          carry += token
-          let out = ''
-          while (carry.length) {
-            if (!inThink) {
-              const open = carry.indexOf('<think>')
-              if (open === -1) {
-                // Keep up to 7 chars (length of "<think>") in carry in case
-                // the tag is split across tokens; emit the rest.
-                if (carry.length > 7) { out += carry.slice(0, -7); carry = carry.slice(-7) }
-                break
-              }
-              out += carry.slice(0, open)
-              carry = carry.slice(open + 7)
-              inThink = true
-            } else {
-              const close = carry.indexOf('</think>')
-              if (close === -1) {
-                if (carry.length > 8) carry = carry.slice(-8)
-                break
-              }
-              carry = carry.slice(close + 8)
-              inThink = false
-            }
-          }
-          if (out) send({ type: 'chat-token', token: out })
+          send({ type: 'chat-token', token })
         }
-        if (!inThink && carry) send({ type: 'chat-token', token: carry })
         send({ type: 'chat-done' })
       } catch (err) {
         send({ type: 'chat-error', error: String(err && err.message || err) })
@@ -5286,7 +5242,7 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
-  if (modelId && modelId !== 'mock-model') await unloadModel({ modelId })
+  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Pear.exit()
 }
 

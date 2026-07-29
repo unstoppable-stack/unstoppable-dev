@@ -1,5 +1,8 @@
 import type { GeneratedFile, GeneratorOptions } from './types.js'
-import { has, gitignore, readme, planningReadme } from './common.js'
+import {
+  has, gitignore, readme, planningReadme,
+  DEFAULT_LLM_CONST, DEFAULT_LLM_LABEL, DEFAULT_LLM_SIZE_MB, DEFAULT_CTX_SIZE,
+} from './common.js'
 
 export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
   // Bare worklet is always required — P2P is always part of the base
@@ -527,7 +530,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     // bare-runtime path uses an obfuscated dynamic import that bare-pack
     // can't trace. See bareWorklet() comment for details.
     topImports.push(
-      `import { downloadAsset, loadModel, completion, unloadModel, QWEN3_600M_INST_Q4, VERBOSITY } from '@qvac/sdk'`,
+      `import { downloadAsset, loadModel, completion, unloadModel, ${DEFAULT_LLM_CONST}, VERBOSITY } from '@qvac/sdk'`,
     )
     topImports.push(`import * as Device from 'expo-device'`)
   }
@@ -637,6 +640,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     // with EXPO_PUBLIC_ at bundle time; check it once at module scope.
     handlers.push(`
   const QVAC_MOCK = process.env.EXPO_PUBLIC_QVAC_MOCK === '1'
+  const CTX_SIZE = ${DEFAULT_CTX_SIZE}
 
   async function loadAI() {
     setAiError(null)
@@ -673,7 +677,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       // the GGUF engine).
       setAiProgress('Downloading model...')
       await downloadAsset({
-        assetSrc: QWEN3_600M_INST_Q4,
+        assetSrc: ${DEFAULT_LLM_CONST},
         onProgress: (p: any) => {
           if (typeof p?.percentage === 'number') {
             setAiProgress('Downloading ' + Math.round(p.percentage) + '%')
@@ -682,7 +686,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       })
       setAiProgress('Loading model into memory...')
       const id = await loadModel({
-        modelSrc: QWEN3_600M_INST_Q4,
+        modelSrc: ${DEFAULT_LLM_CONST},
         modelType: 'llm',
         modelConfig: {
           // Device choice is exposed to users via the GPU toggle in the
@@ -690,8 +694,17 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           // faster). CPU = portable fallback (older hardware,
           // experimentation).
           device: aiDevice,
-          ctx_size: 4096,
-          system_prompt: 'You are a helpful assistant. /no_think',
+          ctx_size: CTX_SIZE,
+          // Sliding window — evict oldest ~10% on overflow instead of
+          // throwing. With this set, never hand-trim history: the SDK
+          // reuses its KV cache by message count, so dropping old messages
+          // forces a full re-prefill that overflows the window.
+          n_discarded: Math.floor(CTX_SIZE / 10),
+          // 0 = no reasoning, -1 = unlimited. Replaces the old approach of
+          // asking for no reasoning in the prompt and stripping the blocks
+          // back out of the token stream by hand.
+          reasoning_budget: 0,
+          system_prompt: 'You are a helpful assistant.',
           // VERBOSITY.ERROR keeps the JS console quiet — flip to .DEBUG
           // when chasing model-loading issues.
           verbosity: VERBOSITY.ERROR,
@@ -736,43 +749,11 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
         history: next,
         stream: true,
       })
-      // Strip Qwen 3 <think>...</think> blocks from the live token stream
-      // so the chat bubble shows only the user-facing answer. We track
-      // depth and carry partial tags across chunks. /no_think in the
-      // system prompt usually suppresses them; this is a safety net.
-      let inThink = false
-      let carry = ''
+      // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
+      // tokens arrive as plain content — no reasoning-block filtering needed.
       let visible = ''
       for await (const token of result.tokenStream) {
-        carry += token
-        let outChunk = ''
-        while (carry.length) {
-          if (!inThink) {
-            const open = carry.indexOf('<think>')
-            if (open === -1) {
-              if (carry.length > 7) { outChunk += carry.slice(0, -7); carry = carry.slice(-7) }
-              break
-            }
-            outChunk += carry.slice(0, open)
-            carry = carry.slice(open + 7)
-            inThink = true
-          } else {
-            const close = carry.indexOf('</think>')
-            if (close === -1) {
-              if (carry.length > 8) carry = carry.slice(-8)
-              break
-            }
-            carry = carry.slice(close + 8)
-            inThink = false
-          }
-        }
-        if (outChunk) {
-          visible += outChunk
-          setMessages([...next, { role: 'assistant', content: visible }])
-        }
-      }
-      if (!inThink && carry) {
-        visible += carry
+        visible += token
         setMessages([...next, { role: 'assistant', content: visible }])
       }
     } catch (e: any) {
@@ -859,7 +840,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
         <View style={styles.section} testID="ai-section">
           <Text style={styles.sectionTitle}>AI Assistant</Text>
           <Text style={styles.hint}>
-            Qwen 3 0.6B · ~400MB download on first run, cached after.{'\\n'}
+            ${DEFAULT_LLM_LABEL} · ~${DEFAULT_LLM_SIZE_MB}MB download on first run, cached after.{'\\n'}
             <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
             — QVAC inference does not run on the iOS Simulator or Android
             Emulator. Set{' '}
