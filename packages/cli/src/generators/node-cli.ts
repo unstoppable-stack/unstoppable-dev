@@ -2,7 +2,7 @@ import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, tsconfig, gitignore, readme, planningReadme,
   DEFAULT_LLM_CONST, DEFAULT_LLM_LABEL, DEFAULT_LLM_SIZE_MB, DEFAULT_CTX_SIZE,
-  llmModelConfig,
+  llmModelConfig, MULTI_WRITER_DEPS, schemaBuilder, multiWriterStoreSource,
 } from './common.js'
 
 /**
@@ -27,8 +27,15 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
     packageJson(opts),
     entryPoint(opts),
     swarmManager(),
-    storageManager(),
   ]
+
+  // multi-writer REPLACES the single-writer Hyperbee KV rather than sitting
+  // beside it — two competing stores in one scaffold is just confusing.
+  if (has(opts, 'multi-writer')) {
+    files.push(schemaBuilder(), multiWriterStore())
+  } else {
+    files.push(storageManager())
+  }
 
   if (has(opts, 'local-ai')) files.push(aiManager())
   if (has(opts, 'wallet')) files.push(walletStub())
@@ -62,6 +69,13 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     Object.assign(deps, { '@unstoppable-stack/node-client': '^0.4.0' })
   }
 
+  if (has(opts, 'multi-writer')) {
+    Object.assign(deps, MULTI_WRITER_DEPS)
+    // Hyperbee is only the default single-writer store; multi-writer uses
+    // Autobee (which brings hyperbee2 itself).
+    delete deps.hyperbee
+  }
+
   return {
     path: 'package.json',
     content: JSON.stringify(
@@ -71,6 +85,14 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         private: true,
         type: 'module',
         scripts: {
+          ...(has(opts, 'multi-writer')
+            ? {
+                'build:schema': 'node schema/build.js',
+                // The generated spec/ is required at import time, so build it
+                // as part of install rather than making `npm run dev` fail.
+                postinstall: 'npm run build:schema',
+              }
+            : {}),
           dev: 'tsx watch src/index.ts',
           build: 'tsc',
           start: 'node dist/index.js',
@@ -85,21 +107,42 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
 }
 
 function entryPoint(opts: GeneratorOptions): GeneratedFile {
+  const multiWriter = has(opts, 'multi-writer')
+
   const imports: string[] = [
     `import Corestore from 'corestore'`,
     `import { createSwarm } from './swarm-manager.js'`,
-    `import { createStorage } from './storage-manager.js'`,
+    multiWriter
+      ? `import { createStore } from './multi-writer-store.js'`
+      : `import { createStorage } from './storage-manager.js'`,
   ]
 
   const initCalls: string[] = [
     `const store = new Corestore('./storage')`,
     `const swarm = createSwarm(store)`,
     `console.log('P2P swarm started')`,
-    `const db = await createStorage(store)`,
-    `console.log('Storage ready')`,
   ]
 
   const cleanupCalls: string[] = [`await swarm.destroy()`]
+
+  if (multiWriter) {
+    // BOOTSTRAP_KEY empty => create a new database. Set it to another
+    // device's key to join that device's mesh instead.
+    initCalls.push(
+      `const db = await createStore(store, './storage', process.env.BOOTSTRAP_KEY || null)`,
+      `console.log('Multi-writer store ready')`,
+      `console.log('  database key:', db.key)`,
+      `console.log('  this writer :', db.writerKey)`,
+      `console.log('  writable    :', db.writable)`,
+      `if (!db.writable) console.log('  -> ask a peer to run db.addWriter(<this writer key>)')`,
+    )
+    cleanupCalls.push(`await db.close()`)
+  } else {
+    initCalls.push(
+      `const db = await createStorage(store)`,
+      `console.log('Storage ready')`,
+    )
+  }
 
   if (has(opts, 'local-ai')) {
     imports.push(`import { setupAI } from './ai-manager.js'`)
@@ -191,6 +234,13 @@ export async function createStorage(store: any) {
   return db
 }
 `,
+  }
+}
+
+function multiWriterStore(): GeneratedFile {
+  return {
+    path: 'src/multi-writer-store.ts',
+    content: multiWriterStoreSource('../schema/spec', true),
   }
 }
 
@@ -379,6 +429,12 @@ const UNTYPED_MODULES = [
 function typeDeclarations(opts: GeneratorOptions): GeneratedFile {
   const modules = [...UNTYPED_MODULES]
   if (has(opts, 'node-sync')) modules.push('@unstoppable-stack/node-client')
+  if (has(opts, 'multi-writer')) {
+    // The spec/ tree is generated JS with no .d.ts. Ambient declarations only
+    // work for non-relative specifiers, so match the generated files with a
+    // wildcard pattern rather than the literal relative paths.
+    modules.push('autobee', 'hyperdb', '*/schema/spec/app/index.js', '*/schema/spec/local/index.js')
+  }
   const decls = modules.map((m) => `declare module '${m}'`).join('\n')
   return { path: 'src/types.d.ts', content: decls + '\n' }
 }

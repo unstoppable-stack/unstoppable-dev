@@ -11,9 +11,10 @@ export type Platform = 'pear-desktop' | 'expo-mobile' | 'node-cli'
  * agent-pack skills, not scaffold flags.
  */
 export type Feature =
-  | 'local-ai'  // QVAC SDK + streaming chat UI
-  | 'wallet'    // WDK wallet (stub — WDK not yet validated)
-  | 'node-sync' // Register cores/drives with the Unstoppable Node for replication + backup
+  | 'local-ai'      // QVAC SDK + streaming chat UI
+  | 'wallet'        // WDK wallet (stub — WDK not yet validated)
+  | 'node-sync'     // Register cores/drives with the Unstoppable Node for replication + backup
+  | 'multi-writer'  // Autobee + HyperDB: every device reads AND writes, converging
 
 export interface GeneratorOptions {
   projectName: string
@@ -55,5 +56,14 @@ export const FEATURES: { id: Feature; name: string; description: string; platfor
     name: 'Node Sync',
     description: 'Register data with the Unstoppable Node for P2P replication + backup',
     platforms: ['node-cli', 'pear-desktop', 'expo-mobile'],
+  },
+  {
+    id: 'multi-writer',
+    name: 'Multi-Writer Sync',
+    // Replaces the default single-writer Hyperbee KV with Autobee + HyperDB
+    // collections. Not available on expo-mobile: the Bare worklet is
+    // bare-pack'd and linking rocksdb-native into it is unvalidated.
+    description: 'Autobee + HyperDB — every device reads and writes, converging (replaces the default KV store)',
+    platforms: ['node-cli', 'pear-desktop'],
   },
 ]

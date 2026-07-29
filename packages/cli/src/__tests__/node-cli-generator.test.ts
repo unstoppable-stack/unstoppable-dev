@@ -132,7 +132,7 @@ describe('node-cli generator', () => {
     })
   })
 
-  describe('no autobase anywhere (flag removed)', () => {
+  describe('no autobase anywhere (superseded by autobee)', () => {
     for (const combo of ALL_COMBOS) {
       it(`${combo.name}: no autobase dep or file`, () => {
         const files = fileMap(make(combo.features))
@@ -141,5 +141,76 @@ describe('node-cli generator', () => {
         expect(files['src/autobase-manager.ts']).toBeUndefined()
       })
     }
+  })
+
+  describe('multi-writer feature', () => {
+    it('emits the schema builder and store, and drops the single-writer KV', () => {
+      const files = fileMap(make(['multi-writer']))
+      expect(files['schema/build.js']).toBeDefined()
+      expect(files['src/multi-writer-store.ts']).toBeDefined()
+      // multi-writer REPLACES the Hyperbee KV rather than coexisting with it.
+      expect(files['src/storage-manager.ts']).toBeUndefined()
+    })
+
+    it('bare variant has neither', () => {
+      const files = fileMap(make([]))
+      expect(files['schema/build.js']).toBeUndefined()
+      expect(files['src/multi-writer-store.ts']).toBeUndefined()
+      expect(files['src/storage-manager.ts']).toBeDefined()
+    })
+
+    it('pins autobee exactly (upstream is experimental)', () => {
+      const pkg = JSON.parse(fileMap(make(['multi-writer']))['package.json'])
+      expect(pkg.dependencies.autobee).toBe('1.0.10')
+      expect(pkg.dependencies.hyperdb).toBeDefined()
+      expect(pkg.dependencies.hyperschema).toBeDefined()
+      // Autobee brings hyperbee2 itself; the v1 Hyperbee dep is dropped.
+      expect(pkg.dependencies.hyperbee).toBeUndefined()
+    })
+
+    it('generates the spec on install — it is imported at startup', () => {
+      const pkg = JSON.parse(fileMap(make(['multi-writer']))['package.json'])
+      expect(pkg.scripts['build:schema']).toBe('node schema/build.js')
+      expect(pkg.scripts.postinstall).toBe('npm run build:schema')
+    })
+
+    it('schema builder is ESM — the package is type:module', () => {
+      const build = fileMap(make(['multi-writer']))['schema/build.js']
+      expect(build).toContain("import Hyperschema from 'hyperschema'")
+      expect(build).not.toContain("require('hyperschema')")
+    })
+
+    it('splits replicated @app from device-private @local', () => {
+      const build = fileMap(make(['multi-writer']))['schema/build.js']
+      expect(build).toContain("schema.namespace('app')")
+      expect(build).toContain("schema.namespace('local')")
+      expect(build).toContain("HyperDB.from(SCHEMA_DIR, LOCAL_DIR)")
+    })
+
+    it('store uses bee2 for the Autobee view and rocks for local', () => {
+      const store = fileMap(make(['multi-writer']))['src/multi-writer-store.ts']
+      expect(store).toContain('HyperDB.bee2(bee, AppSpec')
+      expect(store).toContain('HyperDB.rocks(')
+      // open() must stay synchronous — Autobee does not await it.
+      expect(store).not.toMatch(/async function open/)
+    })
+
+    it('index queries use both range bounds, not equality shorthand', () => {
+      const store = fileMap(make(['multi-writer']))['src/multi-writer-store.ts']
+      // An equality shorthand silently matches every row instead of erroring.
+      expect(store).toContain('gte: { authorId: author }, lte: { authorId: author }')
+    })
+
+    it('guards optional uints with || not ?? (they decode to 0)', () => {
+      const store = fileMap(make(['multi-writer']))['src/multi-writer-store.ts']
+      expect(store).toContain('(op.doc.updatedAt || 0)')
+      expect(store).not.toContain('updatedAt ??')
+    })
+
+    it('declares the generated spec via wildcard (relative ambient fails)', () => {
+      const decls = fileMap(make(['multi-writer']))['src/types.d.ts']
+      expect(decls).toContain("declare module 'autobee'")
+      expect(decls).toContain("declare module '*/schema/spec/app/index.js'")
+    })
   })
 })
