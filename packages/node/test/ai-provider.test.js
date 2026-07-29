@@ -130,6 +130,35 @@ describe('ai-provider (mock mode)', () => {
     assert.match(text, /^Mock: hi node$/)
   })
 
+  it('requestInference stops promptly when the caller aborts', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const node = await env.createNode({ ai: { mock: true } })
+    cleanupItems.push(node)
+    await node.start()
+
+    const client = await env.createConnectedClient({
+      appId: 'abort-app',
+      appName: 'Abort App',
+      requireServices: ['ai']
+    })
+    cleanupItems.push(client)
+
+    const controller = new AbortController()
+    const tokens = []
+    await assert.rejects(async () => {
+      for await (const token of client.requestInference({
+        messages: [{ role: 'user', content: 'a response that should stop' }],
+        signal: controller.signal
+      })) {
+        tokens.push(token)
+        controller.abort()
+      }
+    }, /aborted/)
+    assert.equal(tokens.length, 1)
+  })
+
   it('requestInference rejects when app AI grant is revoked', async () => {
     env = await createTestEnv()
     cleanupItems = []

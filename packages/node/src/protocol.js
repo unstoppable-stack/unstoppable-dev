@@ -53,6 +53,23 @@ export function defaultCapabilityGrants (capabilities = buildCapabilities()) {
   return grants
 }
 
+// Pairing grants are least-privilege: an app receives only methods it asked
+// for and that this Node currently offers. Older clients that omit a request
+// get the small compatibility baseline needed to register and inspect their
+// own replication state; they do not receive debug peeks or AI implicitly.
+export function requestedCapabilityGrants (capabilities = buildCapabilities(), requested = null) {
+  const wanted = requested && typeof requested === 'object'
+    ? requested
+    : { resources: ['register', 'status'], storage: ['usage'] }
+  const grants = {}
+  for (const [name, cap] of Object.entries(capabilities)) {
+    const methods = Array.isArray(wanted[name]) ? wanted[name] : []
+    const available = new Set(cap.enabled ? (cap.methods || []) : [])
+    grants[name] = methods.filter((method) => available.has(method))
+  }
+  return grants
+}
+
 // `os` and `process` aren't available in Bare by default — `bare-os` and
 // `bare-env` are separate modules. Load both lazily, preferring the Bare
 // variants, so a Pear Desktop worker and a Node.js client on the same
