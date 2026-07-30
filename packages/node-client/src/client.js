@@ -11,6 +11,7 @@ import { ClientClosedError, InferenceError, NodeClientError } from './errors.js'
 const HELLO_TIMEOUT_MS = 2_000
 const DISCOVERY_RETRY_MS = 1_000
 const DISCOVERY_RESET_AFTER_RETRIES = 5
+const MAX_CONTROL_FRAME_CHARS = 1024 * 1024
 
 // `process` exists in Node.js and Bare, but Bare does not expose `pid` or
 // `uptime()`. Wrap in guards so the client works across both runtimes.
@@ -144,13 +145,16 @@ export class NodeClient extends EventEmitter {
 
   async _resetDiscoverySwarm () {
     if (this._closing || this.paired || !this._topic) return
+    // App identity is the Noise key. Preserve it across a discovery reset so
+    // the Node does not treat the same running installation as a new app.
+    const keyPair = this.swarm.keyPair
     for (const [, entry] of this._candidates) {
       if (entry.helloTimer) clearTimeout(entry.helloTimer)
       try { entry.socket.destroy() } catch {}
     }
     this._candidates.clear()
     try { await this.swarm.destroy() } catch {}
-    this.swarm = new Hyperswarm(this._swarmOpts)
+    this.swarm = new Hyperswarm({ ...this._swarmOpts, keyPair })
     this._setupSwarm()
     this.swarm.join(this._topic, { server: false, client: true })
     await this.swarm.flush().catch(() => {})
@@ -168,6 +172,11 @@ export class NodeClient extends EventEmitter {
 
     socket.on('data', (data) => {
       buffer += b4a.toString(data)
+      if (buffer.length > MAX_CONTROL_FRAME_CHARS) {
+        this.emit('nodeError', { code: 'FRAME_TOO_LARGE', message: 'Node control frame exceeds maximum size' })
+        socket.destroy()
+        return
+      }
       const lines = buffer.split('\n')
       buffer = lines.pop()
       for (const line of lines) {
@@ -184,6 +193,7 @@ export class NodeClient extends EventEmitter {
     socket.on('close', () => {
       this._clearCandidate(remoteKey)
       if (this.socket === socket) {
+        this._failPending(new ClientClosedError('Node disconnected during request'))
         this.socket = null
         this.paired = false
         this.registered = false
@@ -282,7 +292,13 @@ export class NodeClient extends EventEmitter {
           capabilities: msg.capabilities,
           grants: msg.grants
         })
-        this._sendRegistration()
+        if ((this.grants?.resources || []).includes('register')) {
+          this._sendRegistration()
+        } else {
+          // Pairing itself creates the app record. A compute/status-only client
+          // that did not request registration can still finish connecting.
+          this._markRegistered([])
+        }
         break
 
       case 'pairDenied':
@@ -291,14 +307,7 @@ export class NodeClient extends EventEmitter {
         break
 
       case 'registered': {
-        this.registered = true
-        const isReconnection = this._wasEverPaired
-        this._wasEverPaired = true
-        if (isReconnection) {
-          this._reconnectAttempt = 0
-          this.emit('reconnected', { attempts: this._reconnectAttempt })
-        }
-        this.emit('registered', { replicating: msg.replicating })
+        this._markRegistered(msg.replicating)
         break
       }
 
@@ -318,34 +327,44 @@ export class NodeClient extends EventEmitter {
       case 'status': {
         this.lastStatus = msg.status
         this.emit('nodeStatus', msg.status)
-        const resolve = this._statusRequests.get(msg.requestId)
-        if (resolve) {
+        const pending = this._statusRequests.get(msg.requestId)
+        if (pending) {
           this._statusRequests.delete(msg.requestId)
-          resolve(msg.status)
+          clearTimeout(pending.timer)
+          pending.resolve(msg.status)
         }
         break
       }
 
       case 'disk-usage': {
-        const resolve = this._statusRequests.get(msg.requestId)
-        if (resolve) {
+        const pending = this._statusRequests.get(msg.requestId)
+        if (pending) {
           this._statusRequests.delete(msg.requestId)
-          resolve(msg.usage)
+          clearTimeout(pending.timer)
+          pending.resolve(msg.usage)
         }
         break
       }
 
       case 'peek-core-result':
       case 'peek-drive-result': {
-        const resolve = this._statusRequests.get(msg.requestId)
-        if (resolve) {
+        const pending = this._statusRequests.get(msg.requestId)
+        if (pending) {
           this._statusRequests.delete(msg.requestId)
-          resolve(msg.result)
+          clearTimeout(pending.timer)
+          pending.resolve(msg.result)
         }
         break
       }
 
       case 'error':
+        if (msg.requestId && this._statusRequests.has(msg.requestId)) {
+          const pending = this._statusRequests.get(msg.requestId)
+          this._statusRequests.delete(msg.requestId)
+          clearTimeout(pending.timer)
+          pending.reject(new NodeClientError(msg.code || 'NODE_REQUEST_ERROR', msg.message || 'Node request failed'))
+          break
+        }
         this.emit('nodeError', { message: msg.message })
         break
 
@@ -382,22 +401,18 @@ export class NodeClient extends EventEmitter {
         this._statusRequests.delete(requestId)
         reject(new NodeClientError('STATUS_TIMEOUT', `getNodeStatus() timed out after ${timeout}ms`))
       }, timeout)
-      this._statusRequests.set(requestId, (status) => {
-        clearTimeout(timer)
-        resolve(status)
-      })
+      this._statusRequests.set(requestId, { resolve, reject, timer })
       this.socket.write(encodeMessage({ type: 'status-request', requestId }))
     })
   }
 
   /**
-   * Ask the Node to walk its storage directory and report disk usage in
-   * bytes. Slow on large stores — call ad-hoc, not in tight loops.
-   * Returns `null` if the node can't read its storage.
+   * Ask the Node for this app's replicated logical bytes. Filesystem paths and
+   * other apps' usage are intentionally management-only.
    *
    * @param {Object} [opts]
    * @param {number} [opts.timeout=30000]
-   * @returns {Promise<{ bytes:number, files:number, path:string }|null>}
+   * @returns {Promise<{ bytes:number, files:null, path:null, scope:'self' }|null>}
    */
   async getDiskUsage ({ timeout = 30_000 } = {}) {
     if (this._closing) throw new ClientClosedError()
@@ -409,10 +424,7 @@ export class NodeClient extends EventEmitter {
         this._statusRequests.delete(requestId)
         reject(new NodeClientError('STATUS_TIMEOUT', `getDiskUsage() timed out after ${timeout}ms`))
       }, timeout)
-      this._statusRequests.set(requestId, (usage) => {
-        clearTimeout(timer)
-        resolve(usage)
-      })
+      this._statusRequests.set(requestId, { resolve, reject, timer })
       this.socket.write(encodeMessage({ type: 'disk-usage-request', requestId }))
     })
   }
@@ -445,24 +457,41 @@ export class NodeClient extends EventEmitter {
         this._statusRequests.delete(requestId)
         reject(new NodeClientError('PEEK_TIMEOUT', `${type} timed out after ${timeoutMs}ms`))
       }, timeoutMs)
-      this._statusRequests.set(requestId, (result) => {
-        clearTimeout(timer)
-        resolve(result)
-      })
+      this._statusRequests.set(requestId, { resolve, reject, timer })
       this.socket.write(encodeMessage({ type, requestId, ...payload }))
     })
   }
 
-  async *requestInference ({ messages }) {
+  async *requestInference ({ messages, timeout = 120_000, signal } = {}) {
     if (this._closing) throw new ClientClosedError()
     if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
     if (!this.services?.ai) throw new NodeClientError('NODE_MISSING_SERVICE', 'Node does not advertise AI service', { missing: ['ai'], services: this.services })
+    if (signal?.aborted) throw new InferenceError('Inference aborted')
 
     const requestId = `r${++this._requestSeq}`
     const queue = []
     let resolveNext = null
     let done = false
     let error = null
+    let timer = null
+    let abortHandler = null
+
+    const cancel = (reason) => {
+      if (done) return
+      error = new InferenceError(reason)
+      done = true
+      queue.length = 0
+      try { this.socket?.write(encodeMessage({ type: 'inference-cancel', requestId })) } catch {}
+      if (resolveNext) { const r = resolveNext; resolveNext = null; r() }
+    }
+
+    if (signal) {
+      abortHandler = () => cancel('Inference aborted')
+      signal.addEventListener('abort', abortHandler, { once: true })
+    }
+    if (Number.isFinite(timeout) && timeout > 0) {
+      timer = setTimeout(() => cancel(`Inference timed out after ${timeout}ms`), timeout)
+    }
 
     this._inferenceRequests.set(requestId, (msg) => {
       if (msg.type === 'inference-token') {
@@ -479,7 +508,6 @@ export class NodeClient extends EventEmitter {
     this.socket.write(encodeMessage({
       type: 'inference',
       requestId,
-      appId: this.appId,
       messages
     }))
 
@@ -494,6 +522,8 @@ export class NodeClient extends EventEmitter {
       }
       if (error) throw error
     } finally {
+      if (timer) clearTimeout(timer)
+      if (signal && abortHandler) signal.removeEventListener('abort', abortHandler)
       this._inferenceRequests.delete(requestId)
     }
   }
@@ -514,17 +544,27 @@ export class NodeClient extends EventEmitter {
 
     this.socket.write(encodeMessage({
       type: 'register',
-      appId: this.appId,
       cores: coreDescriptors,
       drives: driveDescriptors
     }))
+  }
+
+  _markRegistered (replicating) {
+    this.registered = true
+    const isReconnection = this._wasEverPaired
+    this._wasEverPaired = true
+    if (isReconnection) {
+      const attempts = this._reconnectAttempt
+      this._reconnectAttempt = 0
+      this.emit('reconnected', { attempts })
+    }
+    this.emit('registered', { replicating: replicating || [] })
   }
 
   sendHeartbeat () {
     if (!this.socket || !this.paired) return
     this.socket.write(encodeMessage({
       type: 'heartbeat',
-      appId: this.appId,
       uptime: _uptime()
     }))
   }
@@ -566,6 +606,7 @@ export class NodeClient extends EventEmitter {
 
   async close () {
     this._closing = true
+    this._failPending(new ClientClosedError())
     if (this._reconnectTimer) {
       clearTimeout(this._reconnectTimer)
       this._reconnectTimer = null
@@ -579,5 +620,16 @@ export class NodeClient extends EventEmitter {
     if (this.socket) this.socket.destroy()
     await this.swarm.destroy()
     this.emit('closed')
+  }
+
+  _failPending (error) {
+    for (const [requestId, pending] of this._statusRequests) {
+      clearTimeout(pending.timer)
+      pending.reject(error)
+      this._statusRequests.delete(requestId)
+    }
+    for (const [, handler] of this._inferenceRequests) {
+      handler({ type: 'inference-error', error: error.message })
+    }
   }
 }

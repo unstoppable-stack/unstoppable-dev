@@ -70,7 +70,8 @@ describe('pairing', () => {
 
     const app = (await node.getStatus()).apps.find((entry) => entry.appId === 'my-app')
     assert.deepEqual(app.requestedCapabilities.resources, ['register', 'status'])
-    assert.deepEqual(app.grants.resources, ['register', 'status', 'pause', 'resume', 'peek'])
+    assert.deepEqual(app.grants.resources, ['register', 'status'])
+    assert.deepEqual(app.grants.storage, ['usage'])
   })
 
   it('pairs multiple apps', async () => {
@@ -96,6 +97,27 @@ describe('pairing', () => {
     assert.deepEqual(ids, ['app-1', 'app-2', 'app-3'])
   })
 
+  it('connects a least-privilege client that intentionally does not register resources', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const node = await env.createNode()
+    cleanupItems.push(node)
+    await node.start()
+
+    const client = await env.createConnectedClient({
+      appId: 'status-only',
+      appName: 'Status Only',
+      requestedCapabilities: { resources: ['status'] }
+    })
+    cleanupItems.push(client)
+
+    assert.equal(client.registered, true)
+    assert.deepEqual(client.grants.resources, ['status'])
+    assert.deepEqual(client.grants.storage, [])
+    assert.equal((await client.getNodeStatus()).apps[0].appId, 'status-only')
+  })
+
   it('unpairs an app and removes from registry', async () => {
     env = await createTestEnv()
     cleanupItems = []
@@ -116,7 +138,7 @@ describe('pairing', () => {
     assert.equal(status.apps.length, 0)
   })
 
-  it('handles duplicate registration from same app', async () => {
+  it('requires a fresh pair flow before a new installation can update an app registration', async () => {
     env = await createTestEnv()
     cleanupItems = []
 
