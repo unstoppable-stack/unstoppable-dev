@@ -26,6 +26,10 @@ describe('peek core / drive', () => {
     const client = await env.createConnectedClient({
       appId: 'peek-bee',
       cores: [{ key: bee.core.key, type: 'hyperbee', name: 'data' }],
+      requestedCapabilities: {
+        resources: ['register', 'status', 'peek'],
+        storage: ['usage']
+      },
       timeout: 30_000
     })
 
@@ -50,14 +54,19 @@ describe('peek core / drive', () => {
     }
   })
 
-  it('peekCore returns null for an unknown key', async () => {
+  it('peekCore rejects a key not owned by the requesting app', async () => {
     const node = await env.createNode()
     await node.start()
-    const client = await env.createConnectedClient({ appId: 'peek-unknown' })
+    const client = await env.createConnectedClient({
+      appId: 'peek-unknown',
+      requestedCapabilities: { resources: ['register', 'status', 'peek'], storage: ['usage'] }
+    })
 
     try {
-      const peek = await client.peekCore('00'.repeat(32))
-      assert.equal(peek, null)
+      await assert.rejects(
+        client.peekCore('00'.repeat(32)),
+        (err) => err.code === 'RESOURCE_FORBIDDEN'
+      )
     } finally {
       await client.close()
       await node.close()
@@ -75,6 +84,10 @@ describe('peek core / drive', () => {
     const client = await env.createConnectedClient({
       appId: 'peek-drive',
       drives: [{ key: drive.key, name: 'files' }],
+      requestedCapabilities: {
+        resources: ['register', 'status', 'peek'],
+        storage: ['usage']
+      },
       timeout: 30_000
     })
 

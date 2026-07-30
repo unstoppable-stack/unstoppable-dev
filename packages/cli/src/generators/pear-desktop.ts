@@ -225,11 +225,21 @@ ${replicateLine}
       appId: '${opts.projectName}',
       appName: '${opts.projectName}',
       cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-      timeout: 5_000
+      timeout: 5_000,
+      reconnect: true
     })
     send({ type: 'status', service: 'node-sync', status: 'connected' })
     nodeClient.on('disconnected', () => {
       send({ type: 'status', service: 'node-sync', status: 'disconnected' })
+    })
+    nodeClient.on('reconnecting', () => {
+      send({ type: 'status', service: 'node-sync', status: 'reconnecting' })
+    })
+    nodeClient.on('reconnected', () => {
+      send({ type: 'status', service: 'node-sync', status: 'connected' })
+    })
+    nodeClient.on('reconnectFailed', () => {
+      send({ type: 'status', service: 'node-sync', status: 'unavailable' })
     })
   } catch (err) {
     send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
@@ -546,9 +556,9 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   if (hasNodeSync) {
     sectionHtml.push(`
       <section data-testid="node-sync-section" class="card">
-        <h2 class="card-title">Unstoppable Node</h2>
-        <p class="mono" id="node-sync-status">⏳ Searching for local node...</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Run <code>npx unstoppable-node</code> to enable sync</p>
+        <h2 class="card-title">Data Protection</h2>
+        <p class="mono" id="node-sync-status">⏳ Looking for your Personal Node…</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Your data stays on this device until a Personal Node is available. Developers can start one with <code>npx unstoppable-node</code>.</p>
       </section>`)
   }
 
@@ -718,14 +728,14 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     msgCases.push(`
     if (msg.type === 'status' && msg.service === 'node-sync') {
       const hintEl = document.getElementById('node-sync-hint')
-      if (msg.status === 'searching') setText('node-sync-status', '⏳ Searching for local node...')
+      if (msg.status === 'searching') setText('node-sync-status', '⏳ Looking for your Personal Node…')
       if (msg.status === 'connected') {
-        setText('node-sync-status', '✅ Connected — replicating to node')
+        setText('node-sync-status', '✅ Protected — background replication is active')
         if (hintEl) hintEl.style.display = 'none'
       }
-      if (msg.status === 'disconnected') setText('node-sync-status', '⚠️ Node disconnected')
+      if (msg.status === 'disconnected' || msg.status === 'reconnecting') setText('node-sync-status', '⚠️ Protection paused — reconnecting…')
       if (msg.status === 'unavailable') {
-        setText('node-sync-status', '❌ No node found')
+        setText('node-sync-status', 'Device only — Personal Node not found')
         if (hintEl) hintEl.style.display = 'block'
       }
     }`)

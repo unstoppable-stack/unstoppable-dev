@@ -74,7 +74,29 @@ describe('node status RPC', () => {
     }
   })
 
-  it('client.getDiskUsage() returns bytes/files/path', async () => {
+  it('scopes app-facing status so one app cannot enumerate another app', async () => {
+    const node = await env.createNode()
+    await node.start()
+
+    const first = await env.createConnectedClient({ appId: 'private-one', appName: 'Private One' })
+    const second = await env.createConnectedClient({ appId: 'private-two', appName: 'Private Two' })
+
+    try {
+      const status = await first.getNodeStatus()
+      assert.deepEqual(status.apps.map((app) => app.appId), ['private-one'])
+      assert.deepEqual(Object.keys(status.storage.perApp), ['private-one'])
+      assert.ok(status.cores.every((core) => core.appId === 'private-one'))
+      assert.ok(status.drives.every((drive) => drive.appId === 'private-one'))
+      assert.equal(status.storagePath, null)
+      assert.equal(status.storage.quotas.global, null)
+    } finally {
+      await first.close()
+      await second.close()
+      await node.close()
+    }
+  })
+
+  it('client.getDiskUsage() returns only the requesting app logical usage', async () => {
     const node = await env.createNode()
     await node.start()
 
@@ -84,10 +106,9 @@ describe('node status RPC', () => {
       const usage = await client.getDiskUsage()
       assert.ok(usage, 'expected disk usage object')
       assert.equal(typeof usage.bytes, 'number')
-      assert.equal(typeof usage.files, 'number')
-      assert.ok(usage.files > 0, 'expected at least one file after corestore init')
-      assert.ok(usage.bytes > 0, 'expected non-zero bytes')
-      assert.ok(typeof usage.path === 'string' && usage.path.length > 0)
+      assert.equal(usage.files, null)
+      assert.equal(usage.path, null)
+      assert.equal(usage.scope, 'self')
     } finally {
       await client.close()
       await node.close()
@@ -107,6 +128,7 @@ describe('node status RPC', () => {
       assert.equal(typeof status.storage.totalCores, 'number')
       assert.equal(typeof status.storage.totalDrives, 'number')
       assert.ok(status.storage.perApp, 'storage.perApp present')
+      assert.equal(status.storagePath, null)
     } finally {
       await client.close()
       await node.close()
