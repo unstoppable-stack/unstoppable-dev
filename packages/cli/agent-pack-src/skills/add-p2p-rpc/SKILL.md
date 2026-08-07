@@ -20,8 +20,8 @@ version: "2026-04-14"
 
 > **CRITICAL — Pear Desktop Apps:** `bare-rpc` and Hyperswarm CANNOT run in
 > the renderer (browser context). They MUST run in a **worker process** started
-> via `pear-run`. The UI communicates with the worker via NDJSON over
-> `Pear.worker.pipe()`. See the `setup-pear-desktop` skill →
+> by embedded `pear-runtime`. The worker uses `Bare.IPC`, bridged to the UI
+> through Electron's sandboxed preload. See the `setup-pear-desktop` skill →
 > `resources/worker-pattern.md` for the full worker bridge implementation.
 
 ## ⚠ IMPORTANT: bare-rpc Has a Low-Level API

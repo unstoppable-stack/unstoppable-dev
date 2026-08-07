@@ -19,7 +19,7 @@ version: "2026-05-21"
   Parakeet ONNX bundles were removed in 0.11)
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.
-> It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.
+> It MUST run in a **Bare worker** started by embedded `pear-runtime`. See `setup-pear-desktop`.
 
 ## Engines: Whisper vs Parakeet
 
