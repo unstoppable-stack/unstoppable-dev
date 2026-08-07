@@ -2594,8 +2594,9 @@ exports[`generator snapshots > file paths only > pear-desktop / bare: path list 
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "electron/main.js",
+  "electron/preload.cjs",
   "index.html",
-  "index.js",
   "package.json",
   "planning/README.md",
   "worker.js",
@@ -2608,8 +2609,9 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "electron/main.js",
+  "electron/preload.cjs",
   "index.html",
-  "index.js",
   "package.json",
   "planning/README.md",
   "worker.js",
@@ -2622,8 +2624,9 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai: path l
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "electron/main.js",
+  "electron/preload.cjs",
   "index.html",
-  "index.js",
   "package.json",
   "planning/README.md",
   "worker.js",
@@ -2636,8 +2639,9 @@ exports[`generator snapshots > file paths only > pear-desktop / node-sync: path 
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "electron/main.js",
+  "electron/preload.cjs",
   "index.html",
-  "index.js",
   "package.json",
   "planning/README.md",
   "worker.js",
@@ -2650,8 +2654,9 @@ exports[`generator snapshots > file paths only > pear-desktop / wallet: path lis
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "electron/main.js",
+  "electron/preload.cjs",
   "index.html",
-  "index.js",
   "package.json",
   "planning/README.md",
   "worker.js",
@@ -3619,19 +3624,12 @@ dist/
     "path": ".gitignore",
   },
   {
-    "content": "import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    "content": "
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -3644,7 +3642,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -3655,7 +3653,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -3668,6 +3665,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 ",
@@ -3814,6 +3816,150 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
+    "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
+
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
+
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: 'snap-test',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+",
+    "path": "electron/main.js",
+  },
+  {
+    "content": "const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
+",
+    "path": "electron/preload.cjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -3828,23 +3974,10 @@ function injectStyles() {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -3853,49 +3986,19 @@ function injectStyles() {
     "path": "index.html",
   },
   {
-    "content": "import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
-
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
-
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
-
-Pear.teardown(() => pipe.destroy())
-",
-    "path": "index.js",
-  },
-  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "pear": {
-    "name": "snap-test",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": [
-      "/worker.js"
-    ],
-    "gui": {
-      "backgroundColor": "#1a1a2e",
-      "height": 720,
-      "width": 1100
-    }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release ."
+    "dev": "electron .",
+    "start": "electron ."
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.5",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "bare-rpc": "^1.1.0",
     "hyperswarm": "^4.17.0",
     "corestore": "^7.8.0",
@@ -3903,7 +4006,9 @@ Pear.teardown(() => pipe.destroy())
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
 }",
     "path": "package.json",
   },
@@ -3948,14 +4053,14 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/* global Pear */
+    "content": "/* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
@@ -4005,7 +4110,9 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
-  Pear.exit()
+  if (db) await db.close()
+  if (store) await store.close()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })
@@ -4048,19 +4155,12 @@ dist/
     "path": ".gitignore",
   },
   {
-    "content": "import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    "content": "
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -4073,7 +4173,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -4084,7 +4184,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -4097,6 +4196,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 ",
@@ -4361,6 +4465,150 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
+    "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
+
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
+
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: 'snap-test',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+",
+    "path": "electron/main.js",
+  },
+  {
+    "content": "const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
+",
+    "path": "electron/preload.cjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -4375,23 +4623,10 @@ function injectStyles() {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -4400,49 +4635,19 @@ function injectStyles() {
     "path": "index.html",
   },
   {
-    "content": "import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
-
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
-
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
-
-Pear.teardown(() => pipe.destroy())
-",
-    "path": "index.js",
-  },
-  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "pear": {
-    "name": "snap-test",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": [
-      "/worker.js"
-    ],
-    "gui": {
-      "backgroundColor": "#1a1a2e",
-      "height": 720,
-      "width": 1100
-    }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release ."
+    "dev": "electron .",
+    "start": "electron ."
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.5",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "bare-rpc": "^1.1.0",
     "hyperswarm": "^4.17.0",
     "corestore": "^7.8.0",
@@ -4452,7 +4657,9 @@ Pear.teardown(() => pipe.destroy())
     "@qvac/sdk": "^0.15.0",
     "zod": "^4.3.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
 }",
     "path": "package.json",
   },
@@ -4499,14 +4706,14 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/* global Pear */
+    "content": "/* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
@@ -4629,8 +4836,10 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
+  if (db) await db.close()
+  if (store) await store.close()
   if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
-  Pear.exit()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })
@@ -4679,19 +4888,12 @@ dist/
     "path": ".gitignore",
   },
   {
-    "content": "import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    "content": "
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -4704,7 +4906,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -4715,7 +4917,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -4728,6 +4929,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 ",
@@ -4983,6 +5189,150 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
+    "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
+
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
+
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: 'snap-test',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+",
+    "path": "electron/main.js",
+  },
+  {
+    "content": "const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
+",
+    "path": "electron/preload.cjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -4997,23 +5347,10 @@ function injectStyles() {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -5022,49 +5359,19 @@ function injectStyles() {
     "path": "index.html",
   },
   {
-    "content": "import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
-
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
-
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
-
-Pear.teardown(() => pipe.destroy())
-",
-    "path": "index.js",
-  },
-  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "pear": {
-    "name": "snap-test",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": [
-      "/worker.js"
-    ],
-    "gui": {
-      "backgroundColor": "#1a1a2e",
-      "height": 720,
-      "width": 1100
-    }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release ."
+    "dev": "electron .",
+    "start": "electron ."
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.5",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "bare-rpc": "^1.1.0",
     "hyperswarm": "^4.17.0",
     "corestore": "^7.8.0",
@@ -5074,7 +5381,9 @@ Pear.teardown(() => pipe.destroy())
     "@qvac/sdk": "^0.15.0",
     "zod": "^4.3.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
 }",
     "path": "package.json",
   },
@@ -5120,14 +5429,14 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/* global Pear */
+    "content": "/* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
@@ -5246,8 +5555,10 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
+  if (db) await db.close()
+  if (store) await store.close()
   if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
-  Pear.exit()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })
@@ -5293,19 +5604,12 @@ dist/
     "path": ".gitignore",
   },
   {
-    "content": "import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    "content": "
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -5318,7 +5622,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -5329,7 +5633,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -5342,6 +5645,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 ",
@@ -5507,6 +5815,150 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
+    "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
+
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
+
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: 'snap-test',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+",
+    "path": "electron/main.js",
+  },
+  {
+    "content": "const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
+",
+    "path": "electron/preload.cjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -5521,23 +5973,10 @@ function injectStyles() {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -5546,49 +5985,19 @@ function injectStyles() {
     "path": "index.html",
   },
   {
-    "content": "import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
-
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
-
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
-
-Pear.teardown(() => pipe.destroy())
-",
-    "path": "index.js",
-  },
-  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "pear": {
-    "name": "snap-test",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": [
-      "/worker.js"
-    ],
-    "gui": {
-      "backgroundColor": "#1a1a2e",
-      "height": 720,
-      "width": 1100
-    }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release ."
+    "dev": "electron .",
+    "start": "electron ."
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.5",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "bare-rpc": "^1.1.0",
     "hyperswarm": "^4.17.0",
     "corestore": "^7.8.0",
@@ -5597,7 +6006,9 @@ Pear.teardown(() => pipe.destroy())
     "hypercore-crypto": "^3.7.0",
     "@unstoppable-stack/node-client": "^0.4.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
 }",
     "path": "package.json",
   },
@@ -5656,15 +6067,15 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/* global Pear */
+    "content": "/* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
 import { connectToNode } from '@unstoppable-stack/node-client'
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
@@ -5715,8 +6126,10 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
+  if (db) await db.close()
+  if (store) await store.close()
   if (nodeClient) await nodeClient.close()
-  Pear.exit()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })
@@ -5785,19 +6198,12 @@ dist/
     "path": ".gitignore",
   },
   {
-    "content": "import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    "content": "
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -5810,7 +6216,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -5821,7 +6227,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -5834,6 +6239,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 ",
@@ -5989,6 +6399,150 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
+    "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
+
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
+
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
+
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: 'snap-test',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+",
+    "path": "electron/main.js",
+  },
+  {
+    "content": "const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
+",
+    "path": "electron/preload.cjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -6003,23 +6557,10 @@ function injectStyles() {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -6028,49 +6569,19 @@ function injectStyles() {
     "path": "index.html",
   },
   {
-    "content": "import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
-
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
-
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
-
-Pear.teardown(() => pipe.destroy())
-",
-    "path": "index.js",
-  },
-  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "pear": {
-    "name": "snap-test",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": [
-      "/worker.js"
-    ],
-    "gui": {
-      "backgroundColor": "#1a1a2e",
-      "height": 720,
-      "width": 1100
-    }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release ."
+    "dev": "electron .",
+    "start": "electron ."
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.5",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "bare-rpc": "^1.1.0",
     "hyperswarm": "^4.17.0",
     "corestore": "^7.8.0",
@@ -6078,7 +6589,9 @@ Pear.teardown(() => pipe.destroy())
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "electron": "^40.2.1"
+  }
 }",
     "path": "package.json",
   },
@@ -6124,14 +6637,14 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/* global Pear */
+    "content": "/* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
@@ -6185,7 +6698,9 @@ async function handleCommand(msg) {
 
 async function cleanup() {
   if (swarm) await swarm.destroy()
-  Pear.exit()
+  if (db) await db.close()
+  if (store) await store.close()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })

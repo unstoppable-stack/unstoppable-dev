@@ -12,7 +12,8 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     planningReadme(),
     packageJson(opts),
     indexHtml(opts),
-    indexJs(),
+    electronMainJs(opts),
+    electronPreloadCjs(),
     workerJs(opts),
     appBridgeJs(),
     appComponent(opts),
@@ -32,9 +33,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
   const deps: Record<string, string> = {
-    'pear-electron': '^1.7.0',
-    'pear-bridge': '^1.2.5',
-    'pear-run': '^1.0.7',
+    'pear-runtime': '^1.3.1',
     'bare-rpc': '^1.1.0',
     hyperswarm: '^4.17.0',
     corestore: '^7.8.0',
@@ -56,13 +55,6 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     delete deps.hyperbee
   }
 
-  // worker.js is unrouted (loaded by pear-run, not the renderer). The
-  // multi-writer store and its generated spec are imported BY the worker, so
-  // they must be unrouted too or Pear will not stage them for the worker.
-  const unrouted = has(opts, 'multi-writer')
-    ? ['/worker.js', '/multi-writer-store.js', '/schema']
-    : ['/worker.js']
-
   return {
     path: 'package.json',
     content: JSON.stringify({
@@ -70,29 +62,24 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       version: '0.1.0',
       private: true,
       type: 'module',
-      pear: {
-        name: opts.projectName,
-        type: 'desktop',
-        pre: 'pear-electron/pre',
-        routes: '.',
-        unrouted,
-        gui: { backgroundColor: '#1a1a2e', height: 720, width: 1100 },
-      },
+      main: 'electron/main.js',
+      // Valid development-only link so pear-runtime can initialize before
+      // the developer creates their own release line with `pear touch`.
+      upgrade: 'pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o',
       scripts: {
         ...(has(opts, 'multi-writer')
           ? {
               'build:schema': 'node schema/build.js',
               // schema/spec is imported at worker start, so generate it on
-              // install rather than letting `pear run` fail on a missing spec.
+              // install rather than letting the Bare worker fail on a missing spec.
               postinstall: 'npm run build:schema',
             }
           : {}),
-        dev: 'pear run -d .',
-        stage: 'pear stage .',
-        release: 'pear release .',
+        dev: 'electron .',
+        start: 'electron .',
       },
       dependencies: deps,
-      devDependencies: {},
+      devDependencies: { electron: '^40.2.1' },
     }, null, 2),
   }
 }
@@ -114,23 +101,10 @@ function indexHtml(opts: GeneratorOptions): GeneratedFile {
       height: 100vh;
       overflow: hidden;
     }
-    #bar {
-      -webkit-app-region: drag;
-      height: 24px;
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 9999;
-    }
-    #bar button, #bar input, #bar a { -webkit-app-region: no-drag; }
-    pear-ctrl[data-platform="darwin"] {
-      margin-top: 6px;
-      margin-left: 8px;
-    }
-    #app { height: 100vh; padding-top: 24px; display: flex; flex-direction: column; }
+    #app { height: 100vh; display: flex; flex-direction: column; }
   </style>
 </head>
 <body>
-  <div id="bar"><pear-ctrl></pear-ctrl></div>
   <div id="app"></div>
   <script type="module" src="./app/index.js"></script>
 </body>
@@ -139,20 +113,152 @@ function indexHtml(opts: GeneratorOptions): GeneratedFile {
   }
 }
 
-function indexJs(): GeneratedFile {
+function electronMainJs(opts: GeneratorOptions): GeneratedFile {
   return {
-    path: 'index.js',
-    content: `import Runtime from 'pear-electron'
-import Bridge from 'pear-bridge'
+    path: 'electron/main.js',
+    content: `import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { createRequire } from 'node:module'
+import { join } from 'node:path'
+import PearRuntime from 'pear-runtime'
 
-const bridge = new Bridge({ waypoint: '/index.html' })
-await bridge.ready()
+const require = createRequire(import.meta.url)
+const pkg = require('../package.json')
 
-const runtime = new Runtime()
-const pipe = await runtime.start({ bridge })
-pipe.on('close', () => Pear.exit())
+let mainWindow = null
+let pear = null
+let worker = null
+let closing = false
 
-Pear.teardown(() => pipe.destroy())
+function storageOverride() {
+  const index = process.argv.indexOf('--storage')
+  return index >= 0 ? process.argv[index + 1] : null
+}
+
+function getPear() {
+  if (pear) return pear
+  const customStorage = storageOverride()
+  pear = new PearRuntime({
+    name: pkg.name,
+    version: pkg.version,
+    upgrade: pkg.upgrade,
+    dir: customStorage || join(app.getPath('userData'), 'pear'),
+    app: app.isPackaged ? process.execPath : null,
+    updates: app.isPackaged || process.argv.includes('--updates'),
+  })
+  pear.on('error', (err) => console.error('[pear-runtime]', err))
+  return pear
+}
+
+async function startWorker() {
+  if (worker) return true
+  const runtime = getPear()
+  await runtime.ready()
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage])
+  worker.on('data', (data) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:message', data.toString())
+    }
+  })
+  worker.stderr?.on('data', (data) => console.error('[worker]', data.toString().trimEnd()))
+  worker.once('exit', (code) => {
+    worker = null
+    if (!closing && mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('worker:exit', code)
+    }
+  })
+  return true
+}
+
+async function shutdown() {
+  if (closing) return
+  closing = true
+  try { worker?.write(JSON.stringify({ type: 'shutdown' }) + '\\n') } catch {}
+  const currentWorker = worker
+  if (currentWorker) {
+    await Promise.race([
+      new Promise((resolve) => currentWorker.once('exit', resolve)),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ])
+    try { currentWorker.kill() } catch {}
+  }
+  await pear?.close().catch(() => {})
+}
+
+function assertTrusted(event) {
+  if (!mainWindow || mainWindow.isDestroyed() || event.sender !== mainWindow.webContents) {
+    throw new Error('Untrusted renderer')
+  }
+}
+
+ipcMain.handle('worker:start', (event) => {
+  assertTrusted(event)
+  return startWorker()
+})
+ipcMain.handle('worker:send', (event, message) => {
+  assertTrusted(event)
+  if (!worker) throw new Error('Worker is not running')
+  if (!message || typeof message !== 'object' || Array.isArray(message)) {
+    throw new Error('Worker message must be an object')
+  }
+  worker.write(JSON.stringify(message) + '\\n')
+})
+
+async function createWindow() {
+  mainWindow = new BrowserWindow({
+    title: '${opts.projectName}',
+    backgroundColor: '#1a1a2e',
+    width: 1100,
+    height: 720,
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  })
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url)
+    return { action: 'deny' }
+  })
+  await mainWindow.loadFile(join(import.meta.dirname, '..', 'index.html'))
+  if (!app.isPackaged) mainWindow.webContents.openDevTools({ mode: 'detach' })
+}
+
+app.whenReady().then(createWindow)
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow()
+})
+app.on('before-quit', (event) => {
+  if (closing) return
+  event.preventDefault()
+  shutdown().finally(() => app.quit())
+})
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+`
+  }
+}
+
+function electronPreloadCjs(): GeneratedFile {
+  return {
+    path: 'electron/preload.cjs',
+    content: `const { contextBridge, ipcRenderer } = require('electron')
+
+contextBridge.exposeInMainWorld('unstoppable', {
+  startWorker: () => ipcRenderer.invoke('worker:start'),
+  sendToWorker: (message) => ipcRenderer.invoke('worker:send', message),
+  onWorkerMessage: (listener) => {
+    const wrapped = (_event, chunk) => listener(chunk)
+    ipcRenderer.on('worker:message', wrapped)
+    return () => ipcRenderer.removeListener('worker:message', wrapped)
+  },
+  onWorkerExit: (listener) => {
+    const wrapped = (_event, code) => listener(code)
+    ipcRenderer.on('worker:exit', wrapped)
+    return () => ipcRenderer.removeListener('worker:exit', wrapped)
+  },
+})
 `
   }
 }
@@ -213,7 +319,8 @@ ${replicateLine}
   ]
 
   const cleanupCode: string[] = [`  if (swarm) await swarm.destroy()`]
-  if (multiWriter) cleanupCode.push(`  if (db) await db.close()`)
+  cleanupCode.push(`  if (db) await db.close()`)
+  if (!multiWriter) cleanupCode.push(`  if (store) await store.close()`)
 
   if (has(opts, 'node-sync')) {
     imports.push(`import { connectToNode } from '@unstoppable-stack/node-client'`)
@@ -305,7 +412,7 @@ ${replicateLine}
     // QVAC_MOCK is read at module load (not inside init) so handleCommand
     // can use it too. The worker runs in two different runtimes:
     //   * Node — when driven by scripts/tests via `node worker.js`
-    //   * Bare — when hosted inside Pear Desktop (pear-electron)
+    //   * Bare — when hosted by pear-runtime
     // `process.env` only exists in Node; Bare exposes env through
     // `Bare.env`. Referencing an undefined `process` in Bare throws a
     // ReferenceError at import time, hard-failing the worker before it
@@ -392,11 +499,11 @@ ${replicateLine}
 
   return {
     path: 'worker.js',
-    content: `/* global Pear */
+    content: `/* global Bare */
 ${imports.join('\n')}
 
-const pipe = Pear.worker.pipe()
-const storagePath = Pear.config.storage
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 ${moduleState.join('\n')}
@@ -428,7 +535,7 @@ async function handleCommand(msg) {
 
 async function cleanup() {
 ${cleanupCode.join('\n')}
-  Pear.exit()
+  Bare.exit()
 }
 
 send({ type: 'workerReady' })
@@ -446,19 +553,12 @@ init().catch((err) => send({ type: 'fatal', error: err.message }))` : `send({ ty
 function appBridgeJs(): GeneratedFile {
   return {
     path: 'app/bridge.js',
-    content: `import run from 'pear-run'
-
-const workerPath = Pear.key
-  ? \`\${Pear.config.applink || ''}/worker.js\`
-  : \`\${Pear.config.dir || ''}/worker.js\`
-
-const pipe = run(workerPath, [])
-
+    content: `
 const handlers = new Set()
 let messageBuffer = ''
 
-pipe.on('data', (data) => {
-  messageBuffer += Buffer.from(data).toString()
+window.unstoppable.onWorkerMessage((data) => {
+  messageBuffer += data
   const lines = messageBuffer.split('\\n')
   messageBuffer = lines.pop() || ''
   for (const line of lines) {
@@ -471,7 +571,7 @@ pipe.on('data', (data) => {
 })
 
 export function sendToWorker(msg) {
-  pipe.write(JSON.stringify(msg) + '\\n')
+  return window.unstoppable.sendToWorker(msg)
 }
 
 export function onWorkerMessage(handler) {
@@ -482,7 +582,6 @@ export function onWorkerMessage(handler) {
 export function destroyWorker() {
   try {
     sendToWorker({ type: 'shutdown' })
-    setTimeout(() => { try { pipe.destroy() } catch {} }, 500)
   } catch {}
   handlers.clear()
 }
@@ -495,6 +594,11 @@ export const workerReady = new Promise((resolve, reject) => {
       unsub()
       resolve(msg)
     }
+  })
+  window.unstoppable.startWorker().catch((err) => {
+    clearTimeout(timeout)
+    unsub()
+    reject(err)
   })
 })
 `

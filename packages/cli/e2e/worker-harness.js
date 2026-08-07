@@ -2,12 +2,12 @@
  * Worker harness — lets us run a generated Pear Desktop `worker.js` in plain
  * Node so the E2E runner can spawn it and assert on its NDJSON output.
  *
- * The generated worker uses two Pear-runtime globals:
- *   - `Pear.worker.pipe()`  — bidirectional stream to the renderer
- *   - `Pear.config.storage` — a directory for Corestore/Hyperbee
- *   - `Pear.exit()`         — graceful shutdown
+ * The generated worker uses the Bare globals supplied by pear-runtime:
+ *   - `Bare.IPC`     — bidirectional stream to the Electron host
+ *   - `Bare.argv[2]` — a directory for Corestore/Hyperbee
+ *   - `Bare.exit()`  — graceful shutdown
  *
- * We replace `Pear.worker.pipe()` with a Duplex that bridges to this process's
+ * We replace `Bare.IPC` with a Duplex that bridges to this process's
  * stdin/stdout, so the test harness can write NDJSON commands and read the
  * NDJSON responses exactly as the real bridge does.
  *
@@ -18,6 +18,7 @@
  */
 
 import { Duplex } from 'stream'
+import { EventEmitter } from 'events'
 import { mkdirSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import path from 'path'
@@ -60,20 +61,16 @@ process.stdin.on('end', () => {
   pipe.push(null)
 })
 
-// Inject the Pear global BEFORE importing the worker. The worker calls
-// `Pear.worker.pipe()` and `Pear.config.storage` at module top level.
-globalThis.Pear = {
-  worker: { pipe: () => pipe },
-  config: { storage: storageDir },
+// Inject the Bare global BEFORE importing the worker.
+globalThis.Bare = Object.assign(new EventEmitter(), {
+  IPC: pipe,
+  argv: ['bare', workerPath, storageDir],
+  env: process.env,
   exit: () => {
     // Give the worker a tick to flush any final NDJSON before exiting
     setImmediate(() => process.exit(0))
   },
-  teardown: () => {
-    /* no-op in harness */
-  },
-  key: null,
-}
+})
 
 // Dynamically import the worker. Use file:// URL so absolute paths work on
 // every platform and ESM semantics match the real runtime.

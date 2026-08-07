@@ -24,8 +24,8 @@ version: "2026-05-21"
   default tests cover only the mock provider.
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer
-> (browser context). It MUST run in a **worker process** started via `pear-run`.
-> The UI communicates with the worker via NDJSON over `Pear.worker.pipe()`.
+> (browser context). It MUST run in a **Bare worker** started by embedded `pear-runtime`.
+> The worker uses `Bare.IPC`, bridged through Electron's sandboxed preload.
 > See the `setup-pear-desktop` skill → `resources/worker-pattern.md` for the
 > full worker bridge implementation.
 

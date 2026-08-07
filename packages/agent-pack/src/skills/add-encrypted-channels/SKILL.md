@@ -18,7 +18,7 @@ version: "2026-04-14"
 
 > **CRITICAL — Pear Desktop Apps:** These P2P modules CANNOT run in the
 > renderer (browser context). They MUST run in a **worker process** started
-> via `pear-run`. See the `setup-pear-desktop` skill → `resources/worker-pattern.md`.
+> by embedded `pear-runtime`. See the `setup-pear-desktop` skill → `resources/worker-pattern.md`.
 
 ## Steps
 

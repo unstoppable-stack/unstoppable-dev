@@ -19,7 +19,7 @@ version: "2026-04-14"
 - Node.js, Bare, or Expo Bare runtime
 
 > **CRITICAL — Pear Desktop Apps:** HyperDB CANNOT run in the renderer.
-> It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.
+> It MUST run in a **Bare worker** started by embedded `pear-runtime`. See `setup-pear-desktop`.
 
 ## Steps
 

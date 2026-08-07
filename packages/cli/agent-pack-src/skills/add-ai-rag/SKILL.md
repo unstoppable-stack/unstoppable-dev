@@ -32,7 +32,7 @@ version: "2026-05-21"
 > the server-side request registry.
 
 > **CRITICAL — Pear Desktop Apps:** `@qvac/sdk` CANNOT run in the renderer.
-> It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.
+> It MUST run in a **Bare worker** started by embedded `pear-runtime`. See `setup-pear-desktop`.
 
 ## What Changed in 0.9 — Workspaces
 

@@ -98,17 +98,16 @@ Generated files:
 ### pear-desktop
 
 Generated files:
-- `package.json` — `pear` config block (`pre`, `routes`, `unrouted`), `pear-electron`/`pear-bridge`/`pear-run` deps
-- `index.html` — web entry with `<pear-ctrl>` native window controls and title bar
-- `index.js` — Pear native entry using `pear-electron` + `pear-bridge` (ESM, runs in Bare)
-- `worker.js` — P2P, storage, and/or AI initialization (ESM imports, `Pear.worker.pipe()`)
-- `app/bridge.js` — renderer-side worker client using `pear-run` (spawns worker, NDJSON pipe)
+- `package.json` — Electron entrypoint, `pear-runtime`, and Pear OTA upgrade link
+- `index.html` — renderer entry loaded by Electron
+- `electron/main.js` — Electron host that embeds Pear OTA and starts the Bare worker
+- `electron/preload.cjs` — sandboxed, context-isolated renderer API
+- `worker.js` — P2P, storage, and/or AI initialization using `Bare.IPC`
+- `app/bridge.js` — renderer-side NDJSON client over the preload API
 - `app/index.js` — status display UI (imports from bridge)
 
-**Important:** Pear Desktop apps must NOT be npm/pnpm workspace members. Bare runtime
-resolves modules relative to the project directory. If dependencies are hoisted to a
-monorepo root, the app will crash with `MODULE_NOT_FOUND` for every dependency and the
-`pear-electron/pre` script will timeout. Each Pear app needs its own `node_modules/`.
+Pear Desktop apps may be npm/pnpm workspace members. The current Electron +
+`pear-runtime` architecture does not use the legacy `pear-electron/pre` script.
 
 ### node-cli
 

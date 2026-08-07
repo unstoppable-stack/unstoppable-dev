@@ -9,13 +9,13 @@ alwaysApply: false
 - Local-first: core functionality must work without network access.
 - P2P sync: replication is opportunistic, not required to use the app.
 - Trust boundaries: isolate AI inference and P2P IO from UI threads.
-- Progressive delivery: stage, seed, release separately; do not block on global distribution.
+- Progressive delivery: build, stage, provision, and multisig separately.
 
 ## Desktop App Architecture (Pear)
 **Pattern: UI + Engine**
-- UI: Pear desktop app (HTML/React).
-- Engine: Pear terminal app running QVAC, storage, and P2P.
-- Bridge: `pear-run` + `pear-pipe` duplex stream with newline-delimited JSON.
+- UI: sandboxed Electron renderer (HTML/React).
+- Engine: Bare worker started by embedded `pear-runtime`.
+- Bridge: context-isolated Electron preload + `Bare.IPC`, using typed RPC or NDJSON.
 
 **Why**
 - Keeps long-running inference and networking off the UI thread.
