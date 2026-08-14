@@ -55,6 +55,7 @@ export async function createTestEnv () {
       appName: opts.appName || 'Test App',
       cores: opts.cores || [],
       drives: opts.drives || [],
+      resourceManifest: opts.resourceManifest,
       swarm: { bootstrap },
       topic
     })
@@ -67,6 +68,7 @@ export async function createTestEnv () {
       appName: opts.appName || 'Test App',
       cores: opts.cores || [],
       drives: opts.drives || [],
+      resourceManifest: opts.resourceManifest,
       swarm: { bootstrap },
       topic,
       ...(opts.timeout === undefined ? {} : { timeout: opts.timeout }),

@@ -63,14 +63,14 @@ describe('pairing', () => {
     assert.ok(events.length >= 2)
     assert.equal(events[0].type, 'pairRequest')
     assert.equal(events[0].appId, 'my-app')
-    assert.deepEqual(events[0].requestedCapabilities.resources, ['register', 'status'])
+    assert.deepEqual(events[0].requestedCapabilities.resources, ['register', 'manifest.replace', 'status'])
     assert.deepEqual(events[0].requestedCapabilities.storage, ['usage'])
     assert.equal(events[1].type, 'paired')
     assert.equal(events[1].appId, 'my-app')
 
     const app = (await node.getStatus()).apps.find((entry) => entry.appId === 'my-app')
-    assert.deepEqual(app.requestedCapabilities.resources, ['register', 'status'])
-    assert.deepEqual(app.grants.resources, ['register', 'status'])
+    assert.deepEqual(app.requestedCapabilities.resources, ['register', 'manifest.replace', 'status'])
+    assert.deepEqual(app.grants.resources, ['register', 'manifest.replace', 'status'])
     assert.deepEqual(app.grants.storage, ['usage'])
   })
 

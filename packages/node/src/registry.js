@@ -1,5 +1,6 @@
 import Hyperbee from 'hyperbee'
 import b4a from 'b4a'
+import { validateResourceManifest } from './resource-manifest.js'
 
 export class AppRegistry {
   constructor (core) {
@@ -13,7 +14,7 @@ export class AppRegistry {
     await this.bee.ready()
   }
 
-  async registerApp ({ appId, appName, publicKey, deviceName, requestedCapabilities, grants, quotaBytes, cores = [], drives = [] }) {
+  async registerApp ({ appId, appName, publicKey, deviceName, requestedCapabilities, grants, quotaBytes, cores, drives, resourceManifest }) {
     const existing = await this.getApp(appId)
     const record = {
       appId,
@@ -25,8 +26,13 @@ export class AppRegistry {
       requestedCapabilities: requestedCapabilities || existing?.requestedCapabilities || null,
       grants: grants || existing?.grants || null,
       quotaBytes: quotaBytes === undefined ? (existing?.quotaBytes ?? null) : quotaBytes,
-      cores,
-      drives,
+      // Pairing updates identity and grants before resource registration. Do
+      // not erase the last known resource set during that intermediate step.
+      cores: cores === undefined ? (existing?.cores || []) : cores,
+      drives: drives === undefined ? (existing?.drives || []) : drives,
+      resourceManifest: resourceManifest === undefined
+        ? (existing?.resourceManifest || null)
+        : resourceManifest,
       pairedAt: existing?.pairedAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       pairingMethod: 'local',
@@ -54,9 +60,11 @@ export class AppRegistry {
   }
 
   async importApps (apps = []) {
+    if (!Array.isArray(apps)) throw new Error('Imported apps must be an array')
+    if (apps.length > 10_000) throw new Error('Settings bundle contains too many apps')
     for (const app of apps) {
-      if (!app?.appId) continue
-      await this.bee.put(`apps/${app.appId}`, app)
+      const record = validateImportedApp(app)
+      await this.bee.put(`apps/${record.appId}`, record)
     }
   }
 
@@ -72,4 +80,42 @@ export class AppRegistry {
   async close () {
     await this.bee.close()
   }
+}
+
+export function validateImportedApp (app) {
+  if (!isPlainObject(app)) throw new Error('Imported app records must be objects')
+  if (typeof app.appId !== 'string' || app.appId.length === 0 || app.appId.length > 256 || /[\u0000-\u001f]/.test(app.appId)) {
+    throw new Error('Imported appId must be a non-empty string of at most 256 characters')
+  }
+  if (app.publicKey != null && (
+    typeof app.publicKey !== 'string' ||
+    !/^[A-Za-z0-9_-]{1,256}$/.test(app.publicKey) ||
+    ['__proto__', 'prototype', 'constructor'].includes(app.publicKey)
+  )) {
+    throw new Error(`Imported app ${app.appId} has an invalid public key`)
+  }
+  validateResources(app.cores, app.appId, 'cores')
+  validateResources(app.drives, app.appId, 'drives')
+  const copy = JSON.parse(JSON.stringify(app))
+  if (copy.resourceManifest != null) copy.resourceManifest = validateResourceManifest(copy.resourceManifest)
+  return copy
+}
+
+function validateResources (resources, appId, name) {
+  if (resources == null) return
+  if (!Array.isArray(resources) || resources.length > 10_000) {
+    throw new Error(`Imported app ${appId} has invalid ${name}`)
+  }
+  for (const resource of resources) {
+    if (!isPlainObject(resource)) throw new Error(`Imported app ${appId} has an invalid ${name} record`)
+    if (resource.key != null && (typeof resource.key !== 'string' || resource.key.length > 256)) {
+      throw new Error(`Imported app ${appId} has an invalid ${name} key`)
+    }
+  }
+}
+
+function isPlainObject (value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
 }

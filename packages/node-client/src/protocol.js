@@ -10,7 +10,7 @@ export const KNOWN_SERVICES = Object.freeze(['data', 'files', 'ai'])
 
 export function buildRequestedCapabilities ({ requireServices = [] } = {}) {
   const requested = {
-    resources: ['register', 'status'],
+    resources: ['register', 'manifest.replace', 'status'],
     storage: ['usage']
   }
   if (requireServices.includes('ai')) requested.ai = ['completion.stream']

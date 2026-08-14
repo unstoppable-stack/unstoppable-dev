@@ -1,6 +1,6 @@
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, stat, truncate, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { NodeDaemon } from '../src/node.js'
 import { exportNodeState, importNodeState, previewNodeStateImport } from '../src/export.js'
@@ -46,6 +46,8 @@ describe('node export/import', () => {
     const outPath = join(await env.tmpDir('node-export-'), 'backup.uns')
     const exported = await source.exportState(outPath)
     assert.equal(exported.apps.length, 1)
+    assert.equal(exported.kind, 'unstoppable-node-settings')
+    if (process.platform !== 'win32') assert.equal((await stat(outPath)).mode & 0o077, 0)
 
     const preview = await previewNodeStateImport({ inPath: outPath })
     assert.equal(preview.version, 1)
@@ -77,6 +79,15 @@ describe('node export/import', () => {
 
     const trust = JSON.parse(await readFile(join(targetDir, 'trust-registry.json'), 'utf8'))
     assert.equal(trust.approved.abc.appId, 'export-app')
+
+    const liveDir = await env.tmpDir('node-import-live-')
+    const live = new NodeDaemon(liveDir, { swarm: { bootstrap: env.bootstrap }, topic: env.topic })
+    cleanupItems.push(live)
+    await live.start()
+    const liveBundle = await live.importState(outPath)
+    assert.equal(liveBundle.apps.length, 1)
+    assert.equal((await live.registry.listApps())[0].appId, 'export-app')
+    assert.equal((await live.getConfig()).storage.perAppQuotaBytes, 1234)
   })
 
   it('rejects unsupported bundles during preview', async () => {
@@ -90,5 +101,44 @@ describe('node export/import', () => {
       previewNodeStateImport({ inPath: outPath }),
       /Unsupported export version: 999/
     )
+  })
+
+  it('rejects oversized and incorrectly typed settings bundles', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+
+    const dir = await env.tmpDir('node-export-bounds-')
+    const oversized = join(dir, 'oversized.uns')
+    await writeFile(oversized, '')
+    await truncate(oversized, (10 * 1024 * 1024) + 1)
+    await assert.rejects(previewNodeStateImport({ inPath: oversized }), /too large/)
+
+    const wrongKind = join(dir, 'wrong-kind.uns')
+    await writeFile(wrongKind, JSON.stringify({ version: 1, kind: 'other-product', apps: [] }))
+    await assert.rejects(previewNodeStateImport({ inPath: wrongKind }), /bundle kind/)
+
+    const wrongApps = join(dir, 'wrong-apps.uns')
+    await writeFile(wrongApps, JSON.stringify({ version: 1, apps: {} }))
+    await assert.rejects(previewNodeStateImport({ inPath: wrongApps }), /apps must be an array/)
+
+    const invalidApp = join(dir, 'invalid-app.uns')
+    await writeFile(invalidApp, JSON.stringify({ version: 1, apps: [{ appId: '', cores: [] }] }))
+    await assert.rejects(previewNodeStateImport({ inPath: invalidApp }), /Imported appId/)
+
+    const unsafeKey = join(dir, 'unsafe-key.uns')
+    await writeFile(unsafeKey, JSON.stringify({ version: 1, apps: [{ appId: 'unsafe', publicKey: '<img onerror=alert(1)>', cores: [] }] }))
+    await assert.rejects(previewNodeStateImport({ inPath: unsafeKey }), /invalid public key/)
+
+    const unknownConfig = join(dir, 'unknown-config.uns')
+    await writeFile(unknownConfig, JSON.stringify({ version: 1, apps: [], config: { unsafe: true } }))
+    await assert.rejects(previewNodeStateImport({ inPath: unknownConfig }), /Unknown node config option/)
+
+    const conflictingTrust = join(dir, 'conflicting-trust.uns')
+    await writeFile(conflictingTrust, JSON.stringify({
+      version: 1,
+      apps: [],
+      trust: { version: 1, approved: { same: {} }, denied: { same: {} } }
+    }))
+    await assert.rejects(previewNodeStateImport({ inPath: conflictingTrust }), /both approved and denied/)
   })
 })

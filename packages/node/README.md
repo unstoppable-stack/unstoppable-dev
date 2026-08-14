@@ -29,7 +29,7 @@ Or run the [Pear Desktop dashboard](../node-desktop) for a UI.
 npm install -g unstoppable-node
 ```
 
-For AI support, also install `@qvac/sdk` (optional peer dep):
+For AI support, also install the optional `@qvac/sdk` add-on:
 
 ```bash
 npm install @qvac/sdk
@@ -123,6 +123,22 @@ Quota sources:
 Use `null` for unlimited/default values. Resume an over-quota app after raising
 or clearing its quota with `node.resumeApp(appId)` or the dashboard Resume
 button.
+
+## Resource manifests
+
+Node Client `0.5` can replace an app installation's complete generic resource
+manifest. Descriptors have stable IDs, bounded untrusted string metadata, and a
+protection mode:
+
+- `metadata-only` preserves the previous sparse replication behavior.
+- `mirror` downloads all blocks for each observed Hypercore/Hyperbee checkpoint
+  and every file blob in each observed Hyperdrive checkpoint.
+
+Manifest replacement reconciles resources: omitted keys stop replicating, but
+their stored blocks are retained. App-scoped status exposes protection state,
+checkpoints, remaining blocks/bytes where measurable, completion time, and the
+last mirror error. The Node reports `protected` only after it has observed a
+source peer and verified the current checkpoint locally.
 
 ## Quickstart
 

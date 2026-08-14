@@ -1,5 +1,5 @@
 import { NodeDaemon } from 'unstoppable-node/node'
-import { importNodeState, previewNodeStateImport } from 'unstoppable-node/export'
+import { previewNodeStateImport } from 'unstoppable-node/export'
 import { ApprovalGate } from './approval.js'
 
 const STATUS_INTERVAL_MS = 2_000
@@ -153,7 +153,8 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
       case 'import-state':
         try {
-          const bundle = await importNodeState({ storagePath, inPath: msg.path })
+          const bundle = await node.importState(msg.path)
+          if (bundle.trust) await approvalGate.importSnapshot(bundle.trust)
           send({ type: 'import-result', path: msg.path, apps: bundle.apps.length })
           send({ type: 'config', config: await node.getConfig() })
           const status = await node.getStatus()
@@ -227,6 +228,22 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
       case 'disable-ai':
         await node.disableAI()
         break
+
+      // Internal package smoke check. This command is deliberately absent
+      // from the renderer allowlist and can only be sent by the main process.
+      case 'qvac-runtime-check': {
+        try {
+          const sdk = await import('@qvac/sdk')
+          if (typeof sdk.loadModel !== 'function' || typeof sdk.completion !== 'function') {
+            throw new Error('Required QVAC SDK exports are unavailable')
+          }
+          const packageJson = await import('@qvac/sdk/package', { with: { type: 'json' } })
+          send({ type: 'qvacRuntimeReady', version: packageJson.default.version })
+        } catch (err) {
+          send({ type: 'fatal', phase: 'qvac-runtime-check', error: err.message })
+        }
+        break
+      }
 
       case 'shutdown':
         await cleanup()

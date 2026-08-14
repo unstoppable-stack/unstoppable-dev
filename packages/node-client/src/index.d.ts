@@ -14,6 +14,45 @@ export interface DriveResource {
   name?: string
 }
 
+export type ResourceKind = 'hypercore' | 'hyperbee' | 'hyperdrive'
+export type ProtectionMode = 'mirror' | 'metadata-only'
+
+export interface ResourceDescriptor {
+  id: string
+  kind: ResourceKind
+  key: Uint8Array | string
+  name: string
+  metadata?: Record<string, string>
+  protection?: { mode: ProtectionMode }
+}
+
+export interface ResourceManifest {
+  schemaVersion: 1
+  resources: ResourceDescriptor[]
+}
+
+export interface ResourceProtection {
+  mode: ProtectionMode
+  state: 'metadata-only' | 'pending' | 'syncing' | 'protected' | 'error'
+  caughtUpAt: string | null
+  lastError: string | null
+  targetLength?: number
+  localContiguousLength?: number
+  blocksRemaining?: number
+  targetVersion?: number
+  totalBytes?: number
+  protectedBytes?: number
+  bytesRemaining?: number
+}
+
+export interface ResourceProtectionStatus {
+  id: string | null
+  kind: ResourceKind
+  key: string
+  name: string | null
+  protection: ResourceProtection | null
+}
+
 export interface NodeStatus {
   protocolVersion: string
   nodePublicKey: string
@@ -34,6 +73,7 @@ export interface ConnectToNodeOptions {
   appName?: string
   cores?: CoreResource[]
   drives?: DriveResource[]
+  resourceManifest?: ResourceManifest
   swarm?: Record<string, unknown>
   topic?: Uint8Array
   timeout?: number
@@ -67,6 +107,8 @@ export class NodeClient extends EventEmitter {
   lastStatus: NodeStatus | null
   connect(): Promise<void>
   getNodeStatus(opts?: { timeout?: number }): Promise<NodeStatus>
+  replaceResourceManifest(manifest: ResourceManifest, opts?: { timeout?: number }): Promise<{ manifest: ResourceManifest; resources: Array<{ id: string; key: string }> }>
+  getProtectionStatus(opts?: { timeout?: number }): Promise<{ resources: ResourceProtectionStatus[] }>
   getDiskUsage(opts?: { timeout?: number }): Promise<{ bytes: number; files: null; path: null; scope: 'self' }>
   peekCore(key: string, opts?: { limit?: number; timeout?: number }): Promise<unknown>
   peekDrive(key: string, opts?: { dir?: string; limit?: number; timeout?: number }): Promise<unknown>

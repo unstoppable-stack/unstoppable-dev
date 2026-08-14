@@ -1,0 +1,118 @@
+import { readFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+
+const root = resolve(import.meta.dirname, '..')
+const packageFiles = {
+  cli: 'packages/cli/package.json',
+  node: 'packages/node/package.json',
+  client: 'packages/node-client/package.json',
+  desktop: 'packages/node-desktop/package.json'
+}
+
+const packages = Object.fromEntries(await Promise.all(
+  Object.entries(packageFiles).map(async ([name, file]) => [name, JSON.parse(await readFile(resolve(root, file), 'utf8'))])
+))
+
+const failures = []
+const check = (condition, message) => { if (!condition) failures.push(message) }
+const baseVersion = (version) => version.split('-')[0]
+
+check(packages.node.version === packages.client.version, 'Node and node-client versions must match')
+check(packages.node.version === packages.desktop.version, 'Node and desktop versions must match')
+check(baseVersion(packages.node.version) === '0.5.0', 'Node release line must be 0.5.0')
+check(baseVersion(packages.cli.version) === '0.4.0', 'CLI release line must be 0.4.0')
+check(packages.desktop.dependencies?.['@qvac/sdk'] === '0.15.0', 'Desktop QVAC SDK must be pinned to 0.15.0')
+check(packages.desktop.devDependencies?.['@electron-forge/plugin-fuses'] === '7.11.2', 'Electron Fuse plugin must be pinned to 7.11.2')
+check(packages.desktop.scripts?.['test:packaged-runtime'], 'Desktop package runtime verification script is missing')
+
+for (const [name, file] of Object.entries(packageFiles)) {
+  const lockFile = resolve(root, file.replace('package.json', 'package-lock.json'))
+  const lock = JSON.parse(await readFile(lockFile, 'utf8'))
+  check(lock.version === packages[name].version, `${name} package-lock top-level version is stale`)
+  check(lock.packages?.['']?.version === packages[name].version, `${name} package-lock importer version is stale`)
+}
+
+for (const name of ['node', 'client', 'cli']) {
+  const pkg = packages[name]
+  const dependencyValues = Object.values({
+    ...(pkg.dependencies || {}),
+    ...(pkg.optionalDependencies || {}),
+    ...(pkg.peerDependencies || {})
+  })
+  check(!dependencyValues.some((value) => /^file:|^link:|^workspace:/.test(value)), `${name} public package contains a local dependency`)
+  check(pkg.repository?.url === 'https://github.com/unstoppable-stack/unstoppable-dev.git', `${name} repository URL is not the public repository`)
+}
+
+const generatorFiles = [
+  'packages/cli/src/generators/node-cli.ts',
+  'packages/cli/src/generators/pear-desktop.ts',
+  'packages/cli/src/generators/expo-mobile.ts'
+]
+for (const file of generatorFiles) {
+  const source = await readFile(resolve(root, file), 'utf8')
+  check(source.includes(`'@unstoppable-stack/node-client': '^${packages.client.version}'`), `${file} does not generate the release node-client version`)
+}
+
+const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
+for (const name of ['cli', 'node', 'client']) {
+  check(changelog.includes(packages[name].version), `CHANGELOG.md does not mention ${packages[name].version}`)
+}
+
+const desktopMain = await readFile(resolve(root, 'packages/node-desktop/electron/main.js'), 'utf8')
+for (const securityControl of [
+  'setPermissionRequestHandler',
+  'onBeforeRequest',
+  'will-attach-webview',
+  'registerSchemesAsPrivileged',
+  'protocol.handle',
+  'ApprovedPathPolicy',
+  'nodeIntegration: false',
+  'contextIsolation: true',
+  'sandbox: true'
+]) check(desktopMain.includes(securityControl), `Electron security control missing: ${securityControl}`)
+
+const forgeConfig = await readFile(resolve(root, 'packages/node-desktop/forge.config.cjs'), 'utf8')
+for (const fuseControl of [
+  'FuseV1Options.RunAsNode]: false',
+  'FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false',
+  'FuseV1Options.EnableNodeCliInspectArguments]: false',
+  'FuseV1Options.GrantFileProtocolExtraPrivileges]: false',
+  'FuseV1Options.EnableCookieEncryption]: true'
+]) check(forgeConfig.includes(fuseControl), `Electron Fuse control missing: ${fuseControl}`)
+check(forgeConfig.includes('pruneForeignPrebuilds'), 'Desktop packaging does not prune foreign native binaries')
+
+for (const workflow of ['.github/workflows/node-release.yml', '.github/workflows/node-desktop-release.yml', '.github/workflows/node-qvac.yml']) {
+  const source = await readFile(resolve(root, workflow), 'utf8')
+  for (const line of source.split('\n').filter((line) => line.trim().startsWith('uses:') || line.includes('- uses:'))) {
+    check(/@[0-9a-f]{40}(?:\s|$)/.test(line), `${workflow} has an unpinned action: ${line.trim()}`)
+  }
+}
+
+const nodeRelease = await readFile(resolve(root, '.github/workflows/node-release.yml'), 'utf8')
+check(!nodeRelease.includes('\n  push:'), 'Node publishing must not be triggered by a pushed tag')
+check(nodeRelease.includes('environment: npm-release'), 'Node publishing is missing its protected environment')
+check(nodeRelease.includes('--provenance'), 'Node publishing is missing npm provenance')
+check(nodeRelease.includes('npm pack ./packages/node-client'), 'Node release does not pack node-client from the monorepo root correctly')
+check(nodeRelease.includes('npm pack ./packages/node'), 'Node release does not pack node from the monorepo root correctly')
+
+const desktopRelease = await readFile(resolve(root, '.github/workflows/node-desktop-release.yml'), 'utf8')
+check(desktopRelease.includes('environment: desktop-release'), 'Desktop release is missing its protected environment')
+check(desktopRelease.includes('codesign --verify'), 'Desktop release does not verify the macOS signature')
+check(desktopRelease.includes('Get-AuthenticodeSignature'), 'Desktop release does not verify the Windows signature')
+check(desktopRelease.includes('npm run test:packaged-runtime'), 'Desktop release does not verify packaged dependencies and fuses')
+check(desktopRelease.includes('npm run test:packaged'), 'Desktop release does not smoke the packaged app')
+
+const qvacRelease = await readFile(resolve(root, '.github/workflows/node-qvac.yml'), 'utf8')
+check(qvacRelease.includes('environment: qvac-validation'), 'Real QVAC validation is missing its protected environment')
+check(qvacRelease.includes('@qvac/sdk@0.15.0'), 'Real QVAC validation does not install the pinned desktop SDK')
+for (const runner of ['macos-14', 'ubuntu-24.04', 'windows-2025']) {
+  check(qvacRelease.includes(runner), `Real QVAC validation is missing ${runner}`)
+}
+
+if (failures.length > 0) {
+  console.error('Node release gate failed:')
+  for (const failure of failures) console.error(`- ${failure}`)
+  process.exitCode = 1
+} else {
+  console.log(`Node release gate passed (${packages.node.version}; CLI ${packages.cli.version})`)
+}

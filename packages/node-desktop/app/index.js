@@ -1,5 +1,5 @@
-import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
-import ui from 'pear-electron'
+import { sendToWorker, onWorkerMessage, selectSettingsPath, workerReady } from './bridge.js'
+import ui from './platform.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -665,7 +665,7 @@ function renderApps (status) {
               ${grantsMeta}
               <span>${totalEntries} entries</span>
               <span>${totalPeers} peer connections</span>
-              <span class="mono dim" title="${escape(app.publicKey || '')}">key ${short(app.publicKey)}</span>
+              <span class="mono dim" title="${escape(app.publicKey || '')}">key ${escape(short(app.publicKey))}</span>
               <span class="mono dim">ID ${escape(app.appId)}</span>
             </div>
           </details>
@@ -1195,15 +1195,19 @@ function wireConfigForm () {
 function wireBackupControls () {
   const exportBtn = document.getElementById('backup-export')
   const importBtn = document.getElementById('backup-import')
-  if (exportBtn) exportBtn.addEventListener('click', () => {
-    const path = getValue('backup-path').trim()
+  if (exportBtn) exportBtn.addEventListener('click', async () => {
+    const path = await selectSettingsPath('export', getValue('backup-path').trim())
+    if (path == null) return setText('backup-message', 'Export cancelled')
     if (!path) return setText('backup-message', 'Enter an export file path')
+    setValue('backup-path', path)
     setText('backup-message', 'Exporting…')
     sendToWorker({ type: 'export-state', path })
   })
-  if (importBtn) importBtn.addEventListener('click', () => {
-    const path = getValue('backup-path').trim()
+  if (importBtn) importBtn.addEventListener('click', async () => {
+    const path = await selectSettingsPath('import', getValue('backup-path').trim())
+    if (path == null) return setText('backup-message', 'Import cancelled')
     if (!path) return setText('backup-message', 'Enter a settings file path')
+    setValue('backup-path', path)
     setText('backup-message', 'Reading settings…')
     sendToWorker({ type: 'preview-import', path })
   })

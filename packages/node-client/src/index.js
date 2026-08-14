@@ -29,6 +29,7 @@ export {
  * @param {string} opts.appName          - Human-readable app name
  * @param {Array}  opts.cores            - Cores to register: [{ key: Buffer|string, type: string, name: string }]
  * @param {Array}  [opts.drives]         - Drives to register: [{ key: Buffer|string, name: string }]
+ * @param {Object} [opts.resourceManifest] - Complete schemaVersion 1 resource manifest. Preferred over cores/drives.
  * @param {Object} [opts.swarm]          - Hyperswarm options (e.g. { bootstrap })
  * @param {Buffer} [opts.topic]          - Override discovery topic (for testing)
  * @param {number} [opts.timeout=15000]  - How long to wait for pairing before rejecting
@@ -54,6 +55,7 @@ export async function connectToNode ({
   appName,
   cores = [],
   drives = [],
+  resourceManifest,
   swarm,
   topic,
   timeout: timeoutMs = 15_000,
@@ -71,6 +73,11 @@ export async function connectToNode ({
   if (!Array.isArray(cores) || !Array.isArray(drives)) {
     throw new InvalidOptionError('cores and drives must be arrays')
   }
+  if (resourceManifest !== undefined && (
+    !resourceManifest || resourceManifest.schemaVersion !== 1 || !Array.isArray(resourceManifest.resources)
+  )) {
+    throw new InvalidOptionError('resourceManifest must use schemaVersion 1 and contain resources[]')
+  }
   for (const s of requireServices) {
     if (!KNOWN_SERVICES.includes(s)) {
       throw new InvalidOptionError(`Unknown service "${s}" — known: ${KNOWN_SERVICES.join(', ')}`)
@@ -82,6 +89,7 @@ export async function connectToNode ({
     appName,
     cores,
     drives,
+    resourceManifest,
     swarm,
     topic,
     deviceName,

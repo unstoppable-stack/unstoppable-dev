@@ -1,6 +1,6 @@
 {
   "name": "@unstoppable-stack/node-client",
-  "version": "0.4.0",
+  "version": "0.5.0-beta.1",
   "description": "Client library to connect Unstoppable Stack apps to the Node for data replication and sync",
   "type": "module",
   "main": "src/index.js",
@@ -28,7 +28,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/unstoppable-stack/unstoppable-stack.git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/node-client"
   },
   "homepage": "https://unstoppable.dev",
