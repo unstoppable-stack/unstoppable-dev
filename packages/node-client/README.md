@@ -106,6 +106,19 @@ does not delete retained bytes. A protected checkpoint says nothing about
 future writes; applications should keep polling status or react to their own
 write lifecycle before presenting durable-protection claims.
 
+## Client methods
+
+| Method | Purpose |
+| ------ | ------- |
+| `getNodeStatus()` | Fresh app-scoped service, resource, storage, quota, and AI status |
+| `getProtectionStatus()` | Normalized protection state for this app's cores and drives |
+| `getDiskUsage()` | This app's logical replicated bytes; no node path or global use |
+| `replaceResourceManifest()` | Replace the installation's complete resource set |
+| `requestInference()` | Stream tokens from the node with timeout and abort support |
+| `peekCore()` / `peekDrive()` | Debug an owned resource; requires an explicit `resources.peek` grant |
+| `sendHeartbeat()` | Send the app uptime while paired |
+| `close()` | Stop reconnecting, close discovery, and reject pending operations |
+
 ## Events
 
 | Event              | Payload                                                                |
@@ -113,13 +126,18 @@ write lifecycle before presenting durable-protection claims.
 | `searching`        | nothing — fired each time we (re)join the discovery topic              |
 | `candidateFound`   | `{ publicKey }` — a peer answered, awaiting `nodeHello`                |
 | `nodeHello`        | `{ nodePublicKey, services, protocolVersion }`                         |
+| `paired`           | `{ nodePublicKey, services, capabilities, grants }`                    |
 | `registered`       | `{ replicating }` — pairing + registration done                        |
 | `pairDenied`       | `{ reason }`                                                           |
+| `syncStatus`       | node-sent replication status update                                    |
 | `nodeStatus`       | app-scoped status snapshot (also returned by `getNodeStatus()`)        |
+| `resourceManifestReplaced` | `{ manifest, resources }` after a successful replacement       |
 | `disconnected`     | nothing — socket dropped                                               |
 | `reconnecting`     | `{ attempt, delayMs }` — only when `reconnect` is enabled              |
 | `reconnected`      | `{ attempts }`                                                         |
 | `reconnectFailed`  | `{ attempts }` — `maxAttempts` reached                                 |
+| `nodeError`        | node or control-frame error                                            |
+| `closed`           | nothing — client resources have closed                                |
 
 ## Typed errors
 
@@ -155,6 +173,10 @@ try {
 | `INVALID_OPTION`        | `InvalidOptionError`        |
 | `CLOSED`                | `ClientClosedError`         |
 | `INFERENCE_ERROR`       | `InferenceError`            |
+
+Request-specific failures are also `NodeClientError` instances and use codes
+such as `CAPABILITY_DENIED`, `STATUS_TIMEOUT`, `PEEK_TIMEOUT`,
+`MANIFEST_TIMEOUT`, or `INVALID_RESOURCE_MANIFEST`.
 
 ## Discovery topic
 
