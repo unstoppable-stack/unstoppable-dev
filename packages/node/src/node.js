@@ -6,8 +6,10 @@ import { AppRegistry } from './registry.js'
 import { ReplicationEngine } from './replication.js'
 import { AIProvider } from './ai-provider.js'
 import { loadConfig, saveConfig, mergeConfigPatch, validateConfig } from './config.js'
-import { writeNodeStateBundle } from './export.js'
+import { readNodeStateBundle, writeNodeStateBundle } from './export.js'
 import { localDiscoveryTopic, encodeMessage, DEFAULT_SERVICES, PROTOCOL_VERSION, buildCapabilities, defaultCapabilityGrants, requestedCapabilityGrants } from './protocol.js'
+import { runtimeFs, runtimePath } from './runtime-files.js'
+import { manifestToLegacyResources, validateResourceManifest } from './resource-manifest.js'
 
 const DEFAULT_DISCOVERY_WARMUP_MS = 0
 const MAX_CONTROL_FRAME_CHARS = 1024 * 1024
@@ -78,6 +80,7 @@ export class NodeDaemon extends EventEmitter {
 
     this.replicationSwarm.on('connection', (socket) => {
       this.store.replicate(socket)
+      this.replication.onPeerConnection()
     })
 
     this.discoverySwarm.on('connection', (socket, info) => {
@@ -157,6 +160,16 @@ export class NodeDaemon extends EventEmitter {
     const apps = this.registry ? await this.registry.listApps() : []
     const config = await this.getConfig()
     return writeNodeStateBundle({ storagePath: this.storagePath, outPath, config, apps })
+  }
+
+  async importState (inPath) {
+    if (!this.registry || !this.replication) throw new Error('Node must be running before importing settings')
+    const bundle = await readNodeStateBundle(inPath)
+
+    await this.registry.importApps(bundle.apps || [])
+    if (bundle.config) await this.updateConfig(bundle.config)
+    await this._restoreReplication()
+    return bundle
   }
 
   async _applyConfig (previous, next) {
@@ -256,6 +269,9 @@ export class NodeDaemon extends EventEmitter {
         break
       case 'register':
         await this._handleRegister(msg, socket, remoteKey)
+        break
+      case 'resource-manifest-replace':
+        await this._handleResourceManifestReplace(msg, socket)
         break
       case 'heartbeat':
         if (!this._authorize(socket, 'resources', 'status', msg.requestId)) break
@@ -491,6 +507,11 @@ export class NodeDaemon extends EventEmitter {
       }
     }
 
+    await this.replication.reconcileAppResources(session.appId, {
+      coreKeys: (msg.cores || []).map((core) => core.key),
+      driveKeys: (msg.drives || []).map((drive) => drive.key)
+    })
+
     await this.registry.registerApp({
       ...app,
       cores: msg.cores || [],
@@ -510,6 +531,37 @@ export class NodeDaemon extends EventEmitter {
     })
 
     await this._enforceQuotas(this.replication.getReplicatedBytes())
+  }
+
+  async _handleResourceManifestReplace (msg, socket) {
+    const session = this._authorize(socket, 'resources', 'manifest.replace', msg.requestId)
+    if (!session) return
+
+    try {
+      const manifest = validateResourceManifest(msg.manifest)
+      const { cores, drives } = manifestToLegacyResources(manifest)
+
+      for (const core of cores) await this.replication.addCore({ ...core, appId: session.appId })
+      for (const drive of drives) await this.replication.addDrive({ ...drive, appId: session.appId })
+      await this.replication.reconcileAppResources(session.appId, {
+        coreKeys: cores.map((core) => core.key),
+        driveKeys: drives.map((drive) => drive.key)
+      })
+
+      const app = await this.registry.getApp(session.appId)
+      await this.registry.registerApp({ ...app, cores, drives, resourceManifest: manifest })
+      await this._enforceQuotas(this.replication.getReplicatedBytes())
+
+      socket.write(encodeMessage({
+        type: 'resource-manifest-replaced',
+        requestId: msg.requestId,
+        manifest,
+        resources: manifest.resources.map((resource) => ({ id: resource.id, key: resource.key }))
+      }))
+      this.emit('resourceManifestReplaced', { appId: session.appId, resourceCount: manifest.resources.length })
+    } catch (err) {
+      this._writeError(socket, msg.requestId, 'INVALID_RESOURCE_MANIFEST', err.message)
+    }
   }
 
   _authorize (socket, capability, method, requestId = null, errorType = 'error') {
@@ -728,8 +780,8 @@ export class NodeDaemon extends EventEmitter {
   // registry sidecar so the number tracks "data the node is hosting".
   async getDiskUsage () {
     if (!this.storagePath) return null
-    const { stat, readdir } = await import('fs/promises')
-    const { join } = await import('path')
+    const { stat, readdir } = runtimeFs
+    const { join } = runtimePath
 
     let total = 0
     let files = 0

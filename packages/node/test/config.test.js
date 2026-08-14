@@ -1,8 +1,9 @@
 import { describe, it, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile } from 'fs/promises'
+import { readFile, readdir, stat, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { NodeDaemon } from '../src/node.js'
+import { CONFIG_VERSION, loadConfig } from '../src/config.js'
 import { createTestEnv } from './helpers.js'
 
 describe('node config', () => {
@@ -31,9 +32,36 @@ describe('node config', () => {
     assert.equal(config.pairing.requireApproval, true)
     assert.equal(config.notifications.pairRequestSound, false)
     assert.equal(config.notifications.pairRequestAutoRestore, false)
+    assert.equal(config.configVersion, CONFIG_VERSION)
 
-    const saved = JSON.parse(await readFile(join(node.storagePath, 'node-config.json'), 'utf8'))
+    const configFile = join(node.storagePath, 'node-config.json')
+    const saved = JSON.parse(await readFile(configFile, 'utf8'))
     assert.deepEqual(saved, config)
+    assert.equal((await readdir(node.storagePath)).some((name) => name.endsWith('.tmp')), false)
+    if (process.platform !== 'win32') assert.equal((await stat(configFile)).mode & 0o077, 0)
+  })
+
+  it('migrates the unversioned beta config and rejects unknown future versions', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+    const dir = await env.tmpDir('node-config-migration-')
+    const file = join(dir, 'node-config.json')
+
+    await writeFile(file, JSON.stringify({
+      ai: { enabled: false, mode: 'mock', modelSrc: '' },
+      storage: { globalQuotaBytes: 2048, perAppQuotaBytes: null },
+      pairing: { requireApproval: true, autoApproveLocal: false },
+      notifications: { pairRequests: true, pairRequestSound: false, pairRequestAutoRestore: false },
+      ui: { showWelcome: false }
+    }))
+
+    const migrated = await loadConfig(dir)
+    assert.equal(migrated.configVersion, CONFIG_VERSION)
+    assert.equal(migrated.storage.globalQuotaBytes, 2048)
+    assert.equal(migrated.ui.showWelcome, false)
+
+    await writeFile(file, JSON.stringify({ configVersion: CONFIG_VERSION + 1 }))
+    await assert.rejects(loadConfig(dir), /newer than this app supports/)
   })
 
   it('seeds AI config from launch options only for a new store', async () => {
@@ -100,5 +128,17 @@ describe('node config', () => {
     assert.equal(reloaded.pairing.requireApproval, false)
     assert.equal(reloaded.notifications.pairRequestSound, true)
     assert.equal(reloaded.notifications.pairRequestAutoRestore, true)
+  })
+
+  it('rejects unknown config keys and oversized model sources', async () => {
+    env = await createTestEnv()
+    cleanupItems = []
+    const node = await env.createNode()
+    cleanupItems.push(node)
+    await node.start()
+
+    await assert.rejects(node.updateConfig({ pairing: { unexpected: true } }), /Unknown node config option/)
+    await assert.rejects(node.updateConfig({ unexpected: true }), /Unknown node config option/)
+    await assert.rejects(node.updateConfig({ ai: { modelSrc: 'x'.repeat(4097) } }), /at most 4096/)
   })
 })

@@ -242,4 +242,20 @@ describe('lib/approval — ApprovalGate', () => {
     assert.equal(snap2.pending.length, 0)
     assert.ok(snap2.approved.hh)
   })
+
+  it('imports and persists a validated trust snapshot', async () => {
+    const gate = new ApprovalGate({ registryPath: path })
+    await gate.ready()
+
+    await gate.importSnapshot({
+      version: 1,
+      approved: { imported: { appId: 'notes', appName: 'Notes' } },
+      denied: { blocked: { appId: 'bad', reason: 'user denied' } }
+    })
+
+    assert.equal(gate.snapshot().approved.imported.appId, 'notes')
+    assert.equal((await loadRegistry(path)).denied.blocked.appId, 'bad')
+    await assert.rejects(gate.importSnapshot([]), /must be an object/)
+    await assert.rejects(gate.importSnapshot({ approved: [] }), /approved entries/)
+  })
 })

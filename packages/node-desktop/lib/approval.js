@@ -21,7 +21,7 @@
 // after being revoked.
 
 import { EventEmitter } from 'bare-events'
-import { loadRegistry, saveRegistry, recordApproval, recordDenial, decisionFor } from './registry.js'
+import { loadRegistry, saveRegistry, recordApproval, recordDenial, decisionFor, validateRegistry } from './registry.js'
 
 export class ApprovalGate extends EventEmitter {
   constructor ({ registryPath }) {
@@ -152,6 +152,15 @@ export class ApprovalGate extends EventEmitter {
     delete this._cache.denied[publicKey]
     await saveRegistry(this.registryPath, this._cache)
     this.emit('forgot', { publicKey })
+  }
+
+  async importSnapshot (snapshot) {
+    await this.ready()
+    const imported = validateRegistry(snapshot)
+    this._cache = imported
+    await saveRegistry(this.registryPath, this._cache)
+    this.emit('imported', this.snapshot())
+    return this.snapshot()
   }
 
   listPending () {

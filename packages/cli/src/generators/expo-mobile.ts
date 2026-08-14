@@ -140,7 +140,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // node-client + its transitive runtime deps. `hyperswarm` already enters
     // the graph via `local-ai` too, so guard so we don't double-declare.
     Object.assign(deps, {
-      '@unstoppable-stack/node-client': '^0.4.0',
+      '@unstoppable-stack/node-client': '^0.5.0-beta.1',
       hyperswarm: '^4.17.0',
       b4a: '^1.8.0',
       events: '^3.3.0',

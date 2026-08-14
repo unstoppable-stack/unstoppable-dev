@@ -57,6 +57,55 @@ for await (const token of client.requestInference({
 await client.close()
 ```
 
+## Resource manifests and verified retention
+
+For apps with dynamic writer sets or resources that must be retained in full,
+prefer a complete resource manifest over the legacy `cores` / `drives` arrays:
+
+```js
+const client = await connectToNode({
+  appId: 'my-app',
+  appName: 'My App',
+  reconnect: true,
+  resourceManifest: {
+    schemaVersion: 1,
+    resources: [
+      {
+        id: 'catalog-writer-phone',
+        kind: 'hyperbee',
+        key: catalog.core.key,
+        name: 'Catalog writer',
+        metadata: { role: 'catalog-writer' },
+        protection: { mode: 'mirror' }
+      },
+      {
+        id: 'originals',
+        kind: 'hyperdrive',
+        key: originals.key,
+        name: 'Original files',
+        metadata: { role: 'originals' },
+        protection: { mode: 'mirror' }
+      }
+    ]
+  }
+})
+
+// Replace the complete set when a writer/resource is added or removed.
+await client.replaceResourceManifest(nextManifest)
+
+const { resources } = await client.getProtectionStatus()
+const protectedNow = resources.every(({ protection }) =>
+  protection?.state === 'protected'
+)
+```
+
+`mirror` downloads and verifies every block in the currently observed core or
+drive checkpoint. `metadata-only` registers and seeds metadata without forcing
+all sparse content to be retained. Removing a descriptor stops replication but
+does not delete retained bytes. A protected checkpoint says nothing about
+future writes; applications should keep polling status or react to their own
+write lifecycle before presenting durable-protection claims.
+
 ## Events
 
 | Event              | Payload                                                                |

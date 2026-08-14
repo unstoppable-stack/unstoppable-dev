@@ -57,6 +57,17 @@ describe('AppRegistry', () => {
     assert.equal(second.cores.length, 1)
   })
 
+  it('does not erase resources during a pairing-only update', async () => {
+    const cores = [{ key: 'c1', name: 'catalog' }]
+    const drives = [{ key: 'd1', name: 'originals' }]
+    await registry.registerApp({ appId: 'app-1', appName: 'App', publicKey: 'key1', cores, drives })
+
+    await registry.registerApp({ appId: 'app-1', appName: 'App', publicKey: 'key1', grants: { resources: ['status'] } })
+    const app = await registry.getApp('app-1')
+    assert.deepEqual(app.cores, cores)
+    assert.deepEqual(app.drives, drives)
+  })
+
   it('lists multiple apps', async () => {
     await registry.registerApp({ appId: 'app-a', appName: 'A', publicKey: 'k1' })
     await registry.registerApp({ appId: 'app-b', appName: 'B', publicKey: 'k2' })

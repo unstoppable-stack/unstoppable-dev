@@ -37,6 +37,7 @@ export class NodeClient extends EventEmitter {
     appName,
     cores = [],
     drives = [],
+    resourceManifest = null,
     swarm: swarmOpts,
     topic: topicOverride,
     deviceName,
@@ -48,6 +49,8 @@ export class NodeClient extends EventEmitter {
     this.appName = appName
     this.cores = cores
     this.drives = drives
+    this.resourceManifest = resourceManifest ? normalizeManifest(resourceManifest) : null
+    this._registrationManifestRequestId = null
     this.deviceName = typeof deviceName === 'string' && deviceName.length > 0
       ? deviceName
       : localDeviceName()
@@ -292,7 +295,9 @@ export class NodeClient extends EventEmitter {
           capabilities: msg.capabilities,
           grants: msg.grants
         })
-        if ((this.grants?.resources || []).includes('register')) {
+        if (this.resourceManifest && (this.grants?.resources || []).includes('manifest.replace')) {
+          this._sendManifestRegistration()
+        } else if ((this.grants?.resources || []).includes('register')) {
           this._sendRegistration()
         } else {
           // Pairing itself creates the app record. A compute/status-only client
@@ -333,6 +338,22 @@ export class NodeClient extends EventEmitter {
           clearTimeout(pending.timer)
           pending.resolve(msg.status)
         }
+        break
+      }
+
+      case 'resource-manifest-replaced': {
+        this.resourceManifest = msg.manifest
+        const pending = this._statusRequests.get(msg.requestId)
+        if (pending) {
+          this._statusRequests.delete(msg.requestId)
+          clearTimeout(pending.timer)
+          pending.resolve({ manifest: msg.manifest, resources: msg.resources || [] })
+        }
+        if (msg.requestId === this._registrationManifestRequestId) {
+          this._registrationManifestRequestId = null
+          this._markRegistered((msg.resources || []).map((resource) => resource.key))
+        }
+        this.emit('resourceManifestReplaced', { manifest: msg.manifest, resources: msg.resources || [] })
         break
       }
 
@@ -404,6 +425,46 @@ export class NodeClient extends EventEmitter {
       this._statusRequests.set(requestId, { resolve, reject, timer })
       this.socket.write(encodeMessage({ type: 'status-request', requestId }))
     })
+  }
+
+  /**
+   * Replace this installation's complete generic resource set.
+   * Resources omitted from the manifest stop replicating; retained bytes are
+   * not deleted. `protection.mode = "mirror"` requests full block retention.
+   */
+  async replaceResourceManifest (manifest, { timeout = 30_000 } = {}) {
+    if (this._closing) throw new ClientClosedError()
+    if (!this.paired || !this.socket) throw new ClientClosedError('Not paired with a node')
+    if (!(this.grants?.resources || []).includes('manifest.replace')) {
+      throw new NodeClientError('CAPABILITY_DENIED', 'Node did not grant resources.manifest.replace')
+    }
+    if (!manifest || manifest.schemaVersion !== 1 || !Array.isArray(manifest.resources)) {
+      throw new NodeClientError('INVALID_RESOURCE_MANIFEST', 'Expected a schemaVersion 1 resource manifest')
+    }
+
+    const normalized = normalizeManifest(manifest)
+    const requestId = `m${++this._requestSeq}`
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this._statusRequests.delete(requestId)
+        reject(new NodeClientError('MANIFEST_TIMEOUT', `replaceResourceManifest() timed out after ${timeout}ms`))
+      }, timeout)
+      this._statusRequests.set(requestId, { resolve, reject, timer })
+      this.socket.write(encodeMessage({ type: 'resource-manifest-replace', requestId, manifest: normalized }))
+    })
+  }
+
+  async getProtectionStatus (opts) {
+    const status = await this.getNodeStatus(opts)
+    return {
+      resources: [...(status.cores || []), ...(status.drives || [])].map((resource) => ({
+        id: resource.resourceId || null,
+        kind: resource.type,
+        key: resource.key,
+        name: resource.name || null,
+        protection: resource.protection || null
+      }))
+    }
   }
 
   /**
@@ -549,6 +610,17 @@ export class NodeClient extends EventEmitter {
     }))
   }
 
+  _sendManifestRegistration () {
+    if (!this.socket || !this.paired || !this.resourceManifest) return
+    const requestId = `m${++this._requestSeq}`
+    this._registrationManifestRequestId = requestId
+    this.socket.write(encodeMessage({
+      type: 'resource-manifest-replace',
+      requestId,
+      manifest: this.resourceManifest
+    }))
+  }
+
   _markRegistered (replicating) {
     this.registered = true
     const isReconnection = this._wasEverPaired
@@ -631,5 +703,15 @@ export class NodeClient extends EventEmitter {
     for (const [, handler] of this._inferenceRequests) {
       handler({ type: 'inference-error', error: error.message })
     }
+  }
+}
+
+function normalizeManifest (manifest) {
+  return {
+    schemaVersion: 1,
+    resources: manifest.resources.map((resource) => ({
+      ...resource,
+      key: typeof resource.key === 'string' ? resource.key : b4a.toString(resource.key, 'hex')
+    }))
   }
 }

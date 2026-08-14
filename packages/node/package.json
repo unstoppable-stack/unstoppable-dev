@@ -1,6 +1,6 @@
 {
   "name": "unstoppable-node",
-  "version": "0.4.0",
+  "version": "0.5.0-beta.1",
   "description": "Personal sync node for Unstoppable Stack apps — replicates, backs up, and seeds your P2P data",
   "type": "module",
   "main": "src/index.js",
@@ -12,6 +12,7 @@
     "./export": "./src/export.js",
     "./registry": "./src/registry.js",
     "./replication": "./src/replication.js",
+    "./resource-manifest": "./src/resource-manifest.js",
     "./protocol": "./src/protocol.js"
   },
   "files": [
@@ -32,7 +33,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/unstoppable-stack/unstoppable-stack.git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/node"
   },
   "homepage": "https://unstoppable.dev",
@@ -61,6 +62,8 @@
   "dependencies": {
     "b4a": "^1.8.0",
     "bare-events": "^2.8.3",
+    "bare-fs": "^4.5.5",
+    "bare-path": "^3.0.0",
     "chalk": "^5.3.0",
     "corestore": "^7.8.0",
     "hyperbee": "^2.27.3",

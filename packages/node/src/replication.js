@@ -14,11 +14,22 @@ export class ReplicationEngine {
     this.drives = new Map()
   }
 
-  async addCore ({ key, type, name, appId, paused = false }) {
+  async addCore ({ key, type, name, appId, resourceId = null, metadata = {}, protection = { mode: 'metadata-only' }, paused = false }) {
     const keyBuf = b4a.from(key, 'hex')
     const keyHex = b4a.toString(keyBuf, 'hex')
 
-    if (this.replicating.has(keyHex)) return
+    if (this.replicating.has(keyHex)) {
+      const existing = this.replicating.get(keyHex)
+      if (existing.appId !== appId) throw new Error('Resource is already registered to another app')
+      existing.type = type
+      existing.name = name
+      existing.resourceId = resourceId
+      existing.metadata = metadata
+      const nextMode = protection?.mode || 'metadata-only'
+      if (existing.protection.mode !== nextMode) existing.protection = protectionState(nextMode)
+      if (existing.protection.mode === 'mirror') this._scheduleCoreMirror(keyHex)
+      return this._coreResult(keyHex, existing)
+    }
 
     const core = this.store.get({ key: keyBuf })
     await core.ready()
@@ -26,21 +37,45 @@ export class ReplicationEngine {
     const topic = core.discoveryKey
     if (!paused) this.swarm.join(topic)
 
-    this.replicating.set(keyHex, { core, type, name, appId, topic, paused })
+    this.replicating.set(keyHex, {
+      core,
+      type,
+      name,
+      appId,
+      resourceId,
+      metadata,
+      topic,
+      paused,
+      protection: protectionState(protection?.mode)
+    })
 
     core.on('append', () => {
       const info = this.replicating.get(keyHex)
-      if (info) info.lastSync = Date.now()
+      if (info) {
+        info.lastSync = Date.now()
+        if (info.protection.mode === 'mirror') this._scheduleCoreMirror(keyHex)
+      }
     })
 
-    return { key: keyHex, length: core.length, byteLength: core.byteLength }
+    if (protection?.mode === 'mirror') this._scheduleCoreMirror(keyHex)
+    return this._coreResult(keyHex, this.replicating.get(keyHex))
   }
 
-  async addDrive ({ key, name, appId, paused = false }) {
+  async addDrive ({ key, name, appId, resourceId = null, metadata = {}, protection = { mode: 'metadata-only' }, paused = false }) {
     const keyBuf = b4a.from(key, 'hex')
     const keyHex = b4a.toString(keyBuf, 'hex')
 
-    if (this.drives.has(keyHex)) return
+    if (this.drives.has(keyHex)) {
+      const existing = this.drives.get(keyHex)
+      if (existing.appId !== appId) throw new Error('Resource is already registered to another app')
+      existing.name = name
+      existing.resourceId = resourceId
+      existing.metadata = metadata
+      const nextMode = protection?.mode || 'metadata-only'
+      if (existing.protection.mode !== nextMode) existing.protection = protectionState(nextMode)
+      if (existing.protection.mode === 'mirror') this._scheduleDriveMirror(keyHex)
+      return { key: keyHex, version: existing.drive.version }
+    }
 
     // Hyperdrive + Corestore: pass the root store and the drive's public
     // key. Hyperdrive manages its own sub-cores (metadata + blobs) inside
@@ -53,14 +88,47 @@ export class ReplicationEngine {
     const topic = drive.discoveryKey
     if (!paused) this.swarm.join(topic)
 
-    this.drives.set(keyHex, { drive, name, appId, topic, paused })
+    this.drives.set(keyHex, {
+      drive,
+      name,
+      appId,
+      resourceId,
+      metadata,
+      topic,
+      paused,
+      protection: protectionState(protection?.mode)
+    })
 
     drive.core.on('append', () => {
       const info = this.drives.get(keyHex)
-      if (info) info.lastSync = Date.now()
+      if (info) {
+        info.lastSync = Date.now()
+        if (info.protection.mode === 'mirror') this._scheduleDriveMirror(keyHex)
+      }
     })
 
+    if (protection?.mode === 'mirror') this._scheduleDriveMirror(keyHex)
     return { key: keyHex, version: drive.version }
+  }
+
+  async reconcileAppResources (appId, { coreKeys = [], driveKeys = [] }) {
+    const wantedCores = new Set(coreKeys.map(normalizeKey))
+    const wantedDrives = new Set(driveKeys.map(normalizeKey))
+    for (const [key, info] of [...this.replicating]) {
+      if (info.appId === appId && !wantedCores.has(key)) await this.removeCore(key)
+    }
+    for (const [key, info] of [...this.drives]) {
+      if (info.appId === appId && !wantedDrives.has(key)) await this.removeDrive(key)
+    }
+  }
+
+  onPeerConnection () {
+    // Give the Hypercore handshake a moment to exchange remote lengths before
+    // taking a protection checkpoint, then retry every requested mirror.
+    setTimeout(() => {
+      for (const key of this.replicating.keys()) this._scheduleCoreMirror(key)
+      for (const key of this.drives.keys()) this._scheduleDriveMirror(key)
+    }, 100)
   }
 
   async removeCore (keyHex) {
@@ -105,7 +173,7 @@ export class ReplicationEngine {
   // each entry so getStats can surface it.
   async pauseApp (appId) {
     let touched = 0
-    for (const [, info] of this.replicating) {
+    for (const [key, info] of this.replicating) {
       if (info.appId !== appId || info.paused) continue
       try { await this.swarm.leave(info.topic) } catch {}
       info.paused = true
@@ -123,16 +191,18 @@ export class ReplicationEngine {
   // Reverse of pauseApp.
   async resumeApp (appId) {
     let touched = 0
-    for (const [, info] of this.replicating) {
+    for (const [key, info] of this.replicating) {
       if (info.appId !== appId || !info.paused) continue
       try { this.swarm.join(info.topic) } catch {}
       info.paused = false
+      if (info.protection.mode === 'mirror') this._scheduleCoreMirror(key)
       touched++
     }
-    for (const [, info] of this.drives) {
+    for (const [key, info] of this.drives) {
       if (info.appId !== appId || !info.paused) continue
       try { this.swarm.join(info.topic) } catch {}
       info.paused = false
+      if (info.protection.mode === 'mirror') this._scheduleDriveMirror(key)
       touched++
     }
     return touched
@@ -143,14 +213,17 @@ export class ReplicationEngine {
     for (const [key, info] of this.replicating) {
       stats.push({
         key,
+        resourceId: info.resourceId,
         type: info.type,
         name: info.name,
+        metadata: info.metadata,
         appId: info.appId,
         length: info.core.length,
         byteLength: info.core.byteLength,
         peers: info.core.peers.length,
         paused: !!info.paused,
-        lastSync: info.lastSync || null
+        lastSync: info.lastSync || null,
+        protection: this._coreProtection(info)
       })
     }
     return stats
@@ -232,8 +305,10 @@ export class ReplicationEngine {
     for (const [key, info] of this.drives) {
       stats.push({
         key,
+        resourceId: info.resourceId,
         type: 'hyperdrive',
         name: info.name,
+        metadata: info.metadata,
         appId: info.appId,
         version: info.drive.version,
         // `core.byteLength` for a Hyperdrive's metadata feed is small;
@@ -243,7 +318,8 @@ export class ReplicationEngine {
         blobsByteLength: info.drive.blobs?.core?.byteLength || 0,
         peers: info.drive.core.peers.length,
         paused: !!info.paused,
-        lastSync: info.lastSync || null
+        lastSync: info.lastSync || null,
+        protection: { ...info.protection }
       })
     }
     return stats
@@ -285,4 +361,135 @@ export class ReplicationEngine {
     }
     this.drives.clear()
   }
+
+  _coreResult (key, info) {
+    return { key, length: info.core.length, byteLength: info.core.byteLength }
+  }
+
+  _coreProtection (info) {
+    const targetLength = info.protection.targetLength || info.core.length
+    const localContiguousLength = Math.min(info.core.contiguousLength, targetLength)
+    return {
+      ...info.protection,
+      targetLength,
+      localContiguousLength,
+      blocksRemaining: Math.max(0, targetLength - localContiguousLength)
+    }
+  }
+
+  _scheduleCoreMirror (keyHex) {
+    const info = this.replicating.get(keyHex)
+    if (!info || info.paused || info.protection.mode !== 'mirror') return
+    if (info.mirrorPromise) {
+      info.mirrorAgain = true
+      return
+    }
+    info.protection.state = 'pending'
+    info.mirrorPromise = this._mirrorCore(keyHex, info)
+      .catch((err) => {
+        info.protection.state = 'error'
+        info.protection.lastError = err.message
+      })
+      .finally(() => {
+        info.mirrorPromise = null
+        if (info.mirrorAgain) {
+          info.mirrorAgain = false
+          this._scheduleCoreMirror(keyHex)
+        }
+      })
+  }
+
+  async _mirrorCore (keyHex, info) {
+    if (this.replicating.get(keyHex) !== info) return
+    info.protection.state = 'syncing'
+    info.protection.lastError = null
+    if (info.core.peers.length > 0) {
+      info.observedPeer = true
+      await info.core.update({ wait: true })
+    }
+    const targetLength = info.core.length
+    if (!info.observedPeer) {
+      info.protection.state = 'pending'
+      return
+    }
+    info.protection.targetLength = targetLength
+    if (targetLength > 0) await info.core.download({ start: 0, end: targetLength, linear: true }).done()
+    const complete = targetLength === 0 || await info.core.has(0, targetLength)
+    info.protection.state = complete ? 'protected' : 'pending'
+    if (complete) info.protection.caughtUpAt = new Date().toISOString()
+    if (info.core.length > targetLength) info.mirrorAgain = true
+  }
+
+  _scheduleDriveMirror (keyHex) {
+    const info = this.drives.get(keyHex)
+    if (!info || info.paused || info.protection.mode !== 'mirror') return
+    if (info.mirrorPromise) {
+      info.mirrorAgain = true
+      return
+    }
+    info.protection.state = 'pending'
+    info.mirrorPromise = this._mirrorDrive(keyHex, info)
+      .catch((err) => {
+        info.protection.state = 'error'
+        info.protection.lastError = err.message
+      })
+      .finally(() => {
+        info.mirrorPromise = null
+        if (info.mirrorAgain) {
+          info.mirrorAgain = false
+          this._scheduleDriveMirror(keyHex)
+        }
+      })
+  }
+
+  async _mirrorDrive (keyHex, info) {
+    if (this.drives.get(keyHex) !== info) return
+    info.protection.state = 'syncing'
+    info.protection.lastError = null
+    if (info.drive.core.peers.length > 0) {
+      info.observedPeer = true
+      await info.drive.update({ wait: true })
+    }
+    const targetVersion = info.drive.version
+    if (!info.observedPeer) {
+      info.protection.state = 'pending'
+      return
+    }
+    info.protection.targetVersion = targetVersion
+    await info.drive.download('/')
+    const progress = await driveProgress(info.drive)
+    Object.assign(info.protection, progress)
+    const complete = progress.bytesRemaining === 0 && info.drive.version === targetVersion
+    info.protection.state = complete ? 'protected' : 'pending'
+    if (complete) info.protection.caughtUpAt = new Date().toISOString()
+    if (info.drive.version > targetVersion) info.mirrorAgain = true
+  }
+}
+
+function protectionState (mode = 'metadata-only') {
+  return {
+    mode,
+    state: mode === 'mirror' ? 'pending' : 'metadata-only',
+    caughtUpAt: null,
+    lastError: null
+  }
+}
+
+function normalizeKey (key) {
+  return typeof key === 'string' ? key.toLowerCase() : b4a.toString(key, 'hex')
+}
+
+async function driveProgress (drive) {
+  let totalBytes = 0
+  let protectedBytes = 0
+  const blobs = await drive.getBlobs()
+  for await (const entry of drive.list('/', { recursive: true })) {
+    const blob = entry.value?.blob
+    if (!blob) continue
+    totalBytes += blob.byteLength || 0
+    if (await blobs.core.has(blob.blockOffset, blob.blockOffset + blob.blockLength)) {
+      protectedBytes += blob.byteLength || 0
+    }
+  }
+  return { totalBytes, protectedBytes, bytesRemaining: Math.max(0, totalBytes - protectedBytes) }
 }

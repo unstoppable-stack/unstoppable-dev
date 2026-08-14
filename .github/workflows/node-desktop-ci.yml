@@ -1,0 +1,74 @@
+name: Personal Node Desktop CI
+
+on:
+  pull_request:
+    paths:
+      - packages/node/**
+      - packages/node-client/**
+      - packages/node-desktop/**
+      - scripts/node-release-gate.mjs
+      - .github/workflows/node-desktop-*.yml
+  push:
+    branches: [main]
+    paths:
+      - packages/node/**
+      - packages/node-client/**
+      - packages/node-desktop/**
+      - scripts/node-release-gate.mjs
+      - .github/workflows/node-desktop-*.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-desktop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Validate release metadata
+        run: node scripts/node-release-gate.mjs
+
+      - name: Install node dependencies
+        working-directory: packages/node
+        run: npm ci
+
+      - name: Install desktop dependencies
+        working-directory: packages/node-desktop
+        run: npm ci
+
+      - name: Test desktop and real sidecar boundary
+        working-directory: packages/node-desktop
+        run: npm test
+        env:
+          RUN_ELECTRON_SIDECAR_E2E: '1'
+
+      - name: Package application
+        working-directory: packages/node-desktop
+        run: npm run package:electron
+
+      - name: Verify packaged dependencies, size, and Electron fuses
+        working-directory: packages/node-desktop
+        run: npm run test:packaged-runtime
+
+      - name: Smoke packaged app (macOS and Windows)
+        if: runner.os != 'Linux'
+        working-directory: packages/node-desktop
+        run: npm run test:packaged
+
+      - name: Smoke packaged app (Linux)
+        if: runner.os == 'Linux'
+        working-directory: packages/node-desktop
+        run: xvfb-run -a npm run test:packaged

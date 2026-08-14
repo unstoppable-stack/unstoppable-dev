@@ -19,7 +19,7 @@ export function buildCapabilities (services = DEFAULT_SERVICES) {
       version: 1,
       enabled: true,
       kinds: ['hypercore', 'hyperbee', 'hyperdrive'],
-      methods: ['register', 'status', 'pause', 'resume', 'peek']
+      methods: ['register', 'manifest.replace', 'status', 'pause', 'resume', 'peek']
     },
     storage: {
       version: 1,

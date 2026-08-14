@@ -1,10 +1,13 @@
 name: Node Real QVAC
 
+# Stable-release validation for the exact SDK bundled by Personal Node.
+# Protect the qvac-validation environment with required reviewers so model
+# downloads and native inference run only after explicit approval.
 on:
   workflow_dispatch:
     inputs:
       model_src:
-        description: 'QVAC model source: URL, preset, or runner-local path'
+        description: 'QVAC model source: runner-reachable URL or preset'
         required: true
         type: string
       model_type:
@@ -15,22 +18,29 @@ on:
 
 jobs:
   real-qvac:
-    runs-on: macos-14
-    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    environment: qvac-validation
+    permissions:
+      contents: read
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
       - name: Install node deps
         working-directory: packages/node
-        run: npm install
+        run: npm ci
 
-      - name: Install QVAC SDK
+      - name: Install the exact desktop QVAC SDK without changing the lock
         working-directory: packages/node
-        run: npm install @qvac/sdk
+        run: npm install --no-save --package-lock=false @qvac/sdk@0.15.0
 
       - name: Run real QVAC E2E
         working-directory: packages/node
@@ -38,4 +48,4 @@ jobs:
         env:
           QVAC_MODEL_SRC: ${{ inputs.model_src }}
           QVAC_MODEL_TYPE: ${{ inputs.model_type }}
-          QVAC_TEST_TIMEOUT: '1200000'
+          QVAC_TEST_TIMEOUT: '3000000'

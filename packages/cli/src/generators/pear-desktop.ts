@@ -47,7 +47,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.4.0' })
+    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.5.0-beta.1' })
   }
 
   if (has(opts, 'multi-writer')) {
