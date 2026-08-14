@@ -105,11 +105,11 @@ jobs:
           fi
 
       - name: Publish node-client
-        run: npm publish release-artifacts/unstoppable-stack-node-client-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
+        run: npm publish ./release-artifacts/unstoppable-stack-node-client-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish node
-        run: npm publish release-artifacts/unstoppable-node-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
+        run: npm publish ./release-artifacts/unstoppable-node-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
