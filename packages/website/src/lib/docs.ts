@@ -37,6 +37,7 @@ export const docsNav = [
     title: "Stack",
     pages: [
       { title: "Unstoppable Node", slug: "node" },
+      { title: "Node Client SDK", slug: "node-client" },
       { title: "Modules", slug: "modules" },
       { title: "Agent Pack", slug: "agent-pack" },
       { title: "Recipes", slug: "recipes" },
@@ -274,32 +275,168 @@ export const docsPages: DocPage[] = [
   {
     slug: "node",
     title: "Unstoppable Node",
-    description: "A user-controlled P2P hub for app pairing, data replication, file seeding, and AI delegation.",
+    description: "Run a user-controlled P2P hub for app pairing, verified data retention, file seeding, and optional AI inference.",
     category: "Stack",
     blocks: [
       {
         type: "lead",
-        text: "The Unstoppable Node is an always-on local hub. Apps can pair with it to keep data available, mirror files, and request AI inference from a user-controlled provider.",
+        text: "The Unstoppable Node is an optional, always-on companion for local-first apps. It discovers apps through Hyperswarm, stores paired-app registrations, replicates app-owned Hypercores and Hyperdrives, and can serve mock or QVAC-backed inference. Apps must remain useful when it is unavailable.",
+      },
+      { type: "heading", text: "Install And Run" },
+      {
+        type: "code",
+        language: "bash",
+        code: "npm install -g unstoppable-node\nunstoppable-node start\n\n# Development without a model download\nunstoppable-node start --ai-mock\n\n# Friendlier background-process wrapper\nus node start --ai-mock\nus node status -n 20\nus node stop",
+      },
+      {
+        type: "callout",
+        title: "Default storage",
+        body: "The standalone daemon stores state under ~/.unstoppable-node. Pass --storage <path> to use another directory. AI is opt-in: the Personal Node desktop app bundles the pinned QVAC SDK; source checkouts must install @qvac/sdk@0.15.0 beside packages/node. Use --ai-mock when the SDK is unavailable.",
       },
       { type: "heading", text: "Services" },
       {
         type: "cards",
         items: [
-          { title: "Data", body: "Corestore-backed replication for Hypercore and Hyperbee data." },
-          { title: "Files", body: "Hyperdrive mirroring and seeding for app-owned file trees." },
-          { title: "AI", body: "QVAC-backed inference provider with mock mode for development and testing." },
-          { title: "Search", body: "P2P search direction with local indexing and Tavily-compatible interfaces." },
+          { title: "Data", body: "Corestore-backed replication for app-registered Hypercore and Hyperbee resources." },
+          { title: "Files", body: "Hyperdrive metadata replication, optional full blob retention, and seeding." },
+          { title: "AI", body: "Optional streaming inference through a mock provider or an installed @qvac/sdk model." },
+          { title: "Status", body: "App-scoped service, replication, protection, storage-use, and quota state." },
         ],
       },
-      { type: "heading", text: "Connection Model" },
+      { type: "heading", text: "Pairing And Capabilities" },
       {
         type: "list",
         items: [
-          "Apps discover the node over Hyperswarm.",
-          "The node sends a `nodeHello` handshake with protocol version and service availability.",
-          "Apps can require services, such as `ai`, and fail fast if unavailable.",
-          "Apps should keep working offline when the node is not reachable.",
+          "A node and client on the same user account and machine derive the same machine-local discovery topic.",
+          "The node sends nodeHello with protocol version v1, service flags, and supported capabilities before pairing.",
+          "Pairing grants only requested methods that the node currently supports. The desktop dashboard can require explicit approval; a headless daemon without an approval callback auto-accepts.",
+          "App-facing status is scoped to the requesting app: it cannot reveal another app's registrations, storage paths, or usage.",
         ],
+      },
+      { type: "heading", text: "Replication And Protection" },
+      {
+        type: "list",
+        items: [
+          "Legacy cores/drives registration preserves sparse replication and is equivalent to metadata-only protection.",
+          "A schemaVersion 1 resource manifest gives each resource a stable ID and chooses metadata-only or mirror protection.",
+          "mirror downloads and verifies every block in the currently observed Hypercore or Hyperbee checkpoint, and file metadata plus every referenced Hyperdrive blob.",
+          "protected applies to the observed checkpoint, not future writes. Keep checking protection state after the app writes new data.",
+          "Replacing a manifest stops replication for omitted resources but deliberately does not delete bytes already retained by the node.",
+        ],
+      },
+      {
+        type: "callout",
+        title: "Protection is not a complete backup",
+        body: "The settings export contains config, paired-app registry records, and dashboard trust decisions. It does not contain Corestore payloads, stable node identity seeds, or replicated app data. Keep an independent recovery plan for irreplaceable data.",
+      },
+      { type: "heading", text: "Storage Quotas" },
+      {
+        type: "paragraph",
+        text: "Global and per-app quotas are advisory safety limits. When usage exceeds a configured limit, the node pauses that app's replication announcements; it does not delete existing bytes, and in-flight writes may still arrive. Raise or clear the quota before resuming the app.",
+      },
+      { type: "heading", text: "Settings Export And Import" },
+      {
+        type: "code",
+        language: "bash",
+        code: "unstoppable-node export ./node-settings.uns\nunstoppable-node inspect ./node-settings.uns\nunstoppable-node import ./node-settings.uns --storage ./restored-node",
+      },
+      {
+        type: "cards",
+        items: [
+          {
+            title: "Connect An App",
+            body: "Use @unstoppable-stack/node-client from Node.js, Bare, Pear Desktop, or Expo Bare.",
+            href: "/docs/node-client",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    slug: "node-client",
+    title: "Node Client SDK",
+    description: "Connect Node.js and Bare apps to a local Unstoppable Node for scoped replication, protection status, and delegated inference.",
+    category: "Stack",
+    blocks: [
+      {
+        type: "lead",
+        text: "@unstoppable-stack/node-client is the app-side SDK. It runs under Node.js and Bare-based runtimes that provide Hyperswarm, including Pear Desktop and Expo Bare. connectToNode resolves only after discovery, pairing, and resource registration complete.",
+      },
+      { type: "heading", text: "Install" },
+      {
+        type: "code",
+        language: "bash",
+        code: "npm install @unstoppable-stack/node-client\n\n# Start a development node in another terminal\nnpx unstoppable-node start --ai-mock",
+      },
+      { type: "heading", text: "Connect And Fall Back" },
+      {
+        type: "code",
+        language: "js",
+        code: "import { connectToNode, NodeNotFoundError } from '@unstoppable-stack/node-client'\n\nlet nodeClient = null\ntry {\n  nodeClient = await connectToNode({\n    appId: 'com.example.notes',\n    appName: 'Notes',\n    deviceName: 'Simons Laptop',\n    requireServices: ['data'],\n    reconnect: true,\n    cores: [{ key: notes.core.key, type: 'hyperbee', name: 'notes' }]\n  })\n} catch (error) {\n  if (!(error instanceof NodeNotFoundError)) throw error\n  // Continue in device-only mode; retry when appropriate.\n}",
+      },
+      {
+        type: "callout",
+        title: "Local-first contract",
+        body: "A missing or disconnected node should reduce availability or redundancy, not make the app unusable. Keep the app's primary data locally and expose node state honestly in the UI.",
+      },
+      { type: "heading", text: "Verified Resource Retention" },
+      {
+        type: "paragraph",
+        text: "Prefer a complete resource manifest when resources can change over time or the product promises that the node retains their full contents. Call replaceResourceManifest with the complete next set whenever a writer or resource is added or removed.",
+      },
+      {
+        type: "code",
+        language: "js",
+        code: "const client = await connectToNode({\n  appId: 'com.example.photos',\n  appName: 'Photos',\n  reconnect: true,\n  resourceManifest: {\n    schemaVersion: 1,\n    resources: [\n      {\n        id: 'catalog-writer-laptop',\n        kind: 'hyperbee',\n        key: catalog.core.key,\n        name: 'Photo catalog',\n        metadata: { role: 'catalog-writer' },\n        protection: { mode: 'mirror' }\n      },\n      {\n        id: 'originals',\n        kind: 'hyperdrive',\n        key: originals.key,\n        name: 'Original photos',\n        protection: { mode: 'mirror' }\n      }\n    ]\n  }\n})\n\nawait client.replaceResourceManifest(nextCompleteManifest)\nconst { resources } = await client.getProtectionStatus()\nconst protectedNow = resources.every(\n  (resource) => resource.protection?.state === 'protected'\n)",
+      },
+      {
+        type: "list",
+        items: [
+          "Resource kinds are hypercore, hyperbee, and hyperdrive; protection modes are metadata-only and mirror.",
+          "IDs must be stable within the app installation. Keys may be 32-byte buffers in the client API and are normalized to 64-character hex strings.",
+          "A manifest is a full replacement, not a patch. Omitted resources stop replicating, while retained blocks remain on disk.",
+          "Protection states are metadata-only, pending, syncing, protected, or error. Progress fields differ between cores and drives.",
+        ],
+      },
+      { type: "heading", text: "Client Methods" },
+      {
+        type: "cards",
+        items: [
+          { title: "getNodeStatus()", body: "Returns a fresh app-scoped snapshot and emits nodeStatus. The node storage path and other apps remain hidden." },
+          { title: "getProtectionStatus()", body: "Returns a normalized protection view for this app's registered cores and drives." },
+          { title: "getDiskUsage()", body: "Returns this app's logical replicated bytes with scope: self; it does not expose filesystem paths or global use." },
+          { title: "replaceResourceManifest()", body: "Replaces the complete registered resource set. Requires the resources.manifest.replace grant." },
+          { title: "requestInference()", body: "Streams token strings as an async generator. Supports AbortSignal and a timeout; require the ai service when it is essential." },
+          { title: "peekCore() / peekDrive()", body: "Debug inspection for this app's registered resources. These require an explicit resources.peek capability request and grant." },
+          { title: "sendHeartbeat()", body: "Sends the app uptime when paired. It is a notification, not a connection-health guarantee." },
+          { title: "close()", body: "Stops reconnect attempts, closes discovery resources, and rejects pending operations." },
+        ],
+      },
+      { type: "heading", text: "Inference" },
+      {
+        type: "code",
+        language: "js",
+        code: "const controller = new AbortController()\nfor await (const token of client.requestInference({\n  messages: [{ role: 'user', content: 'Summarize my notes' }],\n  signal: controller.signal,\n  timeout: 120_000\n})) {\n  process.stdout.write(token)\n}",
+      },
+      { type: "heading", text: "Events And Errors" },
+      {
+        type: "list",
+        items: [
+          "Discovery and pairing: searching, candidateFound, nodeHello, registered, and pairDenied.",
+          "Lifecycle: disconnected, reconnecting, reconnected, reconnectFailed, and resourceManifestReplaced.",
+          "Status and protocol: nodeStatus, nodeError, and message.",
+          "Stable primary error codes: NODE_NOT_FOUND, NODE_DENIED, NODE_MISSING_SERVICE, INVALID_OPTION, CLOSED, and INFERENCE_ERROR. Request-specific failures also use NodeClientError with codes such as CAPABILITY_DENIED or a timeout code.",
+        ],
+      },
+      { type: "heading", text: "Discovery And Device Linking" },
+      {
+        type: "paragraph",
+        text: "By default the SDK derives a machine-local topic from the current user, hostname, and protocol version, so same-machine processes meet without configuration. A phone or second computer will not discover that topic automatically. Cross-device products must provide an explicit authenticated device-linking flow before sharing an override topic; the SDK does not yet provide that onboarding flow.",
+      },
+      {
+        type: "code",
+        language: "js",
+        code: "await client.close()",
       },
     ],
   },
