@@ -29,11 +29,17 @@ Or run the [Pear Desktop dashboard](../node-desktop) for a UI.
 npm install -g unstoppable-node
 ```
 
-For AI support, also install the optional `@qvac/sdk` add-on:
+The Personal Node desktop app bundles the pinned `@qvac/sdk` runtime. When
+running the daemon from this source checkout, install the same SDK beside the
+node package before enabling real AI:
 
 ```bash
-npm install @qvac/sdk
+cd packages/node
+npm install --no-save --package-lock=false @qvac/sdk@0.15.0
 ```
+
+The standalone npm package does not currently bundle QVAC. Use `--ai-mock` for
+standalone development unless `@qvac/sdk` is resolvable from the node package.
 
 ## Usage (programmatic)
 
@@ -123,6 +129,13 @@ Quota sources:
 Use `null` for unlimited/default values. Resume an over-quota app after raising
 or clearing its quota with `node.resumeApp(appId)` or the dashboard Resume
 button.
+
+## Pairing trust boundary
+
+The standalone/headless daemon auto-accepts pairing when no `approvePairing`
+callback is supplied. The Personal Node desktop app supplies an approval gate
+and persists trust decisions. Apps still receive only the capability methods
+they requested and the node currently offers.
 
 ## Resource manifests
 
