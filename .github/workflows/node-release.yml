@@ -82,8 +82,11 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: https://registry.npmjs.org
+
+      - name: Install trusted publishing npm CLI
+        run: npm install --global npm@12.0.2
 
       - name: Download validated tarballs
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
@@ -106,10 +109,6 @@ jobs:
 
       - name: Publish node-client
         run: npm publish ./release-artifacts/unstoppable-stack-node-client-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Publish node
         run: npm publish ./release-artifacts/unstoppable-node-*.tgz --access public --provenance --tag "${{ inputs.dist_tag }}"
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
