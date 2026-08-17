@@ -91,7 +91,10 @@ for (const workflow of ['.github/workflows/node-release.yml', '.github/workflows
 const nodeRelease = await readFile(resolve(root, '.github/workflows/node-release.yml'), 'utf8')
 check(!nodeRelease.includes('\n  push:'), 'Node publishing must not be triggered by a pushed tag')
 check(nodeRelease.includes('environment: npm-release'), 'Node publishing is missing its protected environment')
-check(nodeRelease.includes('--provenance'), 'Node publishing is missing npm provenance')
+check(nodeRelease.includes('id-token: write'), 'Node publishing is missing npm trusted-publishing OIDC permission')
+check(nodeRelease.includes('npm@12.0.2'), 'Node publishing is missing the pinned trusted-publishing npm CLI')
+check(!nodeRelease.includes('NODE_AUTH_TOKEN'), 'Node publishing must not use a long-lived npm token')
+check(!nodeRelease.includes('--provenance'), 'Private-repository Node publishing must not request unsupported npm provenance')
 check(nodeRelease.includes('npm pack ./packages/node-client'), 'Node release does not pack node-client from the monorepo root correctly')
 check(nodeRelease.includes('npm pack ./packages/node'), 'Node release does not pack node from the monorepo root correctly')
 
