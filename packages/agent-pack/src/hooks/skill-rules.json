@@ -44,6 +44,12 @@
       "message": "This involves P2P RPC. Consider /add-p2p-rpc for bare-rpc patterns."
     },
     {
+      "keywords": ["pairing code", "invite", "app to app", "app-to-app", "expose capability", "capability pack", "act as a node"],
+      "files": ["src/node-host*", "src/capabilities/**", "src/node/**"],
+      "skill": "add-node-capability",
+      "message": "This involves exposing a capability to other apps. Consider /add-node-capability for capability packs and pairing codes."
+    },
+    {
       "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
       "files": ["src/p2p/**", "src/data/**"],
       "skill": "add-p2p-sync",
