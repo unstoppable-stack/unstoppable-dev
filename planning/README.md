@@ -38,7 +38,9 @@ Deep planning docs for major features and workstreams.
 | `website.md` | unstoppable.dev — pages, components, design tokens, partner logos |
 | `node.md` | Unstoppable Node — personal sync hub, 3 services, discovery protocol |
 | `node-technical.md` | Node technical architecture — Data Sync, File Sync, AI Provider |
+| `node-as-library.md` | Node as a library — app-nodes, capability packs, invite-based app-to-app pairing |
 | `mobile-app.md` | Unstoppable Notes — mobile reference app to validate Expo Bare stack |
+| `unstoppable-flow.md` | Unstoppable Flow — local-first visual AI automation studio, durable queue, and resource scheduler |
 
 ### Status (`status/`)
 Sprint-level tracking — current priorities, next-up tasks, recently completed.
