@@ -1,19 +1,14 @@
 {
   "name": "unstoppable-node",
-  "version": "0.5.0-beta.1",
-  "description": "Personal sync node for Unstoppable Stack apps — replicates, backs up, and seeds your P2P data",
+  "version": "0.6.0-alpha.1",
+  "description": "Personal Node for Unstoppable Stack apps \u2014 replicates, backs up, and seeds your P2P data",
   "type": "module",
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./node": "./src/node.js",
-    "./ai-provider": "./src/ai-provider.js",
+    "./personal-node": "./src/personal-node.js",
     "./config": "./src/config.js",
-    "./export": "./src/export.js",
-    "./registry": "./src/registry.js",
-    "./replication": "./src/replication.js",
-    "./resource-manifest": "./src/resource-manifest.js",
-    "./protocol": "./src/protocol.js"
+    "./export": "./src/export.js"
   },
   "files": [
     "src",
@@ -49,28 +44,19 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js",
-    "test": "node --test --test-concurrency=1 --test-force-exit test/*.test.js",
-    "test:unit": "node --test test/protocol.test.js test/registry.test.js",
-    "test:integration": "node --test --test-force-exit test/pairing.test.js test/replication.test.js",
-    "test:edge": "node --test --test-force-exit test/edge-cases.test.js",
-    "test:e2e": "node --test --test-force-exit --test-timeout 120000 test/e2e/e2e.test.js",
-    "test:qvac": "RUN_QVAC_E2E=1 node --test --test-force-exit --test-timeout 300000 test/ai-provider-real.test.js",
-    "test:all": "node --test --test-concurrency=1 --test-force-exit --test-timeout 120000 test/*.test.js test/e2e/e2e.test.js",
-    "discovery:stress": "node scripts/discovery-stress.js",
+    "test": "node --test --test-concurrency=1 --test-force-exit --test-timeout 120000 test/*.test.js",
+    "test:unit": "node --test test/config.test.js test/export.test.js",
     "prepublishOnly": "npm test && npm pack --dry-run"
   },
   "dependencies": {
+    "@unstoppable-stack/node-core": "file:../node-core",
+    "@unstoppable-stack/node-caps-sync": "file:../node-caps-sync",
+    "@unstoppable-stack/node-caps-ai": "file:../node-caps-ai",
     "b4a": "^1.8.0",
     "bare-events": "^2.8.3",
     "bare-fs": "^4.5.5",
     "bare-path": "^3.0.0",
-    "chalk": "^5.3.0",
-    "corestore": "^7.8.0",
-    "hyperbee": "^2.27.3",
-    "hypercore": "^11.27.0",
-    "hypercore-crypto": "^3.6.0",
-    "hyperdrive": "^12.3.0",
-    "hyperswarm": "^4.17.0"
+    "chalk": "^5.3.0"
   },
   "optionalDependencies": {
     "bare-env": "^3.0.0",
@@ -78,6 +64,10 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "hyperdht": "^6.29.1"
+    "hyperdht": "^6.29.1",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hyperdrive": "^12.3.0",
+    "hyperswarm": "^4.17.0"
   }
 }

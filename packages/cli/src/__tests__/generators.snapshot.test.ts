@@ -70,6 +70,7 @@ const VARIANTS: Record<Platform, { name: string; features: Feature[] }[]> = {
     { name: 'local-ai', features: ['local-ai'] },
     { name: 'wallet', features: ['wallet'] },
     { name: 'node-sync', features: ['node-sync'] },
+    { name: 'node-host', features: ['node-host'] },
   ],
   'expo-mobile': [
     { name: 'bare', features: [] },

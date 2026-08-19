@@ -47,7 +47,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.5.0-beta.1' })
+    Object.assign(deps, { '@unstoppable-stack/node-core': '^0.6.0-alpha.1' })
   }
 
   if (has(opts, 'multi-writer')) {
@@ -323,35 +323,56 @@ ${replicateLine}
   if (!multiWriter) cleanupCode.push(`  if (store) await store.close()`)
 
   if (has(opts, 'node-sync')) {
-    imports.push(`import { connectToNode } from '@unstoppable-stack/node-client'`)
-    moduleState.push(`let nodeClient = null`)
+    imports.push(`import { createNode } from '@unstoppable-stack/node-core'`)
+    moduleState.push(`let appNode = null`)
+    moduleState.push(`let nodePeer = null`)
     initCode.push(`
   send({ type: 'status', service: 'node-sync', status: 'searching' })
   try {
-    nodeClient = await connectToNode({
-      appId: '${opts.projectName}',
-      appName: '${opts.projectName}',
-      cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-      timeout: 5_000,
+    appNode = createNode({
+      storage: './.unstoppable-app-node',
+      profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },
+      capabilities: [],
       reconnect: true
     })
-    send({ type: 'status', service: 'node-sync', status: 'connected' })
-    nodeClient.on('disconnected', () => {
+    await appNode.ready()
+
+    appNode.on('peerDisconnected', () => {
       send({ type: 'status', service: 'node-sync', status: 'disconnected' })
     })
-    nodeClient.on('reconnecting', () => {
+    appNode.on('reconnecting', () => {
       send({ type: 'status', service: 'node-sync', status: 'reconnecting' })
     })
-    nodeClient.on('reconnected', () => {
+    appNode.on('reconnected', () => {
       send({ type: 'status', service: 'node-sync', status: 'connected' })
     })
-    nodeClient.on('reconnectFailed', () => {
+    appNode.on('reconnectFailed', () => {
       send({ type: 'status', service: 'node-sync', status: 'unavailable' })
     })
+
+    // Find the Personal Node on this machine; its key is remembered after
+    // the first pairing so reconnects go direct.
+    nodePeer = await appNode.discover({ timeout: 5_000 })
+
+    // The manifest is the complete set: anything omitted stops replicating.
+    await nodePeer.call('sync', 'manifest.replace', {
+      manifest: {
+        schemaVersion: 1,
+        resources: [{
+          id: 'main-db',
+          kind: 'hyperbee',
+          key: Buffer.from(db.core.key).toString('hex'),
+          name: 'Main DB',
+          protection: { mode: 'mirror' }
+        }]
+      }
+    })
+    send({ type: 'status', service: 'node-sync', status: 'connected' })
   } catch (err) {
     send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
-  }`)
-    cleanupCode.push(`  if (nodeClient) await nodeClient.close()`)
+  }
+`)
+    cleanupCode.push(`  if (appNode) await appNode.close()`)
   }
 
   const commandHandlers: string[] = [

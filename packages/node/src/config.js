@@ -4,7 +4,7 @@ const { readFile } = runtimeFs
 const { join } = runtimePath
 
 export const CONFIG_FILE = 'node-config.json'
-export const CONFIG_VERSION = 1
+export const CONFIG_VERSION = 2
 
 export const DEFAULT_CONFIG = Object.freeze({
   configVersion: CONFIG_VERSION,
@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   },
   storage: {
     globalQuotaBytes: null,
-    perAppQuotaBytes: null
+    perPeerQuotaBytes: null
   },
   pairing: {
     requireApproval: true,
@@ -64,9 +64,21 @@ export function migrateConfig (config) {
     throw new Error(`Node config version ${version} is newer than this app supports (${CONFIG_VERSION})`)
   }
 
-  // Version 0 was the unversioned beta format. Its fields already match v1;
-  // recording the version makes all future migrations explicit and testable.
-  return mergeConfigPatch(DEFAULT_CONFIG, { ...config, configVersion: CONFIG_VERSION })
+  // Version 0 was the unversioned beta format; its fields matched v1.
+  // Version 2 re-keyed quotas from appId to peer public key, because the
+  // registry did: two devices running one app are two peers, and they were
+  // sharing a quota. The old key is renamed, not dropped — an existing limit
+  // still means what the user intended.
+  const next = { ...config, configVersion: CONFIG_VERSION }
+  if (isPlainObject(next.storage) && Object.hasOwn(next.storage, 'perAppQuotaBytes')) {
+    const { perAppQuotaBytes, ...rest } = next.storage
+    next.storage = { ...rest }
+    if (!Object.hasOwn(next.storage, 'perPeerQuotaBytes')) {
+      next.storage.perPeerQuotaBytes = perAppQuotaBytes
+    }
+  }
+
+  return mergeConfigPatch(DEFAULT_CONFIG, next)
 }
 
 export function mergeConfigPatch (base, patch = {}) {
@@ -95,7 +107,7 @@ export function validateConfig (config) {
   if (typeof next.ai.modelSrc !== 'string') throw new Error('ai.modelSrc must be a string')
   if (next.ai.modelSrc.length > 4096) throw new Error('ai.modelSrc must be at most 4096 characters')
   validateQuota(next.storage.globalQuotaBytes, 'storage.globalQuotaBytes')
-  validateQuota(next.storage.perAppQuotaBytes, 'storage.perAppQuotaBytes')
+  validateQuota(next.storage.perPeerQuotaBytes, 'storage.perPeerQuotaBytes')
   if (typeof next.pairing.requireApproval !== 'boolean') throw new Error('pairing.requireApproval must be a boolean')
   if (typeof next.pairing.autoApproveLocal !== 'boolean') throw new Error('pairing.autoApproveLocal must be a boolean')
   if (typeof next.notifications.pairRequests !== 'boolean') throw new Error('notifications.pairRequests must be a boolean')

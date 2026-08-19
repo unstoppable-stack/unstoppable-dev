@@ -141,6 +141,33 @@ document.getElementById('app').innerHTML = `
             </div>
           </div>
         </section>
+        <section class="card">
+          <h2 class="card-title">Pair another device</h2>
+          <p class="dim">Apps on this computer find the node on their own. A phone, a second computer, or another person's app needs a pairing code.</p>
+          <div class="row">
+            <button class="btn-ghost" id="invite-create">Create pairing code</button>
+            <label class="field">Expires
+              <select id="invite-expires">
+                <option value="15">15 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="1440">1 day</option>
+              </select>
+            </label>
+            <label class="field">Uses
+              <select id="invite-uses">
+                <option value="1">once</option>
+                <option value="5">5 times</option>
+                <option value="0">unlimited</option>
+              </select>
+            </label>
+          </div>
+          <div id="invite-current" hidden>
+            <p class="dim">Share this code with the other device. Anyone holding it can pair until it expires.</p>
+            <code class="mono" id="invite-code"></code>
+            <button class="btn-ghost btn-ghost-neutral" id="invite-copy">Copy</button>
+          </div>
+          <div id="invite-list" class="apps"></div>
+        </section>
         <section class="card" id="trust-card" hidden>
           <h2 class="card-title">Denied Keys</h2>
           <p class="dim">Keys the node has been told to reject. Click "Forget" to allow them to request approval again.</p>
@@ -261,7 +288,7 @@ onWorkerMessage((msg) => {
     case 'ready':
       setText('node-status', '✅ Node is running')
       setText('config-status', 'Node is running')
-      renderServices(msg.services || {})
+      renderCapabilities({ capabilities: msg.capabilities || {}, ai: lastStatus?.ai })
       if (msg.publicKey) setNodePublicKey(msg.publicKey)
       if (msg.config) renderConfigForm(msg.config)
       if (msg.trust) renderTrust(msg.trust)
@@ -286,7 +313,7 @@ onWorkerMessage((msg) => {
       pushLog(`Config error: ${msg.error}`, 'err')
       break
     case 'export-result':
-      setText('backup-message', `Exported ${msg.apps} app(s)`)
+      setText('backup-message', `Exported ${msg.peers} peer(s)`)
       pushLog(`Exported Personal Node settings to ${msg.path}`, 'ok')
       break
     case 'export-error':
@@ -294,7 +321,7 @@ onWorkerMessage((msg) => {
       pushLog(`Export error: ${msg.error}`, 'err')
       break
     case 'import-result':
-      setText('backup-message', `Imported ${msg.apps} app(s)`)
+      setText('backup-message', `Imported ${msg.peers} peer(s)`)
       closeImportModal()
       pushLog(`Imported Personal Node settings from ${msg.path}`, 'ok')
       break
@@ -306,12 +333,12 @@ onWorkerMessage((msg) => {
       pushLog(`Import error: ${msg.error}`, 'err')
       break
     case 'paired':
-      pushLog(`Paired with ${msg.appName} (${msg.appId})`, 'ok')
+      pushLog(`Paired with ${msg.appName || msg.appId || short(msg.publicKey)}`, 'ok')
       break
     case 'pairRequest':
       // Logged but the modal is driven by `pairAwaitingApproval`,
       // which only fires for keys we haven't decided on yet.
-      pushLog(`Pair request from ${msg.appName || msg.appId}`, 'info')
+      pushLog(`Pair request from ${msg.profile?.appName || msg.profile?.appId || short(msg.publicKey)}`, 'info')
       break
     case 'pairAwaitingApproval':
       enqueueApproval(msg)
@@ -324,7 +351,7 @@ onWorkerMessage((msg) => {
       pushLog(`Decision: ${msg.decision} for ${msg.appName || msg.appId}`, msg.decision.startsWith('approve') ? 'ok' : 'info')
       break
     case 'pairDenied':
-      pushLog(`Pairing denied: ${msg.appName || msg.appId} (${msg.reason || 'denied'})`, 'info')
+      pushLog(`Pairing denied: ${msg.appName || msg.appId || short(msg.publicKey)} (${msg.reason || 'denied'})`, 'info')
       break
     case 'pairRevoked':
       pushLog(`Revoked trust for ${msg.appName || short(msg.publicKey)}`, 'info')
@@ -335,22 +362,44 @@ onWorkerMessage((msg) => {
     case 'pairPromoted':
       pushLog(`Promoted ${msg.appName || msg.appId} to trusted`, 'ok')
       break
-    case 'servicesChanged':
-      renderServices(msg.services || {})
-      renderAiPanel({ ...(lastStatus || {}), services: msg.services || {} })
-      pushLog(`Services updated: ${Object.entries(msg.services || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '(none)'}`, 'ok')
+    case 'invite-result': {
+      const box = document.getElementById('invite-current')
+      const code = document.getElementById('invite-code')
+      if (box && code) {
+        code.textContent = msg.invite.code
+        box.hidden = false
+      }
+      pushLog('Created a pairing code', 'ok')
+      break
+    }
+    case 'invite-error':
+      pushLog(`Pairing code failed: ${msg.error}`, 'err')
+      break
+    case 'inviteRedeemed':
+      pushLog(`Pairing code used by ${short(msg.publicKey)}${msg.remaining === null ? '' : ` (${msg.remaining} use(s) left)`}`, 'ok')
+      break
+    case 'inviteRevoked':
+      pushLog('Pairing code revoked', 'info')
+      break
+    case 'aiDisabled':
+      if (lastStatus) {
+        lastStatus.ai = { ...(lastStatus.ai || {}), ready: false }
+        renderCapabilities(lastStatus)
+        renderAiPanel(lastStatus)
+      }
+      pushLog('AI provider disabled', 'info')
       break
     case 'appPaused':
-      pushLog(`Paused replication for ${msg.appId} (${msg.touched} units${msg.reason ? `, ${msg.reason}` : ''})`, 'dim')
+      pushLog(`Paused replication for ${short(msg.publicKey)} (${msg.touched} units${msg.reason ? `, ${msg.reason}` : ''})`, 'dim')
       break
     case 'quotaExceeded':
-      pushLog(`Quota exceeded for ${msg.appId}: ${formatBytes(msg.used)} used (${msg.reason})`, 'err')
+      pushLog(`Quota exceeded for ${short(msg.publicKey)}: ${formatBytes(msg.used)} used (${msg.reason})`, 'err')
       break
     case 'appQuotaChanged':
-      pushLog(`Updated quota for ${msg.appId}: ${msg.quotaBytes === null ? 'unlimited/default' : formatBytes(msg.quotaBytes)}`, 'ok')
+      pushLog(`Updated quota for ${short(msg.publicKey)}: ${msg.quotaBytes === null ? 'unlimited/default' : formatBytes(msg.quotaBytes)}`, 'ok')
       break
     case 'appResumed':
-      pushLog(`Resumed replication for ${msg.appId} (${msg.touched} units)`, 'ok')
+      pushLog(`Resumed replication for ${short(msg.publicKey)} (${msg.touched} units)`, 'ok')
       break
     case 'peek-core-result':
     case 'peek-drive-result': {
@@ -362,7 +411,7 @@ onWorkerMessage((msg) => {
       break
     }
     case 'appRegistered':
-      pushLog(`${msg.appId}: ${msg.coreCount} core(s), ${msg.driveCount} drive(s)`, 'info')
+      pushLog(`${short(msg.publicKey)} registered resources`, 'info')
       break
     case 'peerConnected':
       pushLog(`Peer connected: ${short(msg.publicKey)}`, 'dim')
@@ -373,8 +422,9 @@ onWorkerMessage((msg) => {
     case 'aiReady':
       pushLog(`AI provider ready${msg.mock ? ' (mock)' : ''}`, 'ok')
       if (lastStatus) {
-        lastStatus.services = { ...(lastStatus.services || {}), ai: true }
-        renderServices(lastStatus.services)
+        lastStatus.ai = { ...(lastStatus.ai || {}), ready: true, mock: !!msg.mock, modelId: msg.modelId || null }
+        renderCapabilities(lastStatus)
+        renderAiPanel(lastStatus)
       }
       break
     case 'aiError':
@@ -389,7 +439,7 @@ onWorkerMessage((msg) => {
       pushLog(`Served inference${msg.appId ? ` to ${msg.appId}` : ''}`, 'dim')
       break
     case 'unpaired':
-      pushLog(`Unpaired ${msg.appId}`, 'info')
+      pushLog(`Unpaired ${short(msg.publicKey)}`, 'info')
       break
     case 'error':
       pushLog(`Error (${msg.type ?? 'unknown'}): ${msg.error}`, 'err')
@@ -406,6 +456,7 @@ wireApprovalModal()
 wireTabs()
 wireAiToggle()
 wireConfigForm()
+wireInvites()
 wireNotificationControls()
 wireBackupControls()
 wireLogControls()
@@ -432,31 +483,35 @@ workerReady.catch((err) => {
 // Renderers
 // ---------------------------------------------------------------------------
 
-function renderServices (services) {
+// Capabilities are always advertised; what varies is whether the AI provider
+// actually has a model loaded. The old `services` flags conflated the two, so
+// a node whose model failed to load looked like it had no AI capability at all.
+function renderCapabilities (status) {
   const el = document.getElementById('services')
-  const labels = {
-    p2p: ['Network ready', 'Network offline'],
-    storage: ['Storage ready', 'Storage unavailable'],
-    ai: ['AI ready', 'AI off']
-  }
-  el.innerHTML = Object.entries(services)
-    .map(([name, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${escape(labels[name]?.[on ? 0 : 1] || name)}</span>`)
+  if (!el) return
+  const capabilities = status?.capabilities || {}
+  const aiReady = !!status?.ai?.ready
+  const pills = []
+  if (capabilities.sync) pills.push(['Data & files ready', true])
+  if (capabilities.ai) pills.push([aiReady ? 'AI ready' : 'AI off', aiReady])
+  el.innerHTML = pills
+    .map(([label, on]) => `<span class="pill ${on ? 'pill-on' : 'pill-off'}">${escape(label)}</span>`)
     .join('')
-  renderAiToggle(services)
-  setText('config-services', Object.entries(services).map(([k, v]) => `${v ? '+' : '-'}${k}`).join(' '))
+  renderAiToggle(aiReady)
+  setText('config-services', Object.keys(capabilities).join(' ') || '–')
 }
 
-function renderAiToggle (services) {
+function renderAiToggle (aiReady) {
   const btn = document.getElementById('ai-toggle')
   if (!btn) return
-  const on = !!services?.ai
+  const on = !!aiReady
   const mode = getValue('ai-mode') || currentConfig?.ai?.mode || 'mock'
   btn.textContent = on ? 'Turn off AI' : `Turn on AI${mode === 'mock' ? ' (demo)' : ''}`
   btn.dataset.action = on ? 'disable-ai' : 'enable-ai'
 }
 
 function renderSummary (status) {
-  setText('m-apps', String(status.apps?.length ?? 0))
+  setText('m-apps', String(status.peers?.length ?? 0))
   setText('m-cores', String(status.cores?.length ?? 0))
   setText('m-drives', String(status.drives?.length ?? 0))
   setText('m-peers', String(status.connectedPeers ?? 0))
@@ -471,28 +526,28 @@ function renderStorage (status) {
   setText('storage-drives', formatBytes(storage.totalDrives || 0))
   const el = document.getElementById('storage-apps')
   if (!el) return
-  const apps = status.apps || []
-  const perApp = storage.perApp || {}
+  const peers = status.peers || []
+  const perOwner = storage.perOwner || {}
   const quota = storage.quotas || {}
   if (quota.global?.limit !== null && quota.global?.limit !== undefined) {
     setText('storage-total', `${formatBytes(storage.total || 0)} / ${formatBytes(quota.global.limit)}${quota.global.exceeded ? ' over quota' : ''}`)
   }
-  if (apps.length === 0) {
+  if (peers.length === 0) {
     el.innerHTML = '<p class="dim">No protected apps yet.</p>'
     return
   }
-  el.innerHTML = apps.map((app) => `
+  el.innerHTML = peers.map((app) => `
     ${(() => {
-      const q = quota.perApp?.[app.appId]
+      const q = quota.perPeer?.[app.publicKey]
       const quotaBadge = q?.exceeded ? '<span class="badge badge-warn">over quota</span>' : ''
       const quotaText = q?.limit !== null && q?.limit !== undefined ? ` / ${formatBytes(q.limit)}` : ''
       return `
     <div class="app-row">
       <div class="app-info">
-        <div class="app-name">${escape(app.appName || app.appId)} ${quotaBadge}</div>
+        <div class="app-name">${escape(app.appName || app.appId || short(app.publicKey))} ${quotaBadge}</div>
         <div class="app-meta"><span>${escape(app.deviceName || 'This app')}</span></div>
       </div>
-      <div class="storage-value">${formatBytes(perApp[app.appId] || 0)}${quotaText}</div>
+      <div class="storage-value">${formatBytes(perOwner[app.publicKey] || 0)}${quotaText}</div>
     </div>
       `
     })()}
@@ -500,9 +555,8 @@ function renderStorage (status) {
 }
 
 function renderAiPanel (status) {
-  const services = status.services || {}
   const ai = status.ai || null
-  const on = !!services.ai
+  const on = !!ai?.ready
   setText('ai-state', on ? 'AI is enabled' : 'AI is disabled')
   if (!on) {
     setText('ai-detail', 'Approved apps cannot run inference here until you turn AI on.')
@@ -511,14 +565,15 @@ function renderAiPanel (status) {
   } else {
     setText('ai-detail', ai?.modelId ? `Local model ready: ${ai.modelId}` : 'Local AI is ready.')
   }
-  renderAiToggle(services)
+  renderAiToggle(on)
 }
 
 function renderConfig (status) {
   setText('config-status', 'Node is running')
   if (nodePublicKey) setText('config-node-key', nodePublicKey)
   setText('config-storage-path', status.storagePath || '–')
-  renderServices(status.services || {})
+  renderCapabilities(status)
+  renderInvites(status)
 }
 
 function renderConfigForm (config) {
@@ -593,20 +648,23 @@ function parseByteAmount (value) {
 
 function renderApps (status) {
   const el = document.getElementById('apps-list')
-  const apps = status.apps || []
+  const peers = status.peers || []
   const approved = status.trust?.approved || {}
-  const perApp = status.storage?.perApp || {}
+  const perOwner = status.storage?.perOwner || {}
 
-  if (apps.length === 0) {
+  if (peers.length === 0) {
     el.innerHTML = '<p class="dim">No protected apps yet. An app will appear here after you allow its first connection.</p>'
     return
   }
-  el.innerHTML = apps.map((app) => {
-    const cores = (status.cores || []).filter((c) => c.appId === app.appId)
-    const drives = (status.drives || []).filter((d) => d.appId === app.appId)
+  el.innerHTML = peers.map((app) => {
+    // Peers are identified by public key: two devices running the same app
+    // are two peers, and only the label falls back to appId.
+    const label = app.appName || app.appId || short(app.publicKey)
+    const cores = (status.cores || []).filter((c) => c.owner === app.publicKey)
+    const drives = (status.drives || []).filter((d) => d.owner === app.publicKey)
     const totalEntries = cores.reduce((s, c) => s + (c.length || 0), 0)
     const totalPeers = cores.reduce((s, c) => s + (c.peers || 0), 0)
-    const appBytes = perApp[app.appId] || 0
+    const appBytes = perOwner[app.publicKey] || 0
     const appUnits = [...cores, ...drives]
     const allPaused = appUnits.length > 0 && appUnits.every((u) => u.paused)
     const trusted = !!approved[app.publicKey]
@@ -615,32 +673,32 @@ function renderApps (status) {
       : '<span class="badge badge-neutral" title="This app was connected before remembered approvals were introduced.">review access</span>'
     const promoteBtn = trusted
       ? ''
-      : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Mark allowed</button>`
+      : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(app.publicKey)}" data-pubkey="${escape(app.publicKey || '')}" data-appname="${escape(app.appName || '')}">Mark allowed</button>`
     const pauseLabel = allPaused ? 'Resume protection' : 'Pause protection'
-    const pauseAction = allPaused ? 'resume-app' : 'pause-app'
+    const pauseAction = allPaused ? 'resume-peer' : 'pause-peer'
     const pauseBtn = appUnits.length > 0
-      ? `<button class="btn-ghost" data-pause-action="${pauseAction}" data-app-id="${escape(app.appId)}">${pauseLabel}</button>`
+      ? `<button class="btn-ghost" data-pause-action="${pauseAction}" data-peer-key="${escape(app.publicKey)}">${pauseLabel}</button>`
       : ''
     const peekTargets = [
       ...cores.map((c) => ({ kind: 'core', key: c.key, name: c.name, type: c.type })),
       ...drives.map((d) => ({ kind: 'drive', key: d.key, name: d.name }))
     ]
     const peekBtn = peekTargets.length > 0
-      ? `<button class="btn-ghost btn-ghost-neutral" data-peek-app="${escape(app.appId)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Inspect data</button>`
+      ? `<button class="btn-ghost btn-ghost-neutral" data-peek-app="${escape(label)}" data-peek-targets='${escape(JSON.stringify(peekTargets))}'>Inspect data</button>`
       : ''
-    const quota = status.storage?.quotas?.perApp?.[app.appId]
+    const quota = status.storage?.quotas?.perPeer?.[app.publicKey]
     const quotaLabel = app.quotaBytes !== null && app.quotaBytes !== undefined
       ? formatBytes(app.quotaBytes)
       : (quota?.limit !== null && quota?.limit !== undefined ? `${formatBytes(quota.limit)} default` : 'unlimited')
-    const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-app="${escape(app.appId)}" data-quota-current="${app.quotaBytes ?? ''}">Storage limit: ${escape(quotaLabel)}</button>`
-    const aiGranted = (app.grants?.ai || []).includes('completion.stream')
-    const aiGrantBtn = app.grants
-      ? `<button class="btn-ghost btn-ghost-neutral" data-ai-grant-app="${escape(app.appId)}" data-ai-granted="${aiGranted ? '1' : '0'}">${aiGranted ? 'Block AI' : 'Allow AI'}</button>`
+    const quotaBtn = `<button class="btn-ghost btn-ghost-neutral" data-quota-peer="${escape(app.publicKey)}" data-quota-current="${app.quotaBytes ?? ''}">Storage limit: ${escape(quotaLabel)}</button>`
+    const aiGranted = (app.grantsGiven?.ai || []).includes('completion.stream')
+    const aiGrantBtn = app.grantsGiven
+      ? `<button class="btn-ghost btn-ghost-neutral" data-ai-grant-peer="${escape(app.publicKey)}" data-ai-granted="${aiGranted ? '1' : '0'}">${aiGranted ? 'Block AI' : 'Allow AI'}</button>`
       : ''
     const deviceLine = app.deviceName
       ? `<span title="Device">${escape(app.deviceName)}</span>`
       : ''
-    const grantLine = formatCapabilitySummary(app.grants || app.requestedCapabilities)
+    const grantLine = formatCapabilitySummary(app.grantsGiven)
     const grantsMeta = grantLine ? `<span>${escape(grantLine)}</span>` : ''
     const stateBadge = appUnits.length === 0
       ? '<span class="badge badge-neutral">connected</span>'
@@ -649,9 +707,9 @@ function renderApps (status) {
           : '<span class="badge badge-ok">protected</span>')
     const activity = appUnits.length === 0 ? 'no data registered' : formatLastActivity(appUnits)
     return `
-      <div class="app-row" data-app-id="${escape(app.appId)}">
+      <div class="app-row" data-peer-key="${escape(app.publicKey)}">
         <div class="app-info">
-          <div class="app-name">${escape(app.appName || app.appId)} ${stateBadge} ${trustBadge}</div>
+          <div class="app-name">${escape(label)} ${stateBadge} ${trustBadge}</div>
           <div class="app-meta">
             ${deviceLine}
             <span>${cores.length} data source${cores.length === 1 ? '' : 's'}</span>
@@ -666,7 +724,7 @@ function renderApps (status) {
               <span>${totalEntries} entries</span>
               <span>${totalPeers} peer connections</span>
               <span class="mono dim" title="${escape(app.publicKey || '')}">key ${escape(short(app.publicKey))}</span>
-              <span class="mono dim">ID ${escape(app.appId)}</span>
+              <span class="mono dim">ID ${escape(app.appId || '–')}</span>
             </div>
           </details>
         </div>
@@ -676,7 +734,7 @@ function renderApps (status) {
           ${quotaBtn}
           ${aiGrantBtn}
           ${promoteBtn}
-          <button class="btn-ghost" data-unpair="${escape(app.appId)}" data-pubkey="${escape(app.publicKey || '')}">Remove app</button>
+          <button class="btn-ghost" data-unpair="${escape(app.publicKey)}" data-appname="${escape(label)}">Remove app</button>
         </div>
       </div>
     `
@@ -684,28 +742,27 @@ function renderApps (status) {
 
   el.querySelectorAll('[data-unpair]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const appId = btn.getAttribute('data-unpair')
-      const publicKey = btn.getAttribute('data-pubkey') || null
-      if (!appId) return
-      if (!confirm(`Remove ${appId}? Protection will stop and future connections from this installation will be blocked. Existing replicated bytes remain on this computer until data cleanup is available.`)) return
-      sendToWorker({ type: 'unpair', appId, publicKey })
+      const publicKey = btn.getAttribute('data-unpair')
+      const appName = btn.getAttribute('data-appname') || short(publicKey)
+      if (!publicKey) return
+      if (!confirm(`Remove ${appName}? Protection will stop and future connections from this installation will be blocked. Existing replicated bytes remain on this computer until data cleanup is available.`)) return
+      sendToWorker({ type: 'unpair', publicKey, appName })
     })
   })
 
   el.querySelectorAll('[data-promote]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const appId = btn.getAttribute('data-promote')
-      const publicKey = btn.getAttribute('data-pubkey') || null
+      const publicKey = btn.getAttribute('data-promote')
       const appName = btn.getAttribute('data-appname') || ''
       if (!publicKey) return
-      sendToWorker({ type: 'promote-trust', appId, appName, publicKey })
+      sendToWorker({ type: 'promote-trust', appName, publicKey })
     })
   })
 
-  el.querySelectorAll('[data-quota-app]').forEach((btn) => {
+  el.querySelectorAll('[data-quota-peer]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const appId = btn.getAttribute('data-quota-app')
-      if (!appId) return
+      const publicKey = btn.getAttribute('data-quota-peer')
+      if (!publicKey) return
       const current = btn.getAttribute('data-quota-current') || ''
       const input = prompt('Set a storage limit such as 500 MB or 5 GB. Leave blank to use the default/unlimited limit.', current)
       if (input === null) return
@@ -718,18 +775,18 @@ function renderApps (status) {
           return
         }
       }
-      sendToWorker({ type: 'set-app-quota', appId, quotaBytes })
+      sendToWorker({ type: 'set-peer-quota', publicKey, quotaBytes })
     })
   })
 
-  el.querySelectorAll('[data-ai-grant-app]').forEach((btn) => {
+  el.querySelectorAll('[data-ai-grant-peer]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const appId = btn.getAttribute('data-ai-grant-app')
+      const publicKey = btn.getAttribute('data-ai-grant-peer')
       const granted = btn.getAttribute('data-ai-granted') === '1'
-      if (!appId) return
+      if (!publicKey) return
       sendToWorker({
-        type: 'set-app-grant',
-        appId,
+        type: 'set-peer-grant',
+        publicKey,
         capability: 'ai',
         methods: granted ? [] : ['completion.stream']
       })
@@ -748,14 +805,78 @@ function renderApps (status) {
 
   el.querySelectorAll('[data-pause-action]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const appId = btn.getAttribute('data-app-id')
+      const publicKey = btn.getAttribute('data-peer-key')
       const action = btn.getAttribute('data-pause-action')
-      if (!appId || !action) return
+      if (!publicKey || !action) return
       btn.disabled = true
-      sendToWorker({ type: action, appId })
+      sendToWorker({ type: action, publicKey })
       setTimeout(() => { btn.disabled = false }, 1500)
     })
   })
+}
+
+function renderInvites (status) {
+  const el = document.getElementById('invite-list')
+  if (!el) return
+  const invites = status?.invites || []
+  if (invites.length === 0) {
+    el.innerHTML = '<p class="dim">No pairing codes are outstanding.</p>'
+    return
+  }
+  el.innerHTML = invites.map((invite) => {
+    const uses = invite.uses === null
+      ? 'unlimited'
+      : `${Math.max(0, invite.uses - invite.used)} of ${invite.uses} left`
+    const expiry = invite.expiresAt ? new Date(invite.expiresAt).toLocaleString() : 'never expires'
+    return `
+      <div class="app-row">
+        <div class="app-info">
+          <div class="app-name">${escape(invite.label || 'Pairing code')}</div>
+          <div class="app-meta"><span>${escape(uses)}</span><span>${escape(expiry)}</span></div>
+        </div>
+        <div class="app-actions">
+          <button class="btn-ghost" data-revoke-invite="${escape(invite.id)}">Revoke</button>
+        </div>
+      </div>
+    `
+  }).join('')
+
+  el.querySelectorAll('[data-revoke-invite]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-revoke-invite')
+      if (!id) return
+      sendToWorker({ type: 'revoke-invite', id })
+    })
+  })
+}
+
+function wireInvites () {
+  const create = document.getElementById('invite-create')
+  if (create) {
+    create.addEventListener('click', () => {
+      const minutes = Number(getValue('invite-expires') || '15')
+      const uses = Number(getValue('invite-uses') || '1')
+      sendToWorker({
+        type: 'create-invite',
+        expiresIn: minutes === 0 ? null : minutes * 60_000,
+        uses: uses === 0 ? null : uses
+      })
+    })
+  }
+  const copy = document.getElementById('invite-copy')
+  if (copy) {
+    copy.addEventListener('click', async () => {
+      const code = document.getElementById('invite-code')?.textContent || ''
+      if (!code) return
+      try {
+        await navigator.clipboard.writeText(code)
+        copy.textContent = 'Copied'
+        setTimeout(() => { copy.textContent = 'Copy' }, 1500)
+      } catch {
+        pushLog('Could not copy to the clipboard; select the code manually', 'info')
+      }
+    })
+  }
 }
 
 function renderTrust (trust) {
@@ -1031,16 +1152,16 @@ async function showDashboardWindow () {
 }
 
 function pauseAllApps () {
-  const apps = lastStatus?.apps || []
+  const peers = lastStatus?.peers || []
   if (apps.length === 0) return pushLog('No paired apps to pause', 'dim')
-  for (const app of apps) sendToWorker({ type: 'pause-app', appId: app.appId })
+  for (const peer of peers) sendToWorker({ type: 'pause-peer', publicKey: peer.publicKey })
   pushLog(`Pause requested for ${apps.length} app(s) from tray`, 'info')
 }
 
 function resumeAllApps () {
-  const apps = lastStatus?.apps || []
+  const peers = lastStatus?.peers || []
   if (apps.length === 0) return pushLog('No paired apps to resume', 'dim')
-  for (const app of apps) sendToWorker({ type: 'resume-app', appId: app.appId })
+  for (const peer of peers) sendToWorker({ type: 'resume-peer', publicKey: peer.publicKey })
   pushLog(`Resume requested for ${apps.length} app(s) from tray`, 'info')
 }
 
@@ -1166,7 +1287,7 @@ function wireAiToggle () {
       sendToWorker({ type: 'disable-ai' })
     }
     // Re-enable after a short delay; the actual button text will be
-    // corrected by the next `servicesChanged` / status snapshot.
+    // corrected by the next aiReady/aiDisabled event or status snapshot.
     setTimeout(() => { btn.disabled = false }, 1500)
   })
 }
@@ -1229,15 +1350,15 @@ function showImportPreview (path, preview) {
   setText('backup-message', 'Ready to import')
   setText('import-path', path)
   setText('import-exported-at', preview.exportedAt || 'unknown')
-  setText('import-app-count', String(preview.appCount || 0))
+  setText('import-app-count', String(preview.peerCount || 0))
   setText('import-trust-count', `${preview.trustCounts?.approved || 0} approved, ${preview.trustCounts?.denied || 0} denied`)
   setText('import-config-state', preview.hasConfig ? 'included' : 'not included')
   const list = document.getElementById('import-app-list')
   if (list) {
-    const apps = preview.apps || []
-    list.innerHTML = apps.length === 0
-      ? '<p class="dim">No app records in this settings file.</p>'
-      : apps.map((app) => `<div class="app-row"><div class="app-info"><div class="app-name">${escape(app.appName || app.appId)}</div><div class="app-meta"><span class="mono">${escape(app.appId)}</span></div></div></div>`).join('')
+    const peers = preview.peers || []
+    list.innerHTML = peers.length === 0
+      ? '<p class="dim">No peer records in this settings file.</p>'
+      : peers.map((peer) => `<div class="app-row"><div class="app-info"><div class="app-name">${escape(peer.appName || short(peer.publicKey))}</div><div class="app-meta"><span class="mono">${escape(short(peer.publicKey))}</span></div></div></div>`).join('')
   }
   document.getElementById('import-modal').hidden = false
 }

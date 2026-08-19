@@ -284,16 +284,17 @@ describe('pear-desktop generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('adds @unstoppable-stack/node-client dependency', () => {
+    it('adds @unstoppable-stack/node-core dependency', () => {
       const files = fileMap(make(['node-sync']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
     })
 
-    it('wires connectToNode into the worker after db.ready()', () => {
+    it('wires node discovery into the worker after db.ready()', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain("from '@unstoppable-stack/node-client'")
-      expect(worker).toContain('connectToNode(')
+      expect(worker).toContain("from '@unstoppable-stack/node-core'")
+      expect(worker).toContain('createNode(')
+      expect(worker).toContain('discover(')
       expect(worker).toContain("service: 'node-sync'")
       expect(worker).toContain('main-db')
       // Must fall back gracefully when the node is unavailable
@@ -307,16 +308,16 @@ describe('pear-desktop generator', () => {
       expect(app).toContain("msg.service === 'node-sync'")
     })
 
-    it('closes the client on shutdown', () => {
+    it('closes the app node on shutdown', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain('nodeClient.close()')
+      expect(worker).toContain('appNode.close()')
     })
 
-    it('bare variant does not include node-client', () => {
+    it('bare variant does not include node-core', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeUndefined()
-      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-client')
+      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-core')
     })
   })
 

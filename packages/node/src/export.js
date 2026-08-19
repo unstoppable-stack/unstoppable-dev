@@ -1,44 +1,39 @@
-import Corestore from 'corestore'
-import { AppRegistry, validateImportedApp } from './registry.js'
+import { PeerRegistry } from '@unstoppable-stack/node-core'
 import { loadConfig, migrateConfig, saveConfig, validateConfig } from './config.js'
 import { atomicWriteFile, runtimeFs, runtimePath } from './runtime-files.js'
 
 const { mkdir, readFile, stat } = runtimeFs
 const { join } = runtimePath
 
-const EXPORT_VERSION = 1
+const EXPORT_VERSION = 2
 const MAX_BUNDLE_BYTES = 10 * 1024 * 1024
 
 export async function exportNodeState ({ storagePath, outPath }) {
   if (!storagePath) throw new Error('storagePath is required')
   if (!outPath) throw new Error('outPath is required')
 
-  const store = new Corestore(storagePath)
-  await store.ready()
-  try {
-    const registryCore = store.get({ name: 'node-registry' })
-    await registryCore.ready()
-    const registry = new AppRegistry(registryCore)
-    await registry.ready()
-    const apps = await registry.listApps()
-    await registry.close()
+  const registry = new PeerRegistry(storagePath)
+  await registry.ready()
+  const peers = registry.list()
 
-    const config = await loadConfig(storagePath)
-    return writeNodeStateBundle({ storagePath, outPath, config, apps })
-  } finally {
-    await store.close()
-  }
+  const config = await loadConfig(storagePath)
+  return writeNodeStateBundle({ storagePath, outPath, config, peers })
 }
 
-export async function writeNodeStateBundle ({ storagePath, outPath, config, apps }) {
+export async function writeNodeStateBundle ({ storagePath, outPath, config, peers, identity }) {
   const trust = await readJson(join(storagePath, 'trust-registry.json'), null)
+  // The identity seed is part of the backup on purpose: without it a restored
+  // node comes back under a new public key and every paired peer has to pair
+  // again. It is also the most sensitive thing in the bundle.
+  const seed = identity ?? await readJson(join(storagePath, 'identity.json'), null)
   const bundle = {
     version: EXPORT_VERSION,
     kind: 'unstoppable-node-settings',
     exportedAt: new Date().toISOString(),
     config,
     trust,
-    apps
+    identity: seed,
+    peers
   }
 
   await atomicWriteFile(outPath, JSON.stringify(bundle, null, 2) + '\n', { encoding: 'utf8' })
@@ -51,17 +46,17 @@ export async function importNodeState ({ storagePath, inPath }) {
   const bundle = await readNodeStateBundle(inPath)
 
   await mkdir(storagePath, { recursive: true })
-  const store = new Corestore(storagePath)
-  await store.ready()
-  try {
-    const registryCore = store.get({ name: 'node-registry' })
-    await registryCore.ready()
-    const registry = new AppRegistry(registryCore)
-    await registry.ready()
-    await registry.importApps(bundle.apps || [])
-    await registry.close()
-  } finally {
-    await store.close()
+
+  const registry = new PeerRegistry(storagePath)
+  await registry.ready()
+  for (const peer of bundle.peers || []) await registry.put(peer)
+
+  if (bundle.identity) {
+    await atomicWriteFile(
+      join(storagePath, 'identity.json'),
+      JSON.stringify(bundle.identity, null, 2) + '\n',
+      { encoding: 'utf8' }
+    )
   }
   if (bundle.config) await saveConfig(storagePath, bundle.config)
   if (bundle.trust) {
@@ -77,14 +72,19 @@ export async function importNodeState ({ storagePath, inPath }) {
 export async function previewNodeStateImport ({ inPath }) {
   if (!inPath) throw new Error('inPath is required')
   const bundle = await readNodeStateBundle(inPath)
-  const apps = Array.isArray(bundle.apps) ? bundle.apps : []
+  const peers = Array.isArray(bundle.peers) ? bundle.peers : []
   return {
     version: bundle.version,
     exportedAt: bundle.exportedAt || null,
-    appCount: apps.length,
-    apps: apps.map((app) => ({ appId: app.appId, appName: app.appName || app.appId })),
+    peerCount: peers.length,
+    peers: peers.map((peer) => ({
+      publicKey: peer.publicKey,
+      appId: peer.appId || null,
+      appName: peer.appName || peer.appId || peer.publicKey.slice(0, 12)
+    })),
     hasConfig: !!bundle.config,
     hasTrust: !!bundle.trust,
+    hasIdentity: !!bundle.identity,
     config: bundle.config || null,
     trustCounts: bundle.trust
       ? {
@@ -109,12 +109,32 @@ export async function readNodeStateBundle (path) {
   if (bundle.kind != null && bundle.kind !== 'unstoppable-node-settings') {
     throw new Error(`Unsupported settings bundle kind: ${bundle.kind}`)
   }
-  if (bundle.apps != null && !Array.isArray(bundle.apps)) throw new Error('Settings bundle apps must be an array')
-  if (bundle.apps?.length > 10_000) throw new Error('Settings bundle contains too many apps')
-  if (bundle.apps) bundle.apps = bundle.apps.map(validateImportedApp)
+  if (bundle.peers != null && !Array.isArray(bundle.peers)) throw new Error('Settings bundle peers must be an array')
+  if (bundle.peers?.length > 10_000) throw new Error('Settings bundle contains too many peers')
+  if (bundle.peers) bundle.peers = bundle.peers.map(validateImportedPeer)
+  validateIdentityShape(bundle.identity)
   if (bundle.config != null) bundle.config = validateConfig(migrateConfig(bundle.config))
   validateTrustShape(bundle.trust)
   return bundle
+}
+
+export function validateImportedPeer (peer) {
+  if (!isPlainObject(peer)) throw new Error('Imported peer records must be objects')
+  if (typeof peer.publicKey !== 'string' || !/^[0-9a-f]{64}$/.test(peer.publicKey)) {
+    throw new Error('Imported peer publicKey must be 32 bytes of hex')
+  }
+  if (peer.appId != null && (typeof peer.appId !== 'string' || peer.appId.length > 256)) {
+    throw new Error(`Imported peer ${peer.publicKey.slice(0, 12)} has an invalid appId`)
+  }
+  return JSON.parse(JSON.stringify(peer))
+}
+
+function validateIdentityShape (identity) {
+  if (identity == null) return
+  if (!isPlainObject(identity)) throw new Error('Settings bundle identity must be an object')
+  if (typeof identity.seed !== 'string' || !/^[0-9a-f]{64}$/i.test(identity.seed)) {
+    throw new Error('Settings bundle identity seed must be 32 bytes of hex')
+  }
 }
 
 function validateTrustShape (trust) {

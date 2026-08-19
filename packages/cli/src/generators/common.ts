@@ -356,6 +356,8 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
         return ['- **Wallet** — WDK wallet integration (stub — coming soon)']
       case 'node-sync':
         return ['- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding']
+      case 'node-host':
+        return ['- **Node Host** — Expose a capability other apps can pair with and call']
       // multi-writer is reflected in baseFeatures above (it replaces the
       // default KV store rather than adding to it).
       default:

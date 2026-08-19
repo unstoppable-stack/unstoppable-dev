@@ -14,6 +14,7 @@ export type Feature =
   | 'local-ai'      // QVAC SDK + streaming chat UI
   | 'wallet'        // WDK wallet (stub — WDK not yet validated)
   | 'node-sync'     // Register cores/drives with the Unstoppable Node for replication + backup
+  | 'node-host'     // Act as a node: expose an app capability other apps can pair with and call
   | 'multi-writer'  // Autobee + HyperDB: every device reads AND writes, converging
 
 export interface GeneratorOptions {
@@ -56,6 +57,15 @@ export const FEATURES: { id: Feature; name: string; description: string; platfor
     name: 'Node Sync',
     description: 'Register data with the Unstoppable Node for P2P replication + backup',
     platforms: ['node-cli', 'pear-desktop', 'expo-mobile'],
+  },
+  {
+    id: 'node-host',
+    name: 'Node Host',
+    // The inverse of node-sync: instead of asking a node for something, the
+    // app *is* one — it exposes a capability and hands out pairing codes.
+    description: 'Act as a node — expose an app capability other apps can pair with and call',
+    // node-cli only for now: the Pear Desktop worker variant is not built yet.
+    platforms: ['node-cli'],
   },
   {
     id: 'multi-writer',
