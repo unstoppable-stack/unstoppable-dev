@@ -1,4 +1,4 @@
-import { NodeDaemon } from 'unstoppable-node/node'
+import { PersonalNode } from 'unstoppable-node/personal-node'
 import { previewNodeStateImport } from 'unstoppable-node/export'
 import { ApprovalGate } from './approval.js'
 
@@ -40,20 +40,27 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
     ? { mock: aiMock, ...(aiModelSrc ? { modelSrc: aiModelSrc } : {}) }
     : undefined
 
-  const node = new NodeDaemon(storagePath, {
+  const node = new PersonalNode(storagePath, {
     ai,
-    discoveryWarmupMs: 2_000,
     approvePairing: async (req) => {
       const config = await node.getConfig()
       if (config.pairing.requireApproval === false) return 'approve'
-      return approvalGate.request(req)
+      // The trust gate is keyed on public key and predates the registry
+      // re-keying; the profile fields are flattened for it.
+      return approvalGate.request({
+        publicKey: req.publicKey,
+        appId: req.profile?.appId || null,
+        appName: req.profile?.appName || null,
+        deviceName: req.profile?.deviceName || null,
+        remoteKey: req.publicKey
+      })
     }
   })
 
-  node.on('ready', async (info) => send({
+  node.on('listening', async (info) => send({
     type: 'ready',
     ...info,
-    services: node.services,
+    capabilities: node.node.capabilities.describe(),
     config: await node.getConfig(),
     trust: approvalGate.snapshot()
   }))
@@ -61,23 +68,26 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('pairRequest', (info) => send({ type: 'pairRequest', ...info }))
   node.on('paired', (info) => send({ type: 'paired', ...info }))
   node.on('pairDenied', (info) => send({ type: 'pairDenied', ...info }))
-  node.on('appRegistered', (info) => send({ type: 'appRegistered', ...info }))
-  node.on('peerConnected', (info) => send({ type: 'peerConnected', ...info }))
+  node.on('connection', (info) => send({ type: 'peerConnected', ...info }))
   node.on('peerDisconnected', (info) => send({ type: 'peerDisconnected', ...info }))
-  node.on('heartbeat', (info) => send({ type: 'heartbeat', ...info }))
   node.on('error', (info) => send({ type: 'error', ...info }))
+  node.on('requestError', (info) => send({ type: 'requestError', ...info }))
   node.on('aiReady', (info) => send({ type: 'aiReady', ...info }))
   node.on('aiError', (info) => send({ type: 'aiError', ...info }))
   node.on('aiProgress', (info) => send({ type: 'aiProgress', ...info }))
-  node.on('servicesChanged', (info) => send({ type: 'servicesChanged', ...info }))
+  node.on('aiDisabled', (info) => send({ type: 'aiDisabled', ...info }))
   node.on('configChanged', (info) => send({ type: 'config', ...info }))
   node.on('quotaExceeded', (info) => send({ type: 'quotaExceeded', ...info }))
-  node.on('appQuotaChanged', (info) => send({ type: 'appQuotaChanged', ...info }))
-  node.on('appGrantChanged', (info) => send({ type: 'appGrantChanged', ...info }))
+  node.on('peerQuotaChanged', (info) => send({ type: 'peerQuotaChanged', ...info }))
+  node.on('peerGrantChanged', (info) => send({ type: 'peerGrantChanged', ...info }))
+  node.on('grantsChanged', (info) => send({ type: 'grantsChanged', ...info }))
   node.on('inference', (info) => send({ type: 'inference', ...info }))
+  node.on('inviteCreated', (info) => send({ type: 'inviteCreated', ...info }))
+  node.on('inviteRedeemed', (info) => send({ type: 'inviteRedeemed', ...info }))
+  node.on('inviteRevoked', (info) => send({ type: 'inviteRevoked', ...info }))
   node.on('unpaired', (info) => send({ type: 'unpaired', ...info }))
-  node.on('appPaused', (info) => send({ type: 'appPaused', ...info }))
-  node.on('appResumed', (info) => send({ type: 'appResumed', ...info }))
+  node.on('peerPaused', (info) => send({ type: 'peerPaused', ...info }))
+  node.on('peerResumed', (info) => send({ type: 'peerResumed', ...info }))
 
   const statusTimer = setInterval(async () => {
     try {
@@ -88,6 +98,14 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
     }
   }, STATUS_INTERVAL_MS)
 
+  async function sendStatus () {
+    const status = await node.getStatus()
+    send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+  }
+
+  // Peers are addressed by public key throughout. The old commands carried
+  // both a publicKey (for the trust gate) and an appId (for the node); the
+  // registry re-keying collapsed that into one identifier.
   async function handleCommand (msg) {
     switch (msg.type) {
       case 'unpair':
@@ -97,8 +115,8 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
             appName: msg.appName,
             reason: 'unpaired by user'
           })
+          await node.unpairPeer(msg.publicKey)
         }
-        await node.unpairApp(msg.appId)
         break
 
       case 'pair-approve':
@@ -123,11 +141,9 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         })
         break
 
-      case 'refresh-status': {
-        const status = await node.getStatus()
-        send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+      case 'refresh-status':
+        await sendStatus()
         break
-      }
 
       case 'get-config':
         send({ type: 'config', config: await node.getConfig() })
@@ -145,7 +161,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
       case 'export-state':
         try {
           const bundle = await node.exportState(msg.path)
-          send({ type: 'export-result', path: msg.path, apps: bundle.apps.length })
+          send({ type: 'export-result', path: msg.path, peers: bundle.peers.length })
         } catch (err) {
           send({ type: 'export-error', error: err.message })
         }
@@ -155,10 +171,9 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         try {
           const bundle = await node.importState(msg.path)
           if (bundle.trust) await approvalGate.importSnapshot(bundle.trust)
-          send({ type: 'import-result', path: msg.path, apps: bundle.apps.length })
+          send({ type: 'import-result', path: msg.path, peers: (bundle.peers || []).length })
           send({ type: 'config', config: await node.getConfig() })
-          const status = await node.getStatus()
-          send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+          await sendStatus()
         } catch (err) {
           send({ type: 'import-error', error: err.message })
         }
@@ -173,46 +188,64 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         }
         break
 
-      case 'pause-app':
-        await node.pauseApp(msg.appId)
+      case 'pause-peer':
+        await node.pausePeer(msg.publicKey)
         break
 
-      case 'resume-app':
-        await node.resumeApp(msg.appId)
+      case 'resume-peer':
+        await node.resumePeer(msg.publicKey)
         break
 
-      case 'set-app-quota':
+      case 'set-peer-quota':
         try {
-          await node.setAppQuota(msg.appId, msg.quotaBytes)
-          const status = await node.getStatus()
-          send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+          await node.setPeerQuota(msg.publicKey, msg.quotaBytes)
+          await sendStatus()
         } catch (err) {
-          send({ type: 'error', phase: 'set-app-quota', error: err.message })
+          send({ type: 'error', phase: 'set-peer-quota', error: err.message })
         }
         break
 
-      case 'set-app-grant':
+      case 'set-peer-grant':
         try {
-          await node.setAppGrant(msg.appId, msg.capability, msg.methods || [])
-          const status = await node.getStatus()
-          send({ type: 'status', ...status, trust: approvalGate.snapshot() })
+          await node.setPeerGrant(msg.publicKey, msg.capability, msg.methods || [])
+          await sendStatus()
         } catch (err) {
-          send({ type: 'error', phase: 'set-app-grant', error: err.message })
+          send({ type: 'error', phase: 'set-peer-grant', error: err.message })
+        }
+        break
+
+      case 'create-invite':
+        try {
+          const invite = await node.createInvite({
+            grants: msg.grants || null,
+            uses: msg.uses === undefined ? 1 : msg.uses,
+            expiresIn: msg.expiresIn === undefined ? 15 * 60_000 : msg.expiresIn,
+            label: msg.label || null
+          })
+          send({ type: 'invite-result', invite })
+          await sendStatus()
+        } catch (err) {
+          send({ type: 'invite-error', error: err.message })
+        }
+        break
+
+      case 'revoke-invite':
+        try {
+          await node.revokeInvite(msg.id)
+          await sendStatus()
+        } catch (err) {
+          send({ type: 'invite-error', error: err.message })
         }
         break
 
       case 'peek-core': {
-        const result = node.replication
-          ? await node.replication.peekCore(msg.key, { limit: msg.limit })
-          : null
+        const result = await node.peekCore(msg.key, { limit: msg.limit })
         send({ type: 'peek-core-result', requestId: msg.requestId, result })
         break
       }
 
       case 'peek-drive': {
-        const result = node.replication
-          ? await node.replication.peekDrive(msg.key, { dir: msg.dir, limit: msg.limit })
-          : null
+        const result = await node.peekDrive(msg.key, { dir: msg.dir, limit: msg.limit })
         send({ type: 'peek-drive-result', requestId: msg.requestId, result })
         break
       }

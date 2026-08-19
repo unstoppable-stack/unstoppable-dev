@@ -9,7 +9,9 @@
     "type": "desktop",
     "pre": "pear-electron/pre",
     "routes": ".",
-    "unrouted": ["/worker.js"],
+    "unrouted": [
+      "/worker.js"
+    ],
     "gui": {
       "backgroundColor": "#0d1117",
       "closeHides": true,
@@ -26,10 +28,10 @@
     "@unstoppable/memory": "file:../memory",
     "@unstoppable/memory-client": "file:../memory-client",
     "@unstoppable/memory-mcp": "file:../memory-mcp",
-    "@unstoppable-stack/node-client": "file:../node-client",
     "pear-bridge": "^1.2.4",
     "pear-electron": "^1.7.0",
     "pear-pipe": "^1.0.6",
-    "pear-run": "^1.0.7"
+    "pear-run": "^1.0.7",
+    "@unstoppable-stack/node-core": "file:../node-core"
   }
 }

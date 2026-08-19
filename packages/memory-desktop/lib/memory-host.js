@@ -9,7 +9,7 @@ export function createMemoryHost ({
   send,
   mcpPort = 8787,
   nodeSync = true,
-  connectToNode,
+  createNode,
   engine = null
 } = {}) {
   if (!storagePath) throw new Error('createMemoryHost requires storagePath')
@@ -22,7 +22,7 @@ export function createMemoryHost ({
     status: nodeSync ? 'searching' : 'disabled',
     detail: nodeSync ? 'Looking for local Unstoppable Node' : 'Node sync disabled for this session'
   }
-  let nodeClient = null
+  let nodeConnection = null
 
   async function start () {
     send({ type: 'workerReady' })
@@ -40,13 +40,13 @@ export function createMemoryHost ({
     sync.status = 'searching'
     sync.detail = 'Looking for local Unstoppable Node'
     try {
-      nodeClient = await connectMemoryToNode({
+      nodeConnection = await connectMemoryToNode({
         engine: memory,
-        connectToNode,
-        required: false,
-        reconnect: true
+        storage: `${storagePath}/app-node`,
+        ...(createNode ? { createNode } : {}),
+        required: false
       })
-      if (nodeClient) {
+      if (nodeConnection) {
         sync.status = 'connected'
         sync.detail = 'Memory Hyperbee registered with Unstoppable Node'
       } else {
@@ -145,9 +145,9 @@ export function createMemoryHost ({
       await mcp.close()
       mcp = null
     }
-    if (nodeClient && typeof nodeClient.close === 'function') {
-      await nodeClient.close()
-      nodeClient = null
+    if (nodeConnection && typeof nodeConnection.close === 'function') {
+      await nodeConnection.close()
+      nodeConnection = null
     }
     if (!engine) await memory.close()
   }

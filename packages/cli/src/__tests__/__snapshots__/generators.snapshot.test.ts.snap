@@ -1985,14 +1985,15 @@ const RPC = require('bare-rpc')
 const { IPC } = BareKit
 const Corestore = require('corestore')
 const Hyperbee = require('hyperbee')
-// node-client is ESM; bare supports dynamic import and the @unstoppable
-// scope resolves once '@unstoppable-stack/node-client' is installed.
+// node-core is ESM; bare supports dynamic import and the @unstoppable
+// scope resolves once '@unstoppable-stack/node-core' is installed.
 
 let storagePath = null
 let store = null
 let db = null
 let mockMode = false
-let nodeClient = null
+let appNode = null
+let nodePeer = null
 let nodeStatus = 'idle'
 
 const rpc = new RPC(IPC, async (request) => {
@@ -2030,23 +2031,41 @@ const rpc = new RPC(IPC, async (request) => {
         break
       }
       case 7: { // node-sync-connect — best-effort; non-blocking
-        if (nodeClient) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
+        if (appNode) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable-stack/node-client')
-          nodeClient = await mod.connectToNode({
-            appId: 'snap-test',
-            appName: 'snap-test',
-            cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-            timeout: 5_000,
+          const mod = await import('@unstoppable-stack/node-core')
+          appNode = mod.createNode({
+            storage: storagePath + '/app-node',
+            profile: { appId: 'snap-test', appName: 'snap-test' },
+            capabilities: [],
             reconnect: true
           })
+          await appNode.ready()
+          appNode.on('peerDisconnected', () => { nodeStatus = 'disconnected' })
+          appNode.on('reconnecting', () => { nodeStatus = 'disconnected' })
+          appNode.on('reconnected', () => { nodeStatus = 'connected' })
+          appNode.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
+
+          // Find the Personal Node on this machine; the key is remembered
+          // after the first pairing so reconnects go direct.
+          nodePeer = await appNode.discover({ timeout: 5_000 })
+
+          // The manifest is the complete set: anything omitted stops syncing.
+          await nodePeer.call('sync', 'manifest.replace', {
+            manifest: {
+              schemaVersion: 1,
+              resources: [{
+                id: 'main-db',
+                kind: 'hyperbee',
+                key: b4a.toString(db.core.key, 'hex'),
+                name: 'Main DB',
+                protection: { mode: 'mirror' }
+              }]
+            }
+          })
           nodeStatus = 'connected'
-          nodeClient.on('disconnected', () => { nodeStatus = 'disconnected' })
-          nodeClient.on('reconnecting', () => { nodeStatus = 'disconnected' })
-          nodeClient.on('reconnected', () => { nodeStatus = 'connected' })
-          nodeClient.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'
@@ -2055,7 +2074,7 @@ const rpc = new RPC(IPC, async (request) => {
         break
       }
       case 8: { // node-sync-status
-        response = { ok: true, status: nodeStatus, connected: !!nodeClient }
+        response = { ok: true, status: nodeStatus, connected: !!nodePeer }
         break
       }
       default:
@@ -2186,7 +2205,7 @@ module.exports = config
     "bare-rpc": "^1.1.0",
     "corestore": "^7.8.0",
     "hyperbee": "^2.27.3",
-    "@unstoppable-stack/node-client": "^0.5.0-beta.1",
+    "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
     "hyperswarm": "^4.17.0",
     "b4a": "^1.8.0",
     "events": "^3.3.0"
@@ -2551,6 +2570,21 @@ exports[`generator snapshots > file paths only > node-cli / local-ai: path list 
   "planning/README.md",
   "src/ai-manager.ts",
   "src/index.ts",
+  "src/storage-manager.ts",
+  "src/swarm-manager.ts",
+  "src/types.d.ts",
+  "tsconfig.json",
+]
+`;
+
+exports[`generator snapshots > file paths only > node-cli / node-host: path list matches snapshot 1`] = `
+[
+  ".gitignore",
+  "README.md",
+  "package.json",
+  "planning/README.md",
+  "src/index.ts",
+  "src/node-host.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -3140,6 +3174,282 @@ declare module 'b4a'
 ]
 `;
 
+exports[`generator snapshots > node-cli > node-host: file tree matches snapshot 1`] = `
+[
+  {
+    "content": "node_modules/
+dist/
+.pear/
+*.log
+.env
+.env.local
+.DS_Store
+",
+    "path": ".gitignore",
+  },
+  {
+    "content": "{
+  "name": "snap-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "hyperswarm": "^4.17.0",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "b4a": "^1.8.0",
+    "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "tsx": "^4.0.0"
+  }
+}",
+    "path": "package.json",
+  },
+  {
+    "content": "# Planning
+
+Architecture decisions, feature plans, and project documentation.
+
+## What Goes Here
+
+- **Architecture decisions** — Record important technical choices
+- **Feature plans** — Break down features before implementing
+- **Design docs** — Document system design and data flows
+",
+    "path": "planning/README.md",
+  },
+  {
+    "content": "# snap-test
+
+Built with the **Unstoppable Stack** — P2P, local-first, no servers.
+
+## Platform
+
+Node.js CLI
+
+## Features
+
+- **P2P Networking** — Hyperswarm for peer discovery and connections
+- **KV Storage** — Hyperbee for persistent local key-value data
+- **Node Host** — Expose a capability other apps can pair with and call
+
+## Getting Started
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Project Structure
+
+See \`planning/\` for architecture decisions and feature plans.
+",
+    "path": "README.md",
+  },
+  {
+    "content": "import Corestore from 'corestore'
+import { createSwarm } from './swarm-manager.js'
+import { createStorage } from './storage-manager.js'
+
+async function main() {
+  console.log('Starting snap-test...')
+
+  const store = new Corestore('./storage')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
+  const db = await createStorage(store)
+  console.log('Storage ready')
+
+  console.log('snap-test is running. Press Ctrl+C to exit.')
+
+  process.on('SIGINT', async () => {
+    console.log('\\nShutting down...')
+    await swarm.destroy()
+    process.exit(0)
+  })
+}
+
+main().catch((err) => {
+  console.error('Fatal error:', err)
+  process.exit(1)
+})
+",
+    "path": "src/index.ts",
+  },
+  {
+    "content": "/**
+ * Node host — makes this app a node other apps can pair with.
+ *
+ * A capability pack is a plain object. Unary methods are async functions;
+ * streaming methods are async generators. That difference is the whole of the
+ * distinction — cancellation, backpressure and multiplexing come from the bus.
+ *
+ * Run this app, print the pairing code, then from the other app:
+ *
+ *   const peer = await node.pair(code)
+ *   const { items } = await peer.api.snap-test.list({})
+ */
+import { createNode } from '@unstoppable-stack/node-core'
+
+const CAPABILITY = 'snap-test'
+
+interface NodeHostOpts {
+  db: any // Hyperbee — whatever this app already stores
+}
+
+export async function startNodeHost({ db }: NodeHostOpts) {
+  const node = createNode({
+    storage: './.unstoppable-app-node',
+    profile: { appId: 'snap-test', appName: 'snap-test' },
+    capabilities: [
+      {
+        name: CAPABILITY,
+        version: 1,
+        methods: {
+          // Unary: resolves once with a value.
+          async list(params: any) {
+            const items: any[] = []
+            const limit = params?.limit ?? 50
+            for await (const entry of db.createReadStream({ limit })) {
+              items.push({ key: entry.key, value: entry.value })
+            }
+            return { items }
+          },
+
+          // Streaming: an async generator. ctx.signal aborts when the peer
+          // disconnects, cancels, or stops iterating — check it in long loops.
+          async *watch(params: any, ctx: any) {
+            for await (const entry of db.createHistoryStream({ live: true })) {
+              if (ctx.signal.aborted) return
+              yield { key: entry.key, value: entry.value }
+            }
+          },
+        },
+        // Anything not listed here must be asked for explicitly at pair time.
+        defaultGrants: ['list'],
+      },
+    ],
+  })
+
+  await node.ready()
+
+  // Reachable by public key. Apps on this machine can also find the local
+  // Personal Node; other devices need a pairing code.
+  await node.listen()
+
+  node.on('paired', ({ appName, publicKey }) => {
+    console.log(\`Paired with \${appName || publicKey.slice(0, 12)}\`)
+  })
+
+  return {
+    node,
+    publicKey: node.publicKey,
+
+    /** Mint a code to share with another device or app. */
+    async invite(opts: { uses?: number; expiresIn?: number } = {}) {
+      const invite = await node.createInvite({
+        uses: opts.uses ?? 1,
+        expiresIn: opts.expiresIn ?? 15 * 60_000,
+      })
+      console.log(\`Pairing code: \${invite.code}\`)
+      return invite
+    },
+
+    async close() {
+      await node.close()
+    },
+  }
+}
+",
+    "path": "src/node-host.ts",
+  },
+  {
+    "content": "import Hyperbee from 'hyperbee'
+
+export async function createStorage(store: any) {
+  const core = store.get({ name: 'main-db' })
+  const db = new Hyperbee(core, {
+    keyEncoding: 'utf-8',
+    valueEncoding: 'json',
+  })
+  await db.ready()
+  return db
+}
+",
+    "path": "src/storage-manager.ts",
+  },
+  {
+    "content": "import Hyperswarm from 'hyperswarm'
+import crypto from 'hypercore-crypto'
+
+export function createSwarm(store: any) {
+  const swarm = new Hyperswarm()
+
+  swarm.on('connection', (conn: any, info: any) => {
+    console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
+    store.replicate(conn)
+    conn.on('error', (err: Error) => console.error('Connection error:', err.message))
+    conn.on('close', () => console.log('Peer disconnected'))
+  })
+
+  return swarm
+}
+
+export function joinTopic(swarm: any, topicName: string) {
+  const topic = crypto.discoveryKey(Buffer.from(topicName))
+  const discovery = swarm.join(topic, { server: true, client: true })
+  return discovery
+}
+",
+    "path": "src/swarm-manager.ts",
+  },
+  {
+    "content": "declare module 'hyperswarm'
+declare module 'corestore'
+declare module 'hyperbee'
+declare module 'hypercore-crypto'
+declare module 'b4a'
+declare module '@unstoppable-stack/node-core'
+",
+    "path": "src/types.d.ts",
+  },
+  {
+    "content": "{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
+  },
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}",
+    "path": "tsconfig.json",
+  },
+]
+`;
+
 exports[`generator snapshots > node-cli > node-sync: file tree matches snapshot 1`] = `
 [
   {
@@ -3170,7 +3480,7 @@ dist/
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/node-client": "^0.5.0-beta.1"
+    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -3277,33 +3587,52 @@ main().catch((err) => {
  *
  * Start the Node separately:   npx unstoppable-node
  *
- * To add more cores or drives later, call setupNodeSync with them in the
- * \`cores\` / \`drives\` arrays.
+ * To add more resources later, add them to the manifest below — it describes
+ * the complete set, so anything omitted stops replicating.
  */
-import { connectToNode } from '@unstoppable-stack/node-client'
+import { createNode } from '@unstoppable-stack/node-core'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
 }
 
 export function setupNodeSync({ db }: NodeSyncOpts) {
-  let client: any = null
+  let node: any = null
+  let peer: any = null
   let closed = false
 
   async function connect() {
     try {
-      client = await connectToNode({
-        appId: 'snap-test',
-        appName: 'snap-test',
-        cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-        timeout: 5_000,
+      node = createNode({
+        storage: './.unstoppable-app-node',
+        profile: { appId: 'snap-test', appName: 'snap-test' },
+        capabilities: [],
+        reconnect: true,
+      })
+      await node.ready()
+
+      node.on('reconnecting', () => console.log('Node connection lost; retrying...'))
+      node.on('reconnected', () => console.log('Reconnected to Unstoppable Node'))
+
+      // Find the Personal Node on this machine. After the first pairing its
+      // key is remembered and reconnects go direct.
+      peer = await node.discover({ timeout: 5_000 })
+
+      await peer.call('sync', 'manifest.replace', {
+        manifest: {
+          schemaVersion: 1,
+          resources: [
+            {
+              id: 'main-db',
+              kind: 'hyperbee',
+              key: Buffer.from(db.core.key).toString('hex'),
+              name: 'Main DB',
+              protection: { mode: 'mirror' },
+            },
+          ],
+        },
       })
       console.log('Connected to Unstoppable Node — replication enabled')
-      client.on('disconnected', () => {
-        if (!closed) {
-          console.log('Node disconnected; will retry on next restart')
-        }
-      })
     } catch (err: any) {
       console.log(\`No Unstoppable Node found (\${err.message})\`)
       console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
@@ -3316,7 +3645,7 @@ export function setupNodeSync({ db }: NodeSyncOpts) {
   return {
     async close() {
       closed = true
-      if (client) await client.close()
+      if (node) await node.close()
     },
   }
 }
@@ -3369,7 +3698,7 @@ declare module 'corestore'
 declare module 'hyperbee'
 declare module 'hypercore-crypto'
 declare module 'b4a'
-declare module '@unstoppable-stack/node-client'
+declare module '@unstoppable-stack/node-core'
 ",
     "path": "src/types.d.ts",
   },
@@ -6004,7 +6333,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/node-client": "^0.5.0-beta.1"
+    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "electron": "^40.2.1"
@@ -6072,7 +6401,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { connectToNode } from '@unstoppable-stack/node-client'
+import { createNode } from '@unstoppable-stack/node-core'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -6081,7 +6410,8 @@ const storagePath = Bare.argv[2]
 let store = null
 let swarm = null
 let db = null
-let nodeClient = null
+let appNode = null
+let nodePeer = null
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')
@@ -6128,7 +6458,7 @@ async function cleanup() {
   if (swarm) await swarm.destroy()
   if (db) await db.close()
   if (store) await store.close()
-  if (nodeClient) await nodeClient.close()
+  if (appNode) await appNode.close()
   Bare.exit()
 }
 
@@ -6151,29 +6481,49 @@ async function init() {
 
   send({ type: 'status', service: 'node-sync', status: 'searching' })
   try {
-    nodeClient = await connectToNode({
-      appId: 'snap-test',
-      appName: 'snap-test',
-      cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-      timeout: 5_000,
+    appNode = createNode({
+      storage: './.unstoppable-app-node',
+      profile: { appId: 'snap-test', appName: 'snap-test' },
+      capabilities: [],
       reconnect: true
     })
-    send({ type: 'status', service: 'node-sync', status: 'connected' })
-    nodeClient.on('disconnected', () => {
+    await appNode.ready()
+
+    appNode.on('peerDisconnected', () => {
       send({ type: 'status', service: 'node-sync', status: 'disconnected' })
     })
-    nodeClient.on('reconnecting', () => {
+    appNode.on('reconnecting', () => {
       send({ type: 'status', service: 'node-sync', status: 'reconnecting' })
     })
-    nodeClient.on('reconnected', () => {
+    appNode.on('reconnected', () => {
       send({ type: 'status', service: 'node-sync', status: 'connected' })
     })
-    nodeClient.on('reconnectFailed', () => {
+    appNode.on('reconnectFailed', () => {
       send({ type: 'status', service: 'node-sync', status: 'unavailable' })
     })
+
+    // Find the Personal Node on this machine; its key is remembered after
+    // the first pairing so reconnects go direct.
+    nodePeer = await appNode.discover({ timeout: 5_000 })
+
+    // The manifest is the complete set: anything omitted stops replicating.
+    await nodePeer.call('sync', 'manifest.replace', {
+      manifest: {
+        schemaVersion: 1,
+        resources: [{
+          id: 'main-db',
+          kind: 'hyperbee',
+          key: Buffer.from(db.core.key).toString('hex'),
+          name: 'Main DB',
+          protection: { mode: 'mirror' }
+        }]
+      }
+    })
+    send({ type: 'status', service: 'node-sync', status: 'connected' })
   } catch (err) {
     send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
   }
+
   send({ type: 'init-complete' })
 }
 

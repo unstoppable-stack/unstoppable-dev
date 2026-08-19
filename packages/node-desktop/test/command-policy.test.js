@@ -4,7 +4,7 @@ import { sanitizeLaunchArgs, validateRendererCommand } from '../electron/command
 
 describe('Electron renderer command policy', () => {
   it('accepts and clones supported daemon commands', () => {
-    const message = { type: 'pause-app', appId: 'notes' }
+    const message = { type: 'pause-peer', publicKey: 'a'.repeat(64) }
     const validated = validateRendererCommand(message)
     assert.deepEqual(validated, message)
     assert.notEqual(validated, message)

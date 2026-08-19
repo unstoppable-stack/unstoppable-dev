@@ -2,15 +2,12 @@ import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { createServer } from 'net'
-import { createHash, randomBytes } from 'crypto'
 import DHT from 'hyperdht'
 import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
-import Hyperdrive from 'hyperdrive'
 import Hyperswarm from 'hyperswarm'
-import { NodeDaemon } from '../src/node.js'
-import { NodeClient } from '../../node-client/src/client.js'
-import { connectToNode } from '../../node-client/src/index.js'
+import { createNode } from '@unstoppable-stack/node-core'
+import { PersonalNode } from '../src/personal-node.js'
 
 function getFreePort () {
   return new Promise((resolve, reject) => {
@@ -29,60 +26,34 @@ export async function createTestEnv () {
   await bootstrapNode.ready()
   const bootstrap = [{ host: '127.0.0.1', port: bootstrapNode.address().port }]
 
-  const topic = createHash('sha256').update('test:' + randomBytes(16).toString('hex')).digest()
-
   const dirs = []
+  const closeables = []
 
-  async function tmpDir (prefix = 'node-test-') {
+  async function tmpDir (prefix = 'personal-node-') {
     const dir = await mkdtemp(join(tmpdir(), prefix))
     dirs.push(dir)
     return dir
   }
 
-  async function createNode (opts = {}) {
-    const dir = await tmpDir('node-daemon-')
-    const node = new NodeDaemon(dir, {
-      swarm: { bootstrap },
-      topic,
-      ...opts
-    })
+  async function makeNode ({ storage, ...opts } = {}) {
+    const dir = storage || await tmpDir('node-')
+    const node = new PersonalNode(dir, { swarm: { bootstrap }, ...opts })
+    closeables.push(node)
     return node
   }
 
-  async function createClient (opts = {}) {
-    const client = new NodeClient({
-      appId: opts.appId || 'test-app',
-      appName: opts.appName || 'Test App',
-      cores: opts.cores || [],
-      drives: opts.drives || [],
-      resourceManifest: opts.resourceManifest,
-      swarm: { bootstrap },
-      topic
-    })
+  async function makeClient (opts = {}) {
+    const dir = await tmpDir('client-')
+    const client = createNode({ storage: dir, swarm: { bootstrap }, ...opts })
+    closeables.push(client)
+    await client.ready()
     return client
   }
 
-  async function createConnectedClient (opts = {}) {
-    return connectToNode({
-      appId: opts.appId || 'test-app',
-      appName: opts.appName || 'Test App',
-      cores: opts.cores || [],
-      drives: opts.drives || [],
-      resourceManifest: opts.resourceManifest,
-      swarm: { bootstrap },
-      topic,
-      ...(opts.timeout === undefined ? {} : { timeout: opts.timeout }),
-      requireServices: opts.requireServices,
-      reconnect: opts.reconnect,
-      requestedCapabilities: opts.requestedCapabilities
-    })
-  }
-
-  async function createAppWithBee (name = 'test-app') {
+  async function makeApp (name = 'app') {
     const dir = await tmpDir('app-')
     const store = new Corestore(dir)
     await store.ready()
-
     const bee = new Hyperbee(store.get({ name: 'data' }), {
       keyEncoding: 'utf-8',
       valueEncoding: 'json'
@@ -91,52 +62,56 @@ export async function createTestEnv () {
 
     const swarm = new Hyperswarm({ bootstrap })
     swarm.on('connection', (socket) => store.replicate(socket))
-
     swarm.join(bee.core.discoveryKey, { server: true, client: false })
     await swarm.flush()
 
+    closeables.push(swarm, store)
     return { store, bee, swarm, dir }
   }
 
-  async function createAppWithDrive (name = 'test-drive-app') {
-    const dir = await tmpDir('drive-app-')
-    const store = new Corestore(dir)
-    await store.ready()
-
-    const drive = new Hyperdrive(store.namespace(name))
-    await drive.ready()
-
-    const swarm = new Hyperswarm({ bootstrap })
-    swarm.on('connection', (socket) => store.replicate(socket))
-
-    swarm.join(drive.discoveryKey, { server: true, client: false })
-    await swarm.flush()
-
-    return { store, drive, swarm, dir }
+  async function until (fn, { timeout = 20_000, interval = 100 } = {}) {
+    const deadline = Date.now() + timeout
+    for (;;) {
+      const value = await fn()
+      if (value) return value
+      if (Date.now() > deadline) throw new Error('Condition never became true')
+      await new Promise((resolve) => setTimeout(resolve, interval))
+    }
   }
 
-  function waitForEvent (emitter, event, timeoutMs = 10000) {
+  function waitForEvent (emitter, event, timeoutMs = 20_000) {
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error(`Timed out waiting for "${event}"`)), timeoutMs)
-      emitter.once(event, (data) => {
-        clearTimeout(timer)
-        resolve(data)
-      })
+      emitter.once(event, (data) => { clearTimeout(timer); resolve(data) })
     })
   }
 
-  async function cleanup (...extras) {
-    for (const item of extras) {
+  async function cleanup () {
+    // Close in creation order: nodes first (they hold the connections), then
+    // each app's swarm, then its store. Reversing closes a Corestore while its
+    // own swarm is still accepting connections that call store.replicate().
+    for (const item of closeables) {
       try {
-        if (item && typeof item.close === 'function') await item.close()
-        if (item && typeof item.destroy === 'function') await item.destroy()
+        if (item.close) await item.close()
+        else if (item.destroy) await item.destroy()
       } catch {}
     }
     await bootstrapNode.destroy()
-    for (const dir of dirs) {
-      await rm(dir, { recursive: true, force: true }).catch(() => {})
-    }
+    for (const dir of dirs) await rm(dir, { recursive: true, force: true }).catch(() => {})
   }
 
-  return { bootstrap, topic, tmpDir, createNode, createClient, createConnectedClient, createAppWithBee, createAppWithDrive, waitForEvent, cleanup }
+  return { bootstrap, tmpDir, makeNode, makeClient, makeApp, until, waitForEvent, cleanup }
+}
+
+export function manifestFor (bee, { id = 'data', name = 'Data' } = {}) {
+  return {
+    schemaVersion: 1,
+    resources: [{
+      id,
+      kind: 'hyperbee',
+      key: Buffer.from(bee.core.key).toString('hex'),
+      name,
+      protection: { mode: 'mirror' }
+    }]
+  }
 }

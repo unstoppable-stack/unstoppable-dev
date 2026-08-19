@@ -16,7 +16,7 @@ import {
  *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
  *   - wallet    → WDK stub
  *   - node-sync → register cores with the local Unstoppable Node for
- *                 replication + backup via @unstoppable-stack/node-client
+ *                 replication + backup via @unstoppable-stack/node-core
  */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -40,6 +40,7 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   if (has(opts, 'local-ai')) files.push(aiManager())
   if (has(opts, 'wallet')) files.push(walletStub())
   if (has(opts, 'node-sync')) files.push(nodeSyncManager(opts))
+  if (has(opts, 'node-host')) files.push(nodeHostManager(opts))
 
   files.push(typeDeclarations(opts))
 
@@ -65,8 +66,8 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
   }
 
-  if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable-stack/node-client': '^0.5.0-beta.1' })
+  if (has(opts, 'node-sync') || has(opts, 'node-host')) {
+    Object.assign(deps, { '@unstoppable-stack/node-core': '^0.6.0-alpha.1' })
   }
 
   if (has(opts, 'multi-writer')) {
@@ -349,33 +350,52 @@ function nodeSyncManager(opts: GeneratorOptions): GeneratedFile {
  *
  * Start the Node separately:   npx unstoppable-node
  *
- * To add more cores or drives later, call setupNodeSync with them in the
- * \`cores\` / \`drives\` arrays.
+ * To add more resources later, add them to the manifest below — it describes
+ * the complete set, so anything omitted stops replicating.
  */
-import { connectToNode } from '@unstoppable-stack/node-client'
+import { createNode } from '@unstoppable-stack/node-core'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
 }
 
 export function setupNodeSync({ db }: NodeSyncOpts) {
-  let client: any = null
+  let node: any = null
+  let peer: any = null
   let closed = false
 
   async function connect() {
     try {
-      client = await connectToNode({
-        appId: '${opts.projectName}',
-        appName: '${opts.projectName}',
-        cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-        timeout: 5_000,
+      node = createNode({
+        storage: './.unstoppable-app-node',
+        profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },
+        capabilities: [],
+        reconnect: true,
+      })
+      await node.ready()
+
+      node.on('reconnecting', () => console.log('Node connection lost; retrying...'))
+      node.on('reconnected', () => console.log('Reconnected to Unstoppable Node'))
+
+      // Find the Personal Node on this machine. After the first pairing its
+      // key is remembered and reconnects go direct.
+      peer = await node.discover({ timeout: 5_000 })
+
+      await peer.call('sync', 'manifest.replace', {
+        manifest: {
+          schemaVersion: 1,
+          resources: [
+            {
+              id: 'main-db',
+              kind: 'hyperbee',
+              key: Buffer.from(db.core.key).toString('hex'),
+              name: 'Main DB',
+              protection: { mode: 'mirror' },
+            },
+          ],
+        },
       })
       console.log('Connected to Unstoppable Node — replication enabled')
-      client.on('disconnected', () => {
-        if (!closed) {
-          console.log('Node disconnected; will retry on next restart')
-        }
-      })
     } catch (err: any) {
       console.log(\`No Unstoppable Node found (\${err.message})\`)
       console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
@@ -388,7 +408,97 @@ export function setupNodeSync({ db }: NodeSyncOpts) {
   return {
     async close() {
       closed = true
-      if (client) await client.close()
+      if (node) await node.close()
+    },
+  }
+}
+`,
+  }
+}
+
+function nodeHostManager(opts: GeneratorOptions): GeneratedFile {
+  return {
+    path: 'src/node-host.ts',
+    content: `/**
+ * Node host — makes this app a node other apps can pair with.
+ *
+ * A capability pack is a plain object. Unary methods are async functions;
+ * streaming methods are async generators. That difference is the whole of the
+ * distinction — cancellation, backpressure and multiplexing come from the bus.
+ *
+ * Run this app, print the pairing code, then from the other app:
+ *
+ *   const peer = await node.pair(code)
+ *   const { items } = await peer.api.${opts.projectName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}.list({})
+ */
+import { createNode } from '@unstoppable-stack/node-core'
+
+const CAPABILITY = '${opts.projectName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}'
+
+interface NodeHostOpts {
+  db: any // Hyperbee — whatever this app already stores
+}
+
+export async function startNodeHost({ db }: NodeHostOpts) {
+  const node = createNode({
+    storage: './.unstoppable-app-node',
+    profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },
+    capabilities: [
+      {
+        name: CAPABILITY,
+        version: 1,
+        methods: {
+          // Unary: resolves once with a value.
+          async list(params: any) {
+            const items: any[] = []
+            const limit = params?.limit ?? 50
+            for await (const entry of db.createReadStream({ limit })) {
+              items.push({ key: entry.key, value: entry.value })
+            }
+            return { items }
+          },
+
+          // Streaming: an async generator. ctx.signal aborts when the peer
+          // disconnects, cancels, or stops iterating — check it in long loops.
+          async *watch(params: any, ctx: any) {
+            for await (const entry of db.createHistoryStream({ live: true })) {
+              if (ctx.signal.aborted) return
+              yield { key: entry.key, value: entry.value }
+            }
+          },
+        },
+        // Anything not listed here must be asked for explicitly at pair time.
+        defaultGrants: ['list'],
+      },
+    ],
+  })
+
+  await node.ready()
+
+  // Reachable by public key. Apps on this machine can also find the local
+  // Personal Node; other devices need a pairing code.
+  await node.listen()
+
+  node.on('paired', ({ appName, publicKey }) => {
+    console.log(\`Paired with \${appName || publicKey.slice(0, 12)}\`)
+  })
+
+  return {
+    node,
+    publicKey: node.publicKey,
+
+    /** Mint a code to share with another device or app. */
+    async invite(opts: { uses?: number; expiresIn?: number } = {}) {
+      const invite = await node.createInvite({
+        uses: opts.uses ?? 1,
+        expiresIn: opts.expiresIn ?? 15 * 60_000,
+      })
+      console.log(\`Pairing code: \${invite.code}\`)
+      return invite
+    },
+
+    async close() {
+      await node.close()
     },
   }
 }
@@ -428,7 +538,7 @@ const UNTYPED_MODULES = [
 
 function typeDeclarations(opts: GeneratorOptions): GeneratedFile {
   const modules = [...UNTYPED_MODULES]
-  if (has(opts, 'node-sync')) modules.push('@unstoppable-stack/node-client')
+  if (has(opts, 'node-sync') || has(opts, 'node-host')) modules.push('@unstoppable-stack/node-core')
   if (has(opts, 'multi-writer')) {
     // The spec/ tree is generated JS with no .d.ts. Ambient declarations only
     // work for non-relative specifiers, so match the generated files with a

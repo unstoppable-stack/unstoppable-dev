@@ -137,10 +137,10 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   const overrides: Record<string, string> = {}
 
   if (has(opts, 'node-sync')) {
-    // node-client + its transitive runtime deps. `hyperswarm` already enters
+    // node-core + its transitive runtime deps. `hyperswarm` already enters
     // the graph via `local-ai` too, so guard so we don't double-declare.
     Object.assign(deps, {
-      '@unstoppable-stack/node-client': '^0.5.0-beta.1',
+      '@unstoppable-stack/node-core': '^0.6.0-alpha.1',
       hyperswarm: '^4.17.0',
       b4a: '^1.8.0',
       events: '^3.3.0',
@@ -1079,12 +1079,12 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (hasNodeSync) {
-    // @unstoppable-stack/node-client is ESM-only; wrap the dynamic import lazily so
-    // bare-pack still traces it but we control timing (node-client calls
-    // Hyperswarm on construct — we want to defer until init() has given us
-    // a Hyperbee to register).
+    // @unstoppable-stack/node-core is ESM-only; wrap the dynamic import lazily
+    // so bare-pack still traces it but we control timing (createNode builds a
+    // Hyperswarm — we want to defer until init() has given us a Hyperbee to
+    // register).
     imports.push(
-      `// node-client is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/node-client' is installed.`,
+      `// node-core is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/node-core' is installed.`,
     )
   }
 
@@ -1095,7 +1095,8 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
     `let mockMode = false`,
   ]
   if (hasNodeSync) {
-    stateVars.push(`let nodeClient = null`)
+    stateVars.push(`let appNode = null`)
+    stateVars.push(`let nodePeer = null`)
     stateVars.push(`let nodeStatus = 'idle'`)
   }
 
@@ -1156,23 +1157,41 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
 
   if (hasNodeSync) {
     cases.push(`case 7: { // node-sync-connect — best-effort; non-blocking
-        if (nodeClient) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
+        if (appNode) { response = { ok: true, status: nodeStatus, alreadyConnected: true }; break }
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable-stack/node-client')
-          nodeClient = await mod.connectToNode({
-            appId: '${opts.projectName}',
-            appName: '${opts.projectName}',
-            cores: [{ key: db.core.key, type: 'hyperbee', name: 'main-db' }],
-            timeout: 5_000,
+          const mod = await import('@unstoppable-stack/node-core')
+          appNode = mod.createNode({
+            storage: storagePath + '/app-node',
+            profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },
+            capabilities: [],
             reconnect: true
           })
+          await appNode.ready()
+          appNode.on('peerDisconnected', () => { nodeStatus = 'disconnected' })
+          appNode.on('reconnecting', () => { nodeStatus = 'disconnected' })
+          appNode.on('reconnected', () => { nodeStatus = 'connected' })
+          appNode.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
+
+          // Find the Personal Node on this machine; the key is remembered
+          // after the first pairing so reconnects go direct.
+          nodePeer = await appNode.discover({ timeout: 5_000 })
+
+          // The manifest is the complete set: anything omitted stops syncing.
+          await nodePeer.call('sync', 'manifest.replace', {
+            manifest: {
+              schemaVersion: 1,
+              resources: [{
+                id: 'main-db',
+                kind: 'hyperbee',
+                key: b4a.toString(db.core.key, 'hex'),
+                name: 'Main DB',
+                protection: { mode: 'mirror' }
+              }]
+            }
+          })
           nodeStatus = 'connected'
-          nodeClient.on('disconnected', () => { nodeStatus = 'disconnected' })
-          nodeClient.on('reconnecting', () => { nodeStatus = 'disconnected' })
-          nodeClient.on('reconnected', () => { nodeStatus = 'connected' })
-          nodeClient.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'
@@ -1182,7 +1201,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
       }`)
 
     cases.push(`case 8: { // node-sync-status
-        response = { ok: true, status: nodeStatus, connected: !!nodeClient }
+        response = { ok: true, status: nodeStatus, connected: !!nodePeer }
         break
       }`)
   }
