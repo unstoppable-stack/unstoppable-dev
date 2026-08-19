@@ -26,3 +26,31 @@ describe('Electron renderer command policy', () => {
     )
   })
 })
+
+describe('renderer commands match the allowlist', () => {
+  // A command the renderer sends that the main process does not allow is
+  // dropped silently — the button just does nothing. Assert the two agree.
+  it('accepts every command the dashboard can build', async () => {
+    const { commands } = await import('../app/render.js')
+    const built = [
+      commands.unpair('a'.repeat(64), 'Notes'),
+      commands.pausePeer('a'.repeat(64)),
+      commands.resumePeer('a'.repeat(64)),
+      commands.setPeerQuota('a'.repeat(64), 1024),
+      commands.setPeerGrant('a'.repeat(64), 'ai', []),
+      commands.promoteTrust('a'.repeat(64), 'Notes'),
+      commands.createInvite({ expiresIn: 900000, uses: 1 }),
+      commands.revokeInvite('i1')
+    ]
+    for (const message of built) {
+      assert.doesNotThrow(
+        () => validateRendererCommand(message),
+        `renderer builds "${message.type}" but the main process rejects it`
+      )
+    }
+  })
+
+  it('still rejects a command the dashboard cannot build', () => {
+    assert.throws(() => validateRendererCommand({ type: 'pause-app', appId: 'notes' }), /not allowed/)
+  })
+})
