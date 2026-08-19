@@ -1,0 +1,58 @@
+{
+  "name": "@unstoppable-stack/node-core",
+  "version": "0.6.0-alpha.1",
+  "description": "Symmetric P2P node runtime — identity, pairing, and a capability bus for apps that act as nodes",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./errors": "./src/errors.js",
+    "./protocol": "./src/protocol.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "p2p",
+    "hyperswarm",
+    "protomux",
+    "unstoppable-stack",
+    "local-first",
+    "capabilities"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
+    "directory": "packages/node-core"
+  },
+  "homepage": "https://unstoppable.dev",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test --test-force-exit test/*.test.js",
+    "test:unit": "node --test test/capabilities.test.js test/identity.test.js test/registry.test.js",
+    "test:integration": "node --test --test-force-exit test/pairing.test.js"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "bare-events": "^2.8.3",
+    "compact-encoding": "^2.16.0",
+    "hypercore-crypto": "^3.6.0",
+    "hyperswarm": "^4.17.0",
+    "protomux": "^3.10.1"
+  },
+  "optionalDependencies": {
+    "bare-env": "^3.0.0",
+    "bare-os": "^3.6.1"
+  },
+  "devDependencies": {
+    "hyperdht": "^6.29.1"
+  },
+  "license": "MIT"
+}

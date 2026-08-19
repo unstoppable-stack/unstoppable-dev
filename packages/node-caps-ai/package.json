@@ -1,0 +1,35 @@
+{
+  "name": "@unstoppable-stack/node-caps-ai",
+  "version": "0.6.0-alpha.1",
+  "description": "Delegated local AI inference capability pack for @unstoppable-stack/node-core",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./provider": "./src/provider.js"
+  },
+  "files": ["src", "README.md", "LICENSE"],
+  "keywords": ["p2p", "qvac", "ai", "inference", "unstoppable-stack"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
+    "directory": "packages/node-caps-ai"
+  },
+  "homepage": "https://unstoppable.dev",
+  "engines": { "node": ">=20" },
+  "publishConfig": { "access": "public" },
+  "scripts": {
+    "test": "node --test --test-force-exit --test-timeout 60000 test/*.test.js"
+  },
+  "dependencies": {
+    "bare-events": "^2.8.3"
+  },
+  "peerDependencies": {
+    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+  },
+  "devDependencies": {
+    "@unstoppable-stack/node-core": "file:../node-core",
+    "hyperdht": "^6.29.1"
+  },
+  "license": "MIT"
+}
