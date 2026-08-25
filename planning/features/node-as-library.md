@@ -580,3 +580,16 @@ single branch is deliberate; splitting it leaves the repo broken in between.
    and is a thin composition over core and the two packs.
 3. An app that only wants app-to-app RPC installs no storage stack.
 4. One peer relationship is one connection, one muxer, one lifecycle.
+
+### Verdicts
+
+| # | Status | Evidence |
+| --- | --- | --- |
+| 1 | **Demonstrated** | `sandbox/app-to-app-demo` runs it end to end; `node-core` invite tests cover expiry, uses, revocation, and forged proofs |
+| 2 | **Qualified** | CLI + headless behaviour covered by the shell suite and the Bare smoke; the dashboard's data layer is extracted and tested, but the Electron UI itself has never been launched |
+| 3 | **Demonstrated** | `corestore`/`hyperbee`/`hyperdrive`/`hypercore` absent from core's install tree |
+| 4 | **Demonstrated** | Single swarm + shared Protomux; the muxer-publication regression test and the Bare smoke exercise control + replication on one connection |
+
+The one honest asterisk is criterion 2's dashboard: everything up to the DOM
+is tested, the window itself is not. Launching `npm run dev:electron` once
+closes it.
