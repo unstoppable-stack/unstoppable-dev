@@ -4,7 +4,7 @@ import { describe, it } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { createSidecarHost } from '../electron/sidecar-host.js'
 
-const fixtures = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures')
+const fixtures = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'test-fixtures')
 
 describe('Electron Bare sidecar host', () => {
   it('round-trips framed messages and shuts down cleanly', async () => {

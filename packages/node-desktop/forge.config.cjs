@@ -26,6 +26,7 @@ const packagerConfig = {
   appCategoryType: 'public.app-category.utilities',
   ignore: [
     /^\/test($|\/)/,
+    /^\/test-fixtures($|\/)/,
     /^\/scripts($|\/)/,
     /^\/\.pear($|\/)/,
     /^\/pnpm-lock\.yaml$/
