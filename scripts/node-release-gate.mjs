@@ -5,9 +5,15 @@ const root = resolve(import.meta.dirname, '..')
 const packageFiles = {
   cli: 'packages/cli/package.json',
   node: 'packages/node/package.json',
-  client: 'packages/node-client/package.json',
+  core: 'packages/node-core/package.json',
+  capsSync: 'packages/node-caps-sync/package.json',
+  capsAi: 'packages/node-caps-ai/package.json',
   desktop: 'packages/node-desktop/package.json'
 }
+
+// The Personal Node is a composition now: shipping it means shipping the
+// runtime and the packs it is built from, at the same version.
+const nodeLine = ['node', 'core', 'capsSync', 'capsAi']
 
 const packages = Object.fromEntries(await Promise.all(
   Object.entries(packageFiles).map(async ([name, file]) => [name, JSON.parse(await readFile(resolve(root, file), 'utf8'))])
@@ -17,9 +23,11 @@ const failures = []
 const check = (condition, message) => { if (!condition) failures.push(message) }
 const baseVersion = (version) => version.split('-')[0]
 
-check(packages.node.version === packages.client.version, 'Node and node-client versions must match')
+for (const name of nodeLine) {
+  check(packages.node.version === packages[name].version, `Node and ${name} versions must match`)
+}
 check(packages.node.version === packages.desktop.version, 'Node and desktop versions must match')
-check(baseVersion(packages.node.version) === '0.5.0', 'Node release line must be 0.5.0')
+check(baseVersion(packages.node.version) === '0.6.0', 'Node release line must be 0.6.0')
 check(baseVersion(packages.cli.version) === '0.4.0', 'CLI release line must be 0.4.0')
 check(packages.desktop.dependencies?.['@qvac/sdk'] === '0.15.0', 'Desktop QVAC SDK must be pinned to 0.15.0')
 check(packages.desktop.devDependencies?.['@electron-forge/plugin-fuses'] === '7.11.2', 'Electron Fuse plugin must be pinned to 7.11.2')
@@ -32,7 +40,7 @@ for (const [name, file] of Object.entries(packageFiles)) {
   check(lock.packages?.['']?.version === packages[name].version, `${name} package-lock importer version is stale`)
 }
 
-for (const name of ['node', 'client', 'cli']) {
+for (const name of [...nodeLine, 'cli']) {
   const pkg = packages[name]
   const dependencyValues = Object.values({
     ...(pkg.dependencies || {}),
@@ -50,11 +58,14 @@ const generatorFiles = [
 ]
 for (const file of generatorFiles) {
   const source = await readFile(resolve(root, file), 'utf8')
-  check(source.includes(`'@unstoppable-stack/node-client': '^${packages.client.version}'`), `${file} does not generate the release node-client version`)
+  check(
+    source.includes(`'@unstoppable-stack/node-core': '^${packages.core.version}'`),
+    `${file} does not generate the release node-core version`
+  )
 }
 
 const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
-for (const name of ['cli', 'node', 'client']) {
+for (const name of ['cli', 'node']) {
   check(changelog.includes(packages[name].version), `CHANGELOG.md does not mention ${packages[name].version}`)
 }
 
@@ -95,8 +106,13 @@ check(nodeRelease.includes('id-token: write'), 'Node publishing is missing npm t
 check(nodeRelease.includes('npm@12.0.2'), 'Node publishing is missing the pinned trusted-publishing npm CLI')
 check(!nodeRelease.includes('NODE_AUTH_TOKEN'), 'Node publishing must not use a long-lived npm token')
 check(!nodeRelease.includes('--provenance'), 'Private-repository Node publishing must not request unsupported npm provenance')
-check(nodeRelease.includes('npm pack ./packages/node-client'), 'Node release does not pack node-client from the monorepo root correctly')
-check(nodeRelease.includes('npm pack ./packages/node'), 'Node release does not pack node from the monorepo root correctly')
+for (const directory of ['node-core', 'node-caps-sync', 'node-caps-ai']) {
+  check(
+    nodeRelease.includes(`npm pack ./packages/${directory}`),
+    `Node release does not pack ${directory} from the monorepo root correctly`
+  )
+}
+check(nodeRelease.includes('npm pack ./packages/node '), 'Node release does not pack node from the monorepo root correctly')
 
 const desktopRelease = await readFile(resolve(root, '.github/workflows/node-desktop-release.yml'), 'utf8')
 check(desktopRelease.includes('environment: desktop-release'), 'Desktop release is missing its protected environment')
@@ -117,5 +133,5 @@ if (failures.length > 0) {
   for (const failure of failures) console.error(`- ${failure}`)
   process.exitCode = 1
 } else {
-  console.log(`Node release gate passed (${packages.node.version}; CLI ${packages.cli.version})`)
+  console.log(`Node release gate passed (node line ${packages.node.version}; CLI ${packages.cli.version})`)
 }
