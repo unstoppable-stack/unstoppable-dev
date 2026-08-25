@@ -44,6 +44,25 @@ jobs:
 
       - name: Validate release metadata
         run: node scripts/node-release-gate.mjs
+        env:
+          # The 0.6 packages are not on npm yet, so the shell's internal
+          # file: links warn here instead of failing. Release workflows run
+          # the gate strict, so an actual publish still refuses them.
+          NODE_RELEASE_GATE_UNPUBLISHED_OK: '1'
+
+      # file:-linked packages resolve imports from their real paths, so each
+      # needs its own node_modules (see node-smoke.yml).
+      - name: Install node-core dependencies
+        working-directory: packages/node-core
+        run: npm install
+
+      - name: Install node-caps-sync dependencies
+        working-directory: packages/node-caps-sync
+        run: npm install
+
+      - name: Install node-caps-ai dependencies
+        working-directory: packages/node-caps-ai
+        run: npm install
 
       - name: Install node dependencies
         working-directory: packages/node
