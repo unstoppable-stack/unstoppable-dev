@@ -4,7 +4,7 @@ import { it } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { createSidecarHost } from '../electron/sidecar-host.js'
 
-const fixtures = join(fileURLToPath(new URL('.', import.meta.url)), 'fixtures')
+const fixtures = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'test-fixtures')
 
 it('loads the pinned QVAC SDK inside the Bare sidecar runtime', { timeout: 20_000 }, async () => {
   let resolveMessage
