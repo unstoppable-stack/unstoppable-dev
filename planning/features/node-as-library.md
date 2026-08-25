@@ -444,6 +444,26 @@ Three problems worth recording:
 The first two were found by a test that failed while a hand-run probe passed;
 the probe had a sleep in it. The sleep was hiding the third.
 
+### What dead CI cost us
+
+The CLI workflow had been failing on `main` every day for twelve consecutive
+runs over a pnpm lockfile drift unrelated to this work. Because the unit job
+gates everything downstream, the worker-spawn, scaffold-smoke and sidecar E2E
+jobs were **skipped, not run** — for weeks. Fixing the lockfile as part of this
+branch turned them back on, and they immediately found real breakage:
+
+- The multi-writer scaffold crashed on its first `db-put`. It fed an object
+  into a hyperschema string field, which the default Hyperbee store handles via
+  `valueEncoding: 'json'`. That template had **never once executed** since the
+  feature merged — it merged while CI was already red.
+- `node --test test/*.test.js` relies on shell glob expansion that cmd.exe does
+  not do, so the Windows job died the first time it ever ran.
+- The desktop sidecar E2E still asserted the deleted `services.data` flag.
+
+None of these were caused by the node work; all were exposed by it. The lesson
+is not about any one bug: a red required check on `main` is not a nuisance, it
+is a hole where regressions accumulate silently.
+
 ### Phase 4 — App-node developer experience — **done**
 
 | # | Task | Status |
@@ -542,6 +562,17 @@ a portable fallback in `src/abort.js` that prefers the platform class. The
 headless smoke is currently the only test that executes core under Bare, so it
 is the regression net for this whole class of bug — treat a smoke failure
 after a core change as a portability signal first.
+
+*Packaging broke the same way, for a related reason.* electron-packager
+materializes **direct** `file:` dependencies but copies **transitive** ones as
+raw symlinks pointing outside the bundle — so 0.5 packaged fine (its only link
+was `unstoppable-node` itself) and the cutover, which introduced the first
+transitive chain, produced a broken `.app` and on Linux a deref copy that
+filled the runner's disk. Fixed with `install-links=true` in
+`packages/node-desktop/.npmrc`; it belongs in the file rather than on a command
+line because `npm ci` must agree with the lockfile `npm install` wrote.
+The dev cost: edits to `node-core` no longer reach `node-desktop` through a
+symlink, so a reinstall there is needed to pick them up.
 
 *The smoke also caught two more cutover leaks:* `scripts/smoke.js` still
 asserted the deleted `services.ai` flags, and `sandbox/node-demo/demo.js` — a
