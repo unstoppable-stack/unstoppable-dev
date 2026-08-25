@@ -46,8 +46,8 @@ jobs:
         run: |
           node --input-type=module -e "import pkg from './packages/node/package.json' with { type: 'json' }; if (pkg.version.includes('-') && process.env.DIST_TAG === 'latest') throw new Error('Prereleases must not publish to the latest tag')"
 
-      - name: Install and test node-client
-        working-directory: packages/node-client
+      - name: Install and test node-core
+        working-directory: packages/node-core
         run: npm ci && npm audit --omit=dev --audit-level=high && npm test
 
       - name: Install and test node
@@ -57,7 +57,9 @@ jobs:
       - name: Pack publishable artifacts
         run: |
           mkdir -p release-artifacts
-          npm pack ./packages/node-client --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node-core --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node-caps-sync --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node-caps-ai --pack-destination "$PWD/release-artifacts"
           npm pack ./packages/node --pack-destination "$PWD/release-artifacts"
           sha256sum release-artifacts/*.tgz > release-artifacts/SHA256SUMS.txt
 
@@ -96,10 +98,10 @@ jobs:
 
       - name: Refuse an existing version
         run: |
-          CLIENT_VERSION=$(node -p "require('./packages/node-client/package.json').version")
+          CORE_VERSION=$(node -p "require('./packages/node-core/package.json').version")
           NODE_VERSION=$(node -p "require('./packages/node/package.json').version")
-          if npm view "@unstoppable-stack/node-client@$CLIENT_VERSION" version >/dev/null 2>&1; then
-            echo "@unstoppable-stack/node-client@$CLIENT_VERSION already exists" >&2
+          if npm view "@unstoppable-stack/node-core@$CORE_VERSION" version >/dev/null 2>&1; then
+            echo "@unstoppable-stack/node-core@$CORE_VERSION already exists" >&2
             exit 1
           fi
           if npm view "unstoppable-node@$NODE_VERSION" version >/dev/null 2>&1; then
@@ -107,8 +109,14 @@ jobs:
             exit 1
           fi
 
-      - name: Publish node-client
-        run: npm publish ./release-artifacts/unstoppable-stack-node-client-*.tgz --access public --tag "${{ inputs.dist_tag }}"
+      - name: Publish node-core
+        run: npm publish ./release-artifacts/unstoppable-stack-node-core-*.tgz --access public --tag "${{ inputs.dist_tag }}"
+
+      - name: Publish node-caps-sync
+        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-sync-*.tgz --access public --tag "${{ inputs.dist_tag }}"
+
+      - name: Publish node-caps-ai
+        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-ai-*.tgz --access public --tag "${{ inputs.dist_tag }}"
 
       - name: Publish node
         run: npm publish ./release-artifacts/unstoppable-node-*.tgz --access public --tag "${{ inputs.dist_tag }}"
