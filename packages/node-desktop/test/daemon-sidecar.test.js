@@ -32,7 +32,8 @@ it('boots and stops the real NodeDaemon inside a Bare sidecar', {
 
     const message = await ready
     assert.match(message.publicKey, /^[0-9a-f]{64}$/)
-    assert.equal(message.services.data, true)
+    // v2 has no services flags; the sync capability covers data + files.
+    assert.ok(message.capabilities?.sync, 'ready advertises the sync capability')
     await host.close()
     const exit = await host.exit
     assert.equal(exit.code, 0)

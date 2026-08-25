@@ -239,11 +239,17 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
     /** False until an existing writer promotes this device. */
     get writable() { return autobee.writable },
 
-    async put(key${t(': string')}, value${t(': string')}) {
+    /**
+     * Accepts any JSON-serializable value, like the default Hyperbee store
+     * (valueEncoding: 'json'). The hyperschema field is a string, so the
+     * value is JSON-encoded on write and decoded on read — passing an object
+     * straight through would crash compact-encoding's string preencode.
+     */
+    async put(key${t(': string')}, value${t(': unknown')}) {
       if (!autobee.writable) throw new Error('Not yet a writer — ask a peer to add this device')
       await autobee.append(encode({
         type: 'upsert',
-        doc: { key, value, authorId, updatedAt: Date.now(), deletedAt: 0 },
+        doc: { key, value: JSON.stringify(value ?? null), authorId, updatedAt: Date.now(), deletedAt: 0 },
       }))
     },
 
@@ -252,7 +258,7 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
       const row = await autobee.view.db.get('@app/entries', { key })
       // Tombstones stay in the view; filter them on read.
       if (!row || (row.deletedAt || 0) > 0) return null
-      return row.value
+      return row.value == null ? null : JSON.parse(row.value)
     },
 
     async del(key${t(': string')}) {
@@ -273,8 +279,11 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
       const rows = await autobee.view.db
         .find('@app/entries-by-author', { gte: { authorId: author }, lte: { authorId: author } })
         .toArray()
-      // Tombstones live in the view; filter them here so this agrees with get().
-      return rows.filter((r${t(': any')}) => !(r.deletedAt || 0))
+      // Tombstones live in the view; filter them here so this agrees with
+      // get(), and decode values the same way.
+      return rows
+        .filter((r${t(': any')}) => !(r.deletedAt || 0))
+        .map((r${t(': any')}) => ({ ...r, value: r.value == null ? null : JSON.parse(r.value) }))
     },
 
     /** Promote another device. Pass ITS writerKey, not its database key. */
