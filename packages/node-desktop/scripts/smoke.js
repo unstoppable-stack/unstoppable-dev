@@ -45,12 +45,16 @@ try {
   daemon.stderr.on('data', (data) => process.stderr.write(data))
 
   const ready = await waitForReady(daemon, readyTimeoutMs)
-  console.log('[smoke] daemon ready:', JSON.stringify({ services: ready.services, topicMode }))
-  if (!ready.services?.ai) {
-    throw new Error(`Daemon ready without services.ai=true: ${JSON.stringify(ready.services)}`)
+  const capabilities = Object.keys(ready.capabilities || {})
+  console.log('[smoke] daemon ready:', JSON.stringify({ capabilities, topicMode }))
+  // v2 has no services flags: capabilities are the single answer to "what can
+  // you do". The mock provider is enabled by the launch args, so `ai` must be
+  // hosted; `sync` covers what used to be the separate data + files services.
+  if (!ready.capabilities?.ai) {
+    throw new Error(`Daemon ready without the ai capability: ${JSON.stringify(capabilities)}`)
   }
-  if (!ready.services?.data || !ready.services?.files) {
-    throw new Error(`Daemon ready without core services: ${JSON.stringify(ready.services)}`)
+  if (!ready.capabilities?.sync) {
+    throw new Error(`Daemon ready without the sync capability: ${JSON.stringify(capabilities)}`)
   }
 
   for (let i = 1; i <= runs; i++) {
@@ -131,10 +135,6 @@ function waitForReady (child, timeoutMs) {
           cleanup()
           reject(new Error(`Headless daemon fatal: ${msg.error}`))
           return
-        }
-        if (msg.type === 'aiReady' && msg.mock) {
-          // services.ai not flipped on `ready` if ai started after — emit
-          // a synthetic ready snapshot once we see aiReady.
         }
         if (msg.type === 'ready') {
           cleanup()

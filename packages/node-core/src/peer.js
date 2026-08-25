@@ -1,4 +1,5 @@
 import { EventEmitter } from 'bare-events'
+import { AbortControllerImpl } from './abort.js'
 import { MESSAGE } from './protocol.js'
 import {
   CancelledError,
@@ -197,7 +198,7 @@ export class Peer extends EventEmitter {
     const { requestId, capability, method, params } = msg
     if (typeof requestId !== 'string') return
 
-    const controller = new AbortController()
+    const controller = new AbortControllerImpl()
     this._inbound.set(requestId, controller)
 
     try {

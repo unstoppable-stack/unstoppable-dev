@@ -534,9 +534,36 @@ on calls, not just byte quotas on replication.
 existing `_loadOs`/`_loadEnv` shims in `protocol.js` move into core and need
 tests running under Bare, not only Node.
 
+*Confirmed the hard way.* The first real Bare execution — the headless smoke,
+where the daemon is a Bare process — crashed on the first capability call:
+`AbortController is not defined`. Bare has no such global, and every unit and
+integration test runs under Node, where the platform class exists. Fixed with
+a portable fallback in `src/abort.js` that prefers the platform class. The
+headless smoke is currently the only test that executes core under Bare, so it
+is the regression net for this whole class of bug — treat a smoke failure
+after a core change as a portability signal first.
+
+*The smoke also caught two more cutover leaks:* `scripts/smoke.js` still
+asserted the deleted `services.ai` flags, and `sandbox/node-demo/demo.js` — a
+tracked CI fixture explicitly un-ignored inside the otherwise-gitignored
+sandbox — still imported `@unstoppable/node-client`. The lesson generalises:
+the consumer sweep for the cutover grepped packages, and CI fixtures living
+under an ignored directory escaped it.
+
 **Identity backup.** A stable identity is now something a user can lose. Export
 must include it, and the docs must say what happens if it is lost (peers
 re-pair).
+
+**Release machinery.** The cutover also had to carry
+`scripts/node-release-gate.mjs` and four workflows that referenced the deleted
+`node-client` — the gate crashed on ENOENT before checking anything. The gate
+now tracks the node line (node + core + both packs) and runs in two modes:
+strict for release (a published tarball with `file:` deps is broken for
+consumers), and a warning mode for PR CI (`NODE_RELEASE_GATE_UNPUBLISHED_OK`),
+because until the 0.6 packages exist on npm the `file:` links are the only
+workable state and a permanently red required check teaches people to ignore
+CI. Release order once publishing: core → packs → shell, swapping `file:` to
+semver as part of that release.
 
 **One-shot cutover.** With no compat layer, Phase 2 must land the shell,
 `node-desktop`, and the three scaffold generators together. Sequencing that as a

@@ -20,7 +20,19 @@ const packages = Object.fromEntries(await Promise.all(
 ))
 
 const failures = []
+const warnings = []
 const check = (condition, message) => { if (!condition) failures.push(message) }
+
+// Until the 0.6 packages exist on npm, the shell can only reference them by
+// file: link — a semver range would make every npm install 404. Release runs
+// stay strict (a published tarball with file: deps is broken for consumers);
+// PR CI sets this to get a loud warning instead of a permanently red check.
+const allowUnpublishedInternal = process.env.NODE_RELEASE_GATE_UNPUBLISHED_OK === '1'
+const internalNodeLineDeps = new Set([
+  '@unstoppable-stack/node-core',
+  '@unstoppable-stack/node-caps-sync',
+  '@unstoppable-stack/node-caps-ai'
+])
 const baseVersion = (version) => version.split('-')[0]
 
 for (const name of nodeLine) {
@@ -42,12 +54,19 @@ for (const [name, file] of Object.entries(packageFiles)) {
 
 for (const name of [...nodeLine, 'cli']) {
   const pkg = packages[name]
-  const dependencyValues = Object.values({
+  const dependencyEntries = Object.entries({
     ...(pkg.dependencies || {}),
     ...(pkg.optionalDependencies || {}),
     ...(pkg.peerDependencies || {})
   })
-  check(!dependencyValues.some((value) => /^file:|^link:|^workspace:/.test(value)), `${name} public package contains a local dependency`)
+  for (const [depName, value] of dependencyEntries) {
+    if (!/^file:|^link:|^workspace:/.test(value)) continue
+    if (allowUnpublishedInternal && internalNodeLineDeps.has(depName)) {
+      warnings.push(`${name} depends on unpublished ${depName} via ${value} — must become a semver range before release`)
+      continue
+    }
+    check(false, `${name} public package contains a local dependency (${depName}: ${value})`)
+  }
   check(pkg.repository?.url === 'https://github.com/unstoppable-stack/unstoppable-dev.git', `${name} repository URL is not the public repository`)
 }
 
@@ -127,6 +146,8 @@ check(qvacRelease.includes('@qvac/sdk@0.15.0'), 'Real QVAC validation does not i
 for (const runner of ['macos-14', 'ubuntu-24.04', 'windows-2025']) {
   check(qvacRelease.includes(runner), `Real QVAC validation is missing ${runner}`)
 }
+
+for (const warning of warnings) console.warn(`WARNING: ${warning}`)
 
 if (failures.length > 0) {
   console.error('Node release gate failed:')
