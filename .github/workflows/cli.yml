@@ -87,6 +87,17 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
+      # Each scaffold variant runs a full npm install of a Pear/Electron app,
+      # and five of them exhaust the runner disk — the job dies with no failing
+      # step because the runner is killed writing its own log. Reclaim the
+      # preinstalled toolchains this job never uses.
+      - name: Free runner disk space
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI
@@ -126,6 +137,15 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > "$HOME/.npmrc"
+      # Scaffolds and installs every platform variant in one job — the most
+      # disk-hungry job in the repo. Same reclamation as the matrix job above.
+      - name: Free runner disk space
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build CLI

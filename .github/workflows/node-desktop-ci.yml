@@ -108,7 +108,18 @@ jobs:
         working-directory: packages/node-desktop
         run: npm run test:packaged
 
+      # Electron's SUID sandbox helper refuses to start unless chrome-sandbox
+      # is root-owned with mode 4755, and electron-packager cannot set that
+      # (it does not run as root). Fixing the permissions keeps the sandbox
+      # on; --no-sandbox would silently disable the very hardening this smoke
+      # exists to verify.
       - name: Smoke packaged app (Linux)
         if: runner.os == 'Linux'
         working-directory: packages/node-desktop
-        run: xvfb-run -a npm run test:packaged
+        run: |
+          sandbox="$(find out -name chrome-sandbox -type f | head -1)"
+          if [ -n "$sandbox" ]; then
+            sudo chown root:root "$sandbox"
+            sudo chmod 4755 "$sandbox"
+          fi
+          xvfb-run -a npm run test:packaged
