@@ -51,7 +51,12 @@ assert.ok(
 const executable = packagedFiles.find((file) => {
   const path = normalized(file)
   if (process.platform === 'darwin') return path.endsWith('.app/Contents/MacOS/unstoppable-personal-node')
-  if (process.platform === 'win32') return path.endsWith('/Unstoppable Personal Node.exe')
+  // forge sets executableName, so the binary is unstoppable-personal-node.exe;
+  // the productName spelling is accepted too in case that config changes.
+  if (process.platform === 'win32') {
+    return path.endsWith('/unstoppable-personal-node.exe') ||
+      path.endsWith('/Unstoppable Personal Node.exe')
+  }
   return path.endsWith('/unstoppable-personal-node')
 })
 assert.ok(executable, 'Could not find packaged Electron executable')
