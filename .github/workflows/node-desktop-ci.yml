@@ -42,6 +42,23 @@ jobs:
         with:
           node-version: '20'
 
+      # electron-packager stages the whole app — including the QVAC GPU
+      # prebuilds for every platform — into a temp directory before the
+      # postPackage hook prunes the foreign ones, so peak disk far exceeds the
+      # final 375 MiB bundle. The ubuntu runner does not have room for that on
+      # top of its preinstalled toolchains, and has been failing at "Package
+      # application" with ENOSPC since well before this workflow last passed.
+      # Reclaiming the toolchains we never use is cheaper and lower risk than
+      # reordering the prune, which is security-reviewed.
+      - name: Free runner disk space (ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
+
       - name: Validate release metadata
         run: node scripts/node-release-gate.mjs
         env:
