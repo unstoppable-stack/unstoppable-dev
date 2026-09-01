@@ -1,15 +1,26 @@
 {
   "name": "unstoppable-node-desktop",
-  "version": "0.1.0",
-  "description": "Pear Desktop dashboard for the Unstoppable Node — visual control panel for data/file/AI sync",
+  "version": "0.6.0-alpha.1",
+  "productName": "Unstoppable Personal Node",
+  "description": "Desktop Personal Node for private P2P data sync and local or remote AI inference",
+  "author": "Unstoppable Stack",
+  "homepage": "https://unstoppable.dev",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
+    "directory": "packages/node-desktop"
+  },
   "type": "module",
+  "main": "electron/main.js",
   "private": true,
   "pear": {
     "name": "unstoppable-node-desktop",
     "type": "desktop",
     "pre": "pear-electron/pre",
     "routes": ".",
-    "unrouted": ["/worker.js"],
+    "unrouted": [
+      "/worker.js"
+    ],
     "gui": {
       "backgroundColor": "#0d1117",
       "closeHides": true,
@@ -21,17 +32,60 @@
     }
   },
   "scripts": {
-    "dev": "pear run -d .",
-    "stage": "pear stage .",
-    "release": "pear release .",
-    "test": "node --test --test-force-exit test/*.test.js",
-    "test:smoke": "node scripts/smoke.js"
+    "dev": "npm run dev:electron",
+    "dev:electron": "electron .",
+    "dev:pear": "pear run -d .",
+    "clean:electron": "node scripts/clean-output.mjs",
+    "prepackage:electron": "npm run clean:electron",
+    "package:electron": "electron-forge package",
+    "premake": "npm run clean:electron",
+    "make": "electron-forge make",
+    "premake:mac": "npm run clean:electron",
+    "make:mac": "electron-forge make --platform=darwin",
+    "premake:windows": "npm run clean:electron",
+    "make:windows": "electron-forge make --platform=win32",
+    "premake:linux": "npm run clean:electron",
+    "make:linux": "electron-forge make --platform=linux",
+    "stage": "npm run stage:pear",
+    "stage:pear": "pear stage .",
+    "release": "npm run release:pear",
+    "release:pear": "pear release .",
+    "release:gate": "node ../../scripts/node-release-gate.mjs",
+    "release:artifacts": "node scripts/release-artifacts.mjs",
+    "test": "node --test --test-force-exit",
+    "test:smoke": "node scripts/smoke.js",
+    "test:packaged": "node scripts/packaged-smoke.mjs",
+    "test:packaged-runtime": "node scripts/verify-packaged-runtime.mjs"
   },
   "dependencies": {
+    "@qvac/sdk": "0.15.0",
+    "b4a": "^1.8.0",
+    "bare-events": "^2.8.3",
+    "bare-fs": "^4.5.5",
+    "bare-path": "^3.0.0",
+    "bare-sidecar": "^0.5.2",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hypercore": "^11.27.0",
+    "hypercore-crypto": "^3.6.0",
+    "hyperdrive": "^12.3.0",
+    "hyperswarm": "^4.17.0",
     "pear-bridge": "^1.2.4",
     "pear-electron": "^1.7.0",
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
-    "unstoppable-node": "file:../node"
+    "unstoppable-node": "file:../node",
+    "@unstoppable-stack/node-core": "file:../node-core",
+    "@unstoppable-stack/node-caps-sync": "file:../node-caps-sync",
+    "@unstoppable-stack/node-caps-ai": "file:../node-caps-ai"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "7.11.2",
+    "@electron-forge/maker-deb": "7.11.2",
+    "@electron-forge/maker-dmg": "7.11.2",
+    "@electron-forge/maker-squirrel": "7.11.2",
+    "@electron-forge/maker-zip": "7.11.2",
+    "@electron-forge/plugin-fuses": "7.11.2",
+    "electron": "42.4.1"
   }
 }

@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>Unstoppable Node</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,6 +26,8 @@
       margin-left: 8px;
     }
     #app { height: 100vh; padding-top: 28px; display: flex; flex-direction: column; overflow: hidden; }
+    body.electron-shell #bar { display: none; }
+    body.electron-shell #app { padding-top: 0; }
   </style>
 </head>
 <body>

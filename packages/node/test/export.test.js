@@ -1,94 +1,109 @@
-import { describe, it, afterEach } from 'node:test'
+import { describe, it, after } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFile, writeFile } from 'fs/promises'
+import { mkdtemp, rm, readFile, writeFile } from 'fs/promises'
+import { tmpdir } from 'os'
 import { join } from 'path'
-import { NodeDaemon } from '../src/node.js'
+import { PeerRegistry, loadIdentity } from '@unstoppable-stack/node-core'
+import { loadConfig, saveConfig, mergeConfigPatch } from '../src/config.js'
 import { exportNodeState, importNodeState, previewNodeStateImport } from '../src/export.js'
-import { createTestEnv } from './helpers.js'
+
+const dirs = []
+async function tmp (prefix = 'node-export-') {
+  const dir = await mkdtemp(join(tmpdir(), prefix))
+  dirs.push(dir)
+  return dir
+}
+
+after(async () => {
+  for (const dir of dirs) await rm(dir, { recursive: true, force: true }).catch(() => {})
+})
+
+const KEY_A = 'a'.repeat(64)
+const KEY_B = 'b'.repeat(64)
+
+async function seedNode () {
+  const dir = await tmp()
+  const identity = await loadIdentity(dir)
+  const registry = new PeerRegistry(dir)
+  await registry.ready()
+  await registry.put({ publicKey: KEY_A, appId: 'notes', appName: 'Notes' })
+  await registry.put({ publicKey: KEY_B, appId: 'photos', appName: 'Photos' })
+  const config = await loadConfig(dir)
+  await saveConfig(dir, mergeConfigPatch(config, { storage: { perPeerQuotaBytes: 4096 } }))
+  return { dir, identity }
+}
 
 describe('node export/import', () => {
-  let env, cleanupItems
+  it('exports peers, config and identity', async () => {
+    const { dir, identity } = await seedNode()
+    const out = join(await tmp('bundle-'), 'backup.uns')
 
-  afterEach(async () => {
-    for (const item of cleanupItems || []) {
-      try {
-        if (item.close) await item.close()
-        if (item.destroy) await item.destroy()
-      } catch {}
-    }
-    if (env) await env.cleanup()
+    const bundle = await exportNodeState({ storagePath: dir, outPath: out })
+    assert.equal(bundle.peers.length, 2)
+    assert.equal(bundle.config.storage.perPeerQuotaBytes, 4096)
+
+    const written = JSON.parse(await readFile(out, 'utf8'))
+    assert.equal(written.version, 2)
+    assert.equal(written.identity.seed.length, 64)
+    assert.equal(written.peers.length, 2)
+    assert.ok(identity.publicKey)
   })
 
-  it('round-trips config, trust registry, and paired app registry', async () => {
-    env = await createTestEnv()
-    cleanupItems = []
+  // Restoring under a new key would silently force every paired peer to pair
+  // again, so the identity has to come back with the backup.
+  it('restores the same identity, so peers stay paired', async () => {
+    const { dir } = await seedNode()
+    const before = await loadIdentity(dir)
+    const out = join(await tmp('bundle-'), 'backup.uns')
+    await exportNodeState({ storagePath: dir, outPath: out })
 
-    const source = await env.createNode()
-    cleanupItems.push(source)
-    await source.start()
-    await source.updateConfig({ storage: { perAppQuotaBytes: 1234 }, pairing: { requireApproval: false } })
+    const fresh = await tmp('restored-')
+    await importNodeState({ storagePath: fresh, inPath: out })
 
-    const app = await env.createAppWithBee('export-app')
-    cleanupItems.push(app.store, app.swarm)
-    const client = await env.createConnectedClient({
-      appId: 'export-app',
-      appName: 'Export App',
-      cores: [{ key: app.bee.core.key, type: 'hyperbee', name: 'data' }]
-    })
-    cleanupItems.push(client)
+    const after = await loadIdentity(fresh)
+    assert.equal(after.publicKey, before.publicKey)
 
-    await writeFile(join(source.storagePath, 'trust-registry.json'), JSON.stringify({
-      version: 1,
-      approved: { abc: { appId: 'export-app', appName: 'Export App' } },
-      denied: {}
-    }, null, 2))
+    const registry = new PeerRegistry(fresh)
+    await registry.ready()
+    assert.equal(registry.list().length, 2)
+    assert.equal(registry.get(KEY_A).appName, 'Notes')
+  })
 
-    const outPath = join(await env.tmpDir('node-export-'), 'backup.uns')
-    const exported = await source.exportState(outPath)
-    assert.equal(exported.apps.length, 1)
+  it('previews a bundle without applying it', async () => {
+    const { dir } = await seedNode()
+    const out = join(await tmp('bundle-'), 'backup.uns')
+    await exportNodeState({ storagePath: dir, outPath: out })
 
-    const preview = await previewNodeStateImport({ inPath: outPath })
-    assert.equal(preview.version, 1)
-    assert.equal(preview.appCount, 1)
-    assert.deepEqual(preview.apps, [{ appId: 'export-app', appName: 'Export App' }])
+    const preview = await previewNodeStateImport({ inPath: out })
+    assert.equal(preview.peerCount, 2)
+    assert.equal(preview.hasIdentity, true)
     assert.equal(preview.hasConfig, true)
-    assert.equal(preview.hasTrust, true)
-    assert.deepEqual(preview.trustCounts, { approved: 1, denied: 0 })
-
-    await source.close()
-    cleanupItems = cleanupItems.filter((item) => item !== source)
-
-    const offlinePath = join(await env.tmpDir('node-export-offline-'), 'backup.uns')
-    const offline = await exportNodeState({ storagePath: source.storagePath, outPath: offlinePath })
-    assert.equal(offline.apps.length, 1)
-
-    const targetDir = await env.tmpDir('node-import-')
-    const imported = await importNodeState({ storagePath: targetDir, inPath: outPath })
-    assert.equal(imported.apps.length, 1)
-    assert.equal(imported.config.storage.perAppQuotaBytes, 1234)
-
-    const restored = new NodeDaemon(targetDir, { swarm: { bootstrap: env.bootstrap }, topic: env.topic })
-    cleanupItems.push(restored)
-    await restored.start()
-    const config = await restored.getConfig()
-    assert.equal(config.storage.perAppQuotaBytes, 1234)
-    assert.equal(config.pairing.requireApproval, false)
-    assert.equal((await restored.registry.listApps())[0].appId, 'export-app')
-
-    const trust = JSON.parse(await readFile(join(targetDir, 'trust-registry.json'), 'utf8'))
-    assert.equal(trust.approved.abc.appId, 'export-app')
+    assert.deepEqual(preview.peers.map((p) => p.appName).sort(), ['Notes', 'Photos'])
   })
 
-  it('rejects unsupported bundles during preview', async () => {
-    env = await createTestEnv()
-    cleanupItems = []
+  it('rejects a bundle from an unsupported version', async () => {
+    const file = join(await tmp('bundle-'), 'bad.uns')
+    await writeFile(file, JSON.stringify({ version: 99, kind: 'unstoppable-node-settings' }))
+    await assert.rejects(() => previewNodeStateImport({ inPath: file }), /Unsupported export version/)
+  })
 
-    const outPath = join(await env.tmpDir('node-export-invalid-'), 'backup.uns')
-    await writeFile(outPath, JSON.stringify({ version: 999, apps: [] }))
+  it('rejects malformed peer records', async () => {
+    const file = join(await tmp('bundle-'), 'bad.uns')
+    await writeFile(file, JSON.stringify({
+      version: 2,
+      kind: 'unstoppable-node-settings',
+      peers: [{ publicKey: 'not-a-key' }]
+    }))
+    await assert.rejects(() => previewNodeStateImport({ inPath: file }), /publicKey must be 32 bytes/)
+  })
 
-    await assert.rejects(
-      previewNodeStateImport({ inPath: outPath }),
-      /Unsupported export version: 999/
-    )
+  it('rejects a malformed identity seed', async () => {
+    const file = join(await tmp('bundle-'), 'bad.uns')
+    await writeFile(file, JSON.stringify({
+      version: 2,
+      kind: 'unstoppable-node-settings',
+      identity: { seed: 'nope' }
+    }))
+    await assert.rejects(() => previewNodeStateImport({ inPath: file }), /identity seed must be 32 bytes/)
   })
 })

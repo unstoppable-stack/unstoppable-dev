@@ -14,7 +14,7 @@
 // UI) or simple commands (UI → node: unpair, toggle-ai).
 
 import pearPipe from 'pear-pipe'
-import { createDaemonHost } from './lib/daemon-host.js'
+import { runDaemonWorker } from './lib/run-daemon-worker.js'
 
 // `pear-pipe` is the post-deprecation replacement for `Pear.worker.pipe()`.
 // Same underlying fd-3 duplex; importing directly avoids the deprecation
@@ -22,32 +22,9 @@ import { createDaemonHost } from './lib/daemon-host.js'
 const pipe = pearPipe()
 const storagePath = Pear.config.storage
 
-function send (msg) {
-  pipe.write(JSON.stringify(msg) + '\n')
-}
-
-const host = createDaemonHost({
+runDaemonWorker({
+  pipe,
   storagePath,
   args: Pear.config.args || [],
-  send,
   exit: () => Pear.exit()
 })
-
-let buffer = ''
-pipe.on('data', async (data) => {
-  buffer += data.toString()
-  const lines = buffer.split('\n')
-  buffer = lines.pop() || ''
-  for (const line of lines) {
-    if (!line.trim()) continue
-    try {
-      await host.handleCommand(JSON.parse(line))
-    } catch (err) {
-      send({ type: 'error', phase: 'command', error: err.message })
-    }
-  }
-})
-
-;(async () => {
-  await host.start()
-})()

@@ -22,6 +22,7 @@ const _require = createRequire(import.meta.url)
  *   us node start    # spawn the daemon in the background, pid + log file
  *   us node status   # read the saved pid/log/storage; tail recent lines
  *   us node stop     # SIGTERM the saved pid, clean up the pid file
+ *   us node invite   # mint a pairing code for a phone or second computer
  *
  * We deliberately don't ship a full process manager. If you outgrow this
  * (clusters, restarts, log rotation) put the daemon under systemd / launchd
@@ -109,6 +110,15 @@ function resolveHeadlessPath(): string {
     'Could not locate unstoppable-node-desktop. Install it next to this CLI, ' +
     'or run inside the unstoppable-stack monorepo.'
   )
+}
+
+interface InviteResult {
+  id: string
+  code: string
+  publicKey: string
+  expiresAt: string | null
+  uses: number | null
+  label: string | null
 }
 
 export function registerNodeCommand(program: Command) {
@@ -225,6 +235,96 @@ export function registerNodeCommand(program: Command) {
         console.log()
         console.log(chalk.dim(`--- last ${tail.length} log lines ---`))
         for (const line of tail) console.log(line)
+      }
+    })
+
+  node
+    .command('invite')
+    .description('Create a pairing code so another device or app can pair with this node')
+    .option('--storage <path>', `storage directory (default: ${DEFAULT_STORAGE})`)
+    .option('--expires <minutes>', 'minutes until the code stops working', '15')
+    .option('--uses <n>', 'how many times the code may be redeemed (0 = unlimited)', '1')
+    .option('--label <name>', 'a note to yourself about who this code is for')
+    .option('--grant <cap:method...>', 'limit the code, e.g. --grant sync:status sync:usage')
+    .action(async (opts) => {
+      const storagePath = opts.storage || DEFAULT_STORAGE
+
+      const minutes = Number(opts.expires)
+      if (!Number.isFinite(minutes) || minutes < 0) {
+        console.error(chalk.red('--expires must be a non-negative number of minutes'))
+        process.exit(1)
+      }
+      const uses = Number(opts.uses)
+      if (!Number.isInteger(uses) || uses < 0) {
+        console.error(chalk.red('--uses must be a non-negative integer (0 = unlimited)'))
+        process.exit(1)
+      }
+
+      // Parse `--grant sync:status` pairs into the grants map the node wants.
+      let grants: Record<string, string[]> | null = null
+      for (const entry of (opts.grant as string[] | undefined) || []) {
+        const [capability, method] = entry.split(':')
+        if (!capability || !method) {
+          console.error(chalk.red(`--grant expects capability:method, got "${entry}"`))
+          process.exit(1)
+        }
+        grants = grants || {}
+        grants[capability] = [...(grants[capability] || []), method]
+      }
+
+      // Resolved dynamically, like the daemon binary: node-core is an optional
+      // peer, not a hard dependency of the CLI. A non-literal specifier also
+      // keeps TypeScript from trying to resolve it at build time.
+      const nodeCoreSpecifier = '@unstoppable-stack/node-core'
+      let issueInvite: (opts: Record<string, unknown>) => Promise<InviteResult>
+      try {
+        ;({ issueInvite } = (await import(nodeCoreSpecifier)) as {
+          issueInvite: (opts: Record<string, unknown>) => Promise<InviteResult>
+        })
+      } catch {
+        console.error(chalk.red('@unstoppable-stack/node-core is not installed.'))
+        console.error(
+          'Install it next to this CLI, or run inside the unstoppable-stack monorepo.'
+        )
+        process.exit(1)
+        return
+      }
+
+      // Writes the invite into the node's storage directory and stops there.
+      // A running daemon picks it up within seconds; there is no IPC channel
+      // between `us` and the daemon. Deliberately no swarm here — starting one
+      // would derive the daemon's own identity key and fight it for its DHT
+      // announcement.
+      try {
+        const invite = await issueInvite({
+          storage: storagePath,
+          grants,
+          uses: uses === 0 ? null : uses,
+          expiresIn: minutes === 0 ? null : minutes * 60_000,
+          label: opts.label || null,
+        })
+
+        console.log()
+        console.log(chalk.bold('  Pairing code'))
+        console.log()
+        console.log(`  ${chalk.cyan(invite.code)}`)
+        console.log()
+        console.log(chalk.dim(`  node:    ${invite.publicKey}`))
+        console.log(chalk.dim(`  expires: ${invite.expiresAt || 'never'}`))
+        console.log(chalk.dim(`  uses:    ${invite.uses === null ? 'unlimited' : invite.uses}`))
+        if (grants) console.log(chalk.dim(`  grants:  ${JSON.stringify(grants)}`))
+        console.log()
+        console.log(chalk.dim('  Share this with the other device. Anyone holding it can pair'))
+        console.log(chalk.dim('  until it expires or its uses run out.'))
+        console.log()
+        if (!readPid()) {
+          console.log(chalk.yellow('  No node is running — start one so the code can be redeemed:'))
+          console.log(`    ${chalk.cyan('us node start')}`)
+          console.log()
+        }
+      } catch (err) {
+        console.error(chalk.red((err as Error).message))
+        process.exit(1)
       }
     })
 

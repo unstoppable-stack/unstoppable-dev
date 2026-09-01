@@ -158,17 +158,16 @@ async function runSingleTest(tc: TestCase, baseDir: string, depth: TestDepth): P
 
     if (tc.platform === 'pear-desktop') {
       if (!existsSync(join(outputDir, 'index.html'))) throw new Error('index.html not found')
-      if (!existsSync(join(outputDir, 'index.js'))) throw new Error('index.js not found')
+      if (!existsSync(join(outputDir, 'electron', 'main.js'))) throw new Error('electron/main.js not found')
+      if (!existsSync(join(outputDir, 'electron', 'preload.cjs'))) throw new Error('electron/preload.cjs not found')
       if (!existsSync(join(outputDir, 'worker.js'))) throw new Error('worker.js not found')
       if (!existsSync(join(outputDir, 'app', 'bridge.js'))) throw new Error('app/bridge.js not found')
       if (!existsSync(join(outputDir, 'app', 'index.js'))) throw new Error('app/index.js not found')
       const pkg = JSON.parse(await readFile(join(outputDir, 'package.json'), 'utf-8'))
-      if (!pkg.pear?.pre) throw new Error('package.json missing pear.pre')
-      if (!pkg.pear?.routes) throw new Error('package.json missing pear.routes')
-      if (!pkg.pear?.unrouted) throw new Error('package.json missing pear.unrouted')
-      if (!pkg.dependencies?.['pear-electron']) throw new Error('missing pear-electron dependency')
-      if (!pkg.dependencies?.['pear-bridge']) throw new Error('missing pear-bridge dependency')
-      if (!pkg.dependencies?.['pear-run']) throw new Error('missing pear-run dependency')
+      if (pkg.main !== 'electron/main.js') throw new Error('package.json missing Electron main')
+      if (!pkg.upgrade?.startsWith('pear://')) throw new Error('package.json missing Pear OTA upgrade link')
+      if (!pkg.dependencies?.['pear-runtime']) throw new Error('missing pear-runtime dependency')
+      if (!pkg.devDependencies?.electron) throw new Error('missing electron dev dependency')
     }
 
     if (tc.platform === 'node-cli') {

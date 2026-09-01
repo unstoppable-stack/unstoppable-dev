@@ -1,0 +1,128 @@
+name: Personal Node Desktop CI
+
+on:
+  pull_request:
+    paths:
+      - packages/node/**
+      - packages/node-core/**
+      - packages/node-caps-sync/**
+      - packages/node-caps-ai/**
+      - packages/node-desktop/**
+      - scripts/node-release-gate.mjs
+      - .github/workflows/node-desktop-*.yml
+  push:
+    branches: [main]
+    paths:
+      - packages/node/**
+      - packages/node-core/**
+      - packages/node-caps-sync/**
+      - packages/node-caps-ai/**
+      - packages/node-desktop/**
+      - scripts/node-release-gate.mjs
+      - .github/workflows/node-desktop-*.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-desktop-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      # electron-packager stages the whole app — including the QVAC GPU
+      # prebuilds for every platform — into a temp directory before the
+      # postPackage hook prunes the foreign ones, so peak disk far exceeds the
+      # final 375 MiB bundle. The ubuntu runner does not have room for that on
+      # top of its preinstalled toolchains, and has been failing at "Package
+      # application" with ENOSPC since well before this workflow last passed.
+      # Reclaiming the toolchains we never use is cheaper and lower risk than
+      # reordering the prune, which is security-reviewed.
+      - name: Free runner disk space (ubuntu)
+        if: runner.os == 'Linux'
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
+
+      # Install Node after reclaiming the hosted tool cache so the requested
+      # runtime cannot be deleted and silently replaced by the system Node.
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Validate release metadata
+        run: node scripts/node-release-gate.mjs
+        env:
+          # The 0.6 packages are not on npm yet, so the shell's internal
+          # file: links warn here instead of failing. Release workflows run
+          # the gate strict, so an actual publish still refuses them.
+          NODE_RELEASE_GATE_UNPUBLISHED_OK: '1'
+
+      # file:-linked packages resolve imports from their real paths, so each
+      # needs its own node_modules (see node-smoke.yml).
+      - name: Install node-core dependencies
+        working-directory: packages/node-core
+        run: npm install
+
+      - name: Install node-caps-sync dependencies
+        working-directory: packages/node-caps-sync
+        run: npm install
+
+      - name: Install node-caps-ai dependencies
+        working-directory: packages/node-caps-ai
+        run: npm install
+
+      - name: Install node dependencies
+        working-directory: packages/node
+        run: npm ci
+
+      - name: Install desktop dependencies
+        working-directory: packages/node-desktop
+        run: npm ci
+
+      - name: Test desktop and real sidecar boundary
+        working-directory: packages/node-desktop
+        run: npm test
+        env:
+          RUN_ELECTRON_SIDECAR_E2E: '1'
+
+      - name: Package application
+        working-directory: packages/node-desktop
+        run: npm run package:electron
+
+      - name: Verify packaged dependencies, size, and Electron fuses
+        working-directory: packages/node-desktop
+        run: npm run test:packaged-runtime
+
+      - name: Smoke packaged app (macOS and Windows)
+        if: runner.os != 'Linux'
+        working-directory: packages/node-desktop
+        run: npm run test:packaged
+
+      # Electron's SUID sandbox helper refuses to start unless chrome-sandbox
+      # is root-owned with mode 4755, and electron-packager cannot set that
+      # (it does not run as root). Fixing the permissions keeps the sandbox
+      # on; --no-sandbox would silently disable the very hardening this smoke
+      # exists to verify.
+      - name: Smoke packaged app (Linux)
+        if: runner.os == 'Linux'
+        working-directory: packages/node-desktop
+        run: |
+          sandbox="$(find out -name chrome-sandbox -type f | head -1)"
+          if [ -n "$sandbox" ]; then
+            sudo chown root:root "$sandbox"
+            sudo chmod 4755 "$sandbox"
+          fi
+          xvfb-run -a npm run test:packaged

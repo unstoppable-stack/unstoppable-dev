@@ -1,102 +1,136 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { connectMemoryToNode } from '../src/node-sync.js'
+import { connectMemoryToNode, toManifest } from '../src/node-sync.js'
+
+function fakeSwarm () {
+  return {
+    handler: null,
+    joinedTopic: null,
+    destroyed: false,
+    on (event, handler) { if (event === 'connection') this.handler = handler },
+    join (topic) { this.joinedTopic = topic },
+    async flush () {},
+    async destroy () { this.destroyed = true }
+  }
+}
+
+function fakeEngine (overrides = {}) {
+  return {
+    store: { replicate () {} },
+    core: { discoveryKey: Buffer.from('b'.repeat(64), 'hex') },
+    async getNodeRegistration () {
+      return {
+        appId: 'unstoppable-memory',
+        appName: 'Unstoppable Memory',
+        cores: [{ key: 'ab'.repeat(32), type: 'hyperbee', name: 'memory-store' }],
+        drives: []
+      }
+    },
+    ...overrides
+  }
+}
+
+function fakeNode ({ calls = [], discover } = {}) {
+  const peer = {
+    publicKey: 'c'.repeat(64),
+    async call (capability, method, params) {
+      calls.push({ capability, method, params })
+      return { ok: true }
+    }
+  }
+  return {
+    async ready () {},
+    async discover (opts) {
+      calls.push({ discover: opts })
+      if (discover) return discover(opts)
+      return peer
+    },
+    async close () {},
+    peer
+  }
+}
 
 describe('connectMemoryToNode', () => {
-  it('registers memory engine cores with the local Node client', async () => {
+  it('discovers the local node and hands it a resource manifest', async () => {
     const calls = []
-    const engine = {
-      store: { replicate () {} },
-      core: { discoveryKey: Buffer.from('b'.repeat(64), 'hex') },
-      async getNodeRegistration () {
-        return {
-          appId: 'unstoppable-memory',
-          appName: 'Unstoppable Memory',
-          cores: [{ key: 'abc123', type: 'hyperbee', name: 'memory-store' }],
-          drives: []
-        }
-      }
-    }
-
     const client = await connectMemoryToNode({
-      engine,
-      connectToNode: async (opts) => {
-        calls.push(opts)
-        return { services: { data: true }, close: async () => {} }
-      },
-      createSwarm: () => ({
-        on () {},
-        join () {},
-        async flush () {},
-        async destroy () {}
-      })
+      engine: fakeEngine(),
+      storage: './tmp-memory-node',
+      createNode: () => fakeNode({ calls }),
+      createSwarm: fakeSwarm
     })
 
-    assert.equal(client.services.data, true)
-    assert.equal(calls.length, 1)
-    assert.equal(calls[0].appId, 'unstoppable-memory')
-    assert.deepEqual(calls[0].cores, [{ key: 'abc123', type: 'hyperbee', name: 'memory-store' }])
-    assert.deepEqual(calls[0].requireServices, ['data'])
-    assert.equal(calls[0].reconnect, true)
+    const discovery = calls.find((c) => c.discover)
+    assert.ok(discovery, 'it discovers rather than requiring a key up front')
+    assert.deepEqual(discovery.discover.requested, {
+      sync: ['manifest.replace', 'status', 'usage']
+    })
+
+    const registered = calls.find((c) => c.method === 'manifest.replace')
+    assert.equal(registered.params.manifest.schemaVersion, 1)
+    assert.deepEqual(registered.params.manifest.resources[0], {
+      id: 'memory-store',
+      kind: 'hyperbee',
+      key: 'ab'.repeat(32),
+      name: 'memory-store',
+      protection: { mode: 'mirror' }
+    })
+    assert.equal(client.nodePublicKey, 'c'.repeat(64))
   })
 
-  it('returns unavailable status when Node is absent and optional', async () => {
+  it('returns null when no node is running and it is optional', async () => {
     const result = await connectMemoryToNode({
-      engine: {
-        async getNodeRegistration () {
-          return { appId: 'memory', appName: 'Memory', cores: [], drives: [] }
-        }
-      },
+      engine: fakeEngine(),
       required: false,
-      connectToNode: async () => {
-        throw new Error('not found')
-      }
+      createNode: () => fakeNode({ discover: async () => { throw new Error('not found') } }),
+      createSwarm: fakeSwarm
     })
-
     assert.equal(result, null)
   })
 
-  it('starts a replication server for the memory corestore', async () => {
+  it('rethrows when the node is required', async () => {
+    await assert.rejects(() => connectMemoryToNode({
+      engine: fakeEngine(),
+      required: true,
+      createNode: () => fakeNode({ discover: async () => { throw new Error('not found') } }),
+      createSwarm: fakeSwarm
+    }), /not found/)
+  })
+
+  it('seeds the memory corestore so the node has something to replicate', async () => {
     let replicated = false
-    let joinedTopic = null
-    const fakeSwarm = {
-      on (event, handler) {
-        if (event === 'connection') this.handler = handler
-      },
-      join (topic) {
-        joinedTopic = topic
-      },
-      async flush () {},
-      async destroy () {}
-    }
-    const engine = {
-      store: {
-        replicate () {
-          replicated = true
-        }
-      },
-      core: {
-        discoveryKey: Buffer.from('a'.repeat(64), 'hex')
-      },
-      async getNodeRegistration () {
-        return {
-          appId: 'memory',
-          appName: 'Memory',
-          cores: [{ key: 'abc123', type: 'hyperbee', name: 'memory-store' }],
-          drives: []
-        }
-      }
-    }
+    const swarm = fakeSwarm()
+    const engine = fakeEngine({ store: { replicate () { replicated = true } } })
 
     const client = await connectMemoryToNode({
       engine,
-      createSwarm: () => fakeSwarm,
-      connectToNode: async () => ({ close: async () => {} })
+      createNode: () => fakeNode({}),
+      createSwarm: () => swarm
     })
 
-    fakeSwarm.handler({})
-    assert.ok(joinedTopic)
+    swarm.handler({})
+    assert.ok(swarm.joinedTopic)
     assert.equal(replicated, true)
+
     await client.close()
+    assert.equal(swarm.destroyed, true, 'the seeding swarm is torn down with the client')
+  })
+
+  it('tears down the seeding swarm when discovery fails', async () => {
+    const swarm = fakeSwarm()
+    await connectMemoryToNode({
+      engine: fakeEngine(),
+      createNode: () => fakeNode({ discover: async () => { throw new Error('nope') } }),
+      createSwarm: () => swarm
+    })
+    assert.equal(swarm.destroyed, true, 'no swarm is left running after a failed connect')
+  })
+
+  it('maps drives into the manifest', () => {
+    const manifest = toManifest({
+      cores: [{ key: 'ab'.repeat(32), type: 'hypercore', name: 'log' }],
+      drives: [{ key: 'cd'.repeat(32), name: 'files' }]
+    })
+    assert.deepEqual(manifest.resources.map((r) => r.kind), ['hypercore', 'hyperdrive'])
   })
 })

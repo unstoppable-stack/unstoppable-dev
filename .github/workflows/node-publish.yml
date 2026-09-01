@@ -1,85 +1,22 @@
-name: Node Publish
+name: Node Publish Validation (legacy)
 
-# Publishing is GATED behind workflow_dispatch + an explicit input so a stray
-# tag push can never trigger an npm publish. Bump the version in each package
-# locally, run `pnpm -r test`, push, then trigger this from the Actions tab
-# and pick which packages to publish.
-#
-# Required secret: NPM_TOKEN (npm automation token with publish scope for the
-# `unstoppable-node` package and the `@unstoppable-stack` org).
-
+# Kept as a harmless manual compatibility entry for existing bookmarks. The
+# only workflow allowed to publish is node-release.yml.
 on:
   workflow_dispatch:
-    inputs:
-      packages:
-        description: 'Packages to publish (comma-separated). Options: node, node-client, both'
-        required: true
-        default: 'both'
-        type: choice
-        options:
-          - node
-          - node-client
-          - both
-      dry_run:
-        description: 'Dry run (--dry-run; no actual publish)'
-        required: false
-        default: true
-        type: boolean
+
+permissions:
+  contents: read
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
+  validate:
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Install deps (node-client)
-        if: ${{ inputs.packages != 'node' }}
-        working-directory: packages/node-client
-        run: npm install
-
-      - name: Test (node-client)
-        if: ${{ inputs.packages != 'node' }}
-        working-directory: packages/node-client
-        run: npm test
-
-      - name: Publish (node-client)
-        if: ${{ inputs.packages != 'node' }}
-        working-directory: packages/node-client
-        run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
-          else
-            npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Install deps (node)
-        if: ${{ inputs.packages != 'node-client' }}
-        working-directory: packages/node
-        run: npm install
-
-      - name: Test (node)
-        if: ${{ inputs.packages != 'node-client' }}
-        working-directory: packages/node
-        run: npm test
-
-      - name: Publish (node)
-        if: ${{ inputs.packages != 'node-client' }}
-        working-directory: packages/node
-        run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
-          else
-            npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Run the release gate
+        run: node scripts/node-release-gate.mjs
+      - name: Explain the publishing path
+        run: echo "Validation passed. Use the approval-gated Node Release workflow to publish."

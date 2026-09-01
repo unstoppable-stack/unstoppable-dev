@@ -76,6 +76,19 @@ jobs:
             script: test:e2e:ci:cli
     steps:
       - uses: actions/checkout@v4
+      # Each scaffold variant runs a full npm install of a Pear/Electron app,
+      # and five of them exhaust the runner disk — the job dies with no failing
+      # step because the runner is killed writing its own log. Reclaim the
+      # preinstalled toolchains this job never uses.
+      - name: Free runner disk space
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
+      # Set up runtimes after deleting the hosted tool cache; reversing these
+      # steps silently falls back to the runner's system Node.
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -115,6 +128,17 @@ jobs:
     needs: unit
     steps:
       - uses: actions/checkout@v4
+      # Scaffolds and installs every platform variant in one job — the most
+      # disk-hungry job in the repo. Same reclamation as the matrix job above.
+      - name: Free runner disk space
+        run: |
+          echo "Before:"; df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            "$AGENT_TOOLSDIRECTORY" /usr/local/lib/android /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force > /dev/null 2>&1 || true
+          echo "After:"; df -h / | tail -1
+      # Set up runtimes after deleting the hosted tool cache; reversing these
+      # steps silently falls back to the runner's system Node.
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
