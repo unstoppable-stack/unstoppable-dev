@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
 import { readFileSync } from 'node:fs'
 import { describe, it } from 'node:test'
+import { findPackagedExecutable } from '../scripts/packaged-paths.mjs'
 
 const require = createRequire(import.meta.url)
 const forge = require('../forge.config.cjs')
@@ -19,6 +20,28 @@ describe('Electron packaging contract', () => {
     assert.ok(makers.has('@electron-forge/maker-dmg'))
     assert.ok(makers.has('@electron-forge/maker-squirrel'))
     assert.ok(makers.has('@electron-forge/maker-deb'))
+  })
+
+  it('uses a space-free Linux package path for Electron child processes', () => {
+    assert.equal(
+      forge.packagerConfig.name,
+      process.platform === 'linux' ? 'unstoppable-personal-node' : 'Unstoppable Personal Node'
+    )
+  })
+
+  it('finds the configured executable on every packaged platform', () => {
+    assert.equal(
+      findPackagedExecutable(['/out/App.app/Contents/MacOS/unstoppable-personal-node'], 'darwin'),
+      '/out/App.app/Contents/MacOS/unstoppable-personal-node'
+    )
+    assert.equal(
+      findPackagedExecutable(['D:\\out\\App-win32-x64\\unstoppable-personal-node.exe'], 'win32'),
+      'D:\\out\\App-win32-x64\\unstoppable-personal-node.exe'
+    )
+    assert.equal(
+      findPackagedExecutable(['/out/App-linux-x64/unstoppable-personal-node'], 'linux'),
+      '/out/App-linux-x64/unstoppable-personal-node'
+    )
   })
 
   it('disables Electron runtime escape hatches with package-time fuses', () => {

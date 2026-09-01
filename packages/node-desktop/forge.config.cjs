@@ -21,6 +21,11 @@ function copyLocalNodePackage (buildPath) {
 
 const packagerConfig = {
   asar: false,
+  // Electron's Linux zygote cannot relaunch reliably when Forge's generated
+  // package directory contains spaces. Keep the human-readable name on macOS
+  // and Windows, but use a filesystem-safe Linux package name. The app itself
+  // still calls app.setName('Unstoppable Personal Node').
+  name: process.platform === 'linux' ? 'unstoppable-personal-node' : 'Unstoppable Personal Node',
   executableName: 'unstoppable-personal-node',
   appBundleId: 'dev.unstoppable.personal-node',
   appCategoryType: 'public.app-category.utilities',

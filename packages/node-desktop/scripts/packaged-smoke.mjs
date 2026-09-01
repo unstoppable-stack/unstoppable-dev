@@ -1,26 +1,12 @@
 import { spawn } from 'node:child_process'
-import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { files, findPackagedExecutable } from './packaged-paths.mjs'
 
 const packageRoot = resolve(import.meta.dirname, '..')
 const out = join(packageRoot, 'out')
 
-async function files (directory) {
-  const result = []
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = join(directory, entry.name)
-    if (entry.isDirectory()) result.push(...await files(path))
-    else result.push(path)
-  }
-  return result
-}
-
 const candidates = await files(out)
-const executable = candidates.find((file) => {
-  if (process.platform === 'darwin') return file.endsWith('.app/Contents/MacOS/unstoppable-personal-node')
-  if (process.platform === 'win32') return file.endsWith('Unstoppable Personal Node.exe')
-  return file.endsWith('/unstoppable-personal-node')
-})
+const executable = findPackagedExecutable(candidates, process.platform)
 
 if (!executable) throw new Error(`Could not find packaged executable under ${out}`)
 
