@@ -1,73 +1,122 @@
 name: Node Release
 
+# Publishing is manual and additionally protected by the npm-release GitHub
+# environment. Keep the environment configured with required reviewers.
 on:
-  push:
-    tags:
-      - 'v0.4.*'
   workflow_dispatch:
     inputs:
-      dry_run:
-        description: 'Run npm publish --dry-run instead of publishing'
-        required: false
-        default: true
+      publish:
+        description: Publish the validated tarballs to npm
+        required: true
+        default: false
         type: boolean
+      dist_tag:
+        description: npm distribution tag
+        required: true
+        default: beta
+        type: choice
+        options:
+          - beta
+          - latest
+
+concurrency:
+  group: node-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  publish-node-packages:
-    runs-on: ubuntu-latest
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          registry-url: https://registry.npmjs.org
+
+      - name: Validate release metadata and security controls
+        run: node scripts/node-release-gate.mjs
+
+      - name: Validate distribution tag
+        env:
+          DIST_TAG: ${{ inputs.dist_tag }}
+        run: |
+          node --input-type=module -e "import pkg from './packages/node/package.json' with { type: 'json' }; if (pkg.version.includes('-') && process.env.DIST_TAG === 'latest') throw new Error('Prereleases must not publish to the latest tag')"
+
+      - name: Install and test node-core
+        working-directory: packages/node-core
+        run: npm ci && npm audit --omit=dev --audit-level=high && npm test
+
+      - name: Install and test node
+        working-directory: packages/node
+        run: npm ci && npm audit --omit=dev --audit-level=high && npm test
+
+      - name: Pack publishable artifacts
+        run: |
+          mkdir -p release-artifacts
+          npm pack ./packages/node-core --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node-caps-sync --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node-caps-ai --pack-destination "$PWD/release-artifacts"
+          npm pack ./packages/node --pack-destination "$PWD/release-artifacts"
+          sha256sum release-artifacts/*.tgz > release-artifacts/SHA256SUMS.txt
+
+      - name: Upload validated tarballs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: node-npm-${{ github.sha }}
+          path: release-artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: ${{ inputs.publish }}
+    needs: validate
+    runs-on: ubuntu-24.04
+    environment: npm-release
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
 
-      - name: Install node-client deps
-        working-directory: packages/node-client
-        run: npm install
+      - name: Install trusted publishing npm CLI
+        run: npm install --global npm@12.0.2
 
-      - name: Test node-client
-        working-directory: packages/node-client
-        run: npm test
+      - name: Download validated tarballs
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: node-npm-${{ github.sha }}
+          path: release-artifacts
 
-      - name: Pack node-client
-        working-directory: packages/node-client
-        run: npm pack --dry-run
-
-      - name: Publish node-client
-        working-directory: packages/node-client
+      - name: Refuse an existing version
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
-          else
-            npm publish --access public
+          CORE_VERSION=$(node -p "require('./packages/node-core/package.json').version")
+          NODE_VERSION=$(node -p "require('./packages/node/package.json').version")
+          if npm view "@unstoppable-stack/node-core@$CORE_VERSION" version >/dev/null 2>&1; then
+            echo "@unstoppable-stack/node-core@$CORE_VERSION already exists" >&2
+            exit 1
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          if npm view "unstoppable-node@$NODE_VERSION" version >/dev/null 2>&1; then
+            echo "unstoppable-node@$NODE_VERSION already exists" >&2
+            exit 1
+          fi
 
-      - name: Install node deps
-        working-directory: packages/node
-        run: npm install
+      - name: Publish node-core
+        run: npm publish ./release-artifacts/unstoppable-stack-node-core-*.tgz --access public --tag "${{ inputs.dist_tag }}"
 
-      - name: Test node
-        working-directory: packages/node
-        run: npm test
+      - name: Publish node-caps-sync
+        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-sync-*.tgz --access public --tag "${{ inputs.dist_tag }}"
 
-      - name: Pack node
-        working-directory: packages/node
-        run: npm pack --dry-run
+      - name: Publish node-caps-ai
+        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-ai-*.tgz --access public --tag "${{ inputs.dist_tag }}"
 
       - name: Publish node
-        working-directory: packages/node
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
-            npm publish --dry-run --access public
-          else
-            npm publish --access public
-          fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish ./release-artifacts/unstoppable-node-*.tgz --access public --tag "${{ inputs.dist_tag }}"

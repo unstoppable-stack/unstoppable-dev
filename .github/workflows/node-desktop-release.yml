@@ -1,0 +1,157 @@
+name: Personal Node Desktop Release
+
+# Configure the desktop-release environment with required reviewers and the
+# platform signing secrets documented in packages/node-desktop/README.md.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-desktop-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    environment: desktop-release
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+
+      - name: Validate release metadata and security controls
+        run: node scripts/node-release-gate.mjs
+
+      - name: Install node dependencies
+        working-directory: packages/node
+        run: npm ci
+
+      - name: Install desktop dependencies
+        working-directory: packages/node-desktop
+        run: npm ci
+
+      - name: Test desktop and real sidecar boundary
+        working-directory: packages/node-desktop
+        run: npm test
+        env:
+          RUN_ELECTRON_SIDECAR_E2E: '1'
+
+      - name: Install Apple signing certificate
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          BUILD_CERTIFICATE_BASE64: ${{ secrets.APPLE_DISTRIBUTION_CERTIFICATE }}
+          P12_PASSWORD: ${{ secrets.APPLE_P12_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.APPLE_KEYCHAIN_PASSWORD }}
+          SIGNING_IDENTITY: ${{ secrets.MACOS_SIGNING_IDENTITY }}
+          NOTARY_APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          NOTARY_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          for value in BUILD_CERTIFICATE_BASE64 P12_PASSWORD KEYCHAIN_PASSWORD SIGNING_IDENTITY NOTARY_APPLE_ID NOTARY_PASSWORD NOTARY_TEAM_ID; do
+            if [ -z "${!value}" ]; then echo "Missing required macOS release secret: $value" >&2; exit 1; fi
+          done
+          CERTIFICATE_PATH="$RUNNER_TEMP/personal-node-signing.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/personal-node-signing.keychain-db"
+          echo -n "$BUILD_CERTIFICATE_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          {
+            echo "MAC_CODESIGN_IDENTITY=$SIGNING_IDENTITY"
+            echo "APPLE_ID=$NOTARY_APPLE_ID"
+            echo "APPLE_ID_PASSWORD=$NOTARY_PASSWORD"
+            echo "APPLE_TEAM_ID=$NOTARY_TEAM_ID"
+          } >> "$GITHUB_ENV"
+
+      - name: Prepare Windows signing certificate
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          if (-not $env:CERTIFICATE_BASE64) { throw 'Missing WINDOWS_CERTIFICATE_BASE64' }
+          if (-not $env:CERTIFICATE_PASSWORD) { throw 'Missing WINDOWS_CERTIFICATE_PASSWORD' }
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'personal-node-signing.pfx'
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:CERTIFICATE_BASE64))
+          "WINDOWS_CERTIFICATE_FILE=$certificatePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "WINDOWS_CERTIFICATE_PASSWORD=$env:CERTIFICATE_PASSWORD" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build signed and notarized macOS installers
+        if: runner.os == 'macOS'
+        working-directory: packages/node-desktop
+        run: npm run make:mac
+
+      - name: Build signed Windows installer
+        if: runner.os == 'Windows'
+        working-directory: packages/node-desktop
+        run: npm run make:windows
+
+      - name: Build Linux installer
+        if: runner.os == 'Linux'
+        working-directory: packages/node-desktop
+        run: npm run make:linux
+
+      - name: Verify packaged dependencies, size, and Electron fuses
+        working-directory: packages/node-desktop
+        run: npm run test:packaged-runtime
+
+      - name: Verify macOS signature and notarization
+        if: runner.os == 'macOS'
+        working-directory: packages/node-desktop
+        shell: bash
+        run: |
+          APP_PATH=$(find out -type d -name '*.app' -print -quit)
+          test -n "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+          spctl --assess --type execute --verbose=2 "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+
+      - name: Verify Windows installer signature
+        if: runner.os == 'Windows'
+        working-directory: packages/node-desktop
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem out/make -Recurse -Filter *.exe | Select-Object -First 1
+          if (-not $installer) { throw 'No Windows installer found' }
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          if ($signature.Status -ne 'Valid') { throw "Invalid installer signature: $($signature.Status)" }
+
+      - name: Smoke packaged app (macOS and Windows)
+        if: runner.os != 'Linux'
+        working-directory: packages/node-desktop
+        run: npm run test:packaged
+
+      - name: Smoke packaged app (Linux)
+        if: runner.os == 'Linux'
+        working-directory: packages/node-desktop
+        run: xvfb-run -a npm run test:packaged
+
+      - name: Create checksums
+        working-directory: packages/node-desktop
+        run: npm run release:artifacts
+
+      - name: Upload release candidates
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: personal-node-${{ runner.os }}-${{ github.sha }}
+          path: packages/node-desktop/out/make
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Clean up Apple keychain
+        if: ${{ always() && runner.os == 'macOS' }}
+        shell: bash
+        run: security delete-keychain "$RUNNER_TEMP/personal-node-signing.keychain-db" || true

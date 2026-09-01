@@ -63,12 +63,7 @@ function emptyRegistry () {
 export async function loadRegistry (path) {
   try {
     const raw = await _fs.readFile(path, 'utf8')
-    const parsed = JSON.parse(raw)
-    return {
-      version: parsed.version || SCHEMA_VERSION,
-      approved: parsed.approved || {},
-      denied: parsed.denied || {}
-    }
+    return validateRegistry(JSON.parse(raw))
   } catch (err) {
     if (err && (err.code === 'ENOENT' || err.code === 'ENOTDIR')) {
       return emptyRegistry()
@@ -80,14 +75,55 @@ export async function loadRegistry (path) {
 // Atomic write: stage to `<path>.tmp`, then rename. Avoids leaving a
 // half-written registry if the worker is killed mid-save.
 export async function saveRegistry (path, data) {
+  const registry = validateRegistry(data)
   const payload = JSON.stringify({
     version: SCHEMA_VERSION,
-    approved: data.approved || {},
-    denied: data.denied || {}
+    approved: registry.approved,
+    denied: registry.denied
   }, null, 2)
-  const tmp = `${path}.tmp`
-  await _fs.writeFile(tmp, payload, 'utf8')
-  await _fs.rename(tmp, path)
+  const tmp = `${path}.${Date.now()}-${Math.random().toString(16).slice(2)}.tmp`
+  try {
+    await _fs.writeFile(tmp, payload, { encoding: 'utf8', mode: 0o600, flag: 'wx' })
+    await _fs.rename(tmp, path)
+  } catch (error) {
+    try { await _fs.unlink(tmp) } catch {}
+    throw error
+  }
+  return registry
+}
+
+export function validateRegistry (input) {
+  if (!isPlainObject(input)) throw new Error('Trust registry must be an object')
+  const version = input.version == null ? SCHEMA_VERSION : input.version
+  if (version !== SCHEMA_VERSION) throw new Error(`Unsupported trust registry version: ${version}`)
+  const approved = validateEntries(input.approved, 'approved')
+  const denied = validateEntries(input.denied, 'denied')
+  for (const publicKey of Object.keys(approved)) {
+    if (Object.hasOwn(denied, publicKey)) throw new Error(`Trust key cannot be both approved and denied: ${publicKey}`)
+  }
+  return { version: SCHEMA_VERSION, approved, denied }
+}
+
+function validateEntries (entries, field) {
+  if (entries == null) return {}
+  if (!isPlainObject(entries)) throw new Error(`Trust registry ${field} entries must be an object`)
+  const keys = Object.keys(entries)
+  if (keys.length > 10_000) throw new Error(`Trust registry contains too many ${field} entries`)
+  const result = {}
+  for (const publicKey of keys) {
+    if (!/^[A-Za-z0-9_-]{1,256}$/.test(publicKey) || ['__proto__', 'prototype', 'constructor'].includes(publicKey)) {
+      throw new Error(`Trust registry contains an invalid public key: ${publicKey}`)
+    }
+    if (!isPlainObject(entries[publicKey])) throw new Error(`Trust registry entry ${publicKey} must be an object`)
+    result[publicKey] = JSON.parse(JSON.stringify(entries[publicKey]))
+  }
+  return result
+}
+
+function isPlainObject (value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === Object.prototype || prototype === null
 }
 
 export async function recordApproval (path, publicKey, info) {

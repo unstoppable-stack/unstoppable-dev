@@ -1,12 +1,15 @@
-import { connectToNode as defaultConnectToNode } from '@unstoppable-stack/node-client'
+import { createNode as defaultCreateNode } from '@unstoppable-stack/node-core'
 import Hyperswarm from 'hyperswarm'
 
+// Connects a memory engine to whatever Personal Node is running on this
+// machine: discover it on the local topic, hand it a resource manifest, and
+// keep seeding the memory core so it has something to replicate.
 export async function connectMemoryToNode ({
   engine,
-  connectToNode = defaultConnectToNode,
+  storage,
+  createNode = defaultCreateNode,
   createSwarm = () => new Hyperswarm(),
   required = false,
-  reconnect = true,
   timeout = 5_000
 } = {}) {
   if (!engine || typeof engine.getNodeRegistration !== 'function') {
@@ -15,23 +18,61 @@ export async function connectMemoryToNode ({
 
   const registration = await engine.getNodeRegistration()
   let swarm = null
+  let node = null
+
   try {
     swarm = await serveMemoryCore(engine, createSwarm)
-    const client = await connectToNode({
-      appId: registration.appId,
-      appName: registration.appName,
-      cores: registration.cores || [],
-      drives: registration.drives || [],
-      requireServices: ['data'],
-      reconnect,
-      timeout
+
+    node = createNode({
+      storage: storage || registration.storage || './.unstoppable-memory-node',
+      profile: { appId: registration.appId, appName: registration.appName },
+      // This app hosts nothing; it only consumes the node's sync capability.
+      capabilities: [],
+      pairing: {}
     })
-    return withReplicationCleanup(client, swarm)
+    await node.ready()
+
+    const peer = await node.discover({ timeout, requested: { sync: ['manifest.replace', 'status', 'usage'] } })
+    await peer.call('sync', 'manifest.replace', {
+      manifest: toManifest(registration)
+    })
+
+    return withCleanup({ node, peer, swarm })
   } catch (err) {
+    if (node) await node.close().catch(() => {})
     if (swarm) await destroySwarm(swarm)
     if (!required) return null
     throw err
   }
+}
+
+// The 0.5 protocol took parallel `cores` and `drives` arrays; v2 takes one
+// manifest describing the complete set.
+export function toManifest (registration) {
+  const resources = []
+  for (const [index, core] of (registration.cores || []).entries()) {
+    resources.push({
+      id: core.name || `core-${index}`,
+      kind: core.type === 'hyperbee' ? 'hyperbee' : 'hypercore',
+      key: toHex(core.key),
+      name: core.name || `Core ${index}`,
+      protection: { mode: 'mirror' }
+    })
+  }
+  for (const [index, drive] of (registration.drives || []).entries()) {
+    resources.push({
+      id: drive.name || `drive-${index}`,
+      kind: 'hyperdrive',
+      key: toHex(drive.key),
+      name: drive.name || `Drive ${index}`,
+      protection: { mode: 'mirror' }
+    })
+  }
+  return { schemaVersion: 1, resources }
+}
+
+function toHex (key) {
+  return typeof key === 'string' ? key.toLowerCase() : Buffer.from(key).toString('hex')
 }
 
 async function serveMemoryCore (engine, createSwarm) {
@@ -49,12 +90,16 @@ async function serveMemoryCore (engine, createSwarm) {
   return swarm
 }
 
-function withReplicationCleanup (client, swarm) {
-  const originalClose = typeof client?.close === 'function' ? client.close.bind(client) : null
+function withCleanup ({ node, peer, swarm }) {
   return {
-    ...client,
+    node,
+    peer,
+    nodePublicKey: peer.publicKey,
+    getStatus: (opts) => peer.call('sync', 'status', {}, opts),
+    getUsage: (opts) => peer.call('sync', 'usage', {}, opts),
+    replaceManifest: (manifest, opts) => peer.call('sync', 'manifest.replace', { manifest }, opts),
     async close () {
-      if (originalClose) await originalClose()
+      await node.close().catch(() => {})
       await destroySwarm(swarm)
     }
   }

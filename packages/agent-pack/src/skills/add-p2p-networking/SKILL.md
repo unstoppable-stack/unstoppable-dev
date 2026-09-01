@@ -19,7 +19,7 @@ version: "2026-04-14"
 - Node.js, Bare, or Expo Bare runtime
 
 > **CRITICAL — Pear Desktop Apps:** Hyperswarm CANNOT run in the renderer.
-> It MUST run in a **worker process** via `pear-run`. See `setup-pear-desktop`.
+> It MUST run in a **Bare worker** started by embedded `pear-runtime`. See `setup-pear-desktop`.
 
 ## Included Components
 
@@ -80,8 +80,8 @@ Your project includes a battle-tested component in `src/p2p/`:
    // Node.js
    process.on('SIGINT', cleanup)
 
-   // Pear
-   Pear.teardown(cleanup)
+   // Pear OTA worker: invoke this from the host's explicit shutdown command,
+   // then call Bare.exit().
    ```
 
 ## Topic Design
@@ -135,7 +135,7 @@ mutual discovery. Use roles to decide who initiates RPC or replication.
 - **Never use random topics for reconnectable rooms** — `crypto.randomBytes(32)` means peers can never find each other again
 - **Don't skip `discovery.flushed()`** — without it, you may try to use connections before the DHT announcement completes
 - **Don't forget graceful shutdown** — call `swarm.destroy()` on exit or you'll leave ghost entries in the DHT
-- **Don't run Hyperswarm in the renderer** on Pear Desktop — it must run in a worker process via `pear-run`
+- **Don't run Hyperswarm in the renderer** on Pear Desktop — it must run in a Bare worker launched by `pear-runtime`
 
 ## Validation
 1. [ ] `npm i hyperswarm hypercore-crypto` completes without errors

@@ -25,7 +25,8 @@ describe('pear-desktop generator', () => {
         const files = fileMap(make(combo.features))
         expect(files['package.json']).toBeDefined()
         expect(files['index.html']).toBeDefined()
-        expect(files['index.js']).toBeDefined()
+        expect(files['electron/main.js']).toBeDefined()
+        expect(files['electron/preload.cjs']).toBeDefined()
         expect(files['worker.js']).toBeDefined()
         expect(files['app/bridge.js']).toBeDefined()
         expect(files['app/index.js']).toBeDefined()
@@ -50,24 +51,22 @@ describe('pear-desktop generator', () => {
         expect(pkg.dependencies).toBeDefined()
       })
 
-      it(`${combo.name}: has pear config with pre, routes, unrouted`, () => {
+      it(`${combo.name}: uses an Electron entrypoint with a Pear OTA upgrade link`, () => {
         const files = fileMap(make(combo.features))
         const pkg = JSON.parse(files['package.json'])
-        expect(pkg.pear).toBeDefined()
-        expect(pkg.pear.type).toBe('desktop')
-        expect(pkg.pear.pre).toBe('pear-electron/pre')
-        expect(pkg.pear.routes).toBe('.')
-        expect(pkg.pear.unrouted).toBeInstanceOf(Array)
-        expect(pkg.pear.unrouted.length).toBeGreaterThan(0)
-        expect(pkg.pear.gui).toBeDefined()
+        expect(pkg.main).toBe('electron/main.js')
+        expect(pkg.upgrade).toMatch(/^pear:\/\//)
+        expect(pkg.pear).toBeUndefined()
       })
 
-      it(`${combo.name}: includes pear-electron, pear-bridge, pear-run deps`, () => {
+      it(`${combo.name}: includes pear-runtime and Electron, without legacy runtime deps`, () => {
         const files = fileMap(make(combo.features))
         const pkg = JSON.parse(files['package.json'])
-        expect(pkg.dependencies['pear-electron']).toBeDefined()
-        expect(pkg.dependencies['pear-bridge']).toBeDefined()
-        expect(pkg.dependencies['pear-run']).toBeDefined()
+        expect(pkg.dependencies['pear-runtime']).toBeDefined()
+        expect(pkg.devDependencies.electron).toBeDefined()
+        expect(pkg.dependencies['pear-electron']).toBeUndefined()
+        expect(pkg.dependencies['pear-bridge']).toBeUndefined()
+        expect(pkg.dependencies['pear-run']).toBeUndefined()
       })
 
       it(`${combo.name}: includes base P2P + KV deps (always-on)`, () => {
@@ -79,41 +78,34 @@ describe('pear-desktop generator', () => {
         expect(pkg.dependencies['hypercore-crypto']).toBeDefined()
       })
 
-      it(`${combo.name}: dev script uses -d flag (not --dev)`, () => {
+      it(`${combo.name}: dev script launches Electron directly`, () => {
         const files = fileMap(make(combo.features))
         const pkg = JSON.parse(files['package.json'])
-        expect(pkg.scripts.dev).toContain('-d')
-        expect(pkg.scripts.dev).not.toContain('--dev')
+        expect(pkg.scripts.dev).toBe('electron .')
+        expect(pkg.scripts.dev).not.toContain('pear run')
       })
     }
   })
 
-  describe('index.js uses pear-electron + pear-bridge (not Pear.worker.run)', () => {
-    it('imports pear-electron and pear-bridge', () => {
+  describe('Electron main process embeds pear-runtime', () => {
+    it('imports pear-runtime and launches the Bare worker', () => {
       const files = fileMap(make())
-      const indexJs = files['index.js']
-      expect(indexJs).toContain("import Runtime from 'pear-electron'")
-      expect(indexJs).toContain("import Bridge from 'pear-bridge'")
+      const main = files['electron/main.js']
+      expect(main).toContain("import PearRuntime from 'pear-runtime'")
+      expect(main).toContain('runtime.run(')
     })
 
-    it('does NOT use Pear.worker.run', () => {
+    it('does not use the removed global Pear API', () => {
       const files = fileMap(make())
-      expect(files['index.js']).not.toContain('Pear.worker.run')
+      expect(files['electron/main.js']).not.toContain('Pear.worker')
+      expect(files['electron/main.js']).not.toContain('Pear.teardown')
     })
 
-    it('does NOT reference window', () => {
+    it('uses a sandboxed, context-isolated renderer', () => {
       const files = fileMap(make())
-      expect(files['index.js']).not.toContain('window')
-    })
-
-    it('creates bridge with waypoint to index.html', () => {
-      const files = fileMap(make())
-      expect(files['index.js']).toContain("new Bridge({ waypoint: '/index.html' })")
-    })
-
-    it('sets up teardown', () => {
-      const files = fileMap(make())
-      expect(files['index.js']).toContain('Pear.teardown')
+      expect(files['electron/main.js']).toContain('contextIsolation: true')
+      expect(files['electron/main.js']).toContain('nodeIntegration: false')
+      expect(files['electron/main.js']).toContain('sandbox: true')
     })
   })
 
@@ -162,9 +154,10 @@ describe('pear-desktop generator', () => {
       expect(worker).not.toContain('@qvac/sdk')
     })
 
-    it('uses Pear.worker.pipe() for communication', () => {
+    it('uses Bare.IPC for communication', () => {
       const files = fileMap(make())
-      expect(files['worker.js']).toContain('Pear.worker.pipe()')
+      expect(files['worker.js']).toContain('Bare.IPC')
+      expect(files['worker.js']).not.toContain('Pear.worker.pipe()')
     })
 
     it('sends workerReady before slow init', () => {
@@ -176,10 +169,11 @@ describe('pear-desktop generator', () => {
     })
   })
 
-  describe('app/bridge.js uses pear-run', () => {
-    it('imports pear-run', () => {
+  describe('renderer bridge uses the context-isolated preload API', () => {
+    it('uses window.unstoppable', () => {
       const files = fileMap(make())
-      expect(files['app/bridge.js']).toContain("import run from 'pear-run'")
+      expect(files['app/bridge.js']).toContain('window.unstoppable')
+      expect(files['electron/preload.cjs']).toContain('contextBridge.exposeInMainWorld')
     })
 
     it('does NOT use Pear.worker.run', () => {
@@ -204,15 +198,10 @@ describe('pear-desktop generator', () => {
     })
   })
 
-  describe('index.html has pear-ctrl', () => {
-    it('includes <pear-ctrl> element', () => {
+  describe('index.html uses the native Electron window frame', () => {
+    it('does not include the legacy pear-ctrl element', () => {
       const files = fileMap(make())
-      expect(files['index.html']).toContain('<pear-ctrl>')
-    })
-
-    it('has draggable title bar', () => {
-      const files = fileMap(make())
-      expect(files['index.html']).toContain('-webkit-app-region: drag')
+      expect(files['index.html']).not.toContain('<pear-ctrl>')
     })
 
     it('loads app/index.js', () => {
@@ -275,9 +264,7 @@ describe('pear-desktop generator', () => {
       const depKeys = Object.keys(pkg.dependencies)
       expect(depKeys).toEqual(
         expect.arrayContaining([
-          'pear-electron',
-          'pear-bridge',
-          'pear-run',
+          'pear-runtime',
           'bare-rpc',
           'hyperswarm',
           'corestore',
@@ -297,16 +284,17 @@ describe('pear-desktop generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('adds @unstoppable-stack/node-client dependency', () => {
+    it('adds @unstoppable-stack/node-core dependency', () => {
       const files = fileMap(make(['node-sync']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
     })
 
-    it('wires connectToNode into the worker after db.ready()', () => {
+    it('wires node discovery into the worker after db.ready()', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain("from '@unstoppable-stack/node-client'")
-      expect(worker).toContain('connectToNode(')
+      expect(worker).toContain("from '@unstoppable-stack/node-core'")
+      expect(worker).toContain('createNode(')
+      expect(worker).toContain('discover(')
       expect(worker).toContain("service: 'node-sync'")
       expect(worker).toContain('main-db')
       // Must fall back gracefully when the node is unavailable
@@ -320,16 +308,16 @@ describe('pear-desktop generator', () => {
       expect(app).toContain("msg.service === 'node-sync'")
     })
 
-    it('closes the client on shutdown', () => {
+    it('closes the app node on shutdown', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain('nodeClient.close()')
+      expect(worker).toContain('appNode.close()')
     })
 
-    it('bare variant does not include node-client', () => {
+    it('bare variant does not include node-core', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeUndefined()
-      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-client')
+      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-core')
     })
   })
 
@@ -369,11 +357,9 @@ describe('pear-desktop generator', () => {
       expect(app).toContain('data-testid="mesh-add-writer-btn"')
     })
 
-    it('unroutes the store and schema so the worker can load them', () => {
+    it('does not emit legacy pear routing configuration', () => {
       const pkg = JSON.parse(fileMap(make(['multi-writer']))['package.json'])
-      expect(pkg.pear.unrouted).toContain('/worker.js')
-      expect(pkg.pear.unrouted).toContain('/multi-writer-store.js')
-      expect(pkg.pear.unrouted).toContain('/schema')
+      expect(pkg.pear).toBeUndefined()
     })
 
     it('builds the spec on install and closes the store on shutdown', () => {

@@ -95,18 +95,20 @@ describe('node-cli generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('generates node-sync.ts that calls connectToNode', () => {
+    it('generates node-sync.ts that discovers the node and registers a manifest', () => {
       const files = fileMap(make(['node-sync']))
       const sync = files['src/node-sync.ts']
       expect(sync).toBeDefined()
-      expect(sync).toContain("from '@unstoppable-stack/node-client'")
-      expect(sync).toContain('connectToNode')
+      expect(sync).toContain("from '@unstoppable-stack/node-core'")
+      expect(sync).toContain('createNode(')
+      expect(sync).toContain('discover(')
+      expect(sync).toContain("'manifest.replace'")
       expect(sync).toContain('db.core.key')
     })
 
-    it('includes @unstoppable-stack/node-client dependency', () => {
+    it('includes @unstoppable-stack/node-core dependency', () => {
       const pkg = JSON.parse(fileMap(make(['node-sync']))['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-client']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
     })
 
     it('entry point imports setupNodeSync', () => {
@@ -115,9 +117,9 @@ describe('node-cli generator', () => {
       expect(entry).toContain('nodeSync.close()')
     })
 
-    it('type declarations include @unstoppable-stack/node-client', () => {
+    it('type declarations include @unstoppable-stack/node-core', () => {
       const decls = fileMap(make(['node-sync']))['src/types.d.ts']
-      expect(decls).toContain("declare module '@unstoppable-stack/node-client'")
+      expect(decls).toContain("declare module '@unstoppable-stack/node-core'")
     })
 
     it('README explains how to run unstoppable-node', () => {
@@ -212,5 +214,52 @@ describe('node-cli generator', () => {
       expect(decls).toContain("declare module 'autobee'")
       expect(decls).toContain("declare module '*/schema/spec/app/index.js'")
     })
+  })
+})
+
+describe('node-cli generator — node-host', () => {
+  const make = (features: Feature[]) =>
+    generateNodeCli({ projectName: 'host-app', platform: 'node-cli', features })
+  const fileMap = (files: ReturnType<typeof make>) =>
+    Object.fromEntries(files.map((f) => [f.path, f.content]))
+
+  it('emits a capability pack the app hosts itself', () => {
+    const host = fileMap(make(['node-host']))['src/node-host.ts']
+    expect(host).toBeDefined()
+    expect(host).toContain("from '@unstoppable-stack/node-core'")
+    expect(host).toContain('createNode(')
+    expect(host).toContain('capabilities: [')
+    expect(host).toContain('defaultGrants')
+  })
+
+  it('exposes both a unary and a streaming method', () => {
+    const host = fileMap(make(['node-host']))['src/node-host.ts']
+    expect(host).toContain('async list(')
+    expect(host).toContain('async *watch(')
+    expect(host).toContain('ctx.signal.aborted')
+  })
+
+  it('listens and can mint a pairing code', () => {
+    const host = fileMap(make(['node-host']))['src/node-host.ts']
+    expect(host).toContain('node.listen()')
+    expect(host).toContain('createInvite(')
+  })
+
+  it('adds the node-core dependency', () => {
+    const pkg = JSON.parse(fileMap(make(['node-host']))['package.json'])
+    expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
+  })
+
+  it('is absent without the flag', () => {
+    const files = fileMap(make([]))
+    expect(files['src/node-host.ts']).toBeUndefined()
+    expect(JSON.parse(files['package.json']).dependencies['@unstoppable-stack/node-core']).toBeUndefined()
+  })
+
+  // node-sync consumes a node; node-host is one. They compose.
+  it('coexists with node-sync', () => {
+    const files = fileMap(make(['node-sync', 'node-host']))
+    expect(files['src/node-host.ts']).toBeDefined()
+    expect(files['src/node-sync.ts']).toBeDefined()
   })
 })

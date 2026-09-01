@@ -207,11 +207,10 @@ function checkPrereqs(platform: Platform, level: number, deviceMode: boolean = f
     if (level >= 5) exec('maestro --version', { timeout: 10_000 })
   }
   if (platform === 'pear-desktop') {
-    if (level >= 4) exec('which pear', { timeout: 5000 })
     if (level >= 5) {
       // Playwright ships as an npm dep of the CLI package so we can run
       // `npx playwright --version` from inside `packages/cli/`. Fail early
-      // with an actionable hint rather than waiting for `pear run` to spawn.
+      // with an actionable hint rather than waiting for Electron to spawn.
       try {
         exec('npx --no-install playwright --version', {
           cwd: CLI_ROOT,
@@ -282,7 +281,8 @@ function killMetro(proc: ChildProcess) {
 const DESKTOP_REQUIRED_FILES = [
   'package.json',
   'index.html',
-  'index.js',
+  'electron/main.js',
+  'electron/preload.cjs',
   'worker.js',
   'app/bridge.js',
   'app/index.js',
@@ -295,8 +295,11 @@ function checkDesktopFiles(projectDir: string, features: string[]) {
   }
 
   const pkg = JSON.parse(readFileSync(join(projectDir, 'package.json'), 'utf8'))
-  if (!pkg.pear) throw new Error('package.json missing "pear" field')
-  if (pkg.pear.type !== 'desktop') throw new Error('pear.type should be "desktop"')
+  if (pkg.main !== 'electron/main.js') throw new Error('package.json missing Electron main entry')
+  if (!pkg.dependencies?.['pear-runtime']) throw new Error('package.json missing pear-runtime')
+  if (pkg.dependencies?.['pear-electron'] || pkg.dependencies?.['pear-run']) {
+    throw new Error('package.json still includes legacy Pear runtime dependencies')
+  }
 
   // Base infra — always present
   const worker = readFileSync(join(projectDir, 'worker.js'), 'utf8')
@@ -340,7 +343,7 @@ function checkDesktopFiles(projectDir: string, features: string[]) {
 // ---------------------------------------------------------------------------
 // Pear Desktop: worker spawn test (Level 4)
 //
-// Spawns `worker.js` via the harness with a fake Pear global, sends commands
+// Spawns `worker.js` via the harness with a fake Bare global, sends commands
 // over stdin as NDJSON, reads responses from stdout, asserts expected events.
 // ---------------------------------------------------------------------------
 
@@ -519,10 +522,10 @@ async function runWorkerSpawnTest(projectDir: string, features: string[]): Promi
 // Pear Desktop: launch app with Playwright attached via CDP (Level 5)
 // ---------------------------------------------------------------------------
 //
-// Pear Desktop runs Chromium under the hood (via pear-electron), so we can
+// Electron exposes Chromium's remote debugging endpoint, so we can
 // pass `--remote-debugging-port` and have Playwright connect over CDP —
 // same trick the qvac-workbench-desktop reference app uses for its own
-// test suite. We spawn `pear run --dev`, drive the resulting window, and
+// test suite. We spawn the generated Electron app, drive its window, and
 // tear everything down on exit (including the detached process group).
 
 async function runPearPlaywrightTest(
@@ -538,14 +541,11 @@ async function runPearPlaywrightTest(
   // Bind-once on a random high port to avoid collisions across repeat runs.
   const port = 10_000 + Math.floor(Math.random() * 50_000)
 
-  // `--no-sandbox` is required when running CI in rootless containers;
-  // harmless on a dev mac. `--dev` enables devtools which is a no-op here
-  // since we're driving via CDP but also ensures a stable window boot.
+  // `--no-sandbox` is required when running CI in rootless containers.
+  const electron = join(projectDir, 'node_modules', '.bin', 'electron')
   const proc = spawn(
-    'pear',
+    electron,
     [
-      'run',
-      '--dev',
       '.',
       `--remote-debugging-port=${port}`,
       '--no-sandbox',
@@ -558,7 +558,7 @@ async function runPearPlaywrightTest(
   )
 
   // Keep a tail of both streams so failures can point at real causes.
-  // Pear writes useful boot diagnostics to stdout (sidecar handshake,
+  // Electron and pear-runtime write useful boot diagnostics to stdout (sidecar handshake,
   // module resolution) and runtime errors to stderr.
   let stdoutTail = ''
   let stderrTail = ''
@@ -572,7 +572,7 @@ async function runPearPlaywrightTest(
   })
 
   // Connect to the CDP endpoint with polling. Pear takes a variable
-  // amount of time to boot pear-electron and then Chromium — cold-launch
+  // amount of time to boot Electron and pear-runtime — cold-launch
   // on a loaded machine with big dep sets (local-ai+wallet) can easily
   // blow past 15s. We poll on 1s intervals up to 60s so no variant times
   // out for benign boot-time reasons; real failures surface by showing
@@ -589,9 +589,9 @@ async function runPearPlaywrightTest(
       }
     }
     throw new Error(
-      `Failed to connect Playwright to Pear on port ${port} within 60s\n` +
-        `pear stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
-        `pear stderr (last 4KB):\n${stderrTail || '(empty)'}\n` +
+      `Failed to connect Playwright to Electron on port ${port} within 60s\n` +
+        `app stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
+        `app stderr (last 4KB):\n${stderrTail || '(empty)'}\n` +
         `original error: ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`,
     )
   }
@@ -1112,9 +1112,7 @@ async function testDesktopVariant(
   }
 
   // Level 5: launch the real Pear app and drive its UI with Playwright.
-  // Pear runs Chromium under the hood (via pear-electron), which Playwright
-  // can attach to over CDP if we pass `--remote-debugging-port`. Same
-  // recipe as reference-apps/qvac-workbench-desktop/tests/e2e/fixtures.
+  // Electron exposes Chromium over CDP when passed `--remote-debugging-port`.
   if (!aborted && opts.level >= 5) {
     push(
       await runStep('playwright: feature UI test', async () => {

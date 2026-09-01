@@ -7,8 +7,9 @@ alwaysApply: true
 
 ## How Modules Fit Together
 
-- Pear is the app runtime and distribution layer; it runs desktop/terminal apps
-  from `pear://` links and handles staging, seeding, and releases.
+- Pear OTA (`pear-runtime`) is embedded in a standard desktop host and supplies
+  P2P updates, application storage, and Bare workers. The Pear CLI handles
+  build, staging, provisioning, installation, and multisig releases.
 - Bare is the low-level JS runtime used by Pear and on mobile worklets.
 - Hyperswarm (over HyperDHT) discovers peers by topic and provides encrypted
   streams.
@@ -44,8 +45,8 @@ Local-first Storage
   them as secrets.
 - Encrypted transport: Hyperswarm connections are Noise-encrypted; use
   `@hyperswarm/secret-stream` for app-level protocols.
-- Trust prompts: Pear prompts on unknown `pear://` links; document and gate user
-  trust.
+- Installed P2P applications are addressed by `pear://` links; document the
+  expected link and signer trust model.
 - Secrets at rest: store wallet seeds and auth tokens in OS keychains or secure
   stores.
 - Delegate boundaries: if using delegated inference, scope providers to explicit
@@ -78,9 +79,9 @@ Local-first Storage
 ## Example Architectures
 
 1. Pear Desktop LLM App
-   - UI: Pear desktop app
-   - Engine: Pear terminal app running QVAC
-   - Bridge: `pear-run` + `pear-pipe` streaming tokens
+   - UI: Electron renderer
+   - Engine: Bare worker launched by `pear-runtime`
+   - Bridge: Electron preload IPC + `Bare.IPC` streaming tokens
 
 2. P2P Sync App (Desktop/Terminal)
    - Networking: Hyperswarm topic per workspace

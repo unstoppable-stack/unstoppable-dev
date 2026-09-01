@@ -7,8 +7,8 @@
 //   1. Stand up a Hyperbee, write a few entries, announce its core on
 //      the replication DHT (so the Node can fetch the bytes — the
 //      handshake alone is not enough).
-//   2. Pair with the Node via @unstoppable/node-client and register
-//      the bee for replication.
+//   2. Pair with the Node via @unstoppable-stack/node-core (discover the
+//      machine-local topic, then hand it a resource manifest).
 //   3. Stream a one-shot prompt through the Node's AI provider
 //      (requires the node to be started with --ai-mock or --ai).
 //
@@ -28,7 +28,7 @@ import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import Hyperswarm from 'hyperswarm'
 import b4a from 'b4a'
-import { connectToNode } from '@unstoppable/node-client'
+import { createNode } from '@unstoppable-stack/node-core'
 
 const args = new Set(process.argv.slice(2))
 const STORE_ONLY = args.has('--store-only')
@@ -60,7 +60,7 @@ console.log()
 let store
 let bee
 let swarm
-let client
+let appNode
 let exitCode = 0
 
 try {
@@ -101,24 +101,36 @@ try {
   // --------------------------------------------------------------------
   log('section', 'Phase 2 — pair with the Node')
 
-  const cores = DO_STORE
-    ? [{ key: bee.core.key, type: 'hyperbee', name: 'notes' }]
-    : []
-
-  const requireServices = DO_INFER ? ['ai'] : []
-
   const t0 = Date.now()
-  client = await connectToNode({
-    appId: APP_ID,
-    appName: APP_NAME,
-    cores,
-    requireServices,
-    timeout: PAIR_TIMEOUT_MS
+  appNode = createNode({
+    storage: STORAGE + '/app-node',
+    profile: { appId: APP_ID, appName: APP_NAME },
+    capabilities: []
   })
+  await appNode.ready()
+
+  // Finds the Personal Node on this machine (or the topic UNSTOPPABLE_NODE_TOPIC
+  // points at, which is how the smoke harness isolates itself).
+  const peer = await appNode.discover({ timeout: PAIR_TIMEOUT_MS })
   log('ok', `paired in ${Date.now() - t0}ms`)
-  log('info', `node key: ${client.nodePublicKey.slice(0, 16)}…`)
-  log('info', `services: data=${!!client.services?.data} files=${!!client.services?.files} ai=${!!client.services?.ai}`)
-  if (DO_STORE) log('info', `registered core: notes (${b4a.toString(bee.core.key, 'hex').slice(0, 12)}…)`)
+  log('info', `node key: ${peer.publicKey.slice(0, 16)}…`)
+  log('info', `capabilities: ${Object.keys(peer.capabilities).join(', ') || '(none)'}`)
+
+  if (DO_STORE) {
+    await peer.call('sync', 'manifest.replace', {
+      manifest: {
+        schemaVersion: 1,
+        resources: [{
+          id: 'notes',
+          kind: 'hyperbee',
+          key: b4a.toString(bee.core.key, 'hex'),
+          name: 'Notes',
+          protection: { mode: 'mirror' }
+        }]
+      }
+    })
+    log('info', `registered core: notes (${b4a.toString(bee.core.key, 'hex').slice(0, 12)}…)`)
+  }
   console.log()
 
   // --------------------------------------------------------------------
@@ -127,8 +139,8 @@ try {
   if (DO_INFER) {
     log('section', 'Phase 3 — remote inference')
 
-    if (!client.services?.ai) {
-      log('fail', 'node does not advertise services.ai — start it with --ai-mock or --ai')
+    if (!peer.capabilities?.ai) {
+      log('fail', 'node does not advertise the ai capability — start it with --ai-mock or --ai')
       exitCode = 1
     } else {
       log('info', `prompt: "${PROMPT}"`)
@@ -142,7 +154,7 @@ try {
       }, INFER_TIMEOUT_MS)
 
       try {
-        for await (const token of client.requestInference({
+        for await (const token of peer.stream('ai', 'completion.stream', {
           messages: [{ role: 'user', content: PROMPT }]
         })) {
           tokenCount++
@@ -173,7 +185,7 @@ try {
   log('fail', err.message)
   exitCode = 1
 } finally {
-  if (client) await client.close().catch(() => {})
+  if (appNode) await appNode.close().catch(() => {})
   if (swarm) await swarm.destroy().catch(() => {})
   if (store) await store.close().catch(() => {})
   console.log()

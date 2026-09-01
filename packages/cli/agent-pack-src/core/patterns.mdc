@@ -14,9 +14,11 @@ For desktop apps with React UI + Bare worker for P2P/AI/storage:
 
 ```
 my-desktop-app/
-├── index.js              # Pear native entry (pear-electron + pear-bridge)
-├── index.html            # Web entry (pear-ctrl + script tag)
-├── package.json          # pear config with unrouted for workers
+├── index.html            # Renderer entry
+├── package.json          # Electron entry + Pear OTA upgrade link
+├── electron/
+│   ├── main.js           # Electron host + pear-runtime
+│   └── preload.cjs       # Context-isolated renderer API
 ├── .swcrc / .swcrc.dev   # SWC configs
 ├── worker/
 │   └── index.ts          # Bare worker (P2P, storage, AI)
@@ -41,25 +43,17 @@ my-desktop-app/
   "name": "my-desktop-app",
   "version": "0.1.0",
   "type": "module",
-  "pear": {
-    "name": "my-desktop-app",
-    "type": "desktop",
-    "pre": "pear-electron/pre",
-    "routes": ".",
-    "unrouted": ["/dist/worker/index.js"],
-    "gui": { "width": 1024, "height": 768, "backgroundColor": "#171817" }
-  },
+  "main": "electron/main.js",
+  "upgrade": "pear://<VALID_DEVELOPMENT_LINK>",
   "scripts": {
-    "dev": "bun run build && concurrently \"npm:watch:src\" \"npm:watch:worker\" \"pear run -d .\"",
+    "dev": "electron .",
     "build": "bun run clean && bunx swc src -d dist --source-maps && bunx swc worker -d dist --source-maps",
     "watch:src": "bunx swc src -d dist --source-maps --watch --config-file .swcrc.dev",
     "watch:worker": "bunx swc worker -d dist --source-maps --watch",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "pear-electron": "^1.7.0",
-    "pear-bridge": "^1.2.4",
-    "pear-run": "^1.0.7",
+    "pear-runtime": "^1.3.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "styled-components": "^6.1.0"
@@ -69,8 +63,7 @@ my-desktop-app/
     "@swc/core": "^1.3.0",
     "chokidar": "^4.0.3",
     "concurrently": "^9.0.0",
-    "pear-hotmods": "^1.0.0",
-    "pear-interface": "^1.0.0",
+    "electron": "^40.2.1",
     "react-refresh": "^0.17.0",
     "typescript": "^5.0.0"
   }
@@ -341,9 +334,9 @@ For apps with UI + heavy backend (P2P, AI inference, storage):
 
 ```
 my-app/
-├── index.js                 # Pear native entry (pear-electron + pear-bridge)
 ├── index.html               # Web entry
-├── package.json             # Single package, pear.unrouted for worker
+├── package.json             # Electron + Pear OTA configuration
+├── electron/                # Main process and sandboxed preload
 ├── worker/
 │   └── index.ts             # Bare worker (P2P, AI, storage)
 ├── src/
@@ -356,8 +349,9 @@ my-app/
 └── dist/
 ```
 
-**Communication:** Worker started via `pear-run`, communicates with UI via
-NDJSON over `Pear.worker.pipe()`. See `setup-pear-desktop` skill →
+**Communication:** The Electron host starts the worker through `pear-runtime`.
+The worker communicates over `Bare.IPC`, bridged to the renderer via a narrow
+preload API. See `setup-pear-desktop` skill →
 `resources/worker-pattern.md` for full implementation.
 
 ### Monorepo with Workspaces
@@ -694,24 +688,24 @@ await store.update(s => ({ ...s, user: 'alice' }))
 
 ## Graceful Shutdown Pattern
 
-### In Pear Apps (desktop workers and terminal apps)
+### In Pear OTA desktop workers
 
-Use `Pear.teardown()` — NOT `process.on('SIGINT')` (which requires `bare-process`):
+The Electron host sends an explicit shutdown command. Close resources in the
+Bare worker and finish with `Bare.exit()`:
 
 ```typescript
-// worker/index.ts or index.js (Pear app)
-declare const Pear: { teardown(fn: () => Promise<void>): void }
+// worker/index.ts or worker.js
 
 async function main() {
   const swarm = new Hyperswarm()
   const core = new Hypercore('./storage')
 
-  // Register cleanup with Pear lifecycle
-  Pear.teardown(async () => {
+  async function cleanup() {
     console.log('Shutting down...')
     await swarm.destroy()
     await core.close()
-  })
+    Bare.exit()
+  }
 }
 ```
 

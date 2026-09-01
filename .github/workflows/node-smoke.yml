@@ -5,7 +5,9 @@ on:
     branches: [main]
     paths:
       - 'packages/node/**'
-      - 'packages/node-client/**'
+      - 'packages/node-core/**'
+      - 'packages/node-caps-sync/**'
+      - 'packages/node-caps-ai/**'
       - 'packages/node-desktop/**'
       - 'sandbox/node-demo/**'
       - '.github/workflows/node-smoke.yml'
@@ -13,7 +15,9 @@ on:
     branches: [main]
     paths:
       - 'packages/node/**'
-      - 'packages/node-client/**'
+      - 'packages/node-core/**'
+      - 'packages/node-caps-sync/**'
+      - 'packages/node-caps-ai/**'
       - 'packages/node-desktop/**'
       - 'sandbox/node-demo/**'
       - '.github/workflows/node-smoke.yml'
@@ -38,8 +42,19 @@ jobs:
         working-directory: packages/node
         run: npm install
 
-      - name: Install node-client package deps
-        working-directory: packages/node-client
+      - name: Install node-core package deps
+        working-directory: packages/node-core
+        run: npm install
+
+      # The packs are file:-linked into the node/desktop trees, and Node
+      # resolves a symlinked dependency's imports from its real path — so
+      # each pack needs its own node_modules.
+      - name: Install node-caps-sync package deps
+        working-directory: packages/node-caps-sync
+        run: npm install
+
+      - name: Install node-caps-ai package deps
+        working-directory: packages/node-caps-ai
         run: npm install
 
       - name: Install node-desktop package deps

@@ -64,8 +64,8 @@ model: fast  # Use the cheapest/fastest model — exploration is high-volume
 
 ```
 Explore the codebase to understand how worker communication works
-in Pear Desktop apps. Find all files that use Pear.worker.pipe()
-or pear-run, and summarize the message flow.
+in Pear Desktop apps. Find all files that use Bare.IPC, pear-runtime,
+or the Electron preload bridge, and summarize the message flow.
 ```
 
 ## Pattern 2: Implementation Planner

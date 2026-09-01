@@ -20,8 +20,15 @@
 // keyed by `publicKey`, so a malicious app can't silently re-pair
 // after being revoked.
 
-import { EventEmitter } from 'bare-events'
-import { loadRegistry, saveRegistry, recordApproval, recordDenial, decisionFor } from './registry.js'
+import { loadRegistry, saveRegistry, recordApproval, recordDenial, decisionFor, validateRegistry } from './registry.js'
+
+// The approval gate is shared by the Bare sidecar and Node-based integration
+// tests. Resolve the emitter from the active runtime so importing this module
+// does not require node-desktop's dependencies to be installed beside a
+// standalone unstoppable-node checkout.
+const { EventEmitter } = typeof globalThis.Bare !== 'undefined'
+  ? await import('bare-events')
+  : await import('node:events')
 
 export class ApprovalGate extends EventEmitter {
   constructor ({ registryPath }) {
@@ -152,6 +159,15 @@ export class ApprovalGate extends EventEmitter {
     delete this._cache.denied[publicKey]
     await saveRegistry(this.registryPath, this._cache)
     this.emit('forgot', { publicKey })
+  }
+
+  async importSnapshot (snapshot) {
+    await this.ready()
+    const imported = validateRegistry(snapshot)
+    this._cache = imported
+    await saveRegistry(this.registryPath, this._cache)
+    this.emit('imported', this.snapshot())
+    return this.snapshot()
   }
 
   listPending () {

@@ -11,9 +11,8 @@ Bare is a small, modular JavaScript runtime for desktop and mobile. It provides
 V8 bindings via libjs and async I/O via libuv. Unlike Node.js, Bare has a
 **minimal core** — most APIs come from installable `bare-*` npm packages.
 
-Pear uses Bare as its underlying runtime. When you run `pear run`, your code
-executes in the Bare runtime. Desktop app **workers** (started via `pear-run`)
-also run in Bare.
+Pear OTA uses Bare for embedded desktop workers. Those workers are started by
+`pear-runtime`; mobile worklets are hosted by Bare Kit.
 
 ## Version Notes
 

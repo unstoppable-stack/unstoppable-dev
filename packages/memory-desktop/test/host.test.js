@@ -62,7 +62,18 @@ describe('memory desktop host', () => {
       storagePath: dir,
       mcpPort: 0,
       send: (msg) => messages.push(msg),
-      connectToNode: async () => ({ services: { data: true }, close: async () => {} })
+      // A stand-in for node-core: discover() finds a peer, and the peer
+      // accepts the sync manifest the memory engine registers.
+      createNode: () => ({
+        async ready () {},
+        async discover () {
+          return {
+            publicKey: 'a'.repeat(64),
+            async call () { return { ok: true } }
+          }
+        },
+        async close () {}
+      })
     })
 
     await host.start()

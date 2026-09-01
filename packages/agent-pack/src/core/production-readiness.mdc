@@ -10,10 +10,10 @@ This checklist is based on patterns observed in existing apps:
 - QVAC Health mobile app: Bare bundle build, foreground download service, background tasks, limited hot reload, Maestro tests.
 
 ## Build and Release (Pear Desktop)
-- Stage backend engine first; update `pear.links.worker` in the UI package.
-- Use `pear stage production` and `pear release production` for stable builds.
-- Seed production channel during rollout (`pear seed production`).
-- Document trust prompts for `pear run` on new machines.
+- Package and vendor-sign Electron builds for each target OS.
+- Assemble the multi-architecture deployment directory with `pear build`.
+- Use `pear stage` for previews, then `pear provision` and `pear multisig` for production.
+- Test installation and OTA updates against the exact production `upgrade` link.
 
 ## Mobile Packaging (Expo + Bare)
 - Bundle Bare backend with `bare-pack --host ios --host android --linked` (bare-pack 2.x; `--target` was removed in 2.0.0).
@@ -22,7 +22,7 @@ This checklist is based on patterns observed in existing apps:
 - For Android downloads, use a foreground service with progress notifications.
 
 ## Testing Strategy
-- Desktop: Playwright E2E tests over Pear CDP; seed model downloads in setup.
+- Desktop: Playwright E2E tests over Electron CDP; seed model downloads in setup.
 - Mobile: Maestro flows for critical UI; background tasks tested for persistence.
 - Avoid exact LLM text matches; test structure, length, and token limits.
 

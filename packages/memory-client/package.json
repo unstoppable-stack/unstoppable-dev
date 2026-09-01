@@ -20,8 +20,8 @@
     "test": "node --test --test-force-exit test/*.test.js"
   },
   "dependencies": {
-    "@unstoppable-stack/node-client": "file:../node-client",
-    "hyperswarm": "^4.17.0"
+    "hyperswarm": "^4.17.0",
+    "@unstoppable-stack/node-core": "file:../node-core"
   },
   "license": "MIT"
 }

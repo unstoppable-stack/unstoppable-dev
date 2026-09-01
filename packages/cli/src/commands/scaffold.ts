@@ -114,7 +114,7 @@ function getNextSteps(platform: Platform): string[] {
       steps.push('npm run dev')
       break
     case 'pear-desktop':
-      steps.push('pear run -d .')
+      steps.push('npm run dev')
       break
     case 'expo-mobile':
       steps.push('npm run ios  # or: npm run android')

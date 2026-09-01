@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises'
+import { mkdtemp, rm, readFile, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -49,6 +49,7 @@ describe('lib/registry', () => {
     const raw = await readFile(path, 'utf8')
     const parsed = JSON.parse(raw) // would throw if a partial write was visible
     assert.equal(parsed.approved.k.appId, 'a')
+    if (process.platform !== 'win32') assert.equal((await stat(path)).mode & 0o077, 0)
   })
 
   it('recordApproval moves a key from denied → approved', async () => {
@@ -95,5 +96,20 @@ describe('lib/registry', () => {
   it('survives a corrupted file by throwing (not silently resetting)', async () => {
     await writeFile(path, '{not json', 'utf8')
     await assert.rejects(loadRegistry(path), /JSON|Unexpected/i)
+  })
+
+  it('rejects future versions, conflicting decisions, and unsafe keys', async () => {
+    await writeFile(path, JSON.stringify({ version: 2, approved: {}, denied: {} }))
+    await assert.rejects(loadRegistry(path), /Unsupported trust registry version/)
+
+    await assert.rejects(saveRegistry(path, {
+      approved: { same: { appId: 'a' } },
+      denied: { same: { appId: 'a' } }
+    }), /both approved and denied/)
+
+    await assert.rejects(saveRegistry(path, {
+      approved: JSON.parse('{"__proto__":{"appId":"a"}}'),
+      denied: {}
+    }), /invalid public key/)
   })
 })

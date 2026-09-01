@@ -64,13 +64,14 @@ step "Packing launch packages"
 # `npm pack` honors each package's prepack (the CLI rebuilds the minimal
 # profile), so tarballs reflect exactly what would be published.
 if [ "${SKIP_PACK:-0}" = "1" ]; then
-  for glob in unstoppable-stack-node-client unstoppable-node unstoppable-stack-cli; do
+  for glob in unstoppable-stack-node-core unstoppable-stack-node-caps-sync \
+              unstoppable-stack-node-caps-ai unstoppable-node unstoppable-stack-cli; do
     ls "$STAGE/$glob"-*.tgz >/dev/null 2>&1 \
       || fail "SKIP_PACK=1 but no $glob-*.tgz in $STAGE — run the PACK_ONLY=1 half on the host first"
   done
   pass "using pre-staged tarballs from $STAGE"
 else
-  for pkg in node-client node cli; do
+  for pkg in node-core node-caps-sync node-caps-ai node cli; do
     ( cd "$REPO_ROOT/packages/$pkg" && npm pack --pack-destination "$STAGE" >/dev/null )
     pass "packed $pkg"
   done
@@ -85,11 +86,14 @@ fi
 # ---------------------------------------------------------------------------
 step "Installing globally (isolated prefix, dependency order)"
 # ---------------------------------------------------------------------------
-CLIENT_TGZ="$(ls "$STAGE"/unstoppable-stack-node-client-*.tgz)"
+# The shell depends on the runtime and the packs, so they install first.
+CORE_TGZ="$(ls "$STAGE"/unstoppable-stack-node-core-*.tgz)"
+SYNC_TGZ="$(ls "$STAGE"/unstoppable-stack-node-caps-sync-*.tgz)"
+AI_TGZ="$(ls "$STAGE"/unstoppable-stack-node-caps-ai-*.tgz)"
 NODE_TGZ="$(ls "$STAGE"/unstoppable-node-*.tgz)"
 CLI_TGZ="$(ls "$STAGE"/unstoppable-stack-cli-*.tgz)"
-npm install -g "$CLIENT_TGZ" "$NODE_TGZ" "$CLI_TGZ" >/dev/null 2>&1
-pass "installed node-client, node, cli"
+npm install -g "$CORE_TGZ" "$SYNC_TGZ" "$AI_TGZ" "$NODE_TGZ" "$CLI_TGZ" >/dev/null 2>&1
+pass "installed node-core, packs, node, cli"
 
 # ---------------------------------------------------------------------------
 step "us --version"
