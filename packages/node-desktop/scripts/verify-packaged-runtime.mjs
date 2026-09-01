@@ -1,25 +1,15 @@
 import assert from 'node:assert/strict'
-import { stat, readFile, readdir } from 'node:fs/promises'
-import { join, resolve, sep } from 'node:path'
+import { stat, readFile } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import { FuseV1Options, getCurrentFuseWire } from '@electron/fuses'
+import { files, findPackagedExecutable, normalizedPath } from './packaged-paths.mjs'
 
 const packageRoot = resolve(import.meta.dirname, '..')
 const out = join(packageRoot, 'out')
 const MAX_UNPACKED_BYTES = 2 * 1024 * 1024 * 1024
 
-async function files (directory) {
-  const result = []
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const target = join(directory, entry.name)
-    if (entry.isDirectory()) result.push(...await files(target))
-    else result.push(target)
-  }
-  return result
-}
-
 const packagedFiles = await files(out)
-const normalized = (file) => file.split(sep).join('/')
-const appPackage = packagedFiles.find((file) => /\/Resources\/app\/package\.json$|\/resources\/app\/package\.json$/.test(normalized(file)))
+const appPackage = packagedFiles.find((file) => /\/Resources\/app\/package\.json$|\/resources\/app\/package\.json$/.test(normalizedPath(file)))
 assert.ok(appPackage, `Could not find packaged app under ${out}`)
 
 const appRoot = resolve(appPackage, '..')
@@ -35,7 +25,7 @@ const forbiddenRuntimePackages = [
 ]
 for (const file of appFiles) {
   assert.equal(
-    forbiddenRuntimePackages.some((pattern) => pattern.test(normalized(file))),
+    forbiddenRuntimePackages.some((pattern) => pattern.test(normalizedPath(file))),
     false,
     `Build-only dependency leaked into packaged runtime: ${file}`
   )
@@ -48,17 +38,7 @@ assert.ok(
   `Packaged application is ${(totalBytes / 1024 / 1024 / 1024).toFixed(2)} GiB; expected at most 2 GiB`
 )
 
-const executable = packagedFiles.find((file) => {
-  const path = normalized(file)
-  if (process.platform === 'darwin') return path.endsWith('.app/Contents/MacOS/unstoppable-personal-node')
-  // forge sets executableName, so the binary is unstoppable-personal-node.exe;
-  // the productName spelling is accepted too in case that config changes.
-  if (process.platform === 'win32') {
-    return path.endsWith('/unstoppable-personal-node.exe') ||
-      path.endsWith('/Unstoppable Personal Node.exe')
-  }
-  return path.endsWith('/unstoppable-personal-node')
-})
+const executable = findPackagedExecutable(packagedFiles, process.platform)
 assert.ok(executable, 'Could not find packaged Electron executable')
 
 const wire = await getCurrentFuseWire(executable)
