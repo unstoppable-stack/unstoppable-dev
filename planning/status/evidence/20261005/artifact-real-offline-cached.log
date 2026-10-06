@@ -1,0 +1,99 @@
+Agent-pack source and bundle match (104 files)
+
+[1] Packing launch packages
+  ✓ using pre-staged tarballs from /tmp/us-launch-artifacts-final-20261005
+Recorded 1 artifact checksum(s); source tree dirty
+
+[2] Installing globally (isolated prefix, dependency order)
+
+added 67 packages in 1s
+  ✓ installed core CLI (15880 KiB isolated prefix)
+
+[3] us --version
+  → 0.4.0-beta.1 (minimal)
+  ✓ reports 0.4.0-beta.1 (minimal)
+
+[4] Command surface
+  ✓ init, scaffold, doctor present
+  ✓ deferred command surfaces correctly excluded
+
+[5] Public scaffold catalog
+  ✓ only Pear Desktop and local-ai are exposed by the minimal build
+
+[6] us doctor
+  ✓ doctor reports only Pear Desktop readiness in the minimal build
+  ✓ doctor ran clean
+
+[7] us init (non-interactive)
+- Configuring your assistant workspace...
+✔ Assistant workspace configured!
+  ✓ scaffolded smoke-init with AGENTS.md
+
+[8] us scaffold app (Pear Desktop + local AI)
+  ✓ scaffolded Pear Desktop local-ai app
+  ✓ generated app JavaScript passes syntax checks
+
+added 202 packages in 27s
+  ✓ installed generated Pear Desktop local-ai dependency tree
+
+[9] Artifact-generated desktop worker, storage, and UI
+[08:52:35] Unstoppable Stack — Scaffold E2E Test Runner
+[08:52:35] Platform: pear-desktop, Level: 5
+[08:52:35] Output: /tmp/us-e2e-scaffold
+[08:52:35]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[08:52:36]
+━━━ pear-desktop / local-ai ━━━
+[08:52:36]   ○ scaffold (skipped)
+[08:52:36]   ○ npm install (skipped)
+[08:52:36]   ▸ file integrity check
+[08:52:36]   ✓ file integrity check (0.0s)
+[08:52:36]   ▸ worker spawn test
+[08:52:38]   ✓ worker spawn test (2.7s)
+[08:52:38]   ▸ playwright: feature UI test
+[08:52:59]   ℹ real QVAC warm model ready in 7580ms; app process-tree RSS 1752.9 MiB
+[08:53:00]   ✓ playwright: feature UI test (21.3s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           24s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[08:53:00] Report: /tmp/us-e2e-scaffold/report-2026-10-05T08-53-00-277Z.json
+  ✓ artifact-generated app passed worker, storage, and UI
+[08:53:00] Unstoppable Stack — Scaffold E2E Test Runner
+[08:53:00] Platform: pear-desktop, Level: 5
+[08:53:00] Output: /tmp/us-e2e-scaffold
+[08:53:00]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[08:53:00]
+━━━ pear-desktop / local-ai ━━━
+[08:53:00]   ○ scaffold (skipped)
+[08:53:00]   ○ npm install (skipped)
+[08:53:00]   ▸ file integrity check
+[08:53:00]   ✓ file integrity check (0.0s)
+[08:53:00]   ▸ worker spawn test
+[08:53:01]   ✓ worker spawn test (0.7s)
+[08:53:01]   ▸ playwright: feature UI test
+[08:53:04]   ℹ saved value survived process restart before the offline run wrote data
+[08:53:05]   ℹ real QVAC warm model ready in 1022ms; app process-tree RSS 1695.2 MiB
+[08:53:06]   ✓ playwright: feature UI test (5.0s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           6s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[08:53:06] Report: /tmp/us-e2e-scaffold/report-2026-10-05T08-53-06-486Z.json
+  ✓ artifact-generated app passed network-isolated real-model restart
+
+RELEASE SMOKE PASSED in 62s
+Real inference and recovery passed from the packed CLI; clean-machine, pilot, and frozen-commit gates remain separate.

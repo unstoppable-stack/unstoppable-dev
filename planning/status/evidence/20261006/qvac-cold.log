@@ -1,0 +1,37 @@
+[09:24:21] Unstoppable Stack — Scaffold E2E Test Runner
+[09:24:21] Platform: pear-desktop, Level: 5
+[09:24:21] Output: /tmp/us-e2e-scaffold
+[09:24:21]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[09:24:21]
+━━━ pear-desktop / local-ai ━━━
+[09:24:21]   ○ scaffold (skipped)
+[09:24:21]   ○ npm install (skipped)
+[09:24:21]   ▸ file integrity check
+[09:24:21]   ✓ file integrity check (0.0s)
+[09:24:21]   ▸ worker spawn test
+[09:24:22]   ✓ worker spawn test (0.7s)
+[09:24:22]   ▸ playwright: feature UI test
+
+DevTools listening on ws://127.0.0.1:46530/devtools/browser/4f95d63e-77cb-47c6-8a5e-b4ac3839bab2
+[worker] parse: load the model metadata from disk file.
+[worker] initFromConfig: load the model from disk file and apply lora adapter, if any.
+[worker] common_init_result: fitting params to device memory, for bugs during this step try to reproduce them with -fit off, or provide --verbose logs if the bug only occurs with -fit on
+[worker] common_init_result: added <|endoftext|> logit bias = -inf
+common_init_result: added <|im_end|> logit bias = -inf
+common_init_result: added <|fim_pad|> logit bias = -inf
+common_init_result: added <|repo_name|> logit bias = -inf
+common_init_result: added <|file_sep|> logit bias = -inf
+[09:24:42]   ℹ real QVAC warm model ready in 16122ms; app process-tree RSS 1716.6 MiB
+[09:24:42]   ✓ playwright: feature UI test (20.2s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           21s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[09:24:42] Report: /tmp/us-e2e-scaffold/report-2026-10-06T09-24-42-700Z.json

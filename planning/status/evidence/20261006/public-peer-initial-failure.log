@@ -1,0 +1,9 @@
+Using public DHT discovery
+file://<repository>/scripts/coffee-example-e2e.mjs:74
+    throw new Error(`Peer retrieval failed: ${await b.page.locator('#peer-order-result').textContent()}; ${err.message}`)
+          ^
+
+Error: Peer retrieval failed: Peer unavailable after 30 seconds; confirm both apps are online and sharing; page.waitForFunction: Timeout 45000ms exceeded.
+    at file://<repository>/scripts/coffee-example-e2e.mjs:74:11
+
+Node.js v22.21.1

@@ -8,7 +8,9 @@
     "docs:build": "next build",
     "docs:check": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm run lint && pnpm run typecheck && pnpm run build"
   },
   "dependencies": {
     "next": "^15.3.3",

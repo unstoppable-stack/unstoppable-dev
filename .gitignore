@@ -3,6 +3,7 @@
 **/build/
 **/.next
 **/out
+**/*.tsbuildinfo
 .pnpm-store/
 
 .us/

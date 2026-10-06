@@ -28,6 +28,11 @@ Keep P2P, storage, and QVAC dependencies in the desktop package's dependencies.
 The worker is Bare, so do not import Node-only built-ins. Test the installed
 workspace layout as well as a standalone scaffold.
 
+If QVAC reports “No plugins registered in the worker,” register the required
+plugin before the first SDK call. For chat, import `llmPlugin` from
+`@qvac/sdk/llamacpp-completion/plugin` and `registerPlugin` from
+`@qvac/sdk/plugins`, then call `registerPlugin(llmPlugin)` once.
+
 ## Window is blank
 
 Verify the preload path, `contextIsolation: true`, the exposed API name, and

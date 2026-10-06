@@ -8,6 +8,8 @@ version: "2026-05-21"
 
 # Add AI Chat (QVAC)
 
+**Validation:** 5 October 2026 · macOS Apple Silicon · CLI 0.4.0-beta.1 source · QVAC SDK 0.15.0, pear-runtime 1.3.1, Electron 40.10.6. Real desktop UI inference, model failure/retry, Stop/recovery, cached-model network-isolated restart, and storage persistence passed. This is local source/example evidence; frozen release artifacts and independent assistant pilots remain unverified.
+
 ## When to Use
 - User wants local AI inference (chat, assistant, agent)
 - User mentions "AI", "LLM", "model", "inference", "chatbot", or "tool calling"
@@ -28,6 +30,18 @@ version: "2026-05-21"
 > The worker uses `Bare.IPC`, bridged through Electron's sandboxed preload.
 > See the `setup-pear-desktop` skill → `resources/worker-pattern.md` for the
 > full worker bridge implementation.
+>
+> Bare does not auto-register QVAC inference plugins. Before the first SDK
+> call, import `llmPlugin` from `@qvac/sdk/llamacpp-completion/plugin` and
+> `registerPlugin` from `@qvac/sdk/plugins`, then call
+> `registerPlugin(llmPlugin)`. Without this, `loadModel()` fails with “No
+> plugins registered in the worker.” Node and Expo register their supported
+> plugins automatically; this explicit step is for direct Bare workers.
+>
+> Give streamed completions a request ID and expose a Stop action that calls
+> `cancel({ operation: 'inference', modelId })`. Clear the active request before
+> awaiting cancellation so late tokens and terminal events are ignored, and
+> cancel active inference before unloading the model during shutdown.
 
 > **CRITICAL — Expo Mobile Apps with Bare Worklets:** `@qvac/sdk` MUST run in
 > the **Expo/React Native runtime**, NOT inside the Bare worklet. If the app

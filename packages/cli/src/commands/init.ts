@@ -12,6 +12,18 @@ export function registerInitCommand(program: Command) {
     .option('-a, --assistant <assistant>', 'AI assistant (claude, cursor, opencode, codex, none)')
     .option('--no-install', 'Skip dependency installation')
     .action(async (projectName, options) => {
+      if (projectName && !isValidProjectName(projectName)) {
+        console.error(chalk.red('Project name can only contain lowercase letters, numbers, and hyphens'))
+        process.exitCode = 1
+        return
+      }
+
+      if (options.assistant && !ASSISTANTS.some((assistant) => assistant.id === options.assistant)) {
+        console.error(chalk.red(`Unknown assistant "${options.assistant}". Choose: ${ASSISTANTS.map((assistant) => assistant.id).join(', ')}`))
+        process.exitCode = 1
+        return
+      }
+
       const accent = chalk.hex('#00d4aa')
       const accentBold = chalk.hex('#00d4aa').bold
       const muted = chalk.hex('#71717a')
@@ -21,7 +33,7 @@ export function registerInitCommand(program: Command) {
       console.log(muted('  ─────────────────────────────────────────'))
       console.log()
       console.log(chalk.bold.white('     ⚡ ') + chalk.bold.white('The ') + accentBold('Unstoppable') + chalk.bold.white(' Stack'))
-      console.log(dim('     P2P • Local AI • Crypto • No Servers'))
+      console.log(dim('     Local data • Local AI • Peer-to-peer'))
       console.log()
       console.log(muted('  ─────────────────────────────────────────'))
       console.log()
@@ -29,7 +41,7 @@ export function registerInitCommand(program: Command) {
       const answers = await promptUser(projectName, options)
 
       console.log()
-      const spinner = ora('Creating your unstoppable app...').start()
+      const spinner = ora('Configuring your assistant workspace...').start()
 
       try {
         const result = await scaffold({
@@ -39,11 +51,15 @@ export function registerInitCommand(program: Command) {
           install: options.install !== false,
         })
 
-        spinner.succeed(chalk.green('Project created successfully!'))
+        if (result.installAttempted && !result.installed) {
+          spinner.warn(chalk.yellow('Workspace created, but dependency installation did not complete'))
+        } else {
+          spinner.succeed(chalk.green('Assistant workspace configured!'))
+        }
         console.log()
         printSummary(result)
       } catch (error) {
-        spinner.fail(chalk.red('Failed to create project'))
+        spinner.fail(chalk.red('Failed to configure workspace'))
         console.error(error)
         process.exit(1)
       }
@@ -61,7 +77,7 @@ async function promptUser(projectName?: string, options?: any) {
       default: 'my-unstoppable-app',
       validate: (input: string) => {
         if (!input.trim()) return 'Project name is required'
-        if (!/^[a-z0-9-]+$/.test(input)) {
+        if (!isValidProjectName(input)) {
           return 'Project name can only contain lowercase letters, numbers, and hyphens'
         }
         return true
@@ -103,11 +119,15 @@ async function promptUser(projectName?: string, options?: any) {
   }
 }
 
+function isValidProjectName(input: string): boolean {
+  return /^[a-z0-9-]+$/.test(input)
+}
+
 function printSummary(result: any) {
   const accent = chalk.hex('#00d4aa')
   const muted = chalk.hex('#71717a')
 
-  console.log(chalk.bold('  Project created at:'), accent(result.projectPath))
+  console.log(chalk.bold('  Workspace created at:'), accent(result.projectPath))
   console.log()
 
   if (result.agentFiles.length > 0) {
@@ -120,12 +140,20 @@ function printSummary(result: any) {
 
   console.log(chalk.bold('  Next steps:'))
   console.log(accent(`    cd ${result.projectName}`))
-  if (!result.installed) {
+  if (result.installAttempted && !result.installed) {
     console.log(accent('    npm install'))
   }
-  console.log(accent('    npm run dev'))
   console.log()
-  console.log(muted('  Scaffold an app inside your project:'))
-  console.log(muted('    us scaffold app -p expo-mobile -n my-app -f local-ai'))
+  if (result.installAttempted && !result.installed) {
+    console.log(chalk.yellow('  Dependency installation failed. Run npm install in this folder and review its output.'))
+    console.log()
+  }
+  console.log(chalk.bold('  Then open this workspace in your AI assistant and ask:'))
+  console.log(muted('    Scaffold a Pear Desktop app named coffee-assistant with local AI.'))
+  console.log(muted('    Use the Unstoppable Stack CLI, then tell me which folder to run.'))
+  console.log()
+  console.log(chalk.bold('  Or scaffold it yourself:'))
+  console.log(muted('    us scaffold app -p pear-desktop -n coffee-assistant -f local-ai'))
+  console.log(muted('    cd coffee-assistant && npm install && npm run dev'))
   console.log()
 }

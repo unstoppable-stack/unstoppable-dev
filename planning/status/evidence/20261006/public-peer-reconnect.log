@@ -1,0 +1,6 @@
+Using public DHT discovery
+Sharing announced on DHT
+PASS: second app fetched the first app’s unique order over a real peer connection
+PASS: peer disconnection is visible
+PASS: saved order survived full application restart
+PASS: reconnected peer fetches the updated order, rather than an old cached copy

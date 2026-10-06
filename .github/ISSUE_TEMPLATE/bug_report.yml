@@ -1,0 +1,61 @@
+name: Bug report
+description: Report a reproducible problem in a released or candidate path
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Do not include credentials, seed phrases, peer secrets, private model URLs, prompts, or application data. Report vulnerabilities through the private route in SECURITY.md.
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI / workspace setup
+        - Pear Desktop scaffold
+        - Local AI / QVAC
+        - Agent pack
+        - Website / documentation
+        - Deferred or experimental package
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Include `us --version` or the exact git commit.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, architecture, Node.js version, package manager, and Pear version when applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: List the exact commands and smallest steps that reproduce the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and first relevant error
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Doctor output
+      description: Paste sanitized `us doctor -p <platform>` output when applicable.

@@ -38,6 +38,26 @@ interface Check {
 // `src/generators/index.ts`.
 const ALL_PLATFORMS: Platform[] = ['pear-desktop', 'node-cli', 'expo-mobile']
 
+export interface DoctorCommandOptions {
+  includeNode?: boolean
+  publicPreview?: boolean
+}
+
+export function getDoctorPlatforms(options: DoctorCommandOptions = {}): Platform[] {
+  return options.publicPreview ? ['pear-desktop'] : [...ALL_PLATFORMS]
+}
+
+const NODE_CHECK: Check = {
+  name: 'Unstoppable Node',
+  // `unstoppable-node help` exits 0 and prints a banner; we parse the
+  // fixed "Unstoppable Node" string rather than a version number because
+  // the daemon doesn't ship `--version` yet.
+  command: 'unstoppable-node help',
+  required: false,
+  versionPattern: /(Unstoppable Node)/,
+  hint: 'Deferred alpha. Link it from packages/node when validating the internal full profile.',
+}
+
 const CHECKS: Check[] = [
   // --- Core toolchain (everyone needs these) ---
   {
@@ -62,16 +82,6 @@ const CHECKS: Check[] = [
     required: true,
     versionPattern: /(\d+\.\d+)/,
     hint: 'Install git from https://git-scm.com',
-  },
-
-  // --- Pear desktop ---
-  {
-    name: 'Pear CLI',
-    command: 'pear --version',
-    required: false,
-    platforms: ['pear-desktop'],
-    versionPattern: /(\d+\.\d+\.\d+)/,
-    hint: 'npm i -g pear && export PATH="$HOME/Library/Application Support/pear/bin:$PATH"',
   },
 
   // --- Expo mobile ---
@@ -105,20 +115,6 @@ const CHECKS: Check[] = [
     platforms: ['expo-mobile'],
     versionPattern: /(\d+\.\d+)/,
     hint: 'curl -Ls "https://get.maestro.mobile.dev" | bash',
-  },
-
-  // --- Unstoppable Node (optional, enables P2P sync/backup for scaffolded apps) ---
-  {
-    name: 'Unstoppable Node',
-    // `unstoppable-node help` exits 0 and prints a banner; we parse the
-    // fixed "Unstoppable Node" string rather than a version number because
-    // the daemon doesn't ship `--version` yet.
-    command: 'unstoppable-node help',
-    required: false,
-    versionPattern: /(Unstoppable Node)/,
-    hint:
-      'Optional. Install with `npm i -g unstoppable-node` (or `npm link` from packages/node) to enable ' +
-      '`node-sync` feature in scaffolded apps.',
   },
 
   // --- Nice-to-haves (not platform-scoped) ---
@@ -228,26 +224,34 @@ function summariseReadiness(results: Result[]): Record<Platform, boolean> {
   return ready
 }
 
-export function registerDoctorCommand(program: Command) {
+export function registerDoctorCommand(program: Command, config: DoctorCommandOptions = {}) {
+  const availablePlatforms = getDoctorPlatforms(config)
   program
     .command('doctor')
     .description('Check your development environment')
     .option(
       '-p, --platform <platform>',
-      'Only check tools needed for this platform (pear-desktop | node-cli | expo-mobile)',
+      `Only check tools needed for this platform (${availablePlatforms.join(' | ')})`,
     )
     .option('--json', 'Output as JSON')
-    .action(async (options) => {
-      const platformFilter = options.platform as Platform | undefined
-      if (platformFilter && !ALL_PLATFORMS.includes(platformFilter)) {
+    .action(async (commandOptions) => {
+      const platformFilter = commandOptions.platform as Platform | undefined
+      if (platformFilter && !availablePlatforms.includes(platformFilter)) {
+        const knownButExcluded = ALL_PLATFORMS.includes(platformFilter)
+        const reason = knownButExcluded && config.publicPreview
+          ? 'is outside the public-preview scope'
+          : 'is unknown'
         console.error(
-          `Unknown platform "${platformFilter}". Expected one of: ${ALL_PLATFORMS.join(', ')}`,
+          `Platform "${platformFilter}" ${reason}. Expected one of: ${availablePlatforms.join(', ')}`,
         )
         process.exit(2)
       }
 
-      const scoped = CHECKS.filter((c) => {
-        if (!platformFilter) return true
+      const checks = config.includeNode ? [...CHECKS, NODE_CHECK] : CHECKS
+      const scoped = checks.filter((c) => {
+        if (!platformFilter) {
+          return !c.platforms || c.platforms.some((platform) => availablePlatforms.includes(platform))
+        }
         if (!c.platforms) return true // core check
         return c.platforms.includes(platformFilter)
       })
@@ -255,12 +259,21 @@ export function registerDoctorCommand(program: Command) {
       const results = scoped.map(runCheck)
       const readiness = summariseReadiness(results)
 
-      if (options.json) {
+      if (commandOptions.json) {
         console.log(
           JSON.stringify(
             {
+              environment: {
+                cli: program.version(),
+                platform: process.platform,
+                architecture: process.arch,
+              },
               results,
-              readiness,
+              readiness: platformFilter
+                ? { [platformFilter]: readiness[platformFilter] }
+                : Object.fromEntries(
+                    availablePlatforms.map((platform) => [platform, readiness[platform]]),
+                  ),
             },
             null,
             2,
@@ -271,6 +284,7 @@ export function registerDoctorCommand(program: Command) {
 
       console.log()
       console.log(chalk.bold('  Environment Check'))
+      console.log(chalk.gray(`  CLI ${program.version()} · ${process.platform}/${process.arch}`))
       console.log()
 
       for (const r of results) {
@@ -300,7 +314,7 @@ export function registerDoctorCommand(program: Command) {
       // single-platform result is implicit in the individual check lines).
       if (!platformFilter) {
         console.log(chalk.bold('  Platform readiness'))
-        for (const p of ALL_PLATFORMS) {
+        for (const p of availablePlatforms) {
           const ok = readiness[p]
           const icon = ok ? chalk.green('  +') : chalk.yellow('  -')
           console.log(`${icon} ${p}${ok ? '' : chalk.gray('   missing tools above')}`)
