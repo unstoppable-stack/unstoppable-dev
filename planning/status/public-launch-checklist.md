@@ -22,7 +22,7 @@ The machine-readable release contract is [`public-launch-candidate.json`](public
 
 ## Evidence snapshot
 
-- Frozen technical candidate: `36427726b8973ab00ec13459257c9a16bbecd9ca` on `codex/public-preview-candidate`. See [current acceptance results](public-launch-dependency-upgrade-20261006.md); historical runs below do not supersede them.
+- Frozen technical candidate: `064f6066c9c7f6e7998c60cb4c86a8e281852dc3` on `codex/public-preview-candidate`. See [current acceptance results](public-launch-dependency-upgrade-20261006.md); historical runs below do not supersede them.
 - CLI source version: `0.4.0-beta.1`.
 - Runtime/Node source versions: `0.6.0-alpha.1`; excluded from the core preview.
 - Agent-pack canonical and CLI-bundled directories matched on 18 September.

@@ -8,7 +8,7 @@ The upgraded app uses QVAC inference 0.21.0, llama.cpp 0.55.0 and Electron 44.5.
 
 The default CLI exposes `init`, `scaffold` and `doctor`, with Pear Desktop and `local-ai` as the preview catalog. Personal Node, mobile and payments remain outside this preview. Peer sharing exposes every saved order to anyone knowing the sharing key, and stopping sharing does not delete recipient copies.
 
-Validated runtime source: `36427726b8973ab00ec13459257c9a16bbecd9ca`. Artifact: `unstoppable-stack-cli-0.4.0-beta.1.tgz`, 226,745 bytes. SHA-256: `49c8524f097e286b7d7306f3332a3434c369b7b6b3951c74363a29d36aeea26e`.
+Validated runtime source: `064f6066c9c7f6e7998c60cb4c86a8e281852dc3`. Artifact: `unstoppable-stack-cli-0.4.0-beta.1.tgz`, 226,743 bytes. SHA-256: `2a53e298e981a4f3f7ad1b48770506eaad3635fcf9bacd613051f4c543c4bda9`.
 
 Install the retained artifact for review:
 

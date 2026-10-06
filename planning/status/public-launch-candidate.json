@@ -8,20 +8,20 @@
   "releaseStatus": "blocked",
   "releaseOwner": null,
   "candidate": {
-    "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
+    "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
     "branchAtCapture": "codex/public-preview-candidate",
     "workingTree": "clean",
-    "frozen": false,
+    "frozen": true,
     "artifactChecksums": [
       {
         "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
         "name": "@unstoppable-stack/cli",
         "version": "0.4.0-beta.1",
-        "bytes": 226745,
-        "sha256": "49c8524f097e286b7d7306f3332a3434c369b7b6b3951c74363a29d36aeea26e"
+        "bytes": 226743,
+        "sha256": "2a53e298e981a4f3f7ad1b48770506eaad3635fcf9bacd613051f4c543c4bda9"
       }
     ],
-    "note": "Runtime 3642772 passed local and hosted real/offline acceptance. The packed README tooling requirement is corrected to Node 22.17+; final artifact recapture and exact-artifact validation are underway."
+    "note": "Frozen final dependency-upgrade artifact, not publication approval. Exact packed CLI passed fresh real/offline UI locally in 50 seconds and on a separate hosted Mac in 146 seconds with identical checksums. Evidence: planning/status/evidence/20261006-dependency-upgrade. Historical screenshots show the preceding 0.15 candidate. Draft PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
   },
   "maturityDefinitions": {
     "candidate": "Intended for the default developer-preview journey, but not publishable until every applicable P0 gate passes against one frozen commit and its final artifacts.",
@@ -288,9 +288,54 @@
   "verificationRuns": [
     {
       "date": "2026-10-06",
-      "scope": "Dependency-upgrade hosted mock UI",
+      "scope": "Final hosted mock desktop acceptance",
       "result": "pass",
       "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "Packed CLI through actual generated worker/storage/UI passed with explicit mock AI.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043749"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final website validation",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "Next/ESLint Next 15.5.27 lint, type checking and 26-route production build passed.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043688"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final CLI regression and experimental generation lanes",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "CLI source regression and full-profile scripted checks passed; 266 unit tests, 14 skipped.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043648"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final hosted-Mac real/offline installed-artifact acceptance",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "146 seconds; initially empty model cache; actual worker/storage/UI, real completion, failure/retry, cancellation/reuse, bounded history, oversized requests and offline persisted-data restart. Identical local/hosted tarball hash.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482034741"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final dependency-upgrade artifact local real/offline installed UI",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "50 seconds, fresh isolated consumer prefix/npm cache and 188 app dependencies; actual worker/storage/UI, real failure/retry, cancel/reuse, bounded history, oversized-request recovery, offline restart fetching previously saved data.",
+      "evidence": "planning/status/evidence/20261006-dependency-upgrade/installed-release-real-offline.log"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Dependency-upgrade hosted mock UI",
+      "result": "pass",
+      "candidateEvidence": false,
       "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
       "details": "Mock desktop acceptance passed; artifact hash matches canonical real-tested tarball. PR merge checkout, not independent real-model evidence.",
       "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181269"
@@ -299,7 +344,7 @@
       "date": "2026-10-06",
       "scope": "Dependency-upgrade website",
       "result": "pass",
-      "candidateEvidence": true,
+      "candidateEvidence": false,
       "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
       "details": "Next/ESLint Next 15.5.27 lint, typecheck and 26-route production build passed.",
       "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181478"
@@ -308,7 +353,7 @@
       "date": "2026-10-06",
       "scope": "Dependency-upgrade source regression",
       "result": "pass",
-      "candidateEvidence": true,
+      "candidateEvidence": false,
       "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
       "details": "266 CLI tests passed, 14 skipped, typecheck and 104 matching agent-pack files.",
       "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181229"
@@ -317,7 +362,7 @@
       "date": "2026-10-06",
       "scope": "Hosted-Mac dependency-upgrade real/offline installed-artifact acceptance",
       "result": "pass",
-      "candidateEvidence": true,
+      "candidateEvidence": false,
       "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
       "details": "177 seconds, initially empty model cache; actual worker/storage/UI, real completion, failure/retry, cancel/reuse, history bounds and offline persisted-value restart. Identical canonical tarball hash.",
       "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481172009"

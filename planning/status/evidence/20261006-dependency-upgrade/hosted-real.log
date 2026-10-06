@@ -124,8 +124,8 @@ npm notice version: 0.4.0-beta.1
 npm notice filename: unstoppable-stack-cli-0.4.0-beta.1.tgz
 npm notice package size: 226.7 kB
 npm notice unpacked size: 706.1 kB
-npm notice shasum: 23209b5839752a7c4b9352044db601eebc66a5c3
-npm notice integrity: sha512-ajhjtuuZiyo/2[...]CdubJF5lJApJw==
+npm notice shasum: e2f6cfef6b6c903dcf952b8695882aa6ea5ba476
+npm notice integrity: sha512-9m12r8wXD6Ab8[...]F8s/3I3OgSBLg==
 npm notice total files: 114
 npm notice
   ✓ packed cli
@@ -133,7 +133,7 @@ Recorded 1 artifact checksum(s); source tree clean
 
 [2] Installing globally (isolated prefix, dependency order)
 
-added 67 packages in 4s
+added 67 packages in 3s
   ✓ installed core CLI (15824 KiB isolated prefix)
 
 [3] us --version
@@ -160,67 +160,67 @@ added 67 packages in 4s
   ✓ scaffolded Pear Desktop local-ai app
   ✓ generated app JavaScript passes syntax checks
 
-added 188 packages in 27s
+added 188 packages in 21s
   ✓ installed generated Pear Desktop local-ai dependency tree
 
 [9] Artifact-generated desktop worker, storage, and UI
-[14:43:40] Unstoppable Stack — Scaffold E2E Test Runner
-[14:43:40] Platform: pear-desktop, Level: 5
-[14:43:40] Output: /tmp/us-e2e-scaffold
-[14:43:40] 
+[14:49:23] Unstoppable Stack — Scaffold E2E Test Runner
+[14:49:23] Platform: pear-desktop, Level: 5
+[14:49:23] Output: /tmp/us-e2e-scaffold
+[14:49:23] 
 ╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
-[14:43:40] 
+[14:49:24] 
 ━━━ pear-desktop / local-ai ━━━
-[14:43:40]   ○ scaffold (skipped)
-[14:43:40]   ○ npm install (skipped)
-[14:43:40]   ▸ file integrity check
-[14:43:40]   ✓ file integrity check (0.0s)
-[14:43:40]   ▸ worker spawn test
-[14:43:41]   ✓ worker spawn test (1.0s)
-[14:43:41]   ▸ playwright: feature UI test
-[14:45:20]   ℹ real QVAC warm model ready in 86560ms; app process-tree RSS 1560.1 MiB
-[14:45:28]   ✓ playwright: feature UI test (107.0s)
+[14:49:24]   ○ scaffold (skipped)
+[14:49:24]   ○ npm install (skipped)
+[14:49:24]   ▸ file integrity check
+[14:49:24]   ✓ file integrity check (0.0s)
+[14:49:24]   ▸ worker spawn test
+[14:49:24]   ✓ worker spawn test (0.9s)
+[14:49:24]   ▸ playwright: feature UI test
+[14:50:52]   ℹ real QVAC warm model ready in 74226ms; app process-tree RSS 1501.7 MiB
+[14:50:59]   ✓ playwright: feature UI test (94.3s)
 
 ════════════════════════════════════════════════════════════
 RESULTS
 ════════════════════════════════════════════════════════════
-  ✓ pear-desktop/local-ai           108s
+  ✓ pear-desktop/local-ai           95s
       ✓ file integrity check
       ✓ worker spawn test
       ✓ playwright: feature UI test
 
 1/1 variants passed
-[14:45:29] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-45-28-926Z.json
+[14:50:59] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-50-59-201Z.json
   ✓ artifact-generated app passed worker, storage, and UI
-[14:45:29] Unstoppable Stack — Scaffold E2E Test Runner
-[14:45:29] Platform: pear-desktop, Level: 5
-[14:45:29] Output: /tmp/us-e2e-scaffold
-[14:45:29] 
+[14:50:59] Unstoppable Stack — Scaffold E2E Test Runner
+[14:50:59] Platform: pear-desktop, Level: 5
+[14:50:59] Output: /tmp/us-e2e-scaffold
+[14:50:59] 
 ╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
-[14:45:30] 
+[14:51:00] 
 ━━━ pear-desktop / local-ai ━━━
-[14:45:30]   ○ scaffold (skipped)
-[14:45:30]   ○ npm install (skipped)
-[14:45:30]   ▸ file integrity check
-[14:45:30]   ✓ file integrity check (0.0s)
-[14:45:30]   ▸ worker spawn test
-[14:45:31]   ✓ worker spawn test (1.1s)
-[14:45:31]   ▸ playwright: feature UI test
-[14:45:36]   ℹ saved value survived process restart before the offline run wrote data
-[14:45:43]   ℹ real QVAC warm model ready in 5728ms; app process-tree RSS 1656.6 MiB
-[14:45:51]   ✓ playwright: feature UI test (19.9s)
+[14:51:00]   ○ scaffold (skipped)
+[14:51:00]   ○ npm install (skipped)
+[14:51:00]   ▸ file integrity check
+[14:51:00]   ✓ file integrity check (0.0s)
+[14:51:00]   ▸ worker spawn test
+[14:51:01]   ✓ worker spawn test (0.9s)
+[14:51:01]   ▸ playwright: feature UI test
+[14:51:05]   ℹ saved value survived process restart before the offline run wrote data
+[14:51:10]   ℹ real QVAC warm model ready in 4124ms; app process-tree RSS 1637.3 MiB
+[14:51:16]   ✓ playwright: feature UI test (14.8s)
 
 ════════════════════════════════════════════════════════════
 RESULTS
 ════════════════════════════════════════════════════════════
-  ✓ pear-desktop/local-ai           21s
+  ✓ pear-desktop/local-ai           16s
       ✓ file integrity check
       ✓ worker spawn test
       ✓ playwright: feature UI test
 
 1/1 variants passed
-[14:45:51] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-45-51-926Z.json
+[14:51:16] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-51-16-498Z.json
   ✓ artifact-generated app passed network-isolated real-model restart
 
-RELEASE SMOKE PASSED in 177s
+RELEASE SMOKE PASSED in 146s
 Real inference and recovery passed from the packed CLI; clean-machine, pilot, and frozen-commit gates remain separate.
