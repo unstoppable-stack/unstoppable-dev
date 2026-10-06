@@ -22,7 +22,7 @@ The machine-readable release contract is [`public-launch-candidate.json`](public
 
 ## Evidence snapshot
 
-- Frozen technical candidate: `3ce97590ba2c85eca49917327226d77f69fa3716` on `codex/public-preview-candidate`. See [current acceptance results](public-launch-progress-20261006.md); historical runs below do not supersede them.
+- Frozen technical candidate: `36427726b8973ab00ec13459257c9a16bbecd9ca` on `codex/public-preview-candidate`. See [current acceptance results](public-launch-dependency-upgrade-20261006.md); historical runs below do not supersede them.
 - CLI source version: `0.4.0-beta.1`.
 - Runtime/Node source versions: `0.6.0-alpha.1`; excluded from the core preview.
 - Agent-pack canonical and CLI-bundled directories matched on 18 September.
@@ -74,3 +74,7 @@ See [current evidence and remaining gates](public-launch-progress-20261005.md). 
 ## 6 October technical acceptance
 
 The frozen candidate passed a fresh installed-tarball desktop journey with real and offline inference, 261 CLI tests (14 skipped), website checks, public peer reconnect and interrupted model download/offline recovery. Artifact checksum and matching screenshots are retained in `evidence/20261006`. The draft PR starts remote CLI, website and preview CI. Human-dependent and publication gates remain open; see the updated manifest and progress report.
+
+## Dependency upgrade acceptance — 6 October
+
+The current candidate supersedes the 0.15 runtime and its screenshots. The upgraded packed CLI passes real/offline desktop acceptance with 266 passing CLI tests (14 skipped), and the website passes lint/type/build on Next 15.5.27. [Current evidence](public-launch-dependency-upgrade-20261006.md) records new hashes and hosted results. Historical entries above remain context, not approval of a changed artifact.

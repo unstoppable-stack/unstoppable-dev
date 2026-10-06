@@ -1,0 +1,14 @@
+
+> @unstoppable-stack/cli@0.4.0-beta.1 test
+> vitest run --update
+
+
+ RUN  v4.1.0 $CANDIDATE_WORKTREE/packages/cli
+
+
+  Snapshots  2 updated 
+ Test Files  14 passed | 1 skipped (15)
+      Tests  266 passed | 14 skipped (280)
+   Start at  16:41:36
+   Duration  348ms (transform 726ms, setup 0ms, import 1.13s, tests 103ms, environment 1ms)
+

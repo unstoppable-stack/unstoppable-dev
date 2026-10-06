@@ -1,4 +1,6 @@
-# Technical launch progress — 6 October 2026
+# Technical launch progress — preceding QVAC 0.15 candidate
+
+This is historical evidence for `3ce9759`. The [dependency upgrade acceptance](public-launch-dependency-upgrade-20261006.md) and structured release contract identify the current candidate.
 
 Human-dependent pilots, ownership, clean second-machine access and account administration are intentionally pending at the user's request.
 

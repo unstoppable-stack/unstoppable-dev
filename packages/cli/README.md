@@ -39,7 +39,7 @@ artifact passes the isolated consumer smoke. Until then, build this checkout
 using the [development instructions](#development); no registry tag is the
 approved preview channel.
 
-The candidate requires Node **20+**. Run `us doctor` after building to verify
+The candidate requires Node **22.17+**. Run `us doctor` after building to verify
 the rest of your environment.
 
 ---
@@ -193,7 +193,7 @@ $ us doctor -p expo-mobile
 
   Environment Check
 
-  + Node.js (20.19)
+  + Node.js (22.17)
   + npm (10.8)
   + git (2.47)
   + Xcode command-line tools (72)
