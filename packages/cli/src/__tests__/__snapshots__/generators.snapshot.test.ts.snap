@@ -5067,6 +5067,8 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hypercore-crypto": "^3.7.0",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
+    "@qvac/langdetect-text": "^0.1.2",
+    "@qvac/decoder-audio": "^0.7.0",
     "bare-process": "^4.5.1"
   },
   "devDependencies": {
@@ -5914,6 +5916,8 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hypercore-crypto": "^3.7.0",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
+    "@qvac/langdetect-text": "^0.1.2",
+    "@qvac/decoder-audio": "^0.7.0",
     "bare-process": "^4.5.1"
   },
   "devDependencies": {
