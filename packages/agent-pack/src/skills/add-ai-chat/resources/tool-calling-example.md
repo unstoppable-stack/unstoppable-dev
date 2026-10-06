@@ -48,7 +48,6 @@ const modelId = await loadModel({
   modelType: 'llm',
   modelConfig: {
     ctx_size: CTX_SIZE,
-    n_discarded: Math.floor(CTX_SIZE / 10), // 10% sliding window
     tools: true, // REQUIRED — activates native tool-calling template
   },
 })
@@ -284,7 +283,6 @@ loadModel() config:           completion() params:
 ├── modelType: 'llm'          ├── history
 ├── modelConfig:              ├── stream: true
 │   ├── ctx_size              ├── tools (definitions)
-│   ├── n_discarded           ├── mcp (optional)
 │   ├── system_prompt         ├── kvCache (session key)
 │   └── tools: true           └── generationParams:
 └── onProgress                     ├── temp, top_p, top_k
@@ -305,5 +303,5 @@ loadModel() config:           completion() params:
 | Token filtering | `createTokenFilter()` strips `<tool_call>` blocks from visible output |
 | Fallback parsing | `parseFallbackToolCalls()` with `repairJson()` for malformed JSON |
 | Reasoning control | `reasoning_budget: 0` in `modelConfig` — not prompt text, not stream stripping |
-| Context management | `n_discarded` at load time + `kvCache: sessionId` at completion time |
+| Context bound | Bound history before inference; retry overflow once before output |
 | No "respond" tool | Model generates free text naturally alongside tool calls |

@@ -5,7 +5,7 @@ description: Build a desktop app with Electron, Pear OTA (pear-runtime), and a B
 
 # Set Up Pear Desktop
 
-**Validation:** 5 October 2026 · macOS Apple Silicon · CLI 0.4.0-beta.1 source · QVAC SDK 0.15.0, pear-runtime 1.3.1, Electron 40.10.6. Real desktop UI inference, model failure/retry, Stop/recovery, cached-model network-isolated restart, and storage persistence passed. This is local source/example evidence; frozen release artifacts and independent assistant pilots remain unverified.
+**Migration:** 6 October 2026 · macOS Apple Silicon · QVAC inference 0.21.0 + llama.cpp 0.55.0, Pear Runtime 1.3.1, Electron 44.5.1. Release evidence must identify the new candidate/artifact; prior 0.15 checks do not approve this update.
 
 Use the current Pear OTA architecture. `pear run`, the ambient `global.Pear`
 API, `pear-electron`, `pear-bridge`, `pear-run`, `pear.pre`, and `pear release`
@@ -53,7 +53,7 @@ app/
     "pear-runtime": "^1.3.1"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }
 ```
@@ -95,8 +95,8 @@ first SDK call:
 
 ```js
 const [{ llmPlugin }, { registerPlugin }] = await Promise.all([
-  import('@qvac/sdk/llamacpp-completion/plugin'),
-  import('@qvac/sdk/plugins'),
+  import('@qvac/inference/llamacpp-completion/plugin'),
+  import('@qvac/inference/plugins'),
 ])
 registerPlugin(llmPlugin)
 ```
@@ -150,17 +150,8 @@ deployment tool:
 
 Do not generate `pear release`; it was removed in Pear v3.
 
-## QVAC 0.15 Bare configuration compatibility
+## QVAC 0.21 Bare integration
 
-The SDK's Bare config loader uses CommonJS `require` for `qvac.config.json` or `QVAC_CONFIG_PATH`. In a Bare ES-module worker, install Bare's native loader before the first SDK operation, retaining the current module graph and filesystem protocol:
+Use Node >=22.17 for development tooling. Install `@qvac/inference@0.21.0`, `@qvac/llm-llamacpp@0.55.0` and `bare-process@^4.5.1`. Set `globalThis.process` from bare-process before dynamically importing inference. Configuration files now load through dynamic import; remove the 0.15 global require shim.
 
-```js
-if (typeof globalThis.require !== 'function') {
-  const { createRequire } = await import('bare-module')
-  globalThis.require = createRequire(import.meta.url, {
-    referrer: import.meta.cache[import.meta.url],
-  })
-}
-```
-
-Declare `bare-module` in the app dependencies. A fresh loader without the referrer has no backing store and cannot read configuration files. This adapter is for the Bare worker, not browser code or Node's module loader. Validated 6 October 2026 with a separate model cache, the pinned Qwen model's full download and checksum, and real inference.
+Use generated `chat-context.js` to bound recent requests and recover from SDK overflow before streaming. The removed `n_discarded` option must not be generated. Native addons and the embedded Bare runtime must be tested together; keep inference outside Electron/renderer Node code.

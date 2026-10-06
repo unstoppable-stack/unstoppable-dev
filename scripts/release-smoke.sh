@@ -26,7 +26,7 @@
 #
 #   TARBALL_DIR=/tmp/us-release PACK_ONLY=1 bash scripts/release-smoke.sh
 #   docker run --rm -v "$PWD":/src -v /tmp/us-release:/tarballs -w /src \
-#     -e SKIP_PACK=1 -e TARBALL_DIR=/tarballs node:20 \
+#     -e SKIP_PACK=1 -e TARBALL_DIR=/tarballs node:22 \
 #     bash scripts/release-smoke.sh
 #
 # Env knobs:
@@ -203,11 +203,11 @@ step "us scaffold app (Pear Desktop + local AI)"
 us scaffold app -p pear-desktop -n smoke-scaffold -f local-ai -o "$PROJECTS/smoke-scaffold" >/dev/null
 [ -f "$PROJECTS/smoke-scaffold/package.json" ] \
   || fail "scaffold did not produce a package.json"
-node -e "const p=require('$PROJECTS/smoke-scaffold/package.json'); if (!p.dependencies?.['@qvac/sdk']) process.exit(1)" \
-  || fail "local-ai scaffold did not declare @qvac/sdk"
+node -e "const p=require('$PROJECTS/smoke-scaffold/package.json'); if (!p.dependencies?.['@qvac/inference']) process.exit(1)" \
+  || fail "local-ai scaffold did not declare @qvac/inference"
 pass "scaffolded Pear Desktop local-ai app"
 
-for generated_js in electron/main.js electron/preload.cjs worker.js app/bridge.js app/index.js; do
+for generated_js in electron/main.js electron/preload.cjs worker.js chat-context.js app/bridge.js app/index.js; do
   node --check "$PROJECTS/smoke-scaffold/$generated_js" >/dev/null \
     || fail "generated syntax check failed: $generated_js"
 done

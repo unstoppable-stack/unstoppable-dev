@@ -63,14 +63,14 @@
 ## `ping is not a function` / `ping()` import fails
 - `ping()` was removed in 0.8.1
 - **Fix**: `import { heartbeat } from '@qvac/sdk'`; call `await heartbeat()`
-- For remote providers: `await heartbeat({ delegate: { topic, providerPublicKey } })`
+- Use local `heartbeat()`; old SDK delegation is unsupported.
 
 ## Context overflow
-- Set `n_discarded` in `modelConfig` at load time: `n_discarded: Math.floor(ctx_size / 10)`
-- Use `kvCache: sessionId` with a stable key
-- Keep tool outputs compact
-- Avoid returning large data blobs as tool results
-- `n_discarded` eliminates the need for manual history trimming
+QVAC 0.21 removes `n_discarded`; use bounded history and SDK overflow recovery.
+- Drop complete older turns and notify the user; preserve the latest message.
+- Reject oversized latest messages with a shortening instruction.
+- Retry `ContextOverflowError` once before any visible output, with the latest message only.
+- Keep tool outputs compact. A named KV cache does not bound history; reset its identity after trimming.
 
 ## `<think>` blocks appearing in output
 - Set `reasoning_budget: 0` in `loadModel().modelConfig` (`-1` = unlimited).

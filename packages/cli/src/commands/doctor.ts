@@ -65,8 +65,8 @@ const CHECKS: Check[] = [
     command: 'node --version',
     required: true,
     versionPattern: /v(\d+\.\d+)/,
-    minVersion: [20, 0],
-    hint: 'Install Node.js 20+ LTS from https://nodejs.org',
+    minVersion: [22, 17],
+    hint: 'Install Node.js 22.17+ from https://nodejs.org',
   },
   {
     name: 'npm',

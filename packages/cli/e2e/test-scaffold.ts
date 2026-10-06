@@ -371,7 +371,7 @@ function checkDesktopFiles(projectDir: string, features: string[]) {
 
   // Optional features
   if (features.includes('local-ai')) {
-    if (!worker.includes('@qvac/sdk')) throw new Error('worker.js missing @qvac/sdk for local-ai')
+    if (!worker.includes('@qvac/sdk') && !worker.includes('@qvac/inference')) throw new Error('worker.js missing @qvac/sdk for local-ai')
     if (!worker.includes('QVAC_MOCK')) throw new Error('worker.js missing QVAC_MOCK support')
     if (!ui.includes('data-testid="ai-section"')) throw new Error('app/index.js missing AI section')
   }
@@ -880,6 +880,31 @@ async function runPearPlaywrightTest(
           undefined,
           { timeout: 300_000 },
         )
+        // Modern scaffolds bound Unicode input and recent history. An error
+        // must not poison the next request or replay a partial response.
+        if (existsSync(join(projectDir, 'chat-context.js'))) {
+          await chatInput.fill('☕'.repeat(800))
+          await page.locator('[data-testid="chat-send-btn"]').click()
+          await page.waitForFunction(() => {
+            const reply = document.querySelectorAll('.bubble-assistant')
+            return reply.item(reply.length - 1)?.textContent?.includes('Shorten it') &&
+              !(document.querySelector('[data-testid="chat-input"]') as HTMLInputElement)?.disabled
+          }, undefined, { timeout: 15_000 })
+          for (let turn = 0; turn < 3; turn++) {
+            await chatInput.fill('Reply only OK. Background: ' + 'x '.repeat(340))
+            await page.locator('[data-testid="chat-send-btn"]').click()
+            await page.waitForFunction(() => {
+              const reply = document.querySelectorAll('.bubble-assistant')
+              const text = reply.item(reply.length - 1)?.textContent?.trim() || ''
+              return text.length > 0 && !text.startsWith('❌') &&
+                !(document.querySelector('[data-testid="chat-input"]') as HTMLInputElement)?.disabled
+            }, undefined, { timeout: 120_000 })
+          }
+          if (!(await page.locator('.bubble-system').allTextContents()).some(text => text.includes('omitted'))) {
+            throw new Error('Long conversation did not report omitted model context')
+          }
+        }
+
       }
     }
     if (features.includes('wallet')) {

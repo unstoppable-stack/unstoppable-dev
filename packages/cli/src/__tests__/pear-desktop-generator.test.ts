@@ -151,9 +151,9 @@ describe('pear-desktop generator', () => {
       // native-module resolution when worker.js loads, so an SDK failure
       // kills the worker before it can report anything on its pipe — taking
       // P2P and KV storage down with it. It is imported inside 'load-ai'.
-      expect(worker).toContain("import('@qvac/sdk')")
-      expect(worker).toContain("import('@qvac/sdk/llamacpp-completion/plugin')")
-      expect(worker).toContain("import('@qvac/sdk/plugins')")
+      expect(worker).toContain("import('@qvac/inference')")
+      expect(worker).toContain("import('@qvac/inference/llamacpp-completion/plugin')")
+      expect(worker).toContain("import('@qvac/inference/plugins')")
       expect(worker).toContain('registerPlugin(llmPlugin)')
       expect(worker).toContain(`modelSrc: msg.modelSrc || sdk.`)
       expect(worker).toContain("sdk.cancel({ operation: 'inference', modelId })")
@@ -174,7 +174,8 @@ describe('pear-desktop generator', () => {
     it('local-ai: disables reasoning via reasoning_budget, not prompt hacks', () => {
       const worker = fileMap(make(['local-ai']))['worker.js']
       expect(worker).toContain('reasoning_budget: 0')
-      expect(worker).toContain('n_discarded')
+      expect(worker).not.toContain('n_discarded')
+      expect(worker).toContain('streamChat')
       // The old approach — '/no_think' in the system prompt plus a manual
       // <think> stripping state machine over the token stream.
       expect(worker).not.toContain('/no_think')
@@ -278,7 +279,8 @@ describe('pear-desktop generator', () => {
     it('local-ai: includes @qvac/sdk and AI section', () => {
       const files = fileMap(make(['local-ai']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@qvac/sdk']).toBeDefined()
+      expect(pkg.dependencies['@qvac/inference']).toBe('0.21.0')
+      expect(pkg.dependencies['@qvac/llm-llamacpp']).toBe('0.55.0')
       expect(files['app/index.js']).toContain('data-testid="ai-section"')
       expect(files['app/index.js']).toContain('data-testid="load-ai-btn"')
       expect(files['app/index.js']).toContain('data-testid="chat-input"')
