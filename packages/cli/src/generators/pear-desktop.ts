@@ -48,7 +48,10 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/inference': '0.21.0', '@qvac/llm-llamacpp': '0.55.0', 'bare-process': '^4.5.1' })
+    Object.assign(deps, { '@qvac/inference': '0.21.0', '@qvac/llm-llamacpp': '0.55.0',
+      // 0.21's public API eagerly imports translation/audio helpers.
+      '@qvac/langdetect-text': '^0.1.2',
+      '@qvac/decoder-audio': '^0.7.0', 'bare-process': '^4.5.1' })
   }
 
   if (has(opts, 'node-sync')) {

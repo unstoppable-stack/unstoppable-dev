@@ -79,3 +79,5 @@ QVAC also supports embeddings/RAG, translation, transcription, vision, tools, OC
 - [0.20 cache/prompt changes](https://github.com/tetherto/qvac/releases/tag/sdk-v0.20.0)
 - [0.21 release](https://github.com/tetherto/qvac/releases/tag/sdk-v0.21.0)
 - Generated `worker.js` and `chat-context.js`, and maintained `examples/coffee-assistant`, are the tested desktop implementation. Old upstream application guidance can target 0.15; do not copy removed fields into 0.21.
+
+QVAC inference 0.21 eagerly imports language detection and audio decoding from its public API. Install `@qvac/langdetect-text@^0.1.2` and `@qvac/decoder-audio@^0.7.0` explicitly even for this LLM-only app; a fresh install cannot rely on optional peers left over from an older SDK.

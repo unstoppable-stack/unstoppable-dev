@@ -28,3 +28,5 @@ Run the actual worker and renderer, not only structural snapshots. Exercise a mi
 Use current version-matched schemas for tools, multimodal attachments and sampling. Some resources retain general patterns; the current module contract takes precedence over old code. The old SDK `delegate`/provider path was removed in 0.19; the project's experimental Node RPC is separate.
 
 Resources: [chat](resources/chat-example.md), [tools](resources/tool-calling-example.md), [models](resources/model-guide.md), [schemas](resources/schema-guide.md), [troubleshooting](resources/troubleshooting.md). Official reference: https://docs.qvac.tether.io/sdk/js-ts-sdk/.
+
+QVAC inference 0.21 eagerly imports language detection and audio decoding from its public API. Install `@qvac/langdetect-text@^0.1.2` and `@qvac/decoder-audio@^0.7.0` explicitly even for this LLM-only app; a fresh install cannot rely on optional peers left over from an older SDK.
