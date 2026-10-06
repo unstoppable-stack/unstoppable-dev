@@ -1,6 +1,10 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-06-21
+> **Last updated:** 2026-10-06
+
+## Current desktop preview
+
+The scoped desktop candidate passes local and hosted real/offline AI acceptance, peer recovery and website checks. See the [dependency upgrade acceptance](public-launch-dependency-upgrade-20261006.md) and [release contract](public-launch-candidate.json). Independent pilots, owners, account setup and publication remain pending and are set aside at the user’s request. Mobile, Personal Node and payments remain deferred. Entries below are historical.
 
 ---
 

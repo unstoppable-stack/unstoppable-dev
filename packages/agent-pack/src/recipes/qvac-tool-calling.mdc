@@ -63,7 +63,6 @@ const modelId = await loadModel({
   modelType: 'llm',
   modelConfig: {
     ctx_size: CTX_SIZE,
-    n_discarded: Math.floor(CTX_SIZE / 10), // 10% sliding window
     tools: true, // REQUIRED — activates tool-calling template
     // Anchors the tool block per-turn. The SDK default ('static') bakes tools
     // into the KV-cache system prefix, which hides the newer Qwen tool-call
@@ -179,7 +178,7 @@ See `skill-qvac-tool-calling` for the full implementation.
 
 ### Problem: Context overflow
 
-**Solution**: Set `n_discarded` in `modelConfig` for automatic sliding window.
+QVAC 0.21 removes `n_discarded`; use bounded history and SDK overflow recovery.
 Keep tool outputs compact.
 
 ### Problem: `<tool_call>` blocks visible in chat

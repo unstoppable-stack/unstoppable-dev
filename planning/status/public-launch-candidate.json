@@ -1,0 +1,683 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "schemaVersion": 1,
+  "releaseId": "public-developer-preview-2026-09",
+  "releaseLabel": "Developer preview",
+  "recordedAt": "2026-09-18",
+  "lastUpdatedAt": "2026-10-06",
+  "releaseStatus": "blocked",
+  "releaseOwner": null,
+  "candidate": {
+    "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+    "branchAtCapture": "codex/public-preview-candidate",
+    "workingTree": "clean",
+    "frozen": true,
+    "artifactChecksums": [
+      {
+        "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
+        "name": "@unstoppable-stack/cli",
+        "version": "0.4.0-beta.1",
+        "bytes": 226743,
+        "sha256": "2a53e298e981a4f3f7ad1b48770506eaad3635fcf9bacd613051f4c543c4bda9"
+      }
+    ],
+    "note": "Frozen final dependency-upgrade artifact, not publication approval. Exact packed CLI passed fresh real/offline UI locally in 50 seconds and on a separate hosted Mac in 146 seconds with identical checksums. Evidence: planning/status/evidence/20261006-dependency-upgrade. Historical screenshots show the preceding 0.15 candidate. Draft PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
+  },
+  "maturityDefinitions": {
+    "candidate": "Intended for the default developer-preview journey, but not publishable until every applicable P0 gate passes against one frozen commit and its final artifacts.",
+    "experimental": "Optional, opt-in functionality with explicitly limited support. It must not be required by the default journey.",
+    "deferred": "Implemented or partially implemented in source, but excluded from this release because required evidence or safety gates are incomplete.",
+    "planned": "Not included in the release and must not be described as currently usable."
+  },
+  "audience": "JavaScript and TypeScript developers who use an existing AI coding assistant",
+  "promise": "A tested route to a private desktop app with local data, local AI, and direct peer communication.",
+  "primaryJourney": {
+    "platform": "Pear Desktop",
+    "operatingSystem": "macOS",
+    "architecture": "Apple Silicon",
+    "status": "frozen-artifact-validated-pending-independent-pilot",
+    "assistant": "Codex",
+    "steps": [
+      "Install the exact preview CLI artifact.",
+      "Configure an assistant workspace with us init.",
+      "Scaffold a Pear Desktop app with local-ai.",
+      "Install and run the generated app from its own folder.",
+      "Make one visible change with the generated assistant instructions.",
+      "Verify local persistence and offline restart after the model is installed."
+    ],
+    "commandState": "frozen-artifact-validated-unpublished",
+    "commands": [
+      "us init my-workspace --assistant codex",
+      "cd my-workspace",
+      "us scaffold app -p pear-desktop -n coffee-assistant -f local-ai",
+      "cd coffee-assistant",
+      "npm install",
+      "npm run dev"
+    ],
+    "artifactInstallCommand": "npm install -g ./unstoppable-stack-cli-0.4.0-beta.1.tgz"
+  },
+  "releaseScope": [
+    {
+      "capability": "CLI workspace setup and scaffolding",
+      "maturity": "candidate",
+      "releaseDisposition": "include-after-gates",
+      "evidence": [
+        "packages/cli/src/commands/init.ts",
+        "packages/cli/src/commands/scaffold.ts",
+        "planning/status/project-review-2026-09-09.md"
+      ],
+      "limitations": [
+        "The current init flow creates an assistant workspace, not a running app.",
+        "Final package installation from the intended public channel is not verified."
+      ]
+    },
+    {
+      "capability": "Generated assistant instructions",
+      "maturity": "candidate",
+      "releaseDisposition": "include-after-gates",
+      "evidence": [
+        "packages/agent-pack/src",
+        "packages/cli/agent-pack-src"
+      ],
+      "limitations": [
+        "104 canonical and bundled files match; automatic drift checks apply to the candidate.",
+        "Recommended assistant path has not completed an independent pilot."
+      ]
+    },
+    {
+      "capability": "Pear Desktop scaffold with local storage and P2P networking",
+      "maturity": "candidate",
+      "releaseDisposition": "include-after-gates",
+      "evidence": [
+        "packages/cli/src/generators/pear-desktop.ts",
+        "planning/status/project-review-2026-09-09.md"
+      ],
+      "limitations": [
+        "The recorded test evidence used generated-app and worker checks; the final clean-machine journey remains unverified."
+      ]
+    },
+    {
+      "capability": "QVAC local inference",
+      "maturity": "candidate",
+      "releaseDisposition": "include-only-after-PRJ-04",
+      "evidence": [
+        "packages/cli/src/generators/pear-desktop.ts",
+        "packages/node-caps-ai/test/ai-provider-real.test.js",
+        ".github/workflows/node-qvac.yml"
+      ],
+      "limitations": [
+        "Frozen installed-artifact UI passed real completion, forced failure/retry, cancellation, post-cancel reuse and network-isolated restart with existing persisted data.",
+        "Cold download and interrupted transfer recovery passed on this Mac; other machines and broader resource limits remain unverified.",
+        "Mock mode is test support and is not a public demonstration."
+      ]
+    },
+    {
+      "capability": "Coffee Assistant maintained example",
+      "maturity": "candidate",
+      "releaseDisposition": "include-after-PRJ-09",
+      "evidence": [
+        "examples/coffee-assistant",
+        "scripts/coffee-example-e2e.mjs",
+        "planning/status/public-launch-progress-20261005.md"
+      ],
+      "limitations": [
+        "Maintained source is frozen; repository remains private pending account administration.",
+        "Public DHT retrieval, visible graceful disconnection, persistence and fresh reconnect reads passed using distinct instances on one Mac.",
+        "Historical screenshots/walkthrough match the preceding QVAC 0.15 candidate; independent reproduction remains pending."
+      ]
+    },
+    {
+      "capability": "Personal Node, node-core, sync pack, and delegated AI",
+      "maturity": "deferred",
+      "releaseDisposition": "exclude-from-core-preview",
+      "evidence": [
+        "packages/node-core",
+        "packages/node-caps-sync",
+        "packages/node-caps-ai",
+        "packages/node"
+      ],
+      "limitations": [
+        "Local production dependencies prevent a registry-resolvable package graph.",
+        "Default trust, resource bounds, and replication-status gates are incomplete.",
+        "May ship later under an alpha tag only after PRJ-02, PRJ-05, and PRJ-06 pass."
+      ]
+    },
+    {
+      "capability": "Expo Mobile",
+      "maturity": "deferred",
+      "releaseDisposition": "exclude-from-core-preview",
+      "evidence": [
+        "packages/cli/src/generators/expo-mobile.ts",
+        ".github/workflows/cli.yml"
+      ],
+      "limitations": [
+        "The latest recorded iOS native prebuild failed; install-only and mock checks do not establish support."
+      ]
+    },
+    {
+      "capability": "WDK wallets and payments",
+      "maturity": "planned",
+      "releaseDisposition": "exclude",
+      "evidence": [
+        "planning/roadmap/wdk.md"
+      ],
+      "limitations": [
+        "Generated wallet behavior is a stub and no payment flow is validated."
+      ]
+    },
+    {
+      "capability": "Memory, Search, Remote Coder, Flow, and standalone Agent",
+      "maturity": "planned",
+      "releaseDisposition": "exclude",
+      "evidence": [
+        "planning/technical-improvements/20260918-public-launch-plan.md"
+      ],
+      "limitations": [
+        "Retained as separate experiments or future work and excluded from the default install and launch promise."
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "name": "@unstoppable-stack/cli",
+      "sourceVersion": "0.4.0-beta.1",
+      "releaseDisposition": "include-after-gates",
+      "distributionTag": null
+    },
+    {
+      "name": "@unstoppable/agent-pack",
+      "sourceVersion": "0.1.0",
+      "releaseDisposition": "bundle-with-cli",
+      "distributionTag": null
+    },
+    {
+      "name": "@unstoppable-stack/node-core",
+      "sourceVersion": "0.6.0-alpha.1",
+      "releaseDisposition": "deferred",
+      "distributionTag": null
+    },
+    {
+      "name": "@unstoppable-stack/node-caps-sync",
+      "sourceVersion": "0.6.0-alpha.1",
+      "releaseDisposition": "deferred",
+      "distributionTag": null
+    },
+    {
+      "name": "@unstoppable-stack/node-caps-ai",
+      "sourceVersion": "0.6.0-alpha.1",
+      "releaseDisposition": "deferred",
+      "distributionTag": null
+    },
+    {
+      "name": "unstoppable-node",
+      "sourceVersion": "0.6.0-alpha.1",
+      "releaseDisposition": "deferred",
+      "distributionTag": null
+    },
+    {
+      "name": "unstoppable-node-desktop",
+      "sourceVersion": "0.6.0-alpha.1",
+      "releaseDisposition": "deferred",
+      "distributionTag": null
+    }
+  ],
+  "supportMatrix": [
+    {
+      "surface": "Pear Desktop default journey",
+      "os": "macOS",
+      "architecture": "Apple Silicon",
+      "runtime": "Electron 44.5.1 with Pear Runtime 1.3.1 / Bare 1.34.1; Node.js >=22.17 development tooling",
+      "featureCoverage": "Installed packed CLI through actual worker/storage/UI; QVAC inference 0.21 / llama.cpp 0.55; real retry/cancel, bounded history, oversized requests, offline persistence; separate hosted-Mac real/offline acceptance; clean example public peer and interrupted download recovery",
+      "supportStatus": "frozen-candidate-validated-local-and-hosted-macos-arm64",
+      "lastVerified": "2026-10-06"
+    },
+    {
+      "surface": "Node.js CLI scaffold",
+      "os": "Linux, macOS, Windows",
+      "architecture": "CI-hosted architectures",
+      "runtime": "Node.js >=22.17; QVAC SDK 0.21.0",
+      "featureCoverage": "Experimental full-profile generation and mock checks; new SDK real-model Node path not separately validated",
+      "supportStatus": "validation-target",
+      "lastVerified": "2026-09-09"
+    },
+    {
+      "surface": "Expo Mobile",
+      "os": "iOS and Android",
+      "architecture": "device and simulator targets",
+      "runtime": "Expo plus Bare worklet",
+      "featureCoverage": "Generated source and partial checks only",
+      "supportStatus": "deferred",
+      "lastVerified": null
+    },
+    {
+      "surface": "Personal Node desktop",
+      "os": "macOS, Linux, Windows",
+      "architecture": "CI-hosted architectures",
+      "runtime": "Electron with isolated Bare sidecar",
+      "featureCoverage": "Package smoke evidence only; signing and clean installation not verified",
+      "supportStatus": "deferred-alpha",
+      "lastVerified": "2026-09-09"
+    }
+  ],
+  "assistantMatrix": [
+    {
+      "assistant": "Codex",
+      "configurationGenerated": true,
+      "handsOnPilot": false,
+      "supportStatus": "recommended-path-pending-pilot"
+    },
+    {
+      "assistant": "Claude Code",
+      "configurationGenerated": true,
+      "handsOnPilot": false,
+      "supportStatus": "unverified"
+    },
+    {
+      "assistant": "Cursor",
+      "configurationGenerated": true,
+      "handsOnPilot": false,
+      "supportStatus": "unverified"
+    },
+    {
+      "assistant": "OpenCode",
+      "configurationGenerated": true,
+      "handsOnPilot": false,
+      "supportStatus": "unverified"
+    }
+  ],
+  "verificationRuns": [
+    {
+      "date": "2026-10-06",
+      "scope": "Final hosted mock desktop acceptance",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "Packed CLI through actual generated worker/storage/UI passed with explicit mock AI.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043749"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final website validation",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "Next/ESLint Next 15.5.27 lint, type checking and 26-route production build passed.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043688"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final CLI regression and experimental generation lanes",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "CLI source regression and full-profile scripted checks passed; 266 unit tests, 14 skipped.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482043648"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final hosted-Mac real/offline installed-artifact acceptance",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "146 seconds; initially empty model cache; actual worker/storage/UI, real completion, failure/retry, cancellation/reuse, bounded history, oversized requests and offline persisted-data restart. Identical local/hosted tarball hash.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37482034741"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Final dependency-upgrade artifact local real/offline installed UI",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+      "details": "50 seconds, fresh isolated consumer prefix/npm cache and 188 app dependencies; actual worker/storage/UI, real failure/retry, cancel/reuse, bounded history, oversized-request recovery, offline restart fetching previously saved data.",
+      "evidence": "planning/status/evidence/20261006-dependency-upgrade/installed-release-real-offline.log"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Dependency-upgrade hosted mock UI",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
+      "details": "Mock desktop acceptance passed; artifact hash matches canonical real-tested tarball. PR merge checkout, not independent real-model evidence.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181269"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Dependency-upgrade website",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
+      "details": "Next/ESLint Next 15.5.27 lint, typecheck and 26-route production build passed.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181478"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Dependency-upgrade source regression",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
+      "details": "266 CLI tests passed, 14 skipped, typecheck and 104 matching agent-pack files.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481181229"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Hosted-Mac dependency-upgrade real/offline installed-artifact acceptance",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "36427726b8973ab00ec13459257c9a16bbecd9ca",
+      "details": "177 seconds, initially empty model cache; actual worker/storage/UI, real completion, failure/retry, cancel/reuse, history bounds and offline persisted-value restart. Identical canonical tarball hash.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37481172009"
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Separate hosted-Mac real-model installed-artifact acceptance",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37444526632",
+      "details": "Fresh macOS arm64 hosted runner installed the packed CLI and generated desktop app, then passed actual worker/storage/UI, real completion, forced model failure/retry, cancellation/reuse and network-isolated restart retrieving previous persisted data. Complete acceptance: 169 seconds. First model-ready: 52.300 seconds; offline cached ready: 3.158 seconds. Process-tree RSS: 1650.5 / 1608.2 MiB. Its artifact checksum exactly matches the locally tested frozen candidate.",
+      "note": "The first hosted run starts without a model cache, although the existing harness labels its time warm; report the first model-ready measurement separately. This is automated second-Mac evidence, not an independent human assistant pilot."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Frozen core CLI production dependency audit",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "details": "npm audit --omit=dev reports zero known vulnerabilities across 69 production dependencies. This covers the core CLI lockfile, not every generated desktop app or deferred Node package.",
+      "note": "See evidence/20261006/frozen-cli-production-audit.json."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Remote hosted-macOS arm64 artifact acceptance (mock AI)",
+      "result": "pass",
+      "candidateEvidence": false,
+      "details": "PR preview lane installed the packed CLI and generated desktop app on a fresh hosted Mac; actual worker/storage/UI passed in 103 seconds. AI was explicitly mocked. Tarball SHA-256 matches the locally real-tested artifact exactly. The PR merge commit is recorded in its separate identity manifest. Remote CLI and website jobs also passed.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37444320651",
+      "note": "Separate opt-in real-model hosted-Mac acceptance also passed; see its own run record."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Frozen candidate 3ce9759: final installed artifact and website/example regression",
+      "result": "pass",
+      "candidateEvidence": false,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "details": "Fresh isolated npm prefix/cache installed the CLI tarball and all 202 app dependencies. Complete 65-second acceptance passed command/catalog/doctor/init/generation, real worker/storage/UI, model failure/retry, streamed completion, cancellation/recovery and offline restart fetching the previous unique saved value. Warm model-ready: 1.035 s; offline: 1.021 s. Process-tree RSS: 1680.7 / 1674.8 MiB. CLI: 261 passed, 14 skipped; type checking and website lint/type/build passed (26 routes). Frozen example public peer disconnect/reconnect passed; actual download interrupted at 1,114,112 bytes recovered the checksum-verified model in 17.681 s and passed offline inference.",
+      "note": "Same-Mac acceptance; build/test tools reused. The consumer prefix and npm cache were fresh. First frozen artifact exposed a generated Electron loader regression, which was corrected and separately regression-tested. Remote CI is tracked on draft PR #7; independent pilot and second clean Mac remain pending."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Public DHT, disconnect/reconnect, cold model and interrupted download recovery",
+      "result": "pass",
+      "candidateEvidence": false,
+      "details": "Public bootstrap pings and public/local two-app retrieval passed. Graceful shutdown is visible; restart persists orders; reconnect fetches a revised value rather than a cached old copy. An initially empty isolated cache downloaded the pinned 532,517,120-byte model in 16.122 seconds to ready with matching SHA-256. A separate real transfer interrupted at 1,179,648 bytes recovered in 12.639 seconds and completed real inference, followed by network-isolated inference from recovered cache. Generator/example fixed the QVAC 0.15.0 Bare configuration loader using a native require bound to the existing module record.",
+      "note": "Local source evidence, not yet frozen-artifact or remote-CI proof. See planning/status/public-launch-progress-20261006.md and evidence/20261006."
+    },
+    {
+      "date": "2026-10-05",
+      "scope": "Installed CLI artifact through generated-app real UI and offline persistence",
+      "result": "pass",
+      "candidateEvidence": false,
+      "command": "SKIP_PACK=1 RELEASE_NPM_CACHE=<existing-npm-cache> RUN_REAL_QVAC=1 RUN_OFFLINE_QVAC=1 TARBALL_DIR=<retained-artifacts> bash scripts/release-smoke.sh",
+      "details": "The retained 0.4.0-beta.1 tarball installed in an isolated prefix, configured Codex guidance, generated the desktop app and installed all 202 app dependencies using a populated cache. The exact generated app passed worker/storage/UI, forced real model failure/Retry, streamed inference, cancellation and recovery. Network-isolated second launch retrieved the unique previous saved value before writing and repeated real-model recovery checks. Complete run passed in 62 seconds. Offline model-ready was 1.022 seconds; app-process RSS 1,695.2 MiB.",
+      "note": "Tarball SHA-256 f0289a30714892f026b8fcc37eebb906f0af5f24df15f9225d52c81d7a5759aa. Cached developer-machine installation and unfrozen source; not a clean-machine/cold-download/independent-pilot result. Log retained at planning/status/evidence/20261005/artifact-real-offline-cached.log."
+    },
+    {
+      "date": "2026-10-05",
+      "scope": "Current core CLI artifact and source regression checks",
+      "result": "pass",
+      "candidateEvidence": false,
+      "command": "bash scripts/release-smoke.sh; npm run typecheck; npm test; pnpm run check; node scripts/check-agent-pack.mjs",
+      "details": "Updated CLI tarball passed its isolated install, public command/catalog checks, Codex workspace init and desktop local-AI generation in six seconds. Tarball README/LICENSE and registry-resolvable production dependency checks passed. SHA-256 f0289a30714892f026b8fcc37eebb906f0af5f24df15f9225d52c81d7a5759aa. CLI tests: 260 passed, 14 skipped. Agent-pack trees: 104 identical files. Website lint/type/build passed with 26 routes.",
+      "note": "Evidence retained under planning/status/evidence/20261005. This core run excludes generated-app installation and real-model execution; it does not supersede the failed combined-artifact gate."
+    },
+    {
+      "date": "2026-10-05",
+      "scope": "Combined artifact-to-desktop launch smoke",
+      "result": "blocked",
+      "candidateEvidence": false,
+      "command": "RUN_REAL_QVAC=1 RUN_OFFLINE_QVAC=1 TARBALL_DIR=/tmp/us-launch-artifacts-20261005 bash scripts/release-smoke.sh",
+      "details": "Packed CLI installed into an isolated prefix; public command/catalog checks, Codex workspace initialization, generation and syntax checks passed. Generated-app dependency install ended with ECONNRESET before runtime tests. New artifact verification checks README/LICENSE, rejects local production dependencies and records SHA-256.",
+      "note": "Network failure is inconclusive; no packed-artifact real-model pass is claimed."
+    },
+    {
+      "date": "2026-10-05",
+      "scope": "Maintained Coffee Assistant source, real UI, offline restart and peer checks",
+      "result": "partial-pass",
+      "candidateEvidence": false,
+      "command": "external-project Level-5 real/offline QVAC UI harness; node scripts/coffee-example-e2e.mjs; COFFEE_TEST_PUBLIC_DHT=1 node scripts/coffee-example-e2e.mjs",
+      "details": "New examples/coffee-assistant installs with a complete top-level dependency tree. Real model UI, forced model failure/retry, cancellation/recovery passed in 23 seconds. Network-isolated restart passed in 9 seconds and retrieved the prior unique saved value before writing new data. Latest offline warm model-ready was 1.021 seconds and full app-process RSS 1,756 MiB. Two isolated apps fetched a unique remote order through a real local DHT and restart persistence passed. Public DHT discovery timed out after 30 seconds and remains unverified.",
+      "note": "Unfrozen source/example evidence, not final release acceptance. Cold initial download, clean machine, independent pilot, public discovery and video remain open. Detailed evidence: planning/status/public-launch-progress-20261005.md"
+    },
+    {
+      "date": "2026-10-02",
+      "scope": "Network-isolated generated Pear Desktop real-QVAC restart",
+      "command": "QVAC_REAL_LOAD_TIMEOUT_MS=600000 npm run test:e2e:desktop:qvac:offline -- --skip-build",
+      "result": "pass",
+      "details": "macOS sandbox-exec denied every non-localhost network operation while leaving Playwright's localhost CDP connection available. The generated app reused the cached pinned model, recovered from the forced missing-local-model error, completed real inference, cancelled a long response through the SDK, and completed another prompt. Offline model-ready took 1.021 seconds and the full app process tree used 1,396.4 MiB RSS.",
+      "candidateEvidence": false,
+      "note": "Run on macOS arm64 against the dirty source build. This directly validates cached-model operation without external connectivity; cold first-run/download timing and a frozen-artifact repeat remain open."
+    },
+    {
+      "date": "2026-10-02",
+      "scope": "Generated Pear Desktop real-QVAC cancellation and recovery",
+      "command": "QVAC_REAL_LOAD_TIMEOUT_MS=600000 npm run test:e2e:desktop:qvac -- --skip-build",
+      "result": "pass",
+      "details": "The regenerated app first requested a deliberately missing local model and exposed the SDK error in the UI. Retry loaded the cached pinned model, completed an initial prompt, began streaming a deliberately long response, invoked sdk.cancel for the active inference through the Stop control, observed the stopped UI state, and completed a recovery prompt on the same loaded model. A repeat measured 1.026 seconds from Retry to warm model-ready and 1,464.7 MiB RSS across the complete generated-app process tree. Worker startup, storage integrity, and the full Electron UI flow passed in five seconds.",
+      "candidateEvidence": false,
+      "note": "Run on macOS arm64 against the dirty source build. The timing and RSS values describe this machine rather than a minimum requirement. Network-isolated restart, cold first-run/download timing, and the frozen release artifact remain unverified."
+    },
+    {
+      "date": "2026-10-02",
+      "scope": "Real QVAC capability and generated Pear Desktop UI completion",
+      "command": "QVAC_MODEL_SRC=registry://hf/unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf QVAC_TEST_TIMEOUT=3000000 npm run test:qvac; QVAC_REAL_LOAD_TIMEOUT_MS=600000 npm run test:e2e:desktop:qvac -- --skip-build",
+      "result": "pass",
+      "details": "The capability-pack test produced real model output in 14.9 seconds. The first generated-app attempt exposed missing llama.cpp plugin registration in the Bare worker; after the generator was fixed and the app regenerated, Level 5 launched Electron, loaded the pinned model, sent a prompt through the renderer/bridge/worker boundary, and observed visible output in 13 seconds.",
+      "candidateEvidence": false,
+      "note": "Run on macOS arm64 against the dirty source build with Qwen 3.5 0.8B Q4_K_M (532,517,120 bytes; SHA-256 bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517). This establishes a real supported-platform completion, but offline restart, cancellation, model failure/recovery, resource measurements, and a frozen-artifact repeat remain open."
+    },
+    {
+      "date": "2026-10-02",
+      "scope": "Generated Pear Desktop local-AI worker and visible UI runtime",
+      "command": "QVAC_MOCK=1 ./node_modules/.bin/tsx e2e/test-scaffold.ts --platform pear-desktop --variant local-ai --level 4; repeat at level 5 with --skip-build",
+      "result": "pass",
+      "details": "Level 4 clean-scaffold execution passed npm install, generated-file integrity, worker startup, and a Hyperbee write/read round trip in 91 seconds. Level 5 then launched the generated Electron app and Playwright verified the visible title/sections, worker readiness, renderer-to-worker KV save/fetch flow, and local-AI controls in eight seconds.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty source build on macOS arm64 with QVAC_MOCK=1. This is real Electron and storage/worker evidence, but it does not validate model download, real inference, offline model restart, or a packed frozen candidate."
+    },
+    {
+      "date": "2026-09-28",
+      "scope": "Packed minimal CLI and generated-app dependency installation",
+      "command": "INSTALL_GENERATED_APP=1 bash scripts/release-smoke.sh",
+      "result": "pass",
+      "details": "In an isolated prefix and project directory, the 243.7 kB CLI tarball installed; version, command surface, public catalog, doctor, workspace initialization, generation, and generated JavaScript syntax checks passed. npm then installed all 202 Pear Desktop local-AI app packages and npm ls reported a complete top-level tree. Total time was 137 seconds.",
+      "candidateEvidence": false,
+      "note": "Network-enabled run against the dirty tree. This validates dependency installation, not GUI startup, local persistence, a real model, offline restart, signing, or a frozen release artifact."
+    },
+    {
+      "date": "2026-09-28",
+      "scope": "Public-preview scaffold catalog and replication language",
+      "command": "CLI typecheck/test/minimal+full builds; node-desktop tests; website production build",
+      "result": "pass",
+      "details": "CLI type checking, 260 tests with 14 skipped, both build profiles, 66 desktop tests with one explicit sidecar skip, and the 26-page website build passed. The minimal artifact exposes only Pear Desktop and local-ai through scaffold and only Pear Desktop through doctor; the full internal build retains all development targets. Generated Node-sync paths distinguish registration from a verified copy and complete backup.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty tree. Expo, Node CLI, wallet, Node integration, and multi-writer generation remain source-visible only in the full internal profile. Real-model and clean-machine evidence remain open."
+    },
+    {
+      "date": "2026-09-28",
+      "scope": "Packed minimal CLI smoke retry",
+      "command": "bash scripts/release-smoke.sh",
+      "result": "blocked",
+      "details": "The 0.4.0-beta.1 tarball packed successfully at 243.7 kB, including the narrowed minimal catalog. Its isolated npm install then produced no progress for more than two minutes and the run was stopped.",
+      "candidateEvidence": false,
+      "note": "This is an inconclusive registry/install stall, not an artifact pass or dependency defect. Repeat the networked final smoke with INSTALL_GENERATED_APP=1."
+    },
+    {
+      "date": "2026-09-25",
+      "scope": "Deferred Node replication-status truthfulness",
+      "command": "npm test in packages/node-desktop and packages/node-caps-sync",
+      "result": "pass",
+      "details": "Desktop tests passed 66 with one explicit sidecar E2E skip; sync capability tests passed eight. The UI only shows verified copy for protected mirror checkpoints, and a new mirror pass immediately returns the state to pending.",
+      "candidateEvidence": false,
+      "note": "The Node line remains deferred. Retention discovery, deletion controls, and end-user recovery documentation are still incomplete."
+    },
+    {
+      "date": "2026-09-25",
+      "scope": "Deferred runtime package documentation dry run",
+      "command": "npm pack --dry-run --json for node-core, node-caps-sync, and node-caps-ai",
+      "result": "pass",
+      "details": "All three dry-run tarballs now contain README.md and the repository MIT license. Their READMEs identify the packages as deferred alpha and qualify replication and real-QVAC evidence.",
+      "candidateEvidence": false,
+      "note": "These packages remain excluded from the core preview. The result does not resolve their registry dependency graph, trust gates, or the documentation of other deferred runtime/desktop packages."
+    },
+    {
+      "date": "2026-09-25",
+      "scope": "Onboarding diagnostics and prerequisite correction",
+      "command": "npm run typecheck; npm test; npm run build; node dist/us.js doctor -p pear-desktop --json; website pnpm build",
+      "result": "pass",
+      "details": "CLI type checking, 256 tests with 14 skipped, the minimal build, and the 26-page website build passed. Doctor emitted CLI/OS/architecture/tool metadata, omitted the deferred Node, and treated project-local pear-runtime as the desktop prerequisite.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty tree. A generated desktop app and real model still did not run."
+    },
+    {
+      "date": "2026-09-25",
+      "scope": "Clean generated Pear Desktop local-AI installation attempt",
+      "command": "generate Pear Desktop with local-ai; npm install --ignore-scripts; cache-only retry; node --check generated JavaScript",
+      "result": "blocked",
+      "details": "Generation and JavaScript syntax checks passed. npm fetched the Electron/QVAC dependency graph but exited on a registry read timeout; the offline retry could not find bare-sidecar in the isolated cache.",
+      "candidateEvidence": false,
+      "note": "The result is inconclusive and does not establish either install success or a package-graph defect. Final smoke must run with INSTALL_GENERATED_APP=1 on a networked clean environment."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Repository publication and support readiness",
+      "command": "validate issue-template YAML; compare root and CLI licenses; anonymous HTTP request to the configured GitHub repository",
+      "result": "blocked",
+      "details": "Root MIT, contribution, support, security, and issue-template files validate locally. The anonymous repository request returned HTTP 404.",
+      "candidateEvidence": false,
+      "note": "A repository administrator must make the intended repository public, enable and test private vulnerability reporting, and assign triage ownership. Deferred runtime package documentation is also incomplete."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Generated assistant-guidance claim audit",
+      "command": "diff -qr packages/agent-pack/src packages/cli/agent-pack-src; npm test",
+      "result": "pass",
+      "details": "Canonical and CLI-bundled guidance match. Node CLI, Expo, Node replication, and wallet guidance now reflect their candidate, deferred, or planned maturity. The CLI suite passed 255 tests with 14 skipped.",
+      "candidateEvidence": false,
+      "note": "Content and regression evidence from the dirty tree; independent assistant usability remains a separate PRJ-08 gate."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Website release-contract review and production build",
+      "command": "npm view @unstoppable-stack/cli version dist-tags versions --json; pnpm build",
+      "result": "pass",
+      "details": "The registry reported 0.3.0 as the only published CLI version and latest tag. Website maturity labels were aligned with the release contract, and Next.js compiled, type-checked, and generated 26 static pages.",
+      "candidateEvidence": false,
+      "note": "The site still documents the existing 0.3.0 baseline; it must switch to a final candidate only after publication gates pass."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Scaffold overwrite protection",
+      "command": "run the same generated app scaffold twice without --force",
+      "result": "pass",
+      "details": "The second invocation exited with status 1, reported the existing directory, and preserved a marker added to the generated README.",
+      "candidateEvidence": false,
+      "note": "Source-build smoke against the dirty tree; the explicit --force path was not exercised."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Real-QVAC validation entry point",
+      "command": "npm test; npm run test:qvac without QVAC_MODEL_SRC",
+      "result": "partial-pass",
+      "details": "The node-caps-ai suite passed seven tests with the real-model case explicitly skipped. The opt-in command exited non-zero with a clear missing-model-source error. The manual workflow now installs QVAC SDK 0.15.0 beside the current AI capability package on macOS, Linux, and Windows.",
+      "candidateEvidence": false,
+      "note": "This verifies test and workflow wiring only. No model was downloaded and no real inference, cancellation, offline restart, resource, or recovery evidence was produced."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "Trimmed core CLI artifact and isolated consumer smoke",
+      "command": "bash scripts/release-smoke.sh",
+      "result": "pass",
+      "details": "Packed @unstoppable-stack/cli 0.4.0-beta.1 as a 242.5 kB tarball, installed it into a 15,872 KiB throwaway prefix, verified that only init/scaffold/doctor ship, initialized a workspace, and generated the Pear Desktop local-ai app in 11 seconds.",
+      "candidateEvidence": false,
+      "note": "The smoke proves artifact installation and command generation from the dirty tree. It does not install the generated app, run Pear, load a real model, or validate a signed desktop artifact."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "CLI production dependency audit",
+      "command": "npm audit --omit=dev --json",
+      "result": "pass",
+      "details": "The public CLI manifest contains four top-level production dependencies and the live npm audit reported zero known vulnerabilities across 69 production dependencies.",
+      "candidateEvidence": false,
+      "note": "The audit covers the CLI production tree only. Deferred Node and desktop packages were not disclosed to or audited through npm."
+    },
+    {
+      "date": "2026-09-24",
+      "scope": "CLI minimal and full profile regression",
+      "command": "npm run typecheck && npm test && npm run build; npm run build:full",
+      "result": "pass",
+      "details": "255 tests passed and 14 skipped. The minimal build excluded deferred commands; the full internal build retained Remote, Research, Search, Node, and Memory after their runtime-only packages were externalized.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty working tree."
+    },
+    {
+      "date": "2026-09-18",
+      "scope": "CLI type check, unit tests, and minimal build",
+      "command": "npm run typecheck && npm test && npm run build",
+      "result": "pass",
+      "details": "254 tests passed and 14 skipped; the minimal distribution build completed.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty working tree, so this verifies the implementation slice but does not satisfy a frozen release gate."
+    },
+    {
+      "date": "2026-09-18",
+      "scope": "Website production build",
+      "command": "pnpm build",
+      "result": "pass",
+      "details": "Next.js compiled, type-checked, and generated 20 static pages.",
+      "candidateEvidence": false,
+      "note": "Run against the dirty working tree, including concurrent website changes."
+    },
+    {
+      "date": "2026-09-18",
+      "scope": "Codex workspace initialization smoke",
+      "command": "node dist/us.js init preview-workspace --assistant codex --no-install",
+      "result": "pass",
+      "details": "Created a temporary workspace and printed the workspace-to-scaffold handoff without running a placeholder app.",
+      "candidateEvidence": false,
+      "note": "Source-build smoke only; it does not validate a registry artifact."
+    }
+  ],
+  "blockingGates": [
+    "Assign Product, Runtime, Web, Release, and independent Pilot owners.",
+    "PRJ-03/08/12: independent selected-assistant onboarding, visible-change and pilot acceptance.",
+    "PRJ-09: independent example reproduction.",
+    "PRJ-11: public repository, issue intake and private vulnerability reporting administration.",
+    "PRJ-13: publication approval, registry/website publication, anonymous public smoke and hosting rollback exercise."
+  ],
+  "knownLimitations": [
+    "Installation and initial model download require network access.",
+    "Peer synchronization requires another reachable peer.",
+    "The developer's AI coding assistant may use a cloud service even when generated app inference is local.",
+    "No wallet or payment path is included.",
+    "Settings export is not a full identity or application-data backup.",
+    "The deferred Node/desktop production dependency audit has not been performed.",
+    "The configured GitHub repository is not anonymously accessible; public issue and private vulnerability routes are not launch-ready.",
+    "Several deferred runtime packages declare README or LICENSE files that are absent from their current tarballs.",
+    "An explicit preview tag is proposed; no package/site publication or release date is approved.",
+    "Automatic local and separate hosted-Mac acceptance passed; independent onboarding, assistant editing and pilot reproduction remain unverified."
+  ],
+  "previousCandidate": {
+    "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+    "artifactChecksums": [
+      {
+        "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
+        "name": "@unstoppable-stack/cli",
+        "version": "0.4.0-beta.1",
+        "bytes": 245727,
+        "sha256": "94afd44a4bb6b62008197785ded043547669da117d6f06869635969d6d1ff3f1"
+      }
+    ],
+    "evidence": "planning/status/evidence/20261006",
+    "note": "Historical QVAC 0.15 candidate, superseded by the dependency upgrade."
+  }
+}

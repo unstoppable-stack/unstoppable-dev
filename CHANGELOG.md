@@ -1,8 +1,9 @@
 # Changelog
 
-All notable changes to the published Unstoppable Stack packages are documented
-here. This is the first public developer-preview release; versions below are the
-initial published versions of each package.
+Notable package changes are documented here. Some entries describe source
+candidates or earlier package lines rather than artifacts that are currently
+approved for the next public preview. The active scope and evidence gates live
+in [`planning/status/public-launch-checklist.md`](./planning/status/public-launch-checklist.md).
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 

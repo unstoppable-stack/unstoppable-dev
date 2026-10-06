@@ -1,0 +1,17 @@
+{
+  "bootstrap": [
+    {
+      "host": "88.99.3.86",
+      "result": "reply"
+    },
+    {
+      "host": "142.93.90.113",
+      "result": "reply"
+    },
+    {
+      "host": "138.68.147.8",
+      "result": "reply"
+    }
+  ],
+  "routingNodes": 3
+}

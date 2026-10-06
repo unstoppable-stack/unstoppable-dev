@@ -1,0 +1,27 @@
+[09:55:31] Unstoppable Stack — Scaffold E2E Test Runner
+[09:55:31] Platform: pear-desktop, Level: 5
+[09:55:31] Output: /tmp/us-e2e-scaffold
+[09:55:31]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[09:55:31]
+━━━ pear-desktop / local-ai ━━━
+[09:55:31]   ○ scaffold (skipped)
+[09:55:31]   ○ npm install (skipped)
+[09:55:31]   ▸ file integrity check
+[09:55:31]   ✓ file integrity check (0.0s)
+[09:55:31]   ▸ worker spawn test
+[09:55:32]   ✓ worker spawn test (0.8s)
+[09:55:32]   ▸ playwright: feature UI test
+[09:55:39]   ℹ real QVAC warm model ready in 2027ms; app process-tree RSS 1531.4 MiB
+[09:55:39]   ✓ playwright: feature UI test (7.3s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           8s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[09:55:39] Report: /tmp/us-e2e-scaffold/report-2026-10-06T09-55-39-657Z.json

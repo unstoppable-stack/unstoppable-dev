@@ -1,5 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { parseVersion, compareVersion } from '../commands/doctor.js'
+import { parseVersion, compareVersion, getDoctorPlatforms } from '../commands/doctor.js'
+
+describe('doctor release platforms', () => {
+  it('checks only the supported public-preview platform in minimal builds', () => {
+    expect(getDoctorPlatforms({ publicPreview: true })).toEqual(['pear-desktop'])
+  })
+
+  it('retains development targets in full internal builds', () => {
+    expect(getDoctorPlatforms()).toEqual(['pear-desktop', 'node-cli', 'expo-mobile'])
+  })
+})
 
 describe('doctor / parseVersion', () => {
   it('extracts the first capture group from matching output', () => {

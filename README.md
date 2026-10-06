@@ -2,44 +2,44 @@
   <br />
   <strong>The Unstoppable Stack</strong>
   <br />
-  <em>Vibe-code P2P apps with AI — no servers, no gatekeepers</em>
+  <em>Build private apps with local AI and peer-to-peer communication</em>
   <br />
   <br />
   <a href="https://unstoppable.dev">Website</a> ·
   <a href="#quick-start">Quick Start</a> ·
   <a href="#agent-pack">Agent Pack</a> ·
-  <a href="https://github.com/unstoppable-stack/unstoppable-dev/issues">Issues</a>
+  <a href="https://github.com/unstoppable-stack/unstoppable-dev/issues">Issues</a> ·
+  <a href="./SUPPORT.md">Support</a>
 </p>
 
 ---
 
 ## What is this?
 
-The Unstoppable Stack is a toolchain that lets you **build apps using P2P protocols, local AI, and crypto payments** — with any AI coding assistant.
+The Unstoppable Stack is a developer toolkit for building private apps with local data, local AI, and direct peer communication using an existing AI coding assistant.
 
-Run one command. Open your AI editor. Describe what you want. Get a working app.
+The current source separates assistant setup from app generation: `us init` creates an assistant-configured workspace, then `us scaffold app` generates a runnable application inside it.
 
 ```bash
-npx @unstoppable-stack/cli init
-# or if installed globally:
-us init
+us init my-workspace --assistant codex
+cd my-workspace
+us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
+cd coffee-assistant
+npm install
+npm run dev
 ```
 
-Your AI assistant (Claude, Cursor, OpenCode, or Codex) gets pre-loaded with battle-tested knowledge about the entire stack — so it actually builds things that work.
+> **Release status:** the repository is preparing a developer preview. The exact package tag and default local-AI journey are not approved until artifact and real-model validation pass. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
+
+Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the same agent-pack source. The recommended Codex path still requires an independent pilot before it becomes a support claim.
 
 **Full CLI reference:** [`packages/cli/README.md`](./packages/cli/README.md) — every command, every flag, troubleshooting, and dev setup.
 
 ## Why?
 
-AI coding tools are amazing at building centralized apps. React + Next.js + AWS? Minutes.
+P2P runtimes, native modules, model loading, and renderer/worker boundaries are easy to combine incorrectly. This project turns fixes found while building real apps into starters, reusable components, and assistant-readable guidance.
 
-But ask AI to build with [Holepunch](https://holepunch.to) P2P protocols, [QVAC](https://qvac.tether.io) local inference, or [WDK Wallet](https://wallet.tether.io) — and it falls apart. Wrong APIs, wrong architecture, hours of debugging.
-
-**If AI can't build with our stack, developers won't use it.**
-
-The Unstoppable Stack fixes this. We build real apps, document every fix, and package that knowledge so AI assistants get it right the first time.
-
-The result: the same P2P desktop app that took 50+ prompts and hours of debugging now builds in **2 prompts with zero errors**.
+An earlier Coffee Assistant experiment went from more than 50 prompts to 2 prompts after its integration lessons were captured. That is a historical internal case study, not a general speed or success-rate claim. The public preview will use fresh clean-session and pilot evidence instead.
 
 ## The Stack
 
@@ -50,31 +50,18 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 | **P2P & Runtime** | Pear, Bare, Hyperswarm, bare-rpc |
 | **Data** | Hypercore, Hyperbee, HyperDB, Hyperdrive, Corestore |
 | **AI** | QVAC SDK (local inference, tool calling, streaming) |
-| **Payments** | WDK Wallet (self-custodial, USDt) |
-| **Mobile** | Expo Bare (React Native + Bare runtime) |
+| **Payments** | WDK Wallet — planned; no working payment path is included |
+| **Mobile** | Expo Bare — generated target under validation, outside the core preview |
 
 ## Quick Start
 
-```bash
-# Scaffold a new project
-us init
-
-# Follow the prompts
-? Project name: my-app
-? AI assistant: Cursor
-# Open in your editor and start building
-cd my-app
-```
-
-Your project comes pre-configured with AI rules for your chosen assistant. Start describing what you want to build.
+Use the source-accurate workspace and scaffold commands shown above. The public installation command will be frozen only after the final CLI artifact succeeds in an isolated consumer environment; do not assume the registry's `latest` tag refers to this source candidate.
 
 For every command, flag, and troubleshooting tip, see the full CLI reference: [`packages/cli/README.md`](./packages/cli/README.md).
 
-### Example prompts that work out of the box:
+### Proposed first assistant prompt
 
-- *"Build me a P2P desktop chat app with encrypted messaging"*
-- *"Create a local AI assistant with tool calling that can manage a to-do list"*
-- *"Build two Pear desktop apps that sync data over P2P using Hyperbee"*
+*"Scaffold a Pear Desktop app named coffee-assistant with local AI. Use the Unstoppable Stack CLI, keep storage and inference in the worker, and tell me which generated folder to run."*
 
 ## Agent Pack
 
@@ -83,14 +70,14 @@ The core of the project. A structured knowledge base that teaches AI assistants 
 ```
 packages/agent-pack/src/
 ├── core/               # Architecture, patterns, verified package versions
-├── modules/            # 12 module docs (Pear, Bare, Hyperswarm, QVAC, ...)
-├── skills/             # 17 tiered skills organized by capability
+├── modules/            # 14 module docs (Pear, Bare, Hyperswarm, QVAC, ...)
+├── skills/             # 24 tiered skills organized by capability
 │   ├── setup-pear-desktop/    # Platform: Desktop app with worker pattern
 │   ├── add-p2p-networking/    # P2P: Hyperswarm peer discovery
 │   ├── add-ai-chat/           # AI: QVAC chat with tool calling
 │   ├── add-database/          # Data: HyperDB structured storage
 │   └── ...
-├── recipes/            # 18 focused patterns (kv-cache, NDJSON, encryption, ...)
+├── recipes/            # 24 focused patterns (kv-cache, NDJSON, encryption, ...)
 ├── components/         # Reusable TypeScript (chat session, swarm manager, ...)
 └── hooks/              # Auto-activation rules
 ```
@@ -103,7 +90,7 @@ We don't write docs from docs. We **build real apps**, hit real bugs, fix them, 
 Build app → Find bugs → Document fixes → Extract into agent pack → Validate by rebuilding from scratch
 ```
 
-If the AI can rebuild the same app using only the agent pack — the knowledge is validated. See [planning/roadmap/](./planning/roadmap/) for the full coverage matrix.
+Recipes have different validation levels. The launch path must carry its tested version, date, and evidence; documentation-only coverage is not treated as a running example. See [planning/roadmap/](./planning/roadmap/) for the broader coverage matrix.
 
 ### Multi-tool support
 
@@ -146,17 +133,15 @@ unstoppable-stack/
 git clone https://github.com/unstoppable-stack/unstoppable-dev.git
 cd unstoppable-dev
 
-# Install dependencies
-pnpm install
+# The repository root is not a package-manager workspace. Work per package.
+cd packages/cli
+pnpm install --frozen-lockfile
+pnpm build
+pnpm test
 
-# Build the CLI
-pnpm --filter cli build
-
-# Run the website locally
-pnpm --filter website dev
-
-# Install the CLI globally for testing
-cd packages/cli && npm install -g .
+cd ../website
+pnpm install --frozen-lockfile
+pnpm build
 ```
 
 See [`packages/cli/README.md`](./packages/cli/README.md#development) for the full
@@ -170,13 +155,13 @@ All agent pack content lives in `packages/agent-pack/src/`. After making changes
 # Sync to CLI bundle
 rsync -av --delete packages/agent-pack/src/ packages/cli/agent-pack-src/
 
-# Rebuild CLI
-pnpm --filter cli build
+# Rebuild CLI from its package directory
+cd packages/cli && pnpm build
 ```
 
 ## Validated Patterns
 
-These patterns have been built, debugged, and validated in real apps:
+These patterns have implementation evidence in the repository. Release support still depends on candidate-specific package, platform, and real-model checks:
 
 - **Pear Desktop Apps** — Renderer/worker split, NDJSON pipe bridge, SWC + React Refresh build
 - **P2P Communication** — Hyperswarm topics, bare-rpc with numeric command IDs
@@ -187,25 +172,18 @@ These patterns have been built, debugged, and validated in real apps:
 
 See [planning/roadmap/overview.md](./planning/roadmap/overview.md) for the full coverage matrix.
 
-## Roadmap
+## Release plan
 
-| Phase | Status | What |
-|-------|--------|------|
-| **Toolchain** | Done | CLI, Agent Pack, Website |
-| **Validate core** | 50% | 2 of 7 reference apps built |
-| **Validate full stack** | Planned | Hyperdrive, HyperDB, SecretStream, Expo Bare, WDK |
-| **Unstoppable Auth** | Planned | Local-first identity across apps |
-| **Unstoppable Subscriptions** | Vision | Cloud inference, storage, seeding — revenue share with builders |
-
-See [planning/roadmap/](./planning/roadmap/) for the detailed plan.
+The active priority is the [public developer preview plan](./planning/technical-improvements/20260918-public-launch-plan.md). The [candidate checklist](./planning/status/public-launch-checklist.md) records the current scope, evidence gaps, and release blockers. Longer-term coverage remains in [planning/roadmap/](./planning/roadmap/).
 
 ## Built With
 
 - [Holepunch](https://holepunch.to) — P2P protocols (Hyperswarm, Hypercore, Pear Runtime)
-- [Tether](https://tether.io) — QVAC (local AI), WDK (crypto wallet)
+- [Tether](https://tether.io) — QVAC local AI; WDK is planned work for this project
 - [Next.js](https://nextjs.org) — Website
 - [Commander.js](https://github.com/tj/commander.js) + [Inquirer](https://github.com/SBoudrias/Inquirer.js) — CLI
 
 ## License
 
-MIT
+[MIT](./LICENSE). See [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a
+change and [SECURITY.md](./SECURITY.md) for private vulnerability reporting.

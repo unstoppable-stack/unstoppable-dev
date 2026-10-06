@@ -1,0 +1,2232 @@
+{
+  "@qvac/bare-sdk": {
+    "latest": "0.18.2",
+    "published": "2026-08-26T09:41:21.784Z",
+    "tags": {
+      "latest": "0.18.2"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/tetherto/qvac.git",
+      "type": "git",
+      "directory": "packages/bare-sdk"
+    },
+    "deprecated": "@qvac/bare-sdk is no longer supported. Use @qvac/inference for in-process Bare instead. Last release is 0.18.2.",
+    "dependencies": {
+      "zod": "^4.3.0",
+      "semver": "^7.8.0",
+      "bare-fs": "^4.5.1",
+      "bare-os": "^3.6.2",
+      "bare-env": "^3.0.0",
+      "bare-net": "^2.3.2",
+      "bare-rpc": "^1.3.2",
+      "@qvac/rag": "^0.6.4",
+      "bare-path": "^3.0.1",
+      "bare-zlib": "^1.3.1",
+      "corestore": "^7.4.5",
+      "bare-fetch": "^3.0.1",
+      "hyperdrive": "^13.0.1",
+      "hyperswarm": "^4.14.0",
+      "tar-stream": "^3.1.8",
+      "@qvac/error": "^0.1.1",
+      "bare-crypto": "^1.15.0",
+      "bare-stream": "^2.7.0",
+      "bare-signals": "^4.2.0",
+      "@qvac/logging": "^0.1.0",
+      "bare-cpu-info": "0.1.1",
+      "bare-gpu-info": "0.1.1",
+      "which-runtime": "^1.3.2",
+      "compact-encoding": "^3.0.0",
+      "@qvac/decoder-audio": "^0.5.0",
+      "fast-safe-stringify": "2.1.1",
+      "@qvac/langdetect-text": "^0.1.2",
+      "@qvac/registry-client": "^0.6.1",
+      "bare-abort-controller": "^1.0.0"
+    },
+    "peerDependencies": {},
+    "exports": {
+      ".": {
+        "types": "./dist/_sdk/index.d.ts",
+        "import": "./dist/_sdk/index.js",
+        "require": "./dist/_sdk/index.js"
+      },
+      "./models": {
+        "types": "./dist/_sdk/models/registry/index.d.ts",
+        "import": "./dist/_sdk/models/registry/index.js",
+        "require": "./dist/_sdk/models/registry/index.js"
+      },
+      "./logging": {
+        "import": "./dist/_sdk/logging/index.js"
+      },
+      "./package": "./package.json",
+      "./plugins": {
+        "import": "./dist/_sdk/server/plugins/index.js"
+      },
+      "./commands": {
+        "types": "./dist/_sdk/commands/index.d.ts",
+        "import": "./dist/_sdk/commands/index.js"
+      },
+      "./worker-core": {
+        "import": "./dist/_sdk/server/worker-core.js"
+      },
+      "./plugin-utils": {
+        "types": "./dist/_sdk/schemas/plugin.d.ts",
+        "import": "./dist/_sdk/schemas/plugin.js"
+      },
+      "./ggml-ocr/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/ggml-ocr/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/ggml-ocr/plugin.js"
+      },
+      "./ggml-vla/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/ggml-vla/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/ggml-vla/plugin.js"
+      },
+      "./onnx-tts/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/tts-ggml/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/tts-ggml/plugin.js"
+      },
+      "./tts-ggml/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/tts-ggml/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/tts-ggml/plugin.js"
+      },
+      "./audiogen-ggml/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/audiogen-ggml/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/audiogen-ggml/plugin.js"
+      },
+      "./sdcpp-generation/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/sdcpp-generation/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/sdcpp-generation/plugin.js"
+      },
+      "./llamacpp-embedding/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/llamacpp-embedding/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/llamacpp-embedding/plugin.js"
+      },
+      "./nmtcpp-translation/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/nmtcpp-translation/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/nmtcpp-translation/plugin.js"
+      },
+      "./ggml-classification/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/ggml-classification/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/ggml-classification/plugin.js"
+      },
+      "./llamacpp-completion/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/llamacpp-completion/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/llamacpp-completion/plugin.js"
+      },
+      "./parakeet-transcription/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/parakeet-transcription/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/parakeet-transcription/plugin.js"
+      },
+      "./whispercpp-transcription/plugin": {
+        "types": "./dist/_sdk/server/bare/plugins/whispercpp-transcription/plugin.d.ts",
+        "import": "./dist/_sdk/server/bare/plugins/whispercpp-transcription/plugin.js"
+      }
+    },
+    "uses": [],
+    "versions": [
+      "0.13.3",
+      "0.13.4",
+      "0.13.5",
+      "0.14.0",
+      "0.14.1",
+      "0.15.0",
+      "0.16.0",
+      "0.17.0",
+      "0.17.1",
+      "0.18.0",
+      "0.18.1",
+      "0.18.2"
+    ]
+  },
+  "@qvac/inference": {
+    "latest": "0.21.0",
+    "published": "2026-10-04T13:37:19.696Z",
+    "tags": {
+      "latest": "0.21.0"
+    },
+    "engines": {
+      "bare": ">=1.30.3"
+    },
+    "repository": {
+      "url": "git+https://github.com/tetherto/qvac.git",
+      "type": "git",
+      "directory": "packages/inference"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "zod": "^4.4.3",
+      "semver": "^7.8.5",
+      "bare-fs": "^4.7.4",
+      "bare-os": "^3.9.3",
+      "bare-env": "^3.0.1",
+      "bare-net": "^2.3.2",
+      "bare-rpc": "^1.3.8",
+      "bare-url": "^2.4.5",
+      "@qvac/rag": "^0.8.1",
+      "bare-path": "^3.1.1",
+      "bare-zlib": "^1.4.0",
+      "corestore": "^7.11.0",
+      "bare-http1": "^4.5.9",
+      "bare-https": "^3.0.0",
+      "hyperdrive": "^13.3.3",
+      "hyperswarm": "^4.17.0",
+      "tar-stream": "^3.2.0",
+      "@qvac/error": "^0.1.1",
+      "bare-buffer": "^3.6.2",
+      "bare-crypto": "^1.15.3",
+      "bare-stream": "^2.13.3",
+      "bare-process": "^4.5.1",
+      "bare-runtime": "^1.30.3",
+      "@qvac/logging": "^0.1.1",
+      "bare-cpu-info": "0.1.1",
+      "bare-gpu-info": "0.1.1",
+      "which-runtime": "^1.2.1",
+      "compact-encoding": "^3.3.0",
+      "fast-safe-stringify": "2.1.1",
+      "@qvac/registry-client": "^0.7.0",
+      "bare-abort-controller": "^1.1.2"
+    },
+    "peerDependencies": {
+      "@qvac/asr-ggml": "^0.7.0",
+      "@qvac/ocr-ggml": "0.26.0",
+      "@qvac/tts-ggml": "^0.10.0",
+      "@qvac/vla-ggml": "0.29.0",
+      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/audiogen-ggml": "^0.5.0",
+      "@qvac/decoder-audio": "^0.7.0",
+      "@qvac/diffusion-cpp": "^0.26.0",
+      "@qvac/bci-whispercpp": "^0.10.0",
+      "@qvac/embed-llamacpp": "0.43.0",
+      "@qvac/ggml-rpc-server": "0.1.0",
+      "@qvac/langdetect-text": "^0.1.2",
+      "@qvac/translation-nmtcpp": "0.18.0",
+      "@qvac/classification-ggml": "0.28.0"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./engine": {
+        "types": "./dist/engine.d.ts",
+        "import": "./dist/engine.js"
+      },
+      "./models": {
+        "types": "./dist/models/registry/index.d.ts",
+        "import": "./dist/models/registry/index.js"
+      },
+      "./logging": {
+        "types": "./dist/logging/index.d.ts",
+        "import": "./dist/logging/index.js"
+      },
+      "./package": "./package.json",
+      "./plugins": {
+        "types": "./dist/plugins/index.d.ts",
+        "import": "./dist/plugins/index.js"
+      },
+      "./surface": {
+        "types": "./dist/surface.d.ts",
+        "import": "./dist/surface.js"
+      },
+      "./profiling": {
+        "types": "./dist/profiling/index.d.ts",
+        "import": "./dist/profiling/index.js"
+      },
+      "./plugin-utils": {
+        "types": "./dist/schemas/plugin.d.ts",
+        "import": "./dist/schemas/plugin.js"
+      },
+      "./ggml-ocr/plugin": {
+        "types": "./dist/plugins/builtin/ggml-ocr/plugin.d.ts",
+        "import": "./dist/plugins/builtin/ggml-ocr/plugin.js"
+      },
+      "./ggml-vla/plugin": {
+        "types": "./dist/plugins/builtin/ggml-vla/plugin.d.ts",
+        "import": "./dist/plugins/builtin/ggml-vla/plugin.js"
+      },
+      "./plugin-registry": {
+        "types": "./dist/plugins/registry.d.ts",
+        "import": "./dist/plugins/registry.js"
+      },
+      "./tts-ggml/plugin": {
+        "types": "./dist/plugins/builtin/tts-ggml/plugin.d.ts",
+        "import": "./dist/plugins/builtin/tts-ggml/plugin.js"
+      },
+      "./rpc-server-provider": {
+        "types": "./dist/rpc/index.d.ts",
+        "import": "./dist/rpc/index.js"
+      },
+      "./audiogen-ggml/plugin": {
+        "types": "./dist/plugins/builtin/audiogen-ggml/plugin.d.ts",
+        "import": "./dist/plugins/builtin/audiogen-ggml/plugin.js"
+      },
+      "./model-resource-profiles": {
+        "types": "./dist/models/registry/resource-profiles.d.ts",
+        "import": "./dist/models/registry/resource-profiles.js"
+      },
+      "./sdcpp-generation/plugin": {
+        "types": "./dist/plugins/builtin/sdcpp-generation/plugin.d.ts",
+        "import": "./dist/plugins/builtin/sdcpp-generation/plugin.js"
+      },
+      "./ggml-rpc-server/provider": {
+        "types": "./dist/rpc/ggml-provider.d.ts",
+        "import": "./dist/rpc/ggml-provider.js"
+      },
+      "./llamacpp-embedding/plugin": {
+        "types": "./dist/plugins/builtin/llamacpp-embedding/plugin.d.ts",
+        "import": "./dist/plugins/builtin/llamacpp-embedding/plugin.js"
+      },
+      "./nmtcpp-translation/plugin": {
+        "types": "./dist/plugins/builtin/nmtcpp-translation/plugin.d.ts",
+        "import": "./dist/plugins/builtin/nmtcpp-translation/plugin.js"
+      },
+      "./ggml-classification/plugin": {
+        "types": "./dist/plugins/builtin/ggml-classification/plugin.d.ts",
+        "import": "./dist/plugins/builtin/ggml-classification/plugin.js"
+      },
+      "./llamacpp-completion/plugin": {
+        "types": "./dist/plugins/builtin/llamacpp-completion/plugin.d.ts",
+        "import": "./dist/plugins/builtin/llamacpp-completion/plugin.js"
+      },
+      "./parakeet-transcription/plugin": {
+        "types": "./dist/plugins/builtin/parakeet-transcription/plugin.d.ts",
+        "import": "./dist/plugins/builtin/parakeet-transcription/plugin.js"
+      },
+      "./whispercpp-transcription/plugin": {
+        "types": "./dist/plugins/builtin/whispercpp-transcription/plugin.d.ts",
+        "import": "./dist/plugins/builtin/whispercpp-transcription/plugin.js"
+      },
+      "./bci-whispercpp-transcription/plugin": {
+        "types": "./dist/plugins/builtin/bci-whispercpp-transcription/plugin.d.ts",
+        "import": "./dist/plugins/builtin/bci-whispercpp-transcription/plugin.js"
+      }
+    },
+    "uses": [],
+    "versions": [
+      "0.0.0",
+      "0.17.0",
+      "0.17.1",
+      "0.18.0",
+      "0.18.1",
+      "0.18.2",
+      "0.19.0",
+      "0.19.1",
+      "0.20.0",
+      "0.20.1",
+      "0.21.0"
+    ]
+  },
+  "@qvac/llamacpp": {
+    "error": "HTTP Error 404: Not Found",
+    "uses": []
+  },
+  "@qvac/sdk": {
+    "latest": "0.21.0",
+    "published": "2026-10-04T16:08:01.079Z",
+    "tags": {
+      "dev": "0.2.7-dev.1761566029.f834aa3",
+      "latest": "0.21.0"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/tetherto/qvac.git",
+      "type": "git",
+      "directory": "packages/sdk"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "zod": "^4.3.0",
+      "semver": "^7.8.0",
+      "bare-fs": "^4.5.1",
+      "bare-os": "^3.6.2",
+      "bare-env": "^3.0.0",
+      "bare-net": "^2.3.2",
+      "bare-rpc": "^1.3.2",
+      "bare-pack": "^2.0.1",
+      "bare-path": "^3.0.1",
+      "bare-zlib": "^1.3.1",
+      "corestore": "^7.4.5",
+      "hyperdrive": "^13.0.1",
+      "hyperswarm": "^4.14.0",
+      "tar-stream": "^3.1.8",
+      "@qvac/error": "^0.1.1",
+      "bare-buffer": "^3.4.2",
+      "bare-crypto": "^1.15.0",
+      "bare-events": "2.9.1",
+      "bare-stream": "2.13.3",
+      "bare-runtime": "^1.30.3",
+      "bare-signals": "^4.2.0",
+      "@qvac/logging": "^0.1.0",
+      "bare-cpu-info": "0.1.1",
+      "bare-gpu-info": "0.1.1",
+      "which-runtime": "^1.3.2",
+      "@qvac/asr-ggml": "^0.7.0",
+      "@qvac/ocr-ggml": "0.26.0",
+      "@qvac/tts-ggml": "^0.10.0",
+      "@qvac/vla-ggml": "0.29.0",
+      "@qvac/inference": "^0.21.0",
+      "compact-encoding": "^3.0.0",
+      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/audiogen-ggml": "^0.5.0",
+      "@qvac/decoder-audio": "^0.7.0",
+      "@qvac/diffusion-cpp": "^0.26.0",
+      "fast-safe-stringify": "2.1.1",
+      "@qvac/bci-whispercpp": "^0.10.0",
+      "@qvac/embed-llamacpp": "0.43.0",
+      "@qvac/ggml-rpc-server": "0.1.0",
+      "@qvac/langdetect-text": "^0.1.2",
+      "bare-abort-controller": "^1.0.0",
+      "@qvac/translation-nmtcpp": "0.18.0",
+      "@qvac/classification-ggml": "0.28.0"
+    },
+    "peerDependencies": {
+      "tsx": "*",
+      "bare-link": ">=3.0.0",
+      "pear-pipe": ">=1.0.0",
+      "expo-device": ">=8.0.0",
+      "expo-file-system": ">=19.0.0",
+      "expo-modules-core": ">=3.0.0",
+      "expo-build-properties": ">=0.12.0",
+      "react-native-bare-kit": "*",
+      "@electron-forge/plugin-base": "^7.11.1"
+    },
+    "exports": {
+      ".": {
+        "types": "./dist/src/index.d.ts",
+        "import": "./dist/src/index.js",
+        "require": "./dist/src/index.js"
+      },
+      "./models": {
+        "types": "./dist/src/models/registry/index.d.ts",
+        "import": "./dist/src/models/registry/index.js",
+        "require": "./dist/src/models/registry/index.js"
+      },
+      "./logging": {
+        "import": "./dist/src/logging/index.js"
+      },
+      "./package": "./package.json",
+      "./plugins": {
+        "import": "./dist/src/server/plugins/index.js"
+      },
+      "./schemas": {
+        "types": "./dist/src/schemas/public.d.ts",
+        "import": "./dist/src/schemas/public.js",
+        "require": "./dist/src/schemas/public.js"
+      },
+      "./commands": {
+        "types": "./dist/src/commands/index.d.ts",
+        "import": "./dist/src/commands/index.js"
+      },
+      "./pear-pre": "./dist/src/pear/pre.js",
+      "./expo-plugin": "./dist/src/expo/plugins/index.js",
+      "./plugin-utils": {
+        "types": "./dist/src/plugin-utils.d.ts",
+        "import": "./dist/src/plugin-utils.js"
+      },
+      "./electron-forge": {
+        "import": "./src/electron-forge/index.cjs",
+        "default": "./src/electron-forge/index.cjs",
+        "require": "./src/electron-forge/index.cjs"
+      },
+      "./ggml-ocr/plugin": {
+        "types": "./dist/src/worker/plugins/ggml-ocr.d.ts",
+        "import": "./dist/src/worker/plugins/ggml-ocr.js"
+      },
+      "./ggml-vla/plugin": {
+        "types": "./dist/src/worker/plugins/ggml-vla.d.ts",
+        "import": "./dist/src/worker/plugins/ggml-vla.js"
+      },
+      "./onnx-tts/plugin": {
+        "types": "./dist/src/worker/plugins/tts-ggml.d.ts",
+        "import": "./dist/src/worker/plugins/tts-ggml.js"
+      },
+      "./tts-ggml/plugin": {
+        "types": "./dist/src/worker/plugins/tts-ggml.d.ts",
+        "import": "./dist/src/worker/plugins/tts-ggml.js"
+      },
+      "./worker-lifecycle": {
+        "import": "./dist/src/worker/lifecycle.js"
+      },
+      "./rpc-server-provider": {
+        "types": "./dist/src/worker/rpc-server-provider.d.ts",
+        "import": "./dist/src/worker/rpc-server-provider.js"
+      },
+      "./audiogen-ggml/plugin": {
+        "types": "./dist/src/worker/plugins/audiogen-ggml.d.ts",
+        "import": "./dist/src/worker/plugins/audiogen-ggml.js"
+      },
+      "./worker.mobile.bundle": "./dist/worker.mobile.bundle.js",
+      "./sdcpp-generation/plugin": {
+        "types": "./dist/src/worker/plugins/sdcpp-generation.d.ts",
+        "import": "./dist/src/worker/plugins/sdcpp-generation.js"
+      },
+      "./dist/src/worker/index.js": {
+        "import": "./dist/src/worker/index.js",
+        "require": "./dist/src/worker/index.js"
+      },
+      "./ggml-rpc-server/provider": {
+        "types": "./dist/src/worker/ggml-rpc-server-provider.d.ts",
+        "import": "./dist/src/worker/ggml-rpc-server-provider.js"
+      },
+      "./llamacpp-embedding/plugin": {
+        "types": "./dist/src/worker/plugins/llamacpp-embedding.d.ts",
+        "import": "./dist/src/worker/plugins/llamacpp-embedding.js"
+      },
+      "./nmtcpp-translation/plugin": {
+        "types": "./dist/src/worker/plugins/nmtcpp-translation.d.ts",
+        "import": "./dist/src/worker/plugins/nmtcpp-translation.js"
+      },
+      "./ggml-classification/plugin": {
+        "types": "./dist/src/worker/plugins/ggml-classification.d.ts",
+        "import": "./dist/src/worker/plugins/ggml-classification.js"
+      },
+      "./llamacpp-completion/plugin": {
+        "types": "./dist/src/worker/plugins/llamacpp-completion.d.ts",
+        "import": "./dist/src/worker/plugins/llamacpp-completion.js"
+      },
+      "./parakeet-transcription/plugin": {
+        "types": "./dist/src/worker/plugins/parakeet-transcription.d.ts",
+        "import": "./dist/src/worker/plugins/parakeet-transcription.js"
+      },
+      "./whispercpp-transcription/plugin": {
+        "types": "./dist/src/worker/plugins/whispercpp-transcription.d.ts",
+        "import": "./dist/src/worker/plugins/whispercpp-transcription.js"
+      },
+      "./bci-whispercpp-transcription/plugin": {
+        "types": "./dist/src/worker/plugins/bci-whispercpp-transcription.d.ts",
+        "import": "./dist/src/worker/plugins/bci-whispercpp-transcription.js"
+      }
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "0.15.0"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^0.15.0"
+      }
+    ],
+    "versions": [
+      "0.15.0",
+      "0.16.0",
+      "0.17.0",
+      "0.17.1",
+      "0.18.0",
+      "0.18.1",
+      "0.18.2",
+      "0.19.0",
+      "0.19.1",
+      "0.20.0",
+      "0.20.1",
+      "0.21.0"
+    ]
+  },
+  "b4a": {
+    "latest": "1.9.0",
+    "published": "2026-09-13T19:42:28.983Z",
+    "tags": {
+      "latest": "1.9.0"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/b4a.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {},
+    "peerDependencies": {
+      "react-native-b4a": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "index.d.ts",
+        "browser": "./browser.js",
+        "default": "./index.js",
+        "react-native": "./react-native.js"
+      },
+      "./package": "./package.json"
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "packages/memory/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^1.8.0"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^1.8.0"
+      }
+    ],
+    "versions": [
+      "1.6.5",
+      "1.6.6",
+      "1.6.7",
+      "1.7.0",
+      "1.7.1",
+      "1.7.2",
+      "1.7.3",
+      "1.7.4",
+      "1.7.5",
+      "1.8.0",
+      "1.8.1",
+      "1.9.0"
+    ]
+  },
+  "bare": {
+    "latest": "1.34.1",
+    "published": "2026-09-30T09:31:02.319Z",
+    "tags": {
+      "latest": "1.34.1"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {},
+    "peerDependencies": {
+      "bare-url": "*",
+      "bare-buffer": "*",
+      "bare-events": "*",
+      "bare-timers": "*",
+      "bare-console": "*",
+      "bare-runtime": "*",
+      "bare-queue-microtask": "*",
+      "bare-structured-clone": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "import": "./index.mjs",
+        "require": "./index.cjs"
+      }
+    },
+    "uses": [],
+    "versions": [
+      "1.31.0",
+      "1.31.1",
+      "1.31.2",
+      "1.32.0",
+      "1.33.0",
+      "1.33.1",
+      "1.33.2",
+      "1.33.3",
+      "1.33.4",
+      "1.33.5",
+      "1.34.0",
+      "1.34.1"
+    ]
+  },
+  "bare-env": {
+    "latest": "3.0.1",
+    "published": "2026-07-08T12:39:27.369Z",
+    "tags": {
+      "latest": "3.0.1"
+    },
+    "engines": {},
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/holepunchto/bare-env.git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-os": "^3.0.1"
+    },
+    "peerDependencies": {},
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./package": "./package.json"
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^3.0.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^3.0.0"
+      }
+    ],
+    "versions": [
+      "1.0.0",
+      "1.0.1",
+      "2.0.0",
+      "2.1.0",
+      "3.0.0",
+      "3.0.1"
+    ]
+  },
+  "bare-events": {
+    "latest": "2.9.2",
+    "published": "2026-08-26T09:36:15.776Z",
+    "tags": {
+      "latest": "2.9.2"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-events.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {},
+    "peerDependencies": {
+      "bare-abort-controller": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./web": {
+        "types": "./web.d.ts",
+        "default": "./web.js"
+      },
+      "./errors": "./lib/errors.js",
+      "./global": {
+        "types": "./global.d.ts",
+        "default": "./global.js"
+      },
+      "./package": "./package.json"
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^2.8.3"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^2.8.3"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^2.8.3"
+      },
+      {
+        "manifest": "packages/node-caps-ai/package.json",
+        "range": "^2.8.3"
+      }
+    ],
+    "versions": [
+      "2.5.3",
+      "2.5.4",
+      "2.6.0",
+      "2.6.1",
+      "2.7.0",
+      "2.8.0",
+      "2.8.1",
+      "2.8.2",
+      "2.8.3",
+      "2.9.0",
+      "2.9.1",
+      "2.9.2"
+    ]
+  },
+  "bare-fs": {
+    "latest": "4.8.2",
+    "published": "2026-09-25T19:24:20.797Z",
+    "tags": {
+      "latest": "4.8.2"
+    },
+    "engines": {
+      "bare": ">=1.28.0"
+    },
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-fs.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-url": "^2.2.2",
+      "bare-path": "^3.0.0",
+      "fast-fifo": "^1.3.2",
+      "bare-events": "^2.5.4",
+      "bare-stream": "^2.6.4"
+    },
+    "peerDependencies": {
+      "bare-buffer": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./package": "./package.json",
+      "./promises": {
+        "types": "./promises.d.ts",
+        "default": "./promises.js"
+      },
+      "./constants": {
+        "types": "./lib/constants.d.ts",
+        "default": "./lib/constants.js"
+      }
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^4.5.5"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^4.5.5"
+      }
+    ],
+    "versions": [
+      "4.5.4",
+      "4.5.5",
+      "4.5.6",
+      "4.6.0",
+      "4.7.0",
+      "4.7.1",
+      "4.7.2",
+      "4.7.3",
+      "4.7.4",
+      "4.8.0",
+      "4.8.1",
+      "4.8.2"
+    ]
+  },
+  "bare-kit": {
+    "error": "HTTP Error 404: Not Found",
+    "uses": []
+  },
+  "bare-module": {
+    "latest": "7.2.1",
+    "published": "2026-10-01T06:59:43.218Z",
+    "tags": {
+      "latest": "7.2.1"
+    },
+    "engines": {
+      "bare": ">=1.32.0"
+    },
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-module.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-url": "^2.0.1",
+      "bare-path": "^3.0.0",
+      "promaphore": "^1.0.0",
+      "bare-bundle": "^1.11.0",
+      "bare-module-lexer": "^1.7.0",
+      "bare-type-stripper": "^0.1.2",
+      "bare-module-resolve": "^1.12.3",
+      "bare-module-traverse": "~2.5.7"
+    },
+    "peerDependencies": {
+      "bare-buffer": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./loader": {
+        "types": "./lib/loader.d.ts",
+        "default": "./lib/loader.js"
+      },
+      "./package": "./package.json",
+      "./protocol": {
+        "types": "./lib/protocol.d.ts",
+        "default": "./lib/protocol.js"
+      }
+    },
+    "uses": [
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^7.2.1"
+      }
+    ],
+    "versions": [
+      "6.2.1",
+      "6.3.0",
+      "6.3.1",
+      "6.3.2",
+      "6.4.0",
+      "7.0.0",
+      "7.0.1",
+      "7.0.2",
+      "7.0.3",
+      "7.1.0",
+      "7.2.0",
+      "7.2.1"
+    ]
+  },
+  "bare-os": {
+    "latest": "3.9.3",
+    "published": "2026-06-29T06:09:18.419Z",
+    "tags": {
+      "latest": "3.9.3"
+    },
+    "engines": {
+      "bare": ">=1.14.0"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/holepunchto/bare-os.git"
+    },
+    "deprecated": null,
+    "dependencies": {},
+    "peerDependencies": {},
+    "exports": {
+      "./package": "./package.json",
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./constants": {
+        "types": "./lib/constants.d.ts",
+        "default": "./lib/constants.js"
+      },
+      "./errors": {
+        "types": "./lib/errors.d.ts",
+        "default": "./lib/errors.js"
+      }
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^3.6.1"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^3.6.1"
+      }
+    ],
+    "versions": [
+      "3.7.0",
+      "3.7.1",
+      "3.8.0",
+      "3.8.1",
+      "3.8.2",
+      "3.8.4",
+      "3.8.6",
+      "3.8.7",
+      "3.9.0",
+      "3.9.1",
+      "3.9.2",
+      "3.9.3"
+    ]
+  },
+  "bare-pack": {
+    "latest": "2.2.3",
+    "published": "2026-10-05T07:27:01.056Z",
+    "tags": {
+      "latest": "2.2.3"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-pack.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-fs": "^4.2.1",
+      "paparam": "^1.5.0",
+      "bare-path": "^3.0.0",
+      "promaphore": "^1.0.0",
+      "bare-bundle": "^1.8.3",
+      "bare-bundle-id": "^1.0.0",
+      "bare-module-traverse": "~2.5.0"
+    },
+    "peerDependencies": {
+      "bare-url": "^2.4.0",
+      "bare-buffer": "^3.6.0"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./fs": "./lib/fs.js",
+      "./preset": "./lib/preset.js",
+      "./package": "./package.json",
+      "./preset/*": "./lib/preset/*.js"
+    },
+    "uses": [
+      {
+        "manifest": "packages/remote-app/package.json",
+        "range": "^1.5.1"
+      }
+    ],
+    "versions": [
+      "1.5.1",
+      "2.0.0",
+      "2.0.1",
+      "2.0.2",
+      "2.1.0",
+      "2.1.1",
+      "2.1.2",
+      "2.1.3",
+      "2.2.0",
+      "2.2.1",
+      "2.2.2",
+      "2.2.3"
+    ]
+  },
+  "bare-path": {
+    "latest": "3.1.2",
+    "published": "2026-09-01T07:14:42.842Z",
+    "tags": {
+      "latest": "3.1.2"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-path.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {},
+    "peerDependencies": {},
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./posix": "./lib/posix.js",
+      "./win32": "./lib/win32.js",
+      "./package": "./package.json"
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^3.0.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^3.0.0"
+      }
+    ],
+    "versions": [
+      "1.1.2",
+      "2.0.0",
+      "2.0.1",
+      "2.1.0",
+      "2.1.1",
+      "2.1.2",
+      "2.1.3",
+      "3.0.0",
+      "3.0.1",
+      "3.1.0",
+      "3.1.1",
+      "3.1.2"
+    ]
+  },
+  "bare-rpc": {
+    "latest": "1.3.8",
+    "published": "2026-07-07T09:26:07.196Z",
+    "tags": {
+      "latest": "1.3.8"
+    },
+    "engines": {},
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/holepunchto/bare-rpc.git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.6.6",
+      "bare-stream": "^2.1.3",
+      "compact-encoding": "^3.0.0",
+      "safety-catch": "^1.0.2"
+    },
+    "peerDependencies": {
+      "bare-buffer": "*"
+    },
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./package": "./package.json",
+      "./constants": "./lib/constants.js",
+      "./errors": {
+        "types": "./lib/errors.d.ts",
+        "default": "./lib/errors.js"
+      },
+      "./messages": "./lib/messages.js"
+    },
+    "uses": [
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^1.1.0"
+      }
+    ],
+    "versions": [
+      "1.0.0",
+      "1.1.0",
+      "1.2.0",
+      "1.3.0",
+      "1.3.1",
+      "1.3.2",
+      "1.3.3",
+      "1.3.4",
+      "1.3.5",
+      "1.3.6",
+      "1.3.7",
+      "1.3.8"
+    ]
+  },
+  "bare-runtime": {
+    "latest": "1.34.1",
+    "published": "2026-09-30T09:36:23.441Z",
+    "tags": {
+      "latest": "1.34.1"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-runtime.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-fs": "^4.4.4",
+      "bare-os": "^3.0.1",
+      "bare-path": "^3.0.0",
+      "bare-process": "^4.2.1",
+      "bare-subprocess": "^6.1.0"
+    },
+    "peerDependencies": {},
+    "exports": {
+      ".": "./index.js",
+      "./spawn": "./lib/spawn.js",
+      "./package": "./package.json"
+    },
+    "uses": [],
+    "versions": [
+      "1.30.0",
+      "1.30.1",
+      "1.30.2",
+      "1.30.3",
+      "1.31.0",
+      "1.32.0",
+      "1.33.0",
+      "1.33.1",
+      "1.33.3",
+      "1.33.4",
+      "1.34.0",
+      "1.34.1"
+    ]
+  },
+  "bare-sidecar": {
+    "latest": "0.5.7",
+    "published": "2026-09-28T10:25:32.016Z",
+    "tags": {
+      "latest": "0.5.7"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/bare-sidecar.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-fs": "^4.5.1",
+      "bare-url": "^2.3.2",
+      "bare-path": "^3.0.0",
+      "bare-pipe": "^4.1.3",
+      "bare-module": "^7.0.3",
+      "bare-stream": "^2.7.0",
+      "require-asset": "^1.1.0",
+      "bare-subprocess": "^6.0.0"
+    },
+    "peerDependencies": {},
+    "exports": {
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      },
+      "./package": "./package.json"
+    },
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^0.5.2"
+      }
+    ],
+    "versions": [
+      "0.4.3",
+      "0.4.4",
+      "0.4.5",
+      "0.4.6",
+      "0.5.0",
+      "0.5.1",
+      "0.5.2",
+      "0.5.3",
+      "0.5.4",
+      "0.5.5",
+      "0.5.6",
+      "0.5.7"
+    ]
+  },
+  "corestore": {
+    "latest": "7.13.0",
+    "published": "2026-09-28T22:42:48.879Z",
+    "tags": {
+      "latest": "7.13.0"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/corestore.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.6.7",
+      "streamx": "^2.26.0",
+      "hypercore": "^11.35.4",
+      "bare-events": "^2.8.3",
+      "which-runtime": "^1.2.1",
+      "ready-resource": "^1.1.1",
+      "hypercore-crypto": "^3.4.2",
+      "hypercore-errors": "^1.4.0",
+      "sodium-universal": "^5.0.1",
+      "hypercore-id-encoding": "^1.3.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^7.8.0"
+      },
+      {
+        "manifest": "packages/memory/package.json",
+        "range": "^7.8.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^6.18.4"
+      },
+      {
+        "manifest": "packages/search/package.json",
+        "range": "^6.18.4"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^7.8.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^7.8.0"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^7.8.0"
+      }
+    ],
+    "versions": [
+      "7.10.0",
+      "7.10.1",
+      "7.11.0",
+      "7.11.1",
+      "7.12.0",
+      "7.12.1",
+      "7.12.2",
+      "7.12.3",
+      "7.12.4",
+      "7.12.5",
+      "7.12.6",
+      "7.13.0"
+    ]
+  },
+  "electron": {
+    "latest": "44.5.1",
+    "published": "2026-09-30T06:59:15.983Z",
+    "tags": {
+      "unsupported": "2.1.0-unsupported.20180809",
+      "1-8-x": "1.8.8",
+      "1-7-x": "1.7.16",
+      "beta-4-0-x": "4.0.0-beta.11",
+      "beta-3-1-x": "3.1.0-beta.5",
+      "2-0-x": "2.0.18",
+      "3-0-x": "3.0.16",
+      "4-0-x": "4.0.8",
+      "beta-5-0-x": "5.0.0-beta.9",
+      "4-1-x": "4.1.5",
+      "3-1-x": "3.1.12",
+      "beta-6-0-x": "6.0.0-beta.15",
+      "6-0-x": "6.0.12",
+      "beta-7-0-x": "7.0.0-beta.7",
+      "4-2-x": "4.2.12",
+      "7-0-x": "7.0.1",
+      "5-0-x": "5.0.13",
+      "beta-8-x-y": "8.0.0-beta.9",
+      "7-1-x": "7.1.14",
+      "7-2-x": "7.2.4",
+      "beta-9-x-y": "9.0.0-beta.24",
+      "6-1-x": "6.1.12",
+      "beta-10-x-y": "10.0.0-beta.25",
+      "7-3-x": "7.3.3",
+      "beta-11-x-y": "11.0.0-beta.23",
+      "8-x-y": "8.5.5",
+      "beta-12-x-y": "12.0.0-beta.31",
+      "9-x-y": "9.4.4",
+      "origin/11-x-y": "11.4.0",
+      "beta-13-x-y": "13.0.0-beta.28",
+      "10-x-y": "10.4.7",
+      "alpha-15-x-y": "15.0.0-alpha.10",
+      "beta-14-x-y": "14.0.0-beta.25",
+      "11-x-y": "11.5.0",
+      "beta-15-x-y": "15.0.0-beta.7",
+      "alpha-16-x-y": "16.0.0-alpha.9",
+      "beta-16-x-y": "16.0.0-beta.9",
+      "12-x-y": "12.2.3",
+      "alpha-17-x-y": "17.0.0-alpha.6",
+      "beta-17-x-y": "17.0.0-beta.9",
+      "13-x-y": "13.6.9",
+      "alpha-18-x-y": "18.0.0-alpha.5",
+      "beta-18-x-y": "18.0.0-beta.6",
+      "14-x-y": "14.2.9",
+      "alpha-19-x-y": "19.0.0-alpha.5",
+      "beta-19-x-y": "19.0.0-beta.8",
+      "15-x-y": "15.5.7",
+      "16-x-y": "16.2.8",
+      "alpha-20-x-y": "20.0.0-alpha.7",
+      "beta-20-x-y": "20.0.0-beta.13",
+      "17-x-y": "17.4.11",
+      "alpha-21-x-y": "21.0.0-alpha.6",
+      "beta-21-x-y": "21.0.0-beta.8",
+      "18-x-y": "18.3.15",
+      "alpha-22-x-y": "22.0.0-alpha.8",
+      "beta-22-x-y": "22.0.0-beta.8",
+      "19-x-y": "19.1.9",
+      "alpha-23-x-y": "23.0.0-alpha.3",
+      "beta-23-x-y": "23.0.0-beta.8",
+      "20-x-y": "20.3.12",
+      "alpha-24-x-y": "24.0.0-alpha.7",
+      "beta-24-x-y": "24.0.0-beta.7",
+      "21-x-y": "21.4.4",
+      "alpha-25-x-y": "25.0.0-alpha.6",
+      "beta-25-x-y": "25.0.0-beta.8",
+      "alpha-26-x-y": "26.0.0-alpha.8",
+      "beta-26-x-y": "26.0.0-beta.12",
+      "23-x-y": "23.3.13",
+      "alpha-27-x-y": "27.0.0-alpha.6",
+      "beta-27-x-y": "27.0.0-beta.9",
+      "22-x-y": "22.3.27",
+      "24-x-y": "24.8.8",
+      "alpha-28-x-y": "28.0.0-alpha.7",
+      "beta-28-x-y": "28.0.0-beta.11",
+      "25-x-y": "25.9.8",
+      "alpha-29-x-y": "29.0.0-alpha.11",
+      "beta-29-x-y": "29.0.0-beta.12",
+      "26-x-y": "26.6.10",
+      "alpha-30-x-y": "30.0.0-alpha.7",
+      "beta-30-x-y": "30.0.0-beta.8",
+      "27-x-y": "27.3.11",
+      "alpha-31-x-y": "31.0.0-alpha.5",
+      "28-x-y": "28.3.3",
+      "beta-31-x-y": "31.0.0-beta.10",
+      "alpha-32-x-y": "32.0.0-alpha.10",
+      "beta-32-x-y": "32.0.0-beta.7",
+      "29-x-y": "29.4.6",
+      "30-x-y": "30.5.1",
+      "alpha-33-x-y": "33.0.0-alpha.6",
+      "beta-33-x-y": "33.0.0-beta.11",
+      "alpha-34-x-y": "34.0.0-alpha.9",
+      "beta-34-x-y": "34.0.0-beta.16",
+      "31-x-y": "31.7.7",
+      "alpha-35-x-y": "35.0.0-alpha.5",
+      "beta-35-x-y": "35.0.0-beta.13",
+      "32-x-y": "32.3.3",
+      "alpha-36-x-y": "36.0.0-alpha.6",
+      "beta-36-x-y": "36.0.0-beta.9",
+      "33-x-y": "33.4.11",
+      "alpha-37-x-y": "37.0.0-alpha.7",
+      "34-x-y": "34.5.8",
+      "beta-37-x-y": "37.0.0-beta.9",
+      "alpha-38-x-y": "38.0.0-alpha.13",
+      "35-x-y": "35.7.5",
+      "beta-38-x-y": "38.0.0-beta.11",
+      "alpha-39-x-y": "39.0.0-alpha.9",
+      "36-x-y": "36.9.5",
+      "beta-39-x-y": "39.0.0-beta.5",
+      "alpha-40-x-y": "40.0.0-alpha.8",
+      "37-x-y": "37.10.3",
+      "beta-40-x-y": "40.0.0-beta.9",
+      "alpha-41-x-y": "41.0.0-alpha.6",
+      "beta-41-x-y": "41.0.0-beta.8",
+      "38-x-y": "38.8.6",
+      "alpha-42-x-y": "42.0.0-alpha.6",
+      "beta-42-x-y": "42.0.0-beta.8",
+      "39-x-y": "39.8.10",
+      "alpha-43-x-y": "43.0.0-alpha.7",
+      "beta-43-x-y": "43.0.0-beta.8",
+      "40-x-y": "40.10.6",
+      "alpha-44-x-y": "44.0.0-alpha.9",
+      "beta": "44.0.0-beta.6",
+      "beta-44-x-y": "44.0.0-beta.6",
+      "41-x-y": "41.10.7",
+      "44-x-y": "44.5.1",
+      "latest": "44.5.1",
+      "42-x-y": "42.11.10",
+      "43-x-y": "43.7.7",
+      "alpha": "45.0.0-alpha.15",
+      "alpha-45-x-y": "45.0.0-alpha.15"
+    },
+    "engines": {
+      "node": ">= 22.12.0"
+    },
+    "repository": {
+      "url": "git+https://github.com/electron/electron.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "@types/node": "^24.9.0",
+      "@electron/get": "^5.0.0",
+      "@electron-internal/extract-zip": "^1.0.1"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "42.4.1"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^40.2.1"
+      }
+    ],
+    "versions": [
+      "44.4.5",
+      "45.0.0-alpha.11",
+      "45.0.0-alpha.12",
+      "45.0.0-alpha.13",
+      "43.7.6",
+      "42.11.9",
+      "44.5.0",
+      "44.5.1",
+      "42.11.10",
+      "43.7.7",
+      "45.0.0-alpha.14",
+      "45.0.0-alpha.15"
+    ]
+  },
+  "hyperbee": {
+    "latest": "2.27.3",
+    "published": "2026-01-27T11:54:08.017Z",
+    "tags": {
+      "latest": "2.27.3"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/hyperbee.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.6.0",
+      "rache": "^1.0.0",
+      "codecs": "^3.0.0",
+      "unslab": "^1.2.0",
+      "streamx": "^2.12.4",
+      "mutexify": "^1.4.0",
+      "debounceify": "^1.0.0",
+      "safety-catch": "^1.0.2",
+      "ready-resource": "^1.0.0",
+      "hypercore-errors": "^1.0.0",
+      "resolve-reject-promise": "^1.1.0",
+      "protocol-buffers-encodings": "^1.2.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^2.27.3"
+      },
+      {
+        "manifest": "packages/memory/package.json",
+        "range": "^2.27.3"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^2.21.0"
+      },
+      {
+        "manifest": "packages/search/package.json",
+        "range": "^2.21.0"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^2.27.3"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^2.27.3"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^2.27.3"
+      }
+    ],
+    "versions": [
+      "2.24.3",
+      "2.25.0",
+      "2.26.0",
+      "2.26.1",
+      "2.26.2",
+      "2.26.3",
+      "2.26.4",
+      "2.26.5",
+      "2.27.0",
+      "2.27.1",
+      "2.27.2",
+      "2.27.3"
+    ]
+  },
+  "hypercore": {
+    "latest": "11.37.2",
+    "published": "2026-10-05T20:22:23.128Z",
+    "tags": {
+      "next": "10.36.1",
+      "latest": "11.37.2"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/hypercore.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.1.0",
+      "z32": "^1.0.0",
+      "unslab": "^1.3.0",
+      "streamx": "^2.12.4",
+      "protomux": "^3.5.0",
+      "fast-fifo": "^1.3.0",
+      "flat-tree": "^1.9.0",
+      "is-options": "^1.0.1",
+      "nanoassert": "^2.0.0",
+      "bare-events": "^2.2.0",
+      "safety-catch": "^1.0.1",
+      "big-sparse-array": "^1.0.3",
+      "compact-encoding": "^3.0.0",
+      "hypercore-crypto": "^3.2.1",
+      "hypercore-errors": "^1.5.0",
+      "sodium-universal": "^5.0.1",
+      "hypercore-storage": "^3.2.0",
+      "quickbit-universal": "^2.2.0",
+      "hypercore-id-encoding": "^1.2.0",
+      "random-array-iterator": "^1.0.0",
+      "@hyperswarm/secret-stream": "^6.0.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^11.27.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^10.37.20"
+      },
+      {
+        "manifest": "packages/search/package.json",
+        "range": "^10.37.20"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^11.27.0"
+      }
+    ],
+    "versions": [
+      "11.34.1",
+      "11.35.0",
+      "11.35.1",
+      "11.35.2",
+      "11.35.3",
+      "11.35.4",
+      "11.35.5",
+      "11.36.0",
+      "11.36.1",
+      "11.37.0",
+      "11.37.1",
+      "11.37.2"
+    ]
+  },
+  "hypercore-crypto": {
+    "latest": "3.7.0",
+    "published": "2026-05-05T17:02:23.826Z",
+    "tags": {
+      "latest": "3.7.0"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/mafintosh/hypercore-crypto.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.6.6",
+      "compact-encoding": "^3.0.0",
+      "sodium-universal": "^5.0.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^3.6.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^3.6.1"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^3.6.0"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^3.7.0"
+      }
+    ],
+    "versions": [
+      "3.1.1",
+      "3.2.0",
+      "3.2.1",
+      "3.3.0",
+      "3.3.1",
+      "3.4.0",
+      "3.4.1",
+      "3.4.2",
+      "3.5.0",
+      "3.6.0",
+      "3.6.1",
+      "3.7.0"
+    ]
+  },
+  "hyperdht": {
+    "latest": "6.34.1",
+    "published": "2026-10-05T19:34:53.623Z",
+    "tags": {
+      "latest": "6.34.1"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/hyperdht.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.3.1",
+      "bogon": "^1.0.0",
+      "xache": "^1.1.0",
+      "unslab": "^1.3.0",
+      "dht-rpc": "^6.15.1",
+      "streamx": "^2.16.1",
+      "bare-events": "^2.2.0",
+      "blind-relay": "^1.3.0",
+      "record-cache": "^1.1.1",
+      "safety-catch": "^1.0.1",
+      "noise-curve-ed": "^2.0.0",
+      "signal-promise": "^1.0.3",
+      "noise-handshake": "^4.0.0",
+      "compact-encoding": "^3.0.0",
+      "hypercore-crypto": "^3.3.0",
+      "hyperdht-address": "^1.0.1",
+      "sodium-universal": "^5.0.1",
+      "hypercore-id-encoding": "^1.2.0",
+      "@hyperswarm/secret-stream": "^6.6.2"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^6.29.1"
+      },
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^6.29.1"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^6.29.4"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^6.29.1"
+      },
+      {
+        "manifest": "packages/node-caps-ai/package.json",
+        "range": "^6.29.1"
+      }
+    ],
+    "versions": [
+      "6.29.3",
+      "6.29.4",
+      "6.29.5",
+      "6.29.6",
+      "6.30.0",
+      "6.31.0",
+      "6.32.0",
+      "6.33.0",
+      "6.33.1",
+      "6.33.2",
+      "6.34.0",
+      "6.34.1"
+    ]
+  },
+  "hyperdrive": {
+    "latest": "13.3.4",
+    "published": "2026-09-17T20:34:25.424Z",
+    "tags": {
+      "next": "11.0.1",
+      "tmp": "12.0.0",
+      "latest": "13.3.4"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/hyperdrive.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "streamx": "^2.12.4",
+      "hyperbee": "^2.11.1",
+      "hypercore": "^11.0.0",
+      "hyperblobs": "^2.9.0",
+      "is-options": "^1.0.2",
+      "speedometer": "^1.1.0",
+      "sub-encoder": "^2.1.1",
+      "mirror-drive": "^1.2.0",
+      "safety-catch": "^1.0.2",
+      "ready-resource": "^1.0.0",
+      "hypercore-errors": "^1.0.0",
+      "unix-path-resolve": "^1.0.2"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^12.3.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^11.12.0"
+      },
+      {
+        "manifest": "packages/search/package.json",
+        "range": "^11.12.0"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^12.3.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^12.3.0"
+      }
+    ],
+    "versions": [
+      "13.0.2",
+      "13.1.0",
+      "13.1.1",
+      "13.1.2",
+      "13.1.3",
+      "13.2.0",
+      "13.2.1",
+      "13.3.0",
+      "13.3.1",
+      "13.3.2",
+      "13.3.3",
+      "13.3.4"
+    ]
+  },
+  "hyperswarm": {
+    "latest": "4.17.2",
+    "published": "2026-09-22T16:35:53.753Z",
+    "tags": {
+      "tmp": "4.13.0",
+      "latest": "4.17.2"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/hyperswarm.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.3.1",
+      "unslab": "^1.3.0",
+      "streamx": "^2.22.1",
+      "hyperdht": "^6.21.0",
+      "bare-events": "^2.2.0",
+      "safety-catch": "^1.0.2",
+      "shuffled-priority-queue": "^2.1.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-caps-sync/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "packages/memory-client/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "packages/cli/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "packages/node/package.json",
+        "range": "^4.17.0"
+      },
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^4.17.0"
+      }
+    ],
+    "versions": [
+      "4.14.0",
+      "4.14.1",
+      "4.14.2",
+      "4.15.0",
+      "4.15.1",
+      "4.15.2",
+      "4.15.3",
+      "4.15.4",
+      "4.16.0",
+      "4.17.0",
+      "4.17.1",
+      "4.17.2"
+    ]
+  },
+  "next": {
+    "latest": "16.3.8",
+    "published": "2026-09-30T16:07:21.198Z",
+    "tags": {
+      "next-11": "11.1.4",
+      "next-12-2-6": "12.2.6",
+      "next-14-1": "14.1.1",
+      "rc": "15.0.0-rc.1",
+      "next-13": "13.5.11",
+      "next-12-3-2": "12.3.7",
+      "beta": "16.0.0-beta.0",
+      "next-14": "14.2.35",
+      "next-15-3": "15.3.9",
+      "next-15-2": "15.2.9",
+      "next-15-0": "15.1.12",
+      "next-15-0-0": "15.0.8",
+      "preview": "16.3.0-preview.10",
+      "latest": "16.3.8",
+      "backport": "15.5.27",
+      "canary": "16.4.0-canary.61"
+    },
+    "engines": {
+      "node": ">=20.9.0"
+    },
+    "repository": {
+      "url": "git+https://github.com/vercel/next.js.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "postcss": "8.5.23",
+      "@next/env": "16.3.8",
+      "styled-jsx": "5.1.6",
+      "@swc/helpers": "0.5.23",
+      "caniuse-lite": "^1.0.30001579",
+      "baseline-browser-mapping": "^2.9.19"
+    },
+    "peerDependencies": {
+      "sass": "^1.3.0",
+      "react": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+      "react-dom": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+      "@playwright/test": "^1.51.1",
+      "@opentelemetry/api": "^1.1.0",
+      "babel-plugin-react-compiler": "*"
+    },
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/website/package.json",
+        "range": "^15.3.3"
+      }
+    ],
+    "versions": [
+      "16.3.7",
+      "16.4.0-canary.53",
+      "16.3.8",
+      "15.5.27",
+      "16.4.0-canary.54",
+      "16.4.0-canary.55",
+      "16.4.0-canary.56",
+      "16.4.0-canary.57",
+      "16.4.0-canary.58",
+      "16.4.0-canary.59",
+      "16.4.0-canary.60",
+      "16.4.0-canary.61"
+    ]
+  },
+  "pear-bridge": {
+    "latest": "1.2.5",
+    "published": "2026-01-13T21:01:40.763Z",
+    "tags": {
+      "latest": "1.2.5"
+    },
+    "engines": {},
+    "repository": null,
+    "deprecated": null,
+    "dependencies": {
+      "bare-http1": "^4.0.2",
+      "get-mime-type": "^2.0.0",
+      "listen-async": "^1.0.0",
+      "pear-appdrive": "^1.0.0",
+      "pear-errors": "^1.0.0",
+      "pear-gunk": "^1.0.0",
+      "pear-stamp": "^1.0.1",
+      "ready-resource": "^1.1.1",
+      "script-linker": "^2.5.3",
+      "sodium-native": "^5.0.9",
+      "streamx": "^2.21.1"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^1.2.4"
+      },
+      {
+        "manifest": "packages/memory-desktop/package.json",
+        "range": "^1.2.4"
+      }
+    ],
+    "versions": [
+      "1.0.1",
+      "1.0.2",
+      "1.1.0",
+      "1.1.1",
+      "1.1.2",
+      "1.1.3",
+      "1.2.0",
+      "1.2.1",
+      "1.2.2",
+      "1.2.3",
+      "1.2.4",
+      "1.2.5"
+    ]
+  },
+  "pear-electron": {
+    "latest": "1.7.28",
+    "published": "2026-02-09T10:49:23.846Z",
+    "tags": {
+      "latest": "1.7.28",
+      "rc": "1.9.0-rc.0"
+    },
+    "engines": {},
+    "repository": null,
+    "deprecated": null,
+    "dependencies": {
+      "bare-env": "^3.0.0",
+      "bare-fs": "^4.0.1",
+      "bare-os": "^3.4.0",
+      "bare-path": "^3.0.0",
+      "bare-subprocess": "^5.0.2",
+      "compact-encoding": "^2.16.1",
+      "localdrive": "^1.12.1",
+      "paparam": "^1.6.1",
+      "pear-api": "^1.29.1",
+      "pear-cmd": "^1.0.0",
+      "pear-constants": "^1.0.0",
+      "pear-crasher": "^1.0.1",
+      "pear-errors": "^1.0.0",
+      "pear-gunk": "^1.0.0",
+      "pear-ipc": "^6.4.0",
+      "pear-link": "^4.1.0",
+      "pear-logger": "^1.0.0",
+      "pear-pipe": "^1.0.2",
+      "pear-run": "^1.0.0",
+      "pear-state": "^1.0.2",
+      "pear-terminal": "^1.0.0",
+      "pear-tryboot": "^1.0.0",
+      "script-linker": "^2.5.3",
+      "streamx": "^2.20.2",
+      "unix-path-resolve": "^1.0.2",
+      "url-file-url": "^1.0.4",
+      "which-runtime": "^1.2.1"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^1.7.0"
+      },
+      {
+        "manifest": "packages/memory-desktop/package.json",
+        "range": "^1.7.0"
+      }
+    ],
+    "versions": [
+      "1.7.21",
+      "1.7.22",
+      "1.7.23",
+      "1.7.24",
+      "1.7.25-rc.0",
+      "1.7.25-rc.1",
+      "1.7.25",
+      "1.7.26",
+      "1.8.0-rc.0",
+      "1.7.27",
+      "1.9.0-rc.0",
+      "1.7.28"
+    ]
+  },
+  "pear-pipe": {
+    "latest": "1.0.6",
+    "published": "2025-10-28T17:16:38.043Z",
+    "tags": {
+      "latest": "1.0.6"
+    },
+    "engines": {},
+    "repository": null,
+    "deprecated": null,
+    "dependencies": {
+      "bare-fs": "^4.1.6",
+      "bare-pipe": "^4.0.6",
+      "streamx": "^2.22.1",
+      "which-runtime": "^1.3.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^1.0.6"
+      },
+      {
+        "manifest": "packages/memory-desktop/package.json",
+        "range": "^1.0.6"
+      }
+    ],
+    "versions": [
+      "1.0.0",
+      "1.0.1",
+      "1.0.2",
+      "1.0.3",
+      "1.0.4",
+      "1.0.5",
+      "1.0.6"
+    ]
+  },
+  "pear-run": {
+    "latest": "2.0.0",
+    "published": "2026-01-07T01:25:43.638Z",
+    "tags": {
+      "latest": "2.0.0"
+    },
+    "engines": {},
+    "repository": null,
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.6.7",
+      "bare-path": "^3.0.0",
+      "bare-subprocess": "^5.1.0",
+      "paparam": "^1.8.5",
+      "pear-cmd": "^1.0.0",
+      "pear-errors": "^1.0.1",
+      "pear-link": "^4.1.0",
+      "pear-ref": "^1.0.0",
+      "unix-path-resolve": "^1.0.2",
+      "url-file-url": "^1.0.5",
+      "which-runtime": "^1.3.2"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-desktop/package.json",
+        "range": "^1.0.7"
+      },
+      {
+        "manifest": "packages/memory-desktop/package.json",
+        "range": "^1.0.7"
+      }
+    ],
+    "versions": [
+      "1.0.0",
+      "1.0.1",
+      "1.0.2",
+      "1.0.3",
+      "1.0.4",
+      "1.0.5",
+      "1.0.6",
+      "1.0.7",
+      "1.0.8",
+      "2.0.0"
+    ]
+  },
+  "pear-runtime": {
+    "latest": "1.3.1",
+    "published": "2026-07-01T07:40:39.661Z",
+    "tags": {
+      "latest": "1.3.1"
+    },
+    "engines": {},
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/holepunchto/pear-runtime.git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "bare-path": "^3.0.0",
+      "bare-sidecar": "^0.5.2",
+      "bare-worker": "^4.4.0",
+      "corestore": "^7.9.1",
+      "hyperswarm": "^4.17.0",
+      "pear-runtime-updater": "^3.0.0",
+      "ready-resource": "^1.2.0"
+    },
+    "peerDependencies": {},
+    "exports": {
+      "./package": "./package.json",
+      ".": {
+        "types": "./index.d.ts",
+        "default": "./index.js"
+      }
+    },
+    "uses": [
+      {
+        "manifest": "examples/coffee-assistant/package.json",
+        "range": "^1.3.1"
+      }
+    ],
+    "versions": [
+      "0.4.2",
+      "0.4.3",
+      "0.5.0",
+      "1.0.0",
+      "1.0.1",
+      "1.1.0",
+      "1.1.1",
+      "1.1.3",
+      "1.1.4",
+      "1.2.0",
+      "1.3.0",
+      "1.3.1"
+    ]
+  },
+  "protomux": {
+    "latest": "3.12.1",
+    "published": "2026-09-23T21:37:48.308Z",
+    "tags": {
+      "latest": "3.12.1"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/protomux.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "b4a": "^1.3.1",
+      "unslab": "^1.3.0",
+      "queue-tick": "^1.0.0",
+      "safety-catch": "^1.0.1",
+      "compact-encoding": "^3.0.0"
+    },
+    "peerDependencies": {},
+    "exports": null,
+    "uses": [
+      {
+        "manifest": "packages/node-core/package.json",
+        "range": "^3.10.1"
+      }
+    ],
+    "versions": [
+      "3.7.0",
+      "3.8.0",
+      "3.8.1",
+      "3.9.0",
+      "3.9.1",
+      "3.9.2",
+      "3.10.0",
+      "3.10.1",
+      "3.10.3",
+      "3.11.0",
+      "3.12.0",
+      "3.12.1"
+    ]
+  },
+  "react-native-bare-kit": {
+    "latest": "0.15.6",
+    "published": "2026-09-25T14:16:32.165Z",
+    "tags": {
+      "latest": "0.15.6"
+    },
+    "engines": {},
+    "repository": {
+      "url": "git+https://github.com/holepunchto/react-native-bare-kit.git",
+      "type": "git"
+    },
+    "deprecated": null,
+    "dependencies": {
+      "streamx": "^2.21.0",
+      "bare-link": "^3.0.1",
+      "bare-events": "^2.6.1"
+    },
+    "peerDependencies": {
+      "react": "*",
+      "react-native": "*"
+    },
+    "exports": null,
+    "uses": [],
+    "versions": [
+      "0.14.1",
+      "0.14.2",
+      "0.14.3",
+      "0.14.4",
+      "0.14.5",
+      "0.15.0",
+      "0.15.1",
+      "0.15.3",
+      "0.15.2",
+      "0.15.4",
+      "0.15.5",
+      "0.15.6"
+    ]
+  }
+}

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { docsNav, type DocBlock, type DocPage } from "@/lib/docs";
 
+function headingId(text: string) {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 function DocBlockView({ block }: { block: DocBlock }) {
   if (block.type === "lead") {
     return <p className="text-lg leading-8 text-text-secondary">{block.text}</p>;
@@ -10,6 +14,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
   if (block.type === "heading") {
     return (
       <h2 className="mt-12 border-t border-border pt-8 text-2xl font-semibold tracking-tight">
+        <span id={headingId(block.text)} className="scroll-mt-24" />
         {block.text}
       </h2>
     );
@@ -102,42 +107,33 @@ function DocBlockView({ block }: { block: DocBlock }) {
 }
 
 export function DocsShell({ page }: { page: DocPage }) {
+  const navigation = (
+    <nav aria-label="Documentation" className="space-y-6">
+      {docsNav.map((section) => (
+        <div key={section.title}>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{section.title}</h2>
+          <div className="space-y-1">
+            {section.pages.map((item) => {
+              const active = item.slug === page.slug;
+              return <Link key={item.slug || "overview"} href={item.slug ? `/docs/${item.slug}` : "/docs"} aria-current={active ? "page" : undefined} className={`block rounded-lg px-3 py-2 text-sm transition-colors ${active ? "bg-accent/10 text-accent" : "text-text-secondary hover:bg-surface hover:text-text-primary"}`}>{item.title}</Link>;
+            })}
+          </div>
+        </div>
+      ))}
+    </nav>
+  );
+
   return (
     <div className="relative">
       <div className="absolute inset-x-0 top-0 -z-10 h-80 bg-[radial-gradient(ellipse_at_top,_rgba(0,212,170,0.08)_0%,_transparent_55%)]" />
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8 lg:py-16">
         <aside className="lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:overflow-y-auto">
-          <div className="mb-5 flex items-center gap-2 text-sm font-semibold text-text-primary">
+          <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-text-primary">
             <BookOpen className="h-4 w-4 text-accent" />
             Docs
           </div>
-          <nav className="space-y-6">
-            {docsNav.map((section) => (
-              <div key={section.title}>
-                <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
-                  {section.title}
-                </h2>
-                <div className="space-y-1">
-                  {section.pages.map((item) => {
-                    const active = item.slug === page.slug;
-                    return (
-                      <Link
-                        key={item.slug || "overview"}
-                        href={item.slug ? `/docs/${item.slug}` : "/docs"}
-                        className={`block rounded-lg px-3 py-2 text-sm transition-colors ${
-                          active
-                            ? "bg-accent/10 text-accent"
-                            : "text-text-secondary hover:bg-surface hover:text-text-primary"
-                        }`}
-                      >
-                        {item.title}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </nav>
+          <details className="rounded-xl border border-border bg-surface p-4 lg:hidden"><summary className="cursor-pointer text-sm font-medium">Browse documentation</summary><div className="mt-5">{navigation}</div></details>
+          <div className="hidden lg:block">{navigation}</div>
         </aside>
 
         <article className="min-w-0 max-w-3xl">
@@ -149,8 +145,10 @@ export function DocsShell({ page }: { page: DocPage }) {
             <p className="text-lg leading-8 text-text-secondary">
               {page.description}
             </p>
+            <p className="mt-3 text-xs text-text-muted">Verified {page.verifiedOn}</p>
           </div>
           <div className="space-y-7">{page.blocks.map((block, index) => <DocBlockView key={index} block={block} />)}</div>
+          <div className="mt-14 border-t border-border pt-7 text-sm text-text-muted">Public issue reporting will be linked here after the repository and support route are anonymously accessible.</div>
         </article>
       </div>
     </div>

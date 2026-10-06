@@ -3,12 +3,15 @@ name: scaffold-project
 description: Create new apps with `us scaffold app` — all platforms and features.
 when_to_use: User wants to create, bootstrap, or set up a new app or project. ALWAYS scaffold before writing application code.
 paths: ["package.json"]
-version: "2026-04-14"
+version: "2026-09-24"
 ---
 
 # Scaffold Project
 
-**Always use the `us` CLI to create new apps.** Do not manually create project files, package.json, or build configs — the scaffold handles all of that with battle-tested, validated configurations.
+**Start with the `us` CLI when creating a supported app target.** It provides
+versioned project files and build configuration, but a generated target is not
+automatically release-validated. Check the maturity notes below and run the
+target's own install and runtime gates before extending it.
 
 ## When to Use
 
@@ -50,7 +53,7 @@ optional features are:
 |---------|-------------|-----------|
 | `local-ai` | QVAC SDK for local inference + streaming chat UI | All |
 | `wallet` | WDK wallet integration (stub — not yet validated) | pear-desktop, node-cli |
-| `node-sync` | Register cores with the Unstoppable Node for replication + backup | All |
+| `node-sync` | Register cores with the deferred Personal Node alpha for replication; not a complete backup | All |
 | `multi-writer` | Autobee + HyperDB — every device reads and writes, converging | pear-desktop, node-cli |
 
 `multi-writer` **replaces** the default single-writer Hyperbee KV rather than
@@ -79,12 +82,11 @@ us scaffold app -p expo-mobile -n my-app
 
 ### expo-mobile
 
-The scaffold produces a **fully buildable** Expo project. Feature combinations (bare, `local-ai`, `node-sync`, and their combos) have been validated to:
-- `npm install` without errors
-- `expo prebuild` succeeds
-- iOS build (xcodebuild) succeeds
-- Android build (gradle) succeeds
-- Metro JS bundle compiles (`expo export`)
+The scaffold produces an **experimental Expo source target**. Dependency
+installation and mock-level checks have passed in earlier runs, but the current
+candidate has not passed fresh iOS and Android native end-to-end gates. Do not
+describe Expo or any feature combination as supported until those checks pass
+on the claimed simulator/device architecture.
 
 Generated files:
 - `package.json` — correct dependency versions, `postinstall` automation, `overrides`
@@ -129,9 +131,10 @@ npm run dev          # node-cli or pear-desktop: start dev mode
 
 Then start implementing app-specific logic on top of the scaffolded code.
 
-## Validated Dependency Versions
+## Pinned Dependency Versions
 
-These versions are battle-tested and validated through automated research.
+These versions are pinned from reference-app and dependency research; the pins
+reduce drift but do not establish current platform support by themselves.
 The Expo / Bare entries form a **coupled set** — bumping any single one risks
 breaking the worklet bundle pipeline. See `core/verified-versions.mdc` →
 "Mobile (Expo + Bare)" for the full table and the rule for moving them
@@ -178,7 +181,7 @@ us scaffold list-features    # JSON array of features with platform compatibilit
 1. **Always scaffold before coding** — do not manually create package.json, metro.config.js, app.json, or native plugins
 2. **Verify the JSON output** — scaffold outputs `{ "success": true, ... }`. Check this before proceeding.
 3. **Run `npm install` immediately** — the postinstall script handles prebuild and bare-pack
-4. **Do not modify generated plugins** — `withAndroidNdkVersion.js` and `withAndroidArchitecture.js` are validated
-5. **Do not change dependency versions** without checking the validated versions table above. The Mobile (Expo + Bare) entries are a **coupled set** — `bare-pack`, `expo`, `react-native`, `react-native-bare-kit`, and every `expo-*` package must move together against a re-validated bundle pipeline. Never bump one in isolation.
+4. **Preserve generated plugins unless deliberately re-validating them** — `withAndroidNdkVersion.js` and `withAndroidArchitecture.js` are coupled to the native build.
+5. **Do not change dependency versions** without checking the pinned versions table above. The Mobile (Expo + Bare) entries are a **coupled set** — `bare-pack`, `expo`, `react-native`, `react-native-bare-kit`, and every `expo-*` package must move together against a re-validated bundle pipeline. Never bump one in isolation.
 6. **Use `--force` when re-scaffolding** — if the directory already exists
 7. **Customize after scaffolding** — add screens, features, and logic on top of the generated base

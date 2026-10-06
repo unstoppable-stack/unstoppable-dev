@@ -1,0 +1,3 @@
+Using a real local DHT test network (public Internet discovery not tested)
+PASS: second app fetched the first app’s unique order over a real peer connection
+PASS: saved order survived full application restart

@@ -1,0 +1,16 @@
+{
+  "recordedAt": "2026-10-06T14:48:10.369Z",
+  "commit": "064f6066c9c7f6e7998c60cb4c86a8e281852dc3",
+  "workingTree": "clean",
+  "frozen": false,
+  "note": "Artifact identity only. A clean tree does not by itself approve publication.",
+  "artifacts": [
+    {
+      "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
+      "name": "@unstoppable-stack/cli",
+      "version": "0.4.0-beta.1",
+      "bytes": 226743,
+      "sha256": "2a53e298e981a4f3f7ad1b48770506eaad3635fcf9bacd613051f4c543c4bda9"
+    }
+  ]
+}

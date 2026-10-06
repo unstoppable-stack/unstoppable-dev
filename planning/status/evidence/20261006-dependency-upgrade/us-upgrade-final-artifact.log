@@ -1,0 +1,226 @@
+Agent-pack source and bundle match (104 files)
+
+[1] Packing launch packages
+npm notice
+npm notice 📦  @unstoppable-stack/cli@0.4.0-beta.1
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 18.6kB README.md
+npm notice 3.7kB agent-pack-src/components/ai/chat-session.ts
+npm notice 3.6kB agent-pack-src/components/ai/model-manager.ts
+npm notice 8.8kB agent-pack-src/components/ai/tool-runner.ts
+npm notice 2.3kB agent-pack-src/components/data/corestore-manager.ts
+npm notice 2.5kB agent-pack-src/components/data/db-setup.ts
+npm notice 2.8kB agent-pack-src/components/p2p/replication.ts
+npm notice 3.8kB agent-pack-src/components/p2p/swarm-manager.ts
+npm notice 2.2kB agent-pack-src/components/wallet/wallet-setup.ts
+npm notice 3.6kB agent-pack-src/core/architecture.mdc
+npm notice 3.8kB agent-pack-src/core/cheatsheet.mdc
+npm notice 3.0kB agent-pack-src/core/design-guide.mdc
+npm notice 19.1kB agent-pack-src/core/patterns.mdc
+npm notice 12.4kB agent-pack-src/core/principles.mdc
+npm notice 2.7kB agent-pack-src/core/production-readiness.mdc
+npm notice 2.7kB agent-pack-src/core/scenarios.mdc
+npm notice 9.7kB agent-pack-src/core/verified-versions.mdc
+npm notice 372B agent-pack-src/hooks/auto-format.sh
+npm notice 7.5kB agent-pack-src/hooks/skill-rules.json
+npm notice 9.3kB agent-pack-src/modules/autobase.mdc
+npm notice 6.9kB agent-pack-src/modules/autobee.mdc
+npm notice 7.1kB agent-pack-src/modules/bare.mdc
+npm notice 1.4kB agent-pack-src/modules/corestore.mdc
+npm notice 5.1kB agent-pack-src/modules/expo-bare.mdc
+npm notice 1.6kB agent-pack-src/modules/hyperbee.mdc
+npm notice 2.2kB agent-pack-src/modules/hypercore.mdc
+npm notice 3.5kB agent-pack-src/modules/hyperdb.mdc
+npm notice 1.4kB agent-pack-src/modules/hyperdht.mdc
+npm notice 2.1kB agent-pack-src/modules/hyperdrive.mdc
+npm notice 3.7kB agent-pack-src/modules/hyperswarm.mdc
+npm notice 2.6kB agent-pack-src/modules/pear.mdc
+npm notice 6.8kB agent-pack-src/modules/qvac.mdc
+npm notice 3.2kB agent-pack-src/modules/wdk.mdc
+npm notice 1.9kB agent-pack-src/recipes/file-sharing.mdc
+npm notice 2.7kB agent-pack-src/recipes/local-inference.mdc
+npm notice 1.7kB agent-pack-src/recipes/local-p2p-testing.mdc
+npm notice 11.1kB agent-pack-src/recipes/long-context-hygiene.mdc
+npm notice 1.7kB agent-pack-src/recipes/offline-first-app.mdc
+npm notice 7.4kB agent-pack-src/recipes/p2p-conflict-resolution.mdc
+npm notice 1.9kB agent-pack-src/recipes/p2p-data-sync.mdc
+npm notice 7.9kB agent-pack-src/recipes/p2p-hyperdb-autobee-sync.mdc
+npm notice 3.5kB agent-pack-src/recipes/p2p-ndjson-messaging.mdc
+npm notice 5.8kB agent-pack-src/recipes/p2p-rpc.mdc
+npm notice 1.1kB agent-pack-src/recipes/qvac-delegated-inference.mdc
+npm notice 3.3kB agent-pack-src/recipes/qvac-embeddings-rag-sqlite.mdc
+npm notice 1.8kB agent-pack-src/recipes/qvac-kv-cache.mdc
+npm notice 2.1kB agent-pack-src/recipes/qvac-logging.mdc
+npm notice 7.1kB agent-pack-src/recipes/qvac-mobile-expo.mdc
+npm notice 1.9kB agent-pack-src/recipes/qvac-model-sources.mdc
+npm notice 2.4kB agent-pack-src/recipes/qvac-multimodal-vision.mdc
+npm notice 6.1kB agent-pack-src/recipes/qvac-tool-calling.mdc
+npm notice 2.4kB agent-pack-src/recipes/qvac-transcription.mdc
+npm notice 2.9kB agent-pack-src/recipes/qvac-translation.mdc
+npm notice 1.5kB agent-pack-src/recipes/secure-communication.mdc
+npm notice 7.9kB agent-pack-src/recipes/sub-agent-patterns.mdc
+npm notice 3.8kB agent-pack-src/recipes/tool-sets-and-rendering.mdc
+npm notice 1.4kB agent-pack-src/recipes/wallet-integration.mdc
+npm notice 1.5kB agent-pack-src/skills/add-ai-chat/resources/chat-example.md
+npm notice 5.6kB agent-pack-src/skills/add-ai-chat/resources/model-guide.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-chat/resources/schema-guide.md
+npm notice 10.7kB agent-pack-src/skills/add-ai-chat/resources/tool-calling-example.md
+npm notice 7.8kB agent-pack-src/skills/add-ai-chat/resources/troubleshooting.md
+npm notice 3.5kB agent-pack-src/skills/add-ai-chat/SKILL.md
+npm notice 8.8kB agent-pack-src/skills/add-ai-finetune/SKILL.md
+npm notice 10.6kB agent-pack-src/skills/add-ai-image-gen/SKILL.md
+npm notice 13.0kB agent-pack-src/skills/add-ai-plugin/SKILL.md
+npm notice 8.9kB agent-pack-src/skills/add-ai-rag/SKILL.md
+npm notice 10.1kB agent-pack-src/skills/add-ai-transcription/SKILL.md
+npm notice 5.3kB agent-pack-src/skills/add-ai-vision/SKILL.md
+npm notice 5.6kB agent-pack-src/skills/add-database/SKILL.md
+npm notice 2.1kB agent-pack-src/skills/add-encrypted-channels/resources/full-example.md
+npm notice 4.7kB agent-pack-src/skills/add-encrypted-channels/SKILL.md
+npm notice 1.3kB agent-pack-src/skills/add-file-storage/resources/full-example.md
+npm notice 701B agent-pack-src/skills/add-file-storage/resources/troubleshooting.md
+npm notice 3.8kB agent-pack-src/skills/add-file-storage/SKILL.md
+npm notice 977B agent-pack-src/skills/add-kv-storage/resources/full-example.md
+npm notice 697B agent-pack-src/skills/add-kv-storage/resources/troubleshooting.md
+npm notice 4.2kB agent-pack-src/skills/add-kv-storage/SKILL.md
+npm notice 5.2kB agent-pack-src/skills/add-multi-writer-sync/resources/full-example.md
+npm notice 3.5kB agent-pack-src/skills/add-multi-writer-sync/resources/hyperdispatch-pattern.md
+npm notice 10.0kB agent-pack-src/skills/add-multi-writer-sync/SKILL.md
+npm notice 2.4kB agent-pack-src/skills/add-node-capability/resources/two-app-example.md
+npm notice 5.9kB agent-pack-src/skills/add-node-capability/SKILL.md
+npm notice 9.2kB agent-pack-src/skills/add-openai-server/SKILL.md
+npm notice 6.2kB agent-pack-src/skills/add-p2p-networking/SKILL.md
+npm notice 12.8kB agent-pack-src/skills/add-p2p-rpc/resources/full-example.md
+npm notice 3.0kB agent-pack-src/skills/add-p2p-rpc/resources/troubleshooting.md
+npm notice 9.9kB agent-pack-src/skills/add-p2p-rpc/SKILL.md
+npm notice 1.3kB agent-pack-src/skills/add-p2p-sync/resources/full-example.md
+npm notice 951B agent-pack-src/skills/add-p2p-sync/resources/troubleshooting.md
+npm notice 4.8kB agent-pack-src/skills/add-p2p-sync/SKILL.md
+npm notice 851B agent-pack-src/skills/add-wallet/resources/full-example.md
+npm notice 3.5kB agent-pack-src/skills/add-wallet/SKILL.md
+npm notice 10.4kB agent-pack-src/skills/scaffold-project/SKILL.md
+npm notice 784B agent-pack-src/skills/setup-local-testing/resources/full-setup.md
+npm notice 1.6kB agent-pack-src/skills/setup-local-testing/SKILL.md
+npm notice 26.3kB agent-pack-src/skills/setup-mobile-app/SKILL.md
+npm notice 6.1kB agent-pack-src/skills/setup-node-cli/SKILL.md
+npm notice 1.0kB agent-pack-src/skills/setup-pear-desktop/resources/build-setup.md
+npm notice 537B agent-pack-src/skills/setup-pear-desktop/resources/full-example.md
+npm notice 1.8kB agent-pack-src/skills/setup-pear-desktop/resources/troubleshooting.md
+npm notice 11.8kB agent-pack-src/skills/setup-pear-desktop/resources/ui-kit.md
+npm notice 1.8kB agent-pack-src/skills/setup-pear-desktop/resources/worker-pattern.md
+npm notice 5.5kB agent-pack-src/skills/setup-pear-desktop/SKILL.md
+npm notice 5.8kB agent-pack-src/skills/setup-pear-terminal/SKILL.md
+npm notice 8.1kB dist/doctor-UKDA7SFL.js
+npm notice 46.4kB dist/init-6WNNPOH6.js
+npm notice 118.8kB dist/scaffold-VUUHBRTG.js
+npm notice 20B dist/us.d.ts
+npm notice 1.4kB dist/us.js
+npm notice 3.5kB package.json
+npm notice 345B templates/blank/package.json
+npm notice 1.4kB templates/blank/planning/README.md
+npm notice Tarball Details
+npm notice name: @unstoppable-stack/cli
+npm notice version: 0.4.0-beta.1
+npm notice filename: unstoppable-stack-cli-0.4.0-beta.1.tgz
+npm notice package size: 226.8 kB
+npm notice unpacked size: 706.1 kB
+npm notice shasum: 196d3e4eacc30e6abf46bfe18b135e83a2248670
+npm notice integrity: sha512-JEg65m5ELhmLj[...]YkC6mVc+FGAfQ==
+npm notice total files: 114
+npm notice
+  ✓ packed cli
+Recorded 1 artifact checksum(s); source tree clean
+
+[2] Installing globally (isolated prefix, dependency order)
+
+added 67 packages in 2s
+  ✓ installed core CLI (15824 KiB isolated prefix)
+
+[3] us --version
+  → 0.4.0-beta.1 (minimal)
+  ✓ reports 0.4.0-beta.1 (minimal)
+
+[4] Command surface
+  ✓ init, scaffold, doctor present
+  ✓ deferred command surfaces correctly excluded
+
+[5] Public scaffold catalog
+  ✓ only Pear Desktop and local-ai are exposed by the minimal build
+
+[6] us doctor
+  ✓ doctor reports only Pear Desktop readiness in the minimal build
+  ✓ doctor ran clean
+
+[7] us init (non-interactive)
+- Configuring your assistant workspace...
+✔ Assistant workspace configured!
+  ✓ scaffolded smoke-init with AGENTS.md
+
+[8] us scaffold app (Pear Desktop + local AI)
+  ✓ scaffolded Pear Desktop local-ai app
+  ✓ generated app JavaScript passes syntax checks
+
+added 188 packages in 14s
+  ✓ installed generated Pear Desktop local-ai dependency tree
+
+[9] Artifact-generated desktop worker, storage, and UI
+[14:42:21] Unstoppable Stack — Scaffold E2E Test Runner
+[14:42:21] Platform: pear-desktop, Level: 5
+[14:42:21] Output: /tmp/us-e2e-scaffold
+[14:42:21]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[14:42:21]
+━━━ pear-desktop / local-ai ━━━
+[14:42:21]   ○ scaffold (skipped)
+[14:42:21]   ○ npm install (skipped)
+[14:42:21]   ▸ file integrity check
+[14:42:21]   ✓ file integrity check (0.0s)
+[14:42:21]   ▸ worker spawn test
+[14:42:23]   ✓ worker spawn test (1.5s)
+[14:42:23]   ▸ playwright: feature UI test
+[14:42:51]   ℹ real QVAC warm model ready in 19164ms; app process-tree RSS 1520.9 MiB
+[14:42:52]   ✓ playwright: feature UI test (28.9s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           30s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[14:42:52] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-42-52-186Z.json
+  ✓ artifact-generated app passed worker, storage, and UI
+[14:42:52] Unstoppable Stack — Scaffold E2E Test Runner
+[14:42:52] Platform: pear-desktop, Level: 5
+[14:42:52] Output: /tmp/us-e2e-scaffold
+[14:42:52]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[14:42:52]
+━━━ pear-desktop / local-ai ━━━
+[14:42:52]   ○ scaffold (skipped)
+[14:42:52]   ○ npm install (skipped)
+[14:42:52]   ▸ file integrity check
+[14:42:52]   ✓ file integrity check (0.0s)
+[14:42:52]   ▸ worker spawn test
+[14:42:53]   ✓ worker spawn test (0.8s)
+[14:42:53]   ▸ playwright: feature UI test
+[14:42:56]   ℹ saved value survived process restart before the offline run wrote data
+[14:42:59]   ℹ real QVAC warm model ready in 2041ms; app process-tree RSS 1739.1 MiB
+[14:43:00]   ✓ playwright: feature UI test (6.4s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ pear-desktop/local-ai           7s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✓ playwright: feature UI test
+
+1/1 variants passed
+[14:43:00] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-43-00-008Z.json
+  ✓ artifact-generated app passed network-isolated real-model restart
+
+RELEASE SMOKE PASSED in 59s
+Real inference and recovery passed from the packed CLI; clean-machine, pilot, and frozen-commit gates remain separate.

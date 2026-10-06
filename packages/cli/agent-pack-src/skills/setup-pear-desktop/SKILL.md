@@ -5,6 +5,8 @@ description: Build a desktop app with Electron, Pear OTA (pear-runtime), and a B
 
 # Set Up Pear Desktop
 
+**Migration:** 6 October 2026 · macOS Apple Silicon · QVAC inference 0.21.0 + llama.cpp 0.55.0, Pear Runtime 1.3.1, Electron 44.5.1. Release evidence must identify the new candidate/artifact; prior 0.15 checks do not approve this update.
+
 Use the current Pear OTA architecture. `pear run`, the ambient `global.Pear`
 API, `pear-electron`, `pear-bridge`, `pear-run`, `pear.pre`, and `pear release`
 are legacy APIs removed by Pear v3. Never add them to a new desktop app.
@@ -51,7 +53,7 @@ app/
     "pear-runtime": "^1.3.1"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }
 ```
@@ -87,6 +89,21 @@ const storagePath = Bare.argv[2]
 pipe.on('data', onData)
 pipe.write(JSON.stringify({ type: 'workerReady' }) + '\n')
 ```
+
+QVAC plugins must be registered explicitly in a direct Bare worker before its
+first SDK call:
+
+```js
+const [{ llmPlugin }, { registerPlugin }] = await Promise.all([
+  import('@qvac/inference/llamacpp-completion/plugin'),
+  import('@qvac/inference/plugins'),
+])
+registerPlugin(llmPlugin)
+```
+
+For streaming inference, send a request ID across the bridge and implement Stop
+with `cancel({ operation: 'inference', modelId })`. Ignore late stream events
+whose request ID is no longer active, and cancel before model unload on exit.
 
 Use newline-delimited JSON or a typed RPC protocol. Never use stdout as the
 application IPC channel. Call `Bare.exit()` only after P2P, storage, model,
@@ -132,3 +149,9 @@ deployment tool:
 4. Use `pear provision` and `pear multisig` for production.
 
 Do not generate `pear release`; it was removed in Pear v3.
+
+## QVAC 0.21 Bare integration
+
+Use Node >=22.17 for development tooling. Install `@qvac/inference@0.21.0`, `@qvac/llm-llamacpp@0.55.0` and `bare-process@^4.5.1`. Set `globalThis.process` from bare-process before dynamically importing inference. Configuration files now load through dynamic import; remove the 0.15 global require shim.
+
+Use generated `chat-context.js` to bound recent requests and recover from SDK overflow before streaming. The removed `n_discarded` option must not be generated. Native addons and the embedded Bare runtime must be tested together; keep inference outside Electron/renderer Node code.

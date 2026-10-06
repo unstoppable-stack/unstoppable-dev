@@ -1,15 +1,11 @@
 # `us` — The Unstoppable Stack CLI
 
-> Scaffold P2P apps, run them past a `doctor` check, remote-control your AI
-> coding sessions from your phone, and search the web locally — all from one
-> binary.
+> Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-```bash
-npx @unstoppable-stack/cli@latest init my-app
-# or install globally
-npm install -g @unstoppable-stack/cli
-us --help
-```
+> **Release status:** this README describes the unreleased `0.4.0-beta.1`
+> source candidate. The exact preview version/tag is not approved yet. Existing
+> registry releases may describe the older architecture; do not use `latest`
+> as evidence that this candidate journey works.
 
 - **Website:** [unstoppable.dev](https://unstoppable.dev)
 - **Repo:** [unstoppable-stack/unstoppable-dev](https://github.com/unstoppable-stack/unstoppable-dev)
@@ -38,43 +34,41 @@ us --help
 
 ## Install
 
-```bash
-# Global install (recommended)
-npm install -g @unstoppable-stack/cli
-us --version
+The public-preview install command will be added after the final package
+artifact passes the isolated consumer smoke. Until then, build this checkout
+using the [development instructions](#development); no registry tag is the
+approved preview channel.
 
-# Or run without installing
-npx @unstoppable-stack/cli@latest <command>
-```
-
-Requires Node **20+**. Run `us doctor` after installing to verify the rest of
-your environment.
+The candidate requires Node **22.17+**. Run `us doctor` after building to verify
+the rest of your environment.
 
 ---
 
 ## Quick start
 
-### 1. Bootstrap a new project with AI rules
+### 1. Configure an assistant workspace
 
 ```bash
-us init
-# ? Project name: my-app
-# ? AI assistant: Cursor
+us init my-workspace --assistant codex
+cd my-workspace
 ```
 
-The generated project includes pre-loaded agent rules for your chosen
-assistant (Claude, Cursor, OpenCode, or Codex). Open it, describe what you
-want, and the AI already knows the stack.
+This creates a workspace with generated instructions for your chosen assistant.
+It does **not** create a running app. Open the workspace in your assistant and
+ask it to scaffold the app below, or run the command yourself.
 
-### 2. Scaffold a specific platform
+### 2. Scaffold the proposed preview app
 
 ```bash
-us scaffold app -p pear-desktop -n my-app -f local-ai
-us scaffold app -p expo-mobile  -n my-mobile-app
-us scaffold app -p node-cli     -n my-daemon -f local-ai,wallet
+us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
+cd coffee-assistant
+npm install
+npm run dev
 ```
 
-See [Platforms & features](#platforms--features) for the matrix.
+The command is source-accurate but is not a public support claim until the
+clean-machine package and real-model gates pass. Expo Mobile, wallets, and
+Personal Node integration are outside the default preview journey.
 
 ### 3. Check your environment before you start
 
@@ -84,23 +78,15 @@ us doctor -p pear-desktop # only what pear-desktop needs
 us doctor --json          # machine-readable
 ```
 
-### 4. Remote-control your AI session from your phone
-
-```bash
-us remote start           # background daemon
-us remote pair            # print a QR — scan from the mobile app
-us remote run claude      # spawn `claude` inside a session your phone can follow
-```
-
 ---
 
 ## Commands
 
 ### `us init`
 
-Interactive project bootstrap. Creates a new directory, copies a minimal
-starter, wires up the AI assistant of your choice, and (optionally) runs
-`npm install`.
+Interactive workspace bootstrap. Creates a new directory, copies a minimal
+workspace, writes instructions for the AI assistant of your choice, and
+optionally runs `npm install`. Scaffold a runnable app as a separate step.
 
 ```
 us init [project-name] [options]
@@ -119,25 +105,29 @@ us init my-app --assistant cursor
 Output (abridged):
 
 ```
-  Project created at: /path/to/my-app
+  Workspace created at: /path/to/my-workspace
 
   AI Assistant configured (cursor):
     ✓ .cursor/rules/...
 
   Next steps:
-    cd my-app
-    npm run dev
+    cd my-workspace
 
-  Scaffold an app inside your project:
-    us scaffold app -p expo-mobile -n my-app -f local-ai
+  Then open this workspace in your AI assistant and ask:
+    Scaffold a Pear Desktop app named coffee-assistant with local AI.
+
+  Or scaffold it yourself:
+    us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
+    cd coffee-assistant && npm install && npm run dev
 ```
 
 ---
 
 ### `us scaffold`
 
-Generate a real, runnable app for a specific platform. Every generator is
-exercised by the E2E suite in CI — if it's listed here, it boots.
+Generate an app for a specific platform. The generators have different
+validation levels; consult the release support matrix before treating a listed
+platform or feature as publicly supported.
 
 ```
 us scaffold <subcommand>
@@ -154,9 +144,9 @@ Subcommands:
 us scaffold app [options]
 
 Options:
-  -p, --platform <platform>  pear-desktop | expo-mobile | node-cli
+  -p, --platform <platform>  pear-desktop
   -n, --name <name>          Project name
-  -f, --features <features>  Comma-separated: local-ai, wallet, node-sync
+  -f, --features <features>  local-ai
   -o, --output <dir>         Output directory (default: ./<name>)
   --force                    Overwrite existing output directory
 ```
@@ -167,14 +157,8 @@ Options:
 # Minimal Pear Desktop app (Hyperswarm + Hyperbee built in)
 us scaffold app -p pear-desktop -n chat-app
 
-# Pear Desktop with local AI + wallet
-us scaffold app -p pear-desktop -n ai-wallet -f local-ai,wallet
-
-# Expo Mobile with local AI and auto-register with a local Unstoppable Node
-us scaffold app -p expo-mobile -n notes -f local-ai,node-sync
-
-# Node CLI with everything
-us scaffold app -p node-cli -n my-cli -f local-ai,wallet,node-sync
+# Proposed preview path; real-model release validation is still required
+us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
 ```
 
 Every scaffold ships with:
@@ -182,8 +166,8 @@ Every scaffold ships with:
 - Hyperswarm + Corestore P2P networking
 - Hyperbee key-value storage
 - A working KV demo screen (save → fetch round-trip)
-- A pre-wired agent pack for Claude / Cursor / OpenCode / Codex (when you
-  ran `us init`, or via `--assistant` in the future)
+- Access to the parent workspace's generated assistant instructions when you
+  scaffold inside a directory created by `us init`
 - A `README.md` with run instructions for the platform
 
 ---
@@ -198,7 +182,7 @@ us doctor [options]
 
 Options:
   -p, --platform <platform>  Only check tools needed for this platform
-                             (pear-desktop | node-cli | expo-mobile)
+                             (pear-desktop in the published minimal build)
   --json                     Output as JSON (for scripting / CI)
 ```
 
@@ -209,7 +193,7 @@ $ us doctor -p expo-mobile
 
   Environment Check
 
-  + Node.js (20.19)
+  + Node.js (22.17)
   + npm (10.8)
   + git (2.47)
   + Xcode command-line tools (72)
@@ -224,7 +208,9 @@ $ us doctor -p expo-mobile
 ```
 
 `--json` emits a structured report you can pipe into `jq` or consume from a
-CI step.
+CI step. It includes the CLI version, operating-system platform, architecture,
+tool versions, and readiness results, but no environment-variable values or
+user filesystem paths, so it can be sanitized and attached to a bug report.
 
 ---
 
@@ -353,23 +339,28 @@ can swap it in wherever your agent already supports Tavily. See
 
 ## Platforms & features
 
-Generated via `us scaffold list-platforms` and `us scaffold list-features`.
+The published minimal build lists only the public-preview catalog. The full
+internal build retains deferred and experimental generators for development.
+Use `us scaffold list-platforms` and `us scaffold list-features` to inspect the
+catalog in the build you are running.
 
 ### Platforms
 
 | ID             | Name          | Description                                          |
 |----------------|---------------|------------------------------------------------------|
 | `pear-desktop` | Pear Desktop  | P2P desktop app with worker bridge + HTML UI        |
-| `expo-mobile`  | Expo Mobile   | iOS/Android with Bare worklet for native P2P        |
-| `node-cli`     | Node.js CLI   | P2P-enabled command line tool                       |
+| `expo-mobile`  | Expo Mobile   | Deferred; full internal build only                  |
+| `node-cli`     | Node.js CLI   | Scripted validation target; full internal build only |
 
 ### Features
 
 | ID          | Name       | Platforms                                      | Status                |
 |-------------|------------|------------------------------------------------|-----------------------|
-| `local-ai`  | Local AI   | `pear-desktop`, `expo-mobile`, `node-cli`      | Battle-tested (desktop, CLI); mobile: alpha |
-| `wallet`    | Wallet     | `pear-desktop`, `node-cli`                     | Stub (WDK integration coming) |
-| `node-sync` | Node Sync  | `node-cli`, `pear-desktop`, `expo-mobile`      | `node-cli` wired; desktop + mobile pending |
+| `local-ai`  | Local AI   | `pear-desktop` in the minimal build            | Candidate; real-model release validation pending |
+| `wallet`    | Wallet     | Full internal build only                       | Planned stub; excluded from preview |
+| `node-sync` | Node Sync  | Full internal build only                       | Personal Node deferred from preview |
+| `node-host` | Node Host  | Full internal build only                       | Personal Node deferred from preview |
+| `multi-writer` | Multi-Writer Sync | Full internal build only              | Advanced workflow; excluded from preview |
 
 Combine features with commas: `-f local-ai,wallet`.
 
@@ -388,7 +379,7 @@ elimination — not just runtime-hidden).
 | Profile   | Commands included                            | `us --version` suffix | Use                                                           |
 |-----------|----------------------------------------------|-----------------------|---------------------------------------------------------------|
 | `minimal` | `init`, `scaffold`, `doctor`                 | `(minimal)`           | **Default. This is what ships on npm.**                       |
-| `full`    | minimal + `remote`, `research`, `search`     | `(full)`              | Local dev, integration tests, internal builds.               |
+| `full`    | minimal + `remote`, `research`, `search`, `node`, `memory` | `(full)` | Local dev, integration tests, and deferred capability work. |
 
 Current published tarball (`minimal`) is ~120 KB of JS across four
 chunks. The `full` build adds ~155 KB for the three opt-in commands.
@@ -425,6 +416,8 @@ Available flags (see [`tsup.config.ts`](./tsup.config.ts) for defaults):
 | `US_FEAT_REMOTE`  | **off** | on    | `us remote` + daemon + node-pty dep |
 | `US_FEAT_RESEARCH`| **off** | on    | `us research`                |
 | `US_FEAT_SEARCH`  | **off** | on    | `us search`                  |
+| `US_FEAT_NODE`    | **off** | on    | `us node`                    |
+| `US_FEAT_MEMORY`  | **off** | on    | `us memory`                  |
 
 ### How it works (one-liner)
 
@@ -446,6 +439,11 @@ Publishing always runs `prepack` → `US_BUILD_PROFILE=minimal tsup`, so the
 tarball on npm is guaranteed to be minimal regardless of what the last
 local `pnpm build:full` produced.
 
+The published manifest likewise keeps only the four runtime packages used by
+the minimal commands (`chalk`, `commander`, `inquirer`, and `ora`) in
+`dependencies`. Search, Remote, Node, and other full-profile libraries are
+development dependencies and are not installed for public CLI consumers.
+
 ---
 
 ## Environment variables
@@ -464,12 +462,11 @@ local `pnpm build:full` produced.
 Your global npm `bin` isn't on `$PATH`. Run `npm config get prefix` — add
 `<prefix>/bin` to `$PATH`, or use `npx @unstoppable-stack/cli`.
 
-**`us doctor` says Pear is missing**
-Install the runtime:
-```bash
-npm install -g pear
-pear --version
-```
+**Pear Desktop app dependencies are missing**
+Current desktop scaffolds install `pear-runtime` and Electron inside the
+generated project; a global Pear CLI is not required. Run `npm install` in the
+generated app folder and use the first meaningful npm error to diagnose a
+network, permission, or native-package failure.
 
 **Expo Mobile scaffold: `bare-pack` fails with `Cannot find module 'crypto'`**
 Already handled — the generator emits `bare-pack --defer crypto`. If you
