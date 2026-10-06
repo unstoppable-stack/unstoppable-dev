@@ -87,6 +87,15 @@ describe('pear-desktop generator', () => {
     }
   })
 
+  describe('generated documentation', () => {
+    it('qualifies offline AI with the required initial model download', () => {
+      const readme = fileMap(make(['local-ai']))['README.md']
+      expect(readme).toContain('local inference after the initial model download')
+      expect(readme).toContain('~532 MB')
+      expect(readme).not.toContain('offline inference')
+    })
+  })
+
   describe('Electron main process embeds pear-runtime', () => {
     it('imports pear-runtime and launches the Bare worker', () => {
       const files = fileMap(make())
@@ -131,12 +140,24 @@ describe('pear-desktop generator', () => {
       // native-module resolution when worker.js loads, so an SDK failure
       // kills the worker before it can report anything on its pipe — taking
       // P2P and KV storage down with it. It is imported inside 'load-ai'.
-      expect(worker).toContain("await import('@qvac/sdk')")
+      expect(worker).toContain("import('@qvac/sdk')")
+      expect(worker).toContain("import('@qvac/sdk/llamacpp-completion/plugin')")
+      expect(worker).toContain("import('@qvac/sdk/plugins')")
+      expect(worker).toContain('registerPlugin(llmPlugin)')
+      expect(worker).toContain(`modelSrc: msg.modelSrc || sdk.`)
+      expect(worker).toContain("sdk.cancel({ operation: 'inference', modelId })")
+      expect(worker).toContain("case 'cancel-chat'")
       expect(worker).not.toContain("require('@qvac/sdk')")
       expect(worker).not.toMatch(/^import .* from '@qvac\/sdk'$/m)
       expect(worker).toContain('QVAC_MOCK')
       expect(worker).toContain('MOCK_AI')
       expect(worker).toContain("'mock-model'")
+      const app = fileMap(make(['local-ai']))['app/index.js']
+      expect(app).toContain('~532 MB download on first run')
+      expect(app).toContain('~1.4–1.5 GiB')
+      expect(app).toContain('data-testid="chat-stop-btn"')
+      expect(app).toContain("type: 'cancel-chat'")
+      expect(app).toContain('msg.requestId === activeChatRequestId')
     })
 
     it('local-ai: disables reasoning via reasoning_budget, not prompt hacks', () => {
@@ -306,6 +327,8 @@ describe('pear-desktop generator', () => {
       expect(app).toContain('data-testid="node-sync-section"')
       expect(app).toContain('node-sync-status')
       expect(app).toContain("msg.service === 'node-sync'")
+      expect(app).toContain('copy verification pending')
+      expect(app).not.toContain('Protected — background replication is active')
     })
 
     it('closes the app node on shutdown', () => {

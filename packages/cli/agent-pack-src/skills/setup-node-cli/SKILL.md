@@ -3,14 +3,14 @@ name: setup-node-cli
 description: Node.js CLI application with P2P and AI capabilities.
 when_to_use: User is customizing a Node.js CLI app beyond what the scaffold provides, or needs Node-specific patterns.
 paths: ["src/index.ts", "src/**/*.ts"]
-version: "2026-04-14"
+version: "2026-09-24"
 ---
 
 # Setup Node.js CLI App
 
 > **Start with the scaffold:** `us scaffold app -p node-cli -n <name> -f <features>`
 >
-> The scaffold generates a validated TypeScript project with correct dependencies, type declarations
+> The scaffold generates a versioned TypeScript starting point with dependency pins, type declarations
 > for untyped P2P modules, and feature-specific managers. This skill covers customization and advanced patterns.
 
 ## What the Scaffold Handles (do NOT redo manually)
@@ -23,7 +23,10 @@ The `us scaffold app -p node-cli` command generates:
 - `src/types.d.ts` with `declare module` for untyped P2P libraries (hyperswarm, corestore, etc.)
 - Feature-specific managers (`swarm-manager.ts`, `storage-manager.ts`, `ai-manager.ts`)
 
-All feature combinations (local-ai, wallet, node-sync, and their combos) are validated to typecheck and run.
+Validation varies by feature. The base and local-AI paths have the strongest
+evidence; `wallet` is a generated stub, and `node-sync` depends on the deferred
+Personal Node alpha. Run the generated project's own install, typecheck, and
+runtime checks before describing a combination as working.
 
 ## When to Read This Skill
 - You already scaffolded and need to **add custom commands or features**

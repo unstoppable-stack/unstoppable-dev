@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!page) notFound();
 
   return {
-    title: `${page.title} - Unstoppable Stack Docs`,
+    title: page.title,
     description: page.description,
+    alternates: { canonical: `/docs/${page.slug}` },
   };
 }

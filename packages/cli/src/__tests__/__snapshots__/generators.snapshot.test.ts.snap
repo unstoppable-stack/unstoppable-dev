@@ -1525,7 +1525,7 @@ Expo Mobile (iOS/Android)
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Local AI** — QVAC SDK for offline inference with streaming chat
+- **Local AI** — QVAC SDK for local inference after the initial model download (~532 MB)
 
 ## Getting Started
 
@@ -1768,7 +1768,7 @@ export default function Home() {
   const [kvKey, setKvKey] = useState('')
   const [kvValue, setKvValue] = useState('')
   const [kvResult, setKvResult] = useState<string | null>(null)
-  const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'connected' | 'disconnected' | 'unavailable'>('idle')
+  const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'registered' | 'disconnected' | 'unavailable'>('idle')
   
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
@@ -1862,12 +1862,12 @@ export default function Home() {
         </View>
         
         <View style={styles.section} testID="node-sync-section">
-          <Text style={styles.sectionTitle}>Data Protection</Text>
+          <Text style={styles.sectionTitle}>Node Replication</Text>
           <Text style={styles.mono} testID="node-sync-status">
-            {nodeStatus === 'idle' && '⏳ Preparing data protection…'}
+            {nodeStatus === 'idle' && '⏳ Preparing node replication…'}
             {nodeStatus === 'searching' && '⏳ Looking for your Personal Node…'}
-            {nodeStatus === 'connected' && '✅ Protected — background replication is active'}
-            {nodeStatus === 'disconnected' && '⚠️ Protection paused — reconnecting…'}
+            {nodeStatus === 'registered' && 'Registered for replication — copy verification pending'}
+            {nodeStatus === 'disconnected' && '⚠️ Replication paused — reconnecting…'}
             {nodeStatus === 'unavailable' && 'Device only — Personal Node not found'}
           </Text>
           {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
@@ -2045,7 +2045,7 @@ const rpc = new RPC(IPC, async (request) => {
           await appNode.ready()
           appNode.on('peerDisconnected', () => { nodeStatus = 'disconnected' })
           appNode.on('reconnecting', () => { nodeStatus = 'disconnected' })
-          appNode.on('reconnected', () => { nodeStatus = 'connected' })
+          appNode.on('reconnected', () => { nodeStatus = 'registered' })
           appNode.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
 
           // Find the Personal Node on this machine; the key is remembered
@@ -2065,7 +2065,7 @@ const rpc = new RPC(IPC, async (request) => {
               }]
             }
           })
-          nodeStatus = 'connected'
+          nodeStatus = 'registered'
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'
@@ -2329,7 +2329,7 @@ Expo Mobile (iOS/Android)
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+- **Node Sync** — Register data with the Personal Node alpha for P2P replication
 
 ## Getting Started
 
@@ -2373,18 +2373,12 @@ will load on simulators but \`Load Assistant\` blocks GPU mode there.
 Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
 test the chat UI flow without real inference.
 
-## Connecting to the Unstoppable Node
+## Connecting to the Personal Node alpha
 
-This app registers its data with a local Unstoppable Node for P2P
-replication and backup. To enable sync, run the node in a separate
-terminal:
-
-\`\`\`bash
-npx unstoppable-node
-\`\`\`
-
-The app will attempt to pair automatically on startup and keep working
-regardless of whether the Node is running.
+This app can register its data with a compatible Personal Node alpha for P2P
+replication. Registration is not a verified copy or a complete backup. The
+Personal Node is deferred from the core preview, and the app keeps working
+locally when it is unavailable.
 
 ## Project Structure
 
@@ -2950,7 +2944,7 @@ Node.js CLI
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Local AI** — QVAC SDK for offline inference with streaming chat
+- **Local AI** — QVAC SDK for local inference after the initial model download (~532 MB)
 
 ## Getting Started
 
@@ -3516,7 +3510,7 @@ Node.js CLI
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+- **Node Sync** — Register data with the Personal Node alpha for P2P replication
 
 ## Getting Started
 
@@ -3525,18 +3519,12 @@ npm install
 npm run dev
 \`\`\`
 
-## Connecting to the Unstoppable Node
+## Connecting to the Personal Node alpha
 
-This app registers its data with a local Unstoppable Node for P2P
-replication and backup. To enable sync, run the node in a separate
-terminal:
-
-\`\`\`bash
-npx unstoppable-node
-\`\`\`
-
-The app will attempt to pair automatically on startup and keep working
-regardless of whether the Node is running.
+This app can register its data with a compatible Personal Node alpha for P2P
+replication. Registration is not a verified copy or a complete backup. The
+Personal Node is deferred from the core preview, and the app keeps working
+locally when it is unavailable.
 
 ## Project Structure
 
@@ -3579,13 +3567,11 @@ main().catch((err) => {
   },
   {
     "content": "/**
- * Unstoppable Node sync.
+ * Personal Node alpha sync.
  *
- * Connects this app to the local Unstoppable Node (if one is running) so the
- * Node replicates and backs up the app's Hyperbee. The app keeps working
- * normally whether or not the Node is reachable — this is best-effort.
- *
- * Start the Node separately:   npx unstoppable-node
+ * Registers this app's Hyperbee with a compatible Personal Node alpha for
+ * replication. Registration is not proof of a verified copy or a complete
+ * backup. The app keeps working normally when the deferred Node is unavailable.
  *
  * To add more resources later, add them to the manifest below — it describes
  * the complete set, so anything omitted stops replicating.
@@ -3632,10 +3618,10 @@ export function setupNodeSync({ db }: NodeSyncOpts) {
           ],
         },
       })
-      console.log('Connected to Unstoppable Node — replication enabled')
+      console.log('Registered with Personal Node — copy verification pending')
     } catch (err: any) {
       console.log(\`No Unstoppable Node found (\${err.message})\`)
-      console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
+      console.log('Personal Node alpha is deferred from the core preview; continuing locally')
     }
   }
 
@@ -4073,7 +4059,7 @@ onWorkerMessage((msg) => {
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
   
     if (msg.type === 'db-put-ok') {
@@ -4150,7 +4136,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
 const pkg = require('../package.json')
 
 let mainWindow = null
@@ -4571,7 +4557,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">Qwen 3.5 0.8B · ~532MB download on first run, cached after.</p>
+        <p class="card-hint">Qwen 3.5 0.8B · ~532 MB download on first run, cached after. A validation Mac used ~1.4–1.5 GiB for the warm app process tree; your usage may vary.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
@@ -4589,6 +4575,7 @@ document.getElementById('app').innerHTML = \`
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
             <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
       </section>
@@ -4633,25 +4620,41 @@ injectStyles()
   document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
+  document.getElementById('chat-stop').addEventListener('click', () => {
+    if (activeChatRequestId === null) return
+    document.getElementById('chat-stop').disabled = true
+    sendToWorker({ type: 'cancel-chat', requestId: activeChatRequestId })
+  })
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
   })
 
   let chatHistory = []
   let streamingEl = null
+  let chatSequence = 0
+  let activeChatRequestId = null
+
+  function setChatBusy(busy) {
+    const input = document.getElementById('chat-input')
+    input.disabled = busy
+    document.getElementById('chat-send').disabled = busy
+    document.getElementById('chat-stop').style.display = busy ? 'inline-block' : 'none'
+    document.getElementById('chat-stop').disabled = false
+    if (!busy) input.focus()
+  }
 
   function sendChat() {
     const input = document.getElementById('chat-input')
     const text = input.value.trim()
     if (!text) return
     input.value = ''
-    input.disabled = true
-    document.getElementById('chat-send').disabled = true
+    setChatBusy(true)
 
     chatHistory.push({ role: 'user', content: text })
     appendBubble('user', text)
     streamingEl = appendBubble('assistant', '')
-    sendToWorker({ type: 'chat', history: chatHistory })
+    activeChatRequestId = ++chatSequence
+    sendToWorker({ type: 'chat', requestId: activeChatRequestId, history: chatHistory })
   }
 
   function appendBubble(role, text) {
@@ -4677,7 +4680,7 @@ onWorkerMessage((msg) => {
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
   
     if (msg.type === 'db-put-ok') {
@@ -4712,25 +4715,32 @@ onWorkerMessage((msg) => {
       }
       setText('ai-loading-label', label)
     }
-    if (msg.type === 'chat-token' && streamingEl) {
+    if (msg.type === 'chat-token' && msg.requestId === activeChatRequestId && streamingEl) {
       streamingEl.textContent += msg.token
       document.getElementById('chat-messages').scrollTop = 9999
     }
-    if (msg.type === 'chat-done') {
+    if (msg.type === 'chat-done' && msg.requestId === activeChatRequestId) {
       if (streamingEl) {
         chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
         streamingEl = null
       }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      inp.focus()
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }
-    if (msg.type === 'chat-error') {
+    if (msg.type === 'chat-cancelled' && msg.requestId === activeChatRequestId) {
+      if (streamingEl) {
+        const partial = streamingEl.textContent.trim()
+        streamingEl.textContent = partial ? partial + ' [stopped]' : 'Stopped.'
+        chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
+        streamingEl = null
+      }
+      activeChatRequestId = null
+      setChatBusy(false)
+    }
+    if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }
 })
 
@@ -4799,7 +4809,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
 const pkg = require('../package.json')
 
 let mainWindow = null
@@ -4984,6 +4994,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@qvac/sdk": "^0.15.0",
+    "bare-module": "^7.2.1",
     "zod": "^4.3.0"
   },
   "devDependencies": {
@@ -5018,7 +5029,7 @@ Pear Desktop
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Local AI** — QVAC SDK for offline inference with streaming chat
+- **Local AI** — QVAC SDK for local inference after the initial model download (~532 MB)
 - **Wallet** — WDK wallet integration (stub — coming soon)
 
 ## Getting Started
@@ -5050,6 +5061,8 @@ let swarm = null
 let db = null
 let sdk = null
 let modelId = null
+let qvacPluginRegistered = false
+let activeChatRequestId = null
 const CTX_SIZE = 4096
 let modelLoading = false
 const MOCK_AI = (
@@ -5103,9 +5116,24 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        sdk = await import('@qvac/sdk')
+        // QVAC 0.15.0's Bare config loader uses CommonJS require even when
+        // loaded from an ESM worker. Supply Bare's native loader before SDK init.
+        if (typeof globalThis.require !== 'function') {
+          const { createRequire } = await import('bare-module')
+          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
+        }
+        const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
+          import('@qvac/sdk'),
+          import('@qvac/sdk/llamacpp-completion/plugin'),
+          import('@qvac/sdk/plugins'),
+        ])
+        if (!qvacPluginRegistered) {
+          registerPlugin(llmPlugin)
+          qvacPluginRegistered = true
+        }
+        sdk = loadedSdk
         modelId = await sdk.loadModel({
-          modelSrc: sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+          modelSrc: msg.modelSrc || sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
           modelType: 'llm',
           modelConfig: {
             ctx_size: CTX_SIZE,
@@ -5127,15 +5155,22 @@ async function handleCommand(msg) {
       break
     }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
+      const requestId = msg.requestId
+      if (!modelId) { send({ type: 'chat-error', requestId, error: 'Model not loaded. Click Load Assistant first.' }); break }
+      if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
+      activeChatRequestId = requestId
       if (MOCK_AI) {
         const last = msg.history[msg.history.length - 1]
         const reply = \`Mock: \${last?.content ?? '(empty)'}\`
         for (const ch of reply) {
-          send({ type: 'chat-token', token: ch })
+          if (activeChatRequestId !== requestId) break
+          send({ type: 'chat-token', requestId, token: ch })
           await new Promise((r) => setTimeout(r, 5))
         }
-        send({ type: 'chat-done' })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-done', requestId })
+        }
         break
       }
       try {
@@ -5143,11 +5178,33 @@ async function handleCommand(msg) {
         // tokens arrive as plain content — no reasoning-block filtering needed.
         const result = sdk.completion({ modelId, history: msg.history, stream: true })
         for await (const token of result.tokenStream) {
-          send({ type: 'chat-token', token })
+          if (activeChatRequestId !== requestId) break
+          send({ type: 'chat-token', requestId, token })
         }
-        send({ type: 'chat-done' })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-done', requestId })
+        }
       } catch (err) {
-        send({ type: 'chat-error', error: String(err && err.message || err) })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-error', requestId, error: String(err && err.message || err) })
+        }
+      }
+      break
+    }
+    case 'cancel-chat': {
+      const requestId = msg.requestId
+      if (activeChatRequestId !== requestId) {
+        send({ type: 'chat-cancelled', requestId })
+        break
+      }
+      activeChatRequestId = null
+      try {
+        if (!MOCK_AI) await sdk.cancel({ operation: 'inference', modelId })
+        send({ type: 'chat-cancelled', requestId })
+      } catch (err) {
+        send({ type: 'chat-error', requestId, error: \`Cancellation failed: \${String(err && err.message || err)}\` })
       }
       break
     }
@@ -5167,6 +5224,10 @@ async function cleanup() {
   if (swarm) await swarm.destroy()
   if (db) await db.close()
   if (store) await store.close()
+  if (activeChatRequestId !== null && modelId && modelId !== 'mock-model' && sdk) {
+    activeChatRequestId = null
+    await sdk.cancel({ operation: 'inference', modelId }).catch(() => {})
+  }
   if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Bare.exit()
 }
@@ -5299,7 +5360,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">Qwen 3.5 0.8B · ~532MB download on first run, cached after.</p>
+        <p class="card-hint">Qwen 3.5 0.8B · ~532 MB download on first run, cached after. A validation Mac used ~1.4–1.5 GiB for the warm app process tree; your usage may vary.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
@@ -5317,6 +5378,7 @@ document.getElementById('app').innerHTML = \`
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
             <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
       </section>
@@ -5361,25 +5423,41 @@ injectStyles()
   document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
+  document.getElementById('chat-stop').addEventListener('click', () => {
+    if (activeChatRequestId === null) return
+    document.getElementById('chat-stop').disabled = true
+    sendToWorker({ type: 'cancel-chat', requestId: activeChatRequestId })
+  })
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
   })
 
   let chatHistory = []
   let streamingEl = null
+  let chatSequence = 0
+  let activeChatRequestId = null
+
+  function setChatBusy(busy) {
+    const input = document.getElementById('chat-input')
+    input.disabled = busy
+    document.getElementById('chat-send').disabled = busy
+    document.getElementById('chat-stop').style.display = busy ? 'inline-block' : 'none'
+    document.getElementById('chat-stop').disabled = false
+    if (!busy) input.focus()
+  }
 
   function sendChat() {
     const input = document.getElementById('chat-input')
     const text = input.value.trim()
     if (!text) return
     input.value = ''
-    input.disabled = true
-    document.getElementById('chat-send').disabled = true
+    setChatBusy(true)
 
     chatHistory.push({ role: 'user', content: text })
     appendBubble('user', text)
     streamingEl = appendBubble('assistant', '')
-    sendToWorker({ type: 'chat', history: chatHistory })
+    activeChatRequestId = ++chatSequence
+    sendToWorker({ type: 'chat', requestId: activeChatRequestId, history: chatHistory })
   }
 
   function appendBubble(role, text) {
@@ -5405,7 +5483,7 @@ onWorkerMessage((msg) => {
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
   
     if (msg.type === 'db-put-ok') {
@@ -5436,25 +5514,32 @@ onWorkerMessage((msg) => {
       }
       setText('ai-loading-label', label)
     }
-    if (msg.type === 'chat-token' && streamingEl) {
+    if (msg.type === 'chat-token' && msg.requestId === activeChatRequestId && streamingEl) {
       streamingEl.textContent += msg.token
       document.getElementById('chat-messages').scrollTop = 9999
     }
-    if (msg.type === 'chat-done') {
+    if (msg.type === 'chat-done' && msg.requestId === activeChatRequestId) {
       if (streamingEl) {
         chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
         streamingEl = null
       }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      inp.focus()
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }
-    if (msg.type === 'chat-error') {
+    if (msg.type === 'chat-cancelled' && msg.requestId === activeChatRequestId) {
+      if (streamingEl) {
+        const partial = streamingEl.textContent.trim()
+        streamingEl.textContent = partial ? partial + ' [stopped]' : 'Stopped.'
+        chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
+        streamingEl = null
+      }
+      activeChatRequestId = null
+      setChatBusy(false)
+    }
+    if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }
 })
 
@@ -5523,7 +5608,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
 const pkg = require('../package.json')
 
 let mainWindow = null
@@ -5708,6 +5793,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@qvac/sdk": "^0.15.0",
+    "bare-module": "^7.2.1",
     "zod": "^4.3.0"
   },
   "devDependencies": {
@@ -5742,7 +5828,7 @@ Pear Desktop
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Local AI** — QVAC SDK for offline inference with streaming chat
+- **Local AI** — QVAC SDK for local inference after the initial model download (~532 MB)
 
 ## Getting Started
 
@@ -5773,6 +5859,8 @@ let swarm = null
 let db = null
 let sdk = null
 let modelId = null
+let qvacPluginRegistered = false
+let activeChatRequestId = null
 const CTX_SIZE = 4096
 let modelLoading = false
 const MOCK_AI = (
@@ -5826,9 +5914,24 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        sdk = await import('@qvac/sdk')
+        // QVAC 0.15.0's Bare config loader uses CommonJS require even when
+        // loaded from an ESM worker. Supply Bare's native loader before SDK init.
+        if (typeof globalThis.require !== 'function') {
+          const { createRequire } = await import('bare-module')
+          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
+        }
+        const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
+          import('@qvac/sdk'),
+          import('@qvac/sdk/llamacpp-completion/plugin'),
+          import('@qvac/sdk/plugins'),
+        ])
+        if (!qvacPluginRegistered) {
+          registerPlugin(llmPlugin)
+          qvacPluginRegistered = true
+        }
+        sdk = loadedSdk
         modelId = await sdk.loadModel({
-          modelSrc: sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+          modelSrc: msg.modelSrc || sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
           modelType: 'llm',
           modelConfig: {
             ctx_size: CTX_SIZE,
@@ -5850,15 +5953,22 @@ async function handleCommand(msg) {
       break
     }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
+      const requestId = msg.requestId
+      if (!modelId) { send({ type: 'chat-error', requestId, error: 'Model not loaded. Click Load Assistant first.' }); break }
+      if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
+      activeChatRequestId = requestId
       if (MOCK_AI) {
         const last = msg.history[msg.history.length - 1]
         const reply = \`Mock: \${last?.content ?? '(empty)'}\`
         for (const ch of reply) {
-          send({ type: 'chat-token', token: ch })
+          if (activeChatRequestId !== requestId) break
+          send({ type: 'chat-token', requestId, token: ch })
           await new Promise((r) => setTimeout(r, 5))
         }
-        send({ type: 'chat-done' })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-done', requestId })
+        }
         break
       }
       try {
@@ -5866,11 +5976,33 @@ async function handleCommand(msg) {
         // tokens arrive as plain content — no reasoning-block filtering needed.
         const result = sdk.completion({ modelId, history: msg.history, stream: true })
         for await (const token of result.tokenStream) {
-          send({ type: 'chat-token', token })
+          if (activeChatRequestId !== requestId) break
+          send({ type: 'chat-token', requestId, token })
         }
-        send({ type: 'chat-done' })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-done', requestId })
+        }
       } catch (err) {
-        send({ type: 'chat-error', error: String(err && err.message || err) })
+        if (activeChatRequestId === requestId) {
+          activeChatRequestId = null
+          send({ type: 'chat-error', requestId, error: String(err && err.message || err) })
+        }
+      }
+      break
+    }
+    case 'cancel-chat': {
+      const requestId = msg.requestId
+      if (activeChatRequestId !== requestId) {
+        send({ type: 'chat-cancelled', requestId })
+        break
+      }
+      activeChatRequestId = null
+      try {
+        if (!MOCK_AI) await sdk.cancel({ operation: 'inference', modelId })
+        send({ type: 'chat-cancelled', requestId })
+      } catch (err) {
+        send({ type: 'chat-error', requestId, error: \`Cancellation failed: \${String(err && err.message || err)}\` })
       }
       break
     }
@@ -5886,6 +6018,10 @@ async function cleanup() {
   if (swarm) await swarm.destroy()
   if (db) await db.close()
   if (store) await store.close()
+  if (activeChatRequestId !== null && modelId && modelId !== 'mock-model' && sdk) {
+    activeChatRequestId = null
+    await sdk.cancel({ operation: 'inference', modelId }).catch(() => {})
+  }
   if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Bare.exit()
 }
@@ -6014,9 +6150,9 @@ document.getElementById('app').innerHTML = \`
         <p id="kv-result" class="result" style="display:none" data-testid="kv-result"></p>
       </section>
       <section data-testid="node-sync-section" class="card">
-        <h2 class="card-title">Data Protection</h2>
+        <h2 class="card-title">Node Replication</h2>
         <p class="mono" id="node-sync-status">⏳ Looking for your Personal Node…</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Your data stays on this device until a Personal Node is available. Developers can start one with <code>npx unstoppable-node</code>.</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
@@ -6058,7 +6194,7 @@ onWorkerMessage((msg) => {
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
   
     if (msg.type === 'db-put-ok') {
@@ -6072,11 +6208,11 @@ onWorkerMessage((msg) => {
     if (msg.type === 'status' && msg.service === 'node-sync') {
       const hintEl = document.getElementById('node-sync-hint')
       if (msg.status === 'searching') setText('node-sync-status', '⏳ Looking for your Personal Node…')
-      if (msg.status === 'connected') {
-        setText('node-sync-status', '✅ Protected — background replication is active')
+      if (msg.status === 'registered') {
+        setText('node-sync-status', 'Registered for replication — copy verification pending')
         if (hintEl) hintEl.style.display = 'none'
       }
-      if (msg.status === 'disconnected' || msg.status === 'reconnecting') setText('node-sync-status', '⚠️ Protection paused — reconnecting…')
+      if (msg.status === 'disconnected' || msg.status === 'reconnecting') setText('node-sync-status', '⚠️ Replication paused — reconnecting…')
       if (msg.status === 'unavailable') {
         setText('node-sync-status', 'Device only — Personal Node not found')
         if (hintEl) hintEl.style.display = 'block'
@@ -6149,7 +6285,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
 const pkg = require('../package.json')
 
 let mainWindow = null
@@ -6367,7 +6503,7 @@ Pear Desktop
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
 - **KV Storage** — Hyperbee for persistent local key-value data
-- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding
+- **Node Sync** — Register data with the Personal Node alpha for P2P replication
 
 ## Getting Started
 
@@ -6376,18 +6512,12 @@ npm install
 npm run dev
 \`\`\`
 
-## Connecting to the Unstoppable Node
+## Connecting to the Personal Node alpha
 
-This app registers its data with a local Unstoppable Node for P2P
-replication and backup. To enable sync, run the node in a separate
-terminal:
-
-\`\`\`bash
-npx unstoppable-node
-\`\`\`
-
-The app will attempt to pair automatically on startup and keep working
-regardless of whether the Node is running.
+This app can register its data with a compatible Personal Node alpha for P2P
+replication. Registration is not a verified copy or a complete backup. The
+Personal Node is deferred from the core preview, and the app keeps working
+locally when it is unavailable.
 
 ## Project Structure
 
@@ -6496,7 +6626,7 @@ async function init() {
       send({ type: 'status', service: 'node-sync', status: 'reconnecting' })
     })
     appNode.on('reconnected', () => {
-      send({ type: 'status', service: 'node-sync', status: 'connected' })
+      send({ type: 'status', service: 'node-sync', status: 'registered' })
     })
     appNode.on('reconnectFailed', () => {
       send({ type: 'status', service: 'node-sync', status: 'unavailable' })
@@ -6519,7 +6649,7 @@ async function init() {
         }]
       }
     })
-    send({ type: 'status', service: 'node-sync', status: 'connected' })
+    send({ type: 'status', service: 'node-sync', status: 'registered' })
   } catch (err) {
     send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
   }
@@ -6673,7 +6803,7 @@ onWorkerMessage((msg) => {
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
   
     if (msg.type === 'db-put-ok') {
@@ -6754,7 +6884,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url)
+const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
 const pkg = require('../package.json')
 
 let mainWindow = null

@@ -1,0 +1,73 @@
+name: Public developer preview
+
+on:
+  pull_request:
+    paths:
+      - 'packages/cli/**'
+      - 'packages/agent-pack/src/**'
+      - 'scripts/release-*.mjs'
+      - 'scripts/release-smoke.sh'
+      - 'scripts/check-agent-pack.mjs'
+      - '.github/workflows/public-preview.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/cli/**'
+      - 'packages/agent-pack/src/**'
+      - 'scripts/release-*.mjs'
+      - 'scripts/release-smoke.sh'
+      - 'scripts/check-agent-pack.mjs'
+      - '.github/workflows/public-preview.yml'
+  workflow_dispatch:
+    inputs:
+      real_model:
+        description: Download and run the pinned real model, including offline restart
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  artifact:
+    name: macOS arm64 installed CLI and generated desktop UI
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Confirm runner and install validation tools
+        working-directory: packages/cli
+        run: |
+          test "$(uname -m)" = arm64
+          node --version
+          pnpm install --frozen-lockfile
+      - name: Source regression and agent-pack drift
+        run: |
+          node scripts/check-agent-pack.mjs
+          pnpm --dir packages/cli typecheck
+          pnpm --dir packages/cli test
+      - name: Packed CLI through installed desktop UI
+        env:
+          RUN_DESKTOP_UI: '1'
+          RUN_REAL_QVAC: ${{ inputs.real_model && '1' || '0' }}
+          RUN_OFFLINE_QVAC: ${{ inputs.real_model && '1' || '0' }}
+          TARBALL_DIR: ${{ runner.temp }}/preview-artifacts
+        run: |
+          set -o pipefail
+          bash scripts/release-smoke.sh 2>&1 | tee "$RUNNER_TEMP/public-preview.log"
+      - name: Retain artifact checksums and validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-preview-evidence
+          path: |
+            ${{ runner.temp }}/preview-artifacts
+            ${{ runner.temp }}/public-preview.log
+            /tmp/us-e2e-scaffold/report-*.json
+          if-no-files-found: warn

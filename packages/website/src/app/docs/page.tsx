@@ -3,9 +3,10 @@ import { DocsShell } from "@/components/docs-shell";
 import { getDocPage } from "@/lib/docs";
 
 export const metadata: Metadata = {
-  title: "Documentation - Unstoppable Stack",
+  title: "Documentation",
   description:
-    "Build local-first apps with P2P networking, local AI, self-custodial payments, and assistant-aware scaffolding.",
+    "Task-based developer preview documentation for local-first apps, peer communication, and optional local AI.",
+  alternates: { canonical: "/docs" },
 };
 
 export default function DocsIndexPage() {

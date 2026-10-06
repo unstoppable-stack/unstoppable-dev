@@ -545,7 +545,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
 
   if (hasNodeSync) {
     hooks.push(
-      `const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'connected' | 'disconnected' | 'unavailable'>('idle')`,
+      `const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'registered' | 'disconnected' | 'unavailable'>('idle')`,
     )
   }
 
@@ -819,12 +819,12 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   if (hasNodeSync) {
     sections.push(`
         <View style={styles.section} testID="node-sync-section">
-          <Text style={styles.sectionTitle}>Data Protection</Text>
+          <Text style={styles.sectionTitle}>Node Replication</Text>
           <Text style={styles.mono} testID="node-sync-status">
-            {nodeStatus === 'idle' && '⏳ Preparing data protection…'}
+            {nodeStatus === 'idle' && '⏳ Preparing node replication…'}
             {nodeStatus === 'searching' && '⏳ Looking for your Personal Node…'}
-            {nodeStatus === 'connected' && '✅ Protected — background replication is active'}
-            {nodeStatus === 'disconnected' && '⚠️ Protection paused — reconnecting…'}
+            {nodeStatus === 'registered' && 'Registered for replication — copy verification pending'}
+            {nodeStatus === 'disconnected' && '⚠️ Replication paused — reconnecting…'}
             {nodeStatus === 'unavailable' && 'Device only — Personal Node not found'}
           </Text>
           {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
@@ -1171,7 +1171,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
           await appNode.ready()
           appNode.on('peerDisconnected', () => { nodeStatus = 'disconnected' })
           appNode.on('reconnecting', () => { nodeStatus = 'disconnected' })
-          appNode.on('reconnected', () => { nodeStatus = 'connected' })
+          appNode.on('reconnected', () => { nodeStatus = 'registered' })
           appNode.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
 
           // Find the Personal Node on this machine; the key is remembered
@@ -1191,7 +1191,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
               }]
             }
           })
-          nodeStatus = 'connected'
+          nodeStatus = 'registered'
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'

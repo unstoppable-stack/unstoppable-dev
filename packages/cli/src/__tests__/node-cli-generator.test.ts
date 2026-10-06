@@ -104,6 +104,8 @@ describe('node-cli generator', () => {
       expect(sync).toContain('discover(')
       expect(sync).toContain("'manifest.replace'")
       expect(sync).toContain('db.core.key')
+      expect(sync).toContain('copy verification pending')
+      expect(sync).not.toContain('replicates and backs up')
     })
 
     it('includes @unstoppable-stack/node-core dependency', () => {
@@ -122,10 +124,12 @@ describe('node-cli generator', () => {
       expect(decls).toContain("declare module '@unstoppable-stack/node-core'")
     })
 
-    it('README explains how to run unstoppable-node', () => {
+    it('README labels Personal Node support as deferred and registration as unverified', () => {
       const readme = fileMap(make(['node-sync']))['README.md']
-      expect(readme).toContain('npx unstoppable-node')
       expect(readme).toContain('Node Sync')
+      expect(readme).toContain('not a verified copy or a complete backup')
+      expect(readme).toContain('deferred from the core preview')
+      expect(readme).not.toContain('npx unstoppable-node')
     })
 
     it('bare variant does NOT include node-sync.ts', () => {

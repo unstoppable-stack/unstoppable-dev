@@ -10,6 +10,7 @@ import { join, dirname } from 'node:path'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const usSource = readFileSync(join(__dirname, '..', 'us.ts'), 'utf8')
+const tsupSource = readFileSync(join(__dirname, '..', '..', 'tsup.config.ts'), 'utf8')
 
 describe('us --version wiring', () => {
   it('renders the version from the __US_VERSION__ build constant', () => {
@@ -19,5 +20,14 @@ describe('us --version wiring', () => {
   it('does not hardcode a semver literal in the .version() call', () => {
     const versionCall = usSource.match(/\.version\(([^\n]*)\)/)?.[1] ?? ''
     expect(versionCall).not.toMatch(/\d+\.\d+\.\d+/)
+  })
+})
+
+describe('minimal public-preview command surface', () => {
+  it('keeps deferred Node and Memory commands out of the default build', () => {
+    const minimalProfile = tsupSource.match(/minimal:\s*\{([\s\S]*?)\n\s*\},\n\s*\/\/ Everything/)?.[1] ?? ''
+
+    expect(minimalProfile).toContain('US_FEAT_NODE: false')
+    expect(minimalProfile).toContain('US_FEAT_MEMORY: false')
   })
 })

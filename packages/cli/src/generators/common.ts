@@ -360,11 +360,11 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
   const optionalFeatures = opts.features.flatMap((f) => {
     switch (f) {
       case 'local-ai':
-        return ['- **Local AI** — QVAC SDK for offline inference with streaming chat']
+        return [`- **Local AI** — QVAC SDK for local inference after the initial model download (~${DEFAULT_LLM_SIZE_MB} MB)`]
       case 'wallet':
         return ['- **Wallet** — WDK wallet integration (stub — coming soon)']
       case 'node-sync':
-        return ['- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding']
+        return ['- **Node Sync** — Register data with the Personal Node alpha for P2P replication']
       case 'node-host':
         return ['- **Node Host** — Expose a capability other apps can pair with and call']
       // multi-writer is reflected in baseFeatures above (it replaces the
@@ -428,18 +428,12 @@ npm run build:schema
   const nodeSyncSection = opts.features.includes('node-sync')
     ? `
 
-## Connecting to the Unstoppable Node
+## Connecting to the Personal Node alpha
 
-This app registers its data with a local Unstoppable Node for P2P
-replication and backup. To enable sync, run the node in a separate
-terminal:
-
-\`\`\`bash
-npx unstoppable-node
-\`\`\`
-
-The app will attempt to pair automatically on startup and keep working
-regardless of whether the Node is running.`
+This app can register its data with a compatible Personal Node alpha for P2P
+replication. Registration is not a verified copy or a complete backup. The
+Personal Node is deferred from the core preview, and the app keeps working
+locally when it is unavailable.`
     : ''
 
   const gettingStarted = gettingStartedFor(opts)
