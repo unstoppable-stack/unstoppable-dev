@@ -1,3 +1,5 @@
+import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
+
 export type DocBlock =
   | { type: "lead"; text: string }
   | { type: "heading"; text: string }
@@ -13,536 +15,244 @@ export type DocPage = {
   title: string;
   description: string;
   category: string;
+  verifiedOn: string;
   blocks: DocBlock[];
 };
 
 export const docsNav = [
-  {
-    title: "Start",
-    pages: [
-      { title: "Overview", slug: "" },
-      { title: "Quickstart", slug: "quickstart" },
-      { title: "CLI Reference", slug: "cli" },
-    ],
-  },
-  {
-    title: "Platforms",
-    pages: [
-      { title: "Pear Desktop", slug: "platforms/pear-desktop" },
-      { title: "Expo Mobile", slug: "platforms/expo-mobile" },
-      { title: "Node CLI", slug: "platforms/node-cli" },
-    ],
-  },
-  {
-    title: "Stack",
-    pages: [
-      { title: "Unstoppable Node", slug: "node" },
-      { title: "Node Core SDK", slug: "node-core" },
-      { title: "Modules", slug: "modules" },
-      { title: "Agent Pack", slug: "agent-pack" },
-      { title: "Recipes", slug: "recipes" },
-    ],
-  },
+  { title: "Start", pages: [{ title: "Overview", slug: "" }, { title: "Quickstart", slug: "quickstart" }, { title: "Compatibility", slug: "compatibility" }, { title: "Troubleshooting", slug: "troubleshooting" }] },
+  { title: "Build", pages: [{ title: "Project architecture", slug: "architecture" }, { title: "Assistant workflow", slug: "agent-pack" }, { title: "Local AI", slug: "local-ai" }] },
+  { title: "Connect", pages: [{ title: "P2P and pairing", slug: "connect" }, { title: "Personal Node", slug: "node" }] },
+  { title: "Reference", pages: [{ title: "CLI commands", slug: "cli" }, { title: "Modules", slug: "modules" }] },
+  { title: "Operate", pages: [{ title: "Support & limitations", slug: "support" }, { title: "Upgrades", slug: "upgrades" }] },
 ];
+
+const verifiedOn = siteConfig.verifiedOn;
 
 export const docsPages: DocPage[] = [
   {
     slug: "",
     title: "Documentation",
-    description:
-      "Build local-first applications with P2P networking, local AI, self-custodial payments, and assistant-aware scaffolding.",
+    description: "Task-based guidance for the Unstoppable Stack developer preview.",
     category: "Start",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The Unstoppable Stack is a developer toolchain for apps that keep working without central servers. It combines Holepunch P2P infrastructure, QVAC local inference, WDK payments, a CLI, and portable AI assistant instructions.",
-      },
-      {
-        type: "cards",
-        items: [
-          {
-            title: "Start with the CLI",
-            body: "Use `us init` or `us scaffold` to create a Pear Desktop, Expo Mobile, or Node CLI app with agent instructions included.",
-            href: "/docs/quickstart",
-          },
-          {
-            title: "Learn the runtime model",
-            body: "Apps run locally, discover peers through Hyperswarm, replicate data with Hypercore-based stores, and can pair with an Unstoppable Node.",
-            href: "/docs/modules",
-          },
-          {
-            title: "Use AI assistants safely",
-            body: "The agent pack gives Claude, Cursor, OpenCode, and Codex grounded recipes for this stack instead of generic web-app assumptions.",
-            href: "/docs/agent-pack",
-          },
-        ],
-      },
-      { type: "heading", text: "Core Principles" },
-      {
-        type: "list",
-        items: [
-          "Local-first: the app should stay useful offline and sync opportunistically.",
-          "Peer-to-peer by default: discovery and replication happen without an application server.",
-          "Private inference: QVAC runs models locally or through a user-controlled node.",
-          "Assistant-aware development: scaffolded projects include context for the AI tool the developer chooses.",
-        ],
-      },
-      {
-        type: "callout",
-        title: "QVAC docs reference",
-        body: "This docs section follows QVAC's useful patterns: structured source content, generated navigation, static pages, and LLM-readable text exports.",
-      },
+      { type: "lead", text: "Unstoppable Stack helps developers create local-first applications with direct peer communication and optional on-device AI. Start with the Pear Desktop baseline; capabilities outside that path carry an explicit maturity label." },
+      { type: "cards", items: [
+        { title: "Build the baseline", body: "Install the public CLI, configure an assistant workspace, run a desktop app, and verify local persistence.", href: "/getting-started" },
+        { title: "Understand the boundaries", body: "Learn what is local, what needs a reachable peer, and what the project does and does not retain.", href: "/docs/support" },
+        { title: "Check compatibility", body: "Use one support table for platforms, features, and combinations instead of relying on promotional copy.", href: "/docs/compatibility" },
+      ] },
+      { type: "heading", text: "Preview principles" },
+      { type: "list", items: [
+        "Local-first: useful reads and writes should not depend on a central application API.",
+        "Peer availability is optional: show disconnected state and resume cleanly.",
+        "Runtime boundaries matter: renderer UI calls a worker that owns networking, storage, and native AI resources.",
+        "Planned features are not default benefits: wallet payments are not part of the supported preview path.",
+      ] },
     ],
   },
   {
     slug: "quickstart",
     title: "Quickstart",
-    description: "Install the CLI, scaffold an app, run it locally, and start building with an assistant.",
+    description: "The concise version of the supported Pear Desktop walkthrough.",
     category: "Start",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The fastest path is to install the CLI, scaffold an app for your target platform, and let the generated assistant instructions guide the next change.",
-      },
-      {
-        type: "steps",
-        items: [
-          {
-            title: "Install the CLI",
-            body: "Install the `us` command globally when the package is published, or work from the CLI package during local development.",
-            code: "npm install -g @unstoppable-stack/cli",
-          },
-          {
-            title: "Create a project",
-            body: "Use the interactive flow when you want the CLI to ask for project name and assistant target.",
-            code: "us init my-app",
-          },
-          {
-            title: "Scaffold a specific app",
-            body: "Use `us scaffold app` when you already know the platform and features.",
-            code: "us scaffold app -p pear-desktop -n my-app -f local-ai,node-sync",
-          },
-          {
-            title: "Run the app",
-            body: "Follow the generated README. Most projects start with dependency install and a dev command.",
-            code: "cd my-app\npnpm install\npnpm dev",
-          },
-        ],
-      },
-      { type: "heading", text: "Choose A Platform" },
-      {
-        type: "cards",
-        items: [
-          {
-            title: "Pear Desktop",
-            body: "Desktop P2P app with a renderer and worker split.",
-            href: "/docs/platforms/pear-desktop",
-          },
-          {
-            title: "Expo Mobile",
-            body: "React Native app with a Bare worklet for P2P and local runtime code.",
-            href: "/docs/platforms/expo-mobile",
-          },
-          {
-            title: "Node CLI",
-            body: "Terminal app for scripts, daemons, agents, and quick P2P experiments.",
-            href: "/docs/platforms/node-cli",
-          },
-        ],
-      },
+      { type: "lead", text: "Use this path for the fewest dependencies. It creates a base app with local storage and peer networking; it does not require a model, payment setup, or Personal Node." },
+      { type: "steps", items: [
+        { title: "Check tools", body: "Use Node.js 20 or newer and npm. The generated project installs Electron and pear-runtime locally.", code: "node --version\nnpm --version" },
+        { title: "Install the released CLI", body: `The repository candidate is ${siteConfig.cli.candidateVersion}, but public docs remain pinned to the verified registry release.`, code: `${siteConfig.cli.installCommand}\n${siteConfig.cli.versionCommand}` },
+        { title: "Create an assistant workspace", body: "Choose the assistant you actually use; the no-assistant option is valid.", code: "us init coffee-workspace\ncd coffee-workspace" },
+        { title: "Scaffold the app", body: "Base P2P and Hyperbee storage are included automatically.", code: defaultScaffoldCommand },
+        { title: "Run it", body: "Run from the generated application folder.", code: "cd coffee-notes\nnpm install\nnpm run dev" },
+      ] },
+      { type: "callout", title: "Need the full path?", body: "The Getting Started page includes a first change, persistence check, and symptom-based troubleshooting." },
     ],
   },
   {
-    slug: "cli",
-    title: "CLI Reference",
-    description: "The `us` command creates projects, scaffolds app targets, checks environments, and runs research workflows.",
+    slug: "compatibility",
+    title: "Compatibility",
+    description: "Current capability maturity and combinations for the developer preview.",
     category: "Start",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The CLI is the entry point for creating Unstoppable Stack projects. It installs the right app structure and assistant context for the selected target.",
-      },
-      { type: "heading", text: "Common Commands" },
-      {
-        type: "code",
-        language: "bash",
-        code: "us init [project-name]\nus scaffold app -p <platform> -n <name> [-f features]\nus scaffold list-platforms\nus scaffold list-features\nus doctor\nus doctor -p expo-mobile\nus research list\nus research run <experiment-id>\nus research scaffold-test",
-      },
-      { type: "heading", text: "Platforms" },
-      {
-        type: "list",
-        items: [
-          "`pear-desktop`: desktop app using Pear, a renderer, and a worker process.",
-          "`expo-mobile`: React Native app with Bare runtime integration for P2P code.",
-          "`node-cli`: Node-based command line app for local-first services and experiments.",
-        ],
-      },
-      { type: "heading", text: "Feature Flags" },
-      {
-        type: "list",
-        items: [
-          "`local-ai`: add QVAC-powered local inference or mock-mode compatible AI flows.",
-          "`node-sync`: connect scaffolded apps to the local Unstoppable Node for data/files/AI services.",
-          "`wallet`: add the current WDK wallet integration stub where supported.",
-        ],
-      },
+      { type: "lead", text: `This matrix was reviewed ${siteConfig.verifiedOn}. “Preview” means an implementation and validation path exist; it does not mean production support.` },
+      { type: "list", items: supportMatrix.map((item) => `${item.capability} — ${item.maturity}: ${item.detail}`) },
+      { type: "heading", text: "Known incompatible combination" },
+      { type: "paragraph", text: "multi-writer and node-sync cannot be selected together. Multi-writer uses an Autobee writer set, while the current Node registration path handles the single base data core. The CLI rejects the combination instead of generating incomplete protection." },
     ],
   },
   {
-    slug: "platforms/pear-desktop",
-    title: "Pear Desktop",
-    description: "Build desktop P2P applications with Pear, Bare, a renderer process, and a worker process.",
-    category: "Platforms",
+    slug: "troubleshooting",
+    title: "Troubleshooting",
+    description: "Recognizable symptoms, one diagnostic, and one safe recovery action.",
+    category: "Start",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "Pear Desktop is the primary target for rich local-first applications. UI code stays in the renderer; P2P, storage, and AI runtime work belongs in the worker.",
-      },
-      { type: "heading", text: "Runtime Shape" },
-      {
-        type: "list",
-        items: [
-          "Renderer: React UI, bridge calls, status display, user interactions.",
-          "Worker: Hyperswarm, Corestore, Hyperbee, Hyperdrive, QVAC, long-running services.",
-          "Bridge: message boundary between UI and runtime code. Keep it typed and narrow.",
-        ],
-      },
-      {
-        type: "callout",
-        title: "Important",
-        body: "Do not put peer networking or database state directly in the renderer. Keep long-lived resources in the worker and close them on shutdown.",
-      },
-      {
-        type: "code",
-        language: "bash",
-        code: "us scaffold app -p pear-desktop -n desktop-app -f local-ai,node-sync",
-      },
+      { type: "cards", items: [
+        { title: "us is not found", body: "Check npm prefix -g, then ensure its bin directory is on PATH or open a new terminal." },
+        { title: "Desktop dependencies are missing", body: "Run npm ls --depth=0 in the generated app, then rerun npm install and address the first meaningful error." },
+        { title: "Install failed", body: "Use the first meaningful npm error to identify network, permission, or native dependency failure; do not start with broad cache deletion." },
+        { title: "Model failed", body: "Check disk space and the first QVAC error. Return to the base scaffold or use a smaller compatible model before retrying." },
+        { title: "Node unavailable", body: "Continue device-only. If Node features are needed, check that it is running, reachable, and has approved the requested capabilities." },
+      ] },
     ],
   },
   {
-    slug: "platforms/expo-mobile",
-    title: "Expo Mobile",
-    description: "Build mobile local-first apps with React Native UI and Bare-powered runtime code.",
-    category: "Platforms",
+    slug: "architecture",
+    title: "Project architecture",
+    description: "Keep UI, long-lived runtime resources, and optional peers in clear boundaries.",
+    category: "Build",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "Expo Mobile support uses a split architecture: React Native renders the interface while a Bare worklet runs P2P and storage code that needs the Holepunch runtime.",
-      },
-      { type: "heading", text: "Design Rules" },
-      {
-        type: "list",
-        items: [
-          "Keep UI state and mobile navigation in React Native.",
-          "Run Hyperswarm, Hypercore, Hyperbee, and Corestore code inside the Bare worklet.",
-          "Use IPC/RPC messages between React Native and the worklet.",
-          "Treat mobile networking as intermittent; persist locally first and sync later.",
-        ],
-      },
-      {
-        type: "code",
-        language: "bash",
-        code: "us scaffold app -p expo-mobile -n mobile-app -f local-ai,node-sync",
-      },
+      { type: "lead", text: "The primary desktop pattern separates the renderer from a worker. This is a runtime requirement, not just code organization." },
+      { type: "list", items: [
+        "Renderer: UI state, user interactions, and narrow bridge calls.",
+        "Worker: Hyperswarm, Corestore, Hyperbee, Hyperdrive, QVAC, and cleanup.",
+        "Bridge: typed messages with timeouts, errors, and visible status.",
+        "Optional Node: a separate peer for replication or delegated inference; local work must survive its absence.",
+      ] },
+      { type: "callout", title: "Shutdown matters", body: "Close swarms, stores, model handles, and worker pipes explicitly. Treat reconnecting and unavailable states as normal." },
     ],
   },
   {
-    slug: "platforms/node-cli",
-    title: "Node CLI",
-    description: "Use Node CLI apps for agents, daemons, scripts, and fast local-first experiments.",
-    category: "Platforms",
+    slug: "agent-pack",
+    title: "Assistant workflow",
+    description: "How generated project guidance helps an AI coding assistant work inside stack constraints.",
+    category: "Build",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "Node CLI is the simplest target for learning the stack or building automation. It avoids UI complexity while keeping the same P2P and data modules.",
-      },
-      { type: "heading", text: "Good Uses" },
-      {
-        type: "list",
-        items: [
-          "P2P command line tools and local daemons.",
-          "Agent tools that need local storage or peer discovery.",
-          "Fast experiments before promoting a feature to desktop or mobile.",
-        ],
-      },
-      {
-        type: "code",
-        language: "bash",
-        code: "us scaffold app -p node-cli -n p2p-tool -f node-sync",
-      },
+      { type: "lead", text: "us init writes tool-specific instructions and progressively loaded skills. It does not replace review, testing, or explicit user approval for consequential actions." },
+      { type: "steps", items: [
+        { title: "Initialize", body: "Select Claude Code, Cursor, OpenCode, Codex, or none.", code: "us init my-workspace" },
+        { title: "Scaffold first", body: "Create the smallest supported target before asking for feature work.", code: defaultScaffoldCommand },
+        { title: "Request one change", body: "Name the observable result and preserve the worker boundary." },
+        { title: "Verify", body: "Run the generated project checks and exercise local persistence and disconnect behavior." },
+      ] },
+    ],
+  },
+  {
+    slug: "local-ai",
+    title: "Local AI",
+    description: "Add on-device inference after the base application works.",
+    category: "Build",
+    verifiedOn,
+    blocks: [
+      { type: "lead", text: "QVAC-backed inference is optional in the preview. A local model avoids sending prompts to a hosted inference provider, but it still requires compatible hardware, disk space, and an initial model download." },
+      { type: "list", items: [
+        "Keep model initialization in the worker, never the renderer.",
+        "Report download, loading, ready, and error states separately.",
+        "Use mock inference for deterministic UI and protocol tests; label it as mock.",
+        "After a successful model install, test local inference without internet access.",
+        "Do not publish a universal RAM or download-size claim until the chosen model is pinned and measured.",
+      ] },
+    ],
+  },
+  {
+    slug: "connect",
+    title: "P2P and pairing",
+    description: "Peer discovery, invitations, approval, and disconnect behavior.",
+    category: "Connect",
+    verifiedOn,
+    blocks: [
+      { type: "lead", text: "Hyperswarm provides discovery and encrypted transport. Application trust still needs an explicit identity, invitation, or approval model; discovery alone is not authorization." },
+      { type: "list", items: [
+        "Display searching, approval required, connected, reconnecting, and unavailable states.",
+        "Grant only requested capabilities supported by the peer.",
+        "A desktop Personal Node may require explicit approval; a headless development daemon can be configured differently.",
+        "Remote inference sends the request to the selected trusted device. It is not on-device inference.",
+      ] },
     ],
   },
   {
     slug: "node",
-    title: "Unstoppable Node",
-    description: "Run a user-controlled P2P hub for app pairing, verified data retention, file seeding, and optional AI inference.",
-    category: "Stack",
+    title: "Personal Node",
+    description: "Deferred alpha architecture for replication and delegated inference.",
+    category: "Connect",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The Unstoppable Node is an optional, always-on companion for local-first apps. It discovers apps through Hyperswarm, stores paired-app registrations, replicates app-owned Hypercores and Hyperdrives, and can serve mock or QVAC-backed inference. Apps must remain useful when it is unavailable.",
-      },
-      { type: "heading", text: "Install And Run" },
-      {
-        type: "code",
-        language: "bash",
-        code: "npm install -g unstoppable-node\nunstoppable-node start\n\n# Development without a model download\nunstoppable-node start --ai-mock\n\n# Friendlier background-process wrapper\nus node start --ai-mock\nus node status -n 20\nus node stop",
-      },
-      {
-        type: "callout",
-        title: "Default storage",
-        body: "The standalone daemon stores state under ~/.unstoppable-node. Pass --storage <path> to use another directory. AI is opt-in: the Personal Node desktop app bundles the pinned QVAC SDK; source checkouts must install @qvac/sdk@0.15.0 beside packages/node. Use --ai-mock when the SDK is unavailable.",
-      },
-      { type: "heading", text: "Services" },
-      {
-        type: "cards",
-        items: [
-          { title: "Data", body: "Corestore-backed replication for app-registered Hypercore and Hyperbee resources." },
-          { title: "Files", body: "Hyperdrive metadata replication, optional full blob retention, and seeding." },
-          { title: "AI", body: "Optional streaming inference through a mock provider or an installed @qvac/sdk model." },
-          { title: "Status", body: "App-scoped service, replication, protection, storage-use, and quota state." },
-        ],
-      },
-      { type: "heading", text: "Pairing And Capabilities" },
-      {
-        type: "list",
-        items: [
-          "A node and client on the same user account and machine derive the same machine-local discovery topic.",
-          "The node sends nodeHello with protocol version v1, service flags, and supported capabilities before pairing.",
-          "Pairing grants only requested methods that the node currently supports. The desktop dashboard can require explicit approval; a headless daemon without an approval callback auto-accepts.",
-          "App-facing status is scoped to the requesting app: it cannot reveal another app's registrations, storage paths, or usage.",
-        ],
-      },
-      { type: "heading", text: "Replication And Protection" },
-      {
-        type: "list",
-        items: [
-          "Legacy cores/drives registration preserves sparse replication and is equivalent to metadata-only protection.",
-          "A schemaVersion 1 resource manifest gives each resource a stable ID and chooses metadata-only or mirror protection.",
-          "mirror downloads and verifies every block in the currently observed Hypercore or Hyperbee checkpoint, and file metadata plus every referenced Hyperdrive blob.",
-          "protected applies to the observed checkpoint, not future writes. Keep checking protection state after the app writes new data.",
-          "Replacing a manifest stops replication for omitted resources but deliberately does not delete bytes already retained by the node.",
-        ],
-      },
-      {
-        type: "callout",
-        title: "Protection is not a complete backup",
-        body: "The settings export contains config, paired-app registry records, and dashboard trust decisions. It does not contain Corestore payloads, stable node identity seeds, or replicated app data. Keep an independent recovery plan for irreplaceable data.",
-      },
-      { type: "heading", text: "Storage Quotas" },
-      {
-        type: "paragraph",
-        text: "Global and per-app quotas are advisory safety limits. When usage exceeds a configured limit, the node pauses that app's replication announcements; it does not delete existing bytes, and in-flight writes may still arrive. Raise or clear the quota before resuming the app.",
-      },
-      { type: "heading", text: "Settings Export And Import" },
-      {
-        type: "code",
-        language: "bash",
-        code: "unstoppable-node export ./node-settings.uns\nunstoppable-node inspect ./node-settings.uns\nunstoppable-node import ./node-settings.uns --storage ./restored-node",
-      },
-      {
-        type: "cards",
-        items: [
-          {
-            title: "Connect An App",
-            body: "Use @unstoppable-stack/node-core from Node.js, Bare, Pear Desktop, or Expo Bare.",
-            href: "/docs/node-core",
-          },
-        ],
-      },
+      { type: "lead", text: "The Personal Node is not required for a local app and is deferred from the core preview. Its alpha source explores retained replicas, file seeding, and delegated inference, but packaging, trust defaults, and replication-status gates remain open." },
+      { type: "list", items: [
+        "Replication protects observed data; it does not automatically guarantee future writes or a complete backup.",
+        "Settings export does not imply that all replicated application payloads are included.",
+        "Disconnecting pauses Node services but must not erase local data or block local reads and writes.",
+        "Removing or unpairing an app stops replication and revokes access, but already downloaded blocks remain. The alpha has no per-app purge control.",
+      ] },
     ],
   },
   {
-    slug: "node-core",
-    title: "Node Core SDK",
-    description: "Build apps that act as nodes: a stable identity, a capability bus, and pairing with a Personal Node or directly with another app.",
-    category: "Stack",
+    slug: "cli",
+    title: "CLI commands",
+    description: "The public command surface and current feature compatibility.",
+    category: "Reference",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "@unstoppable-stack/node-core is one symmetric runtime with two verbs. listen() accepts pair requests; connect() and discover() reach a peer. A process may do either, both, or neither, so an app that acts like a node is a configuration rather than a different class. Core ships no storage stack; replication and local AI are separate capability packs.",
-      },
-      { type: "heading", text: "Install" },
-      {
-        type: "code",
-        language: "bash",
-        code: "npm install @unstoppable-stack/node-core\n\n# Start a development Personal Node in another terminal\nnpx unstoppable-node start --ai-mock",
-      },
-      { type: "heading", text: "Find The Local Node And Register Data" },
-      {
-        type: "code",
-        language: "js",
-        code: "import { createNode, PeerNotFoundError } from '@unstoppable-stack/node-core'\n\nconst node = createNode({\n  storage: './.my-app-node',\n  profile: { appId: 'com.example.notes', appName: 'Notes', deviceName: 'Simons Laptop' },\n  capabilities: [],\n  reconnect: true\n})\nawait node.ready()\n\ntry {\n  const peer = await node.discover({ timeout: 5_000 })\n  await peer.call('sync', 'manifest.replace', {\n    manifest: {\n      schemaVersion: 1,\n      resources: [{\n        id: 'notes',\n        kind: 'hyperbee',\n        key: Buffer.from(notes.core.key).toString('hex'),\n        name: 'Notes',\n        protection: { mode: 'mirror' }\n      }]\n    }\n  })\n} catch (error) {\n  if (!(error instanceof PeerNotFoundError)) throw error\n  // Continue in device-only mode; the key is remembered once paired.\n}",
-      },
-      {
-        type: "callout",
-        title: "Local-first contract",
-        body: "A missing or disconnected node should reduce availability or redundancy, not make the app unusable. Keep the app's primary data locally and expose node state honestly in the UI.",
-      },
-      { type: "heading", text: "Expose Your Own Capability" },
-      {
-        type: "paragraph",
-        text: "An app becomes a node by hosting capabilities of its own. A pack is a plain object: unary methods are async functions and streaming methods are async generators, which is the whole of the distinction. Another app pairs and calls them exactly as it would call a Personal Node.",
-      },
-      {
-        type: "code",
-        language: "js",
-        code: "const notesPack = {\n  name: 'notes',\n  version: 1,\n  methods: {\n    search: async (params, ctx) => ({ hits: await db.search(params.q) }),\n    watch: async function * (params, ctx) {\n      for await (const change of db.watch(params.prefix, { signal: ctx.signal })) yield change\n    }\n  },\n  defaultGrants: ['search']\n}\n\nconst node = createNode({ storage: './.notes-node', capabilities: [notesPack] })\nawait node.listen()\nconsole.log(node.publicKey) // stable across restarts — share this to pair\n\n// In the other app:\nconst peer = await other.connect(publicKey)\nconst { hits } = await peer.call('notes', 'search', { q: 'coffee' })",
-      },
-      { type: "heading", text: "Grants" },
-      {
-        type: "list",
-        items: [
-          "Grants are per direction: each side decides what the other may call, so pairing is symmetric.",
-          "A peer that asks for nothing receives the host packs' defaultGrants, never everything.",
-          "A peer that asks receives only the intersection of what it asked for and what the host actually hosts.",
-          "Ungranted calls are rejected with NOT_GRANTED before method resolution, so a peer cannot enumerate capabilities from error codes.",
-          "setPeerGrants() changes a live session immediately and persists the decision across restarts.",
-        ],
-      },
-      { type: "heading", text: "Resource Manifests" },
-      {
-        type: "list",
-        items: [
-          "Resource kinds are hypercore, hyperbee, and hyperdrive; protection modes are metadata-only and mirror.",
-          "IDs must be stable within the app installation; keys are 64-character hex strings.",
-          "A manifest is a full replacement, not a patch. Omitted resources stop replicating, while retained blocks remain on disk.",
-          "The sync capability scopes every method to the calling peer: it never exposes another peer's resources, the node's storage path, or global usage.",
-        ],
-      },
-      { type: "heading", text: "Delegated Inference" },
-      {
-        type: "code",
-        language: "js",
-        code: "const controller = new AbortController()\nfor await (const token of peer.stream('ai', 'completion.stream', {\n  messages: [{ role: 'user', content: 'Summarize my notes' }]\n}, { signal: controller.signal })) {\n  process.stdout.write(token)\n}",
-      },
-      {
-        type: "paragraph",
-        text: "Breaking out of the loop cancels the far side: the handler's ctx.signal aborts, so a model stops generating for a peer that stopped listening.",
-      },
-      { type: "heading", text: "Events And Errors" },
-      {
-        type: "list",
-        items: [
-          "Pairing: hello, pairRequest, paired, pairDenied, and unpaired.",
-          "Lifecycle: connection, peerDisconnected, reconnecting, reconnected, and reconnectFailed.",
-          "Management: grantsChanged, policyChanged, and requestError.",
-          "Stable error codes: PEER_NOT_FOUND, PAIR_DENIED, NOT_GRANTED, UNKNOWN_CAPABILITY, UNKNOWN_METHOD, REQUEST_FAILED, REQUEST_TIMEOUT, CANCELLED, INVALID_OPTION, and CLOSED.",
-        ],
-      },
-      { type: "heading", text: "Discovery And Device Linking" },
-      {
-        type: "paragraph",
-        text: "discover() joins a machine-local topic derived from the current user, hostname, and protocol version, so same-machine processes meet without configuration. After pairing, the peer's public key is stored and every reconnect goes direct over the DHT with no topic at all. A phone or second computer will not find that topic; cross-device pairing uses invite codes, which are not shipped yet.",
-      },
-      {
-        type: "code",
-        language: "js",
-        code: "await node.close()",
-      },
+      { type: "code", language: "bash", code: "us init [project-name]\nus scaffold app -p <platform> -n <name> [-f features]\nus scaffold list-platforms\nus scaffold list-features\nus doctor\nus doctor -p pear-desktop\nus research list\nus research run <experiment-id>\nus research scaffold-test" },
+      { type: "heading", text: "Scaffold facts" },
+      { type: "list", items: [
+        "Platforms in source: pear-desktop, expo-mobile, and node-cli. The launch guide defaults to pear-desktop.",
+        "Base Hyperswarm/Corestore networking and Hyperbee storage are always included.",
+        "Feature flags: local-ai, wallet (stub), node-sync, node-host (node-cli only), and multi-writer.",
+        "multi-writer and node-sync are rejected when combined.",
+        "Node CLI is a Node.js command-line target; it is not described as a Bare-only app.",
+      ] },
     ],
   },
   {
     slug: "modules",
     title: "Modules",
-    description: "The core runtime, networking, data, AI, payment, and mobile modules used by the stack.",
-    category: "Stack",
+    description: "The runtime modules used by generated applications.",
+    category: "Reference",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The stack is composed from small modules. Prefer the module that matches the data model instead of forcing everything into one store.",
-      },
-      {
-        type: "cards",
-        items: [
-          { title: "Pear", body: "Desktop runtime for P2P applications." },
-          { title: "Bare", body: "Embeddable JavaScript runtime used by Pear and mobile worklets." },
-          { title: "Hyperswarm", body: "Peer discovery and connection over DHT topics." },
-          { title: "Hypercore", body: "Append-only log and replication foundation." },
-          { title: "Corestore", body: "Manages many Hypercores under shared storage and replication." },
-          { title: "Hyperbee", body: "Sorted key-value database built on Hypercore." },
-          { title: "Hyperdrive", body: "P2P filesystem for larger files and directory trees." },
-          { title: "HyperDB", body: "Multi-writer database pattern built on Autobase." },
-          { title: "QVAC", body: "Local AI inference, embeddings, RAG, transcription, vision, and related capabilities." },
-          { title: "WDK", body: "Self-custodial wallet and payments toolkit." },
-        ],
-      },
-      { type: "heading", text: "Rules Of Thumb" },
-      {
-        type: "list",
-        items: [
-          "Use Hyperbee for small indexed records and range queries.",
-          "Use Hyperdrive for blobs, files, and directory trees.",
-          "Use Corestore when an app owns more than one core.",
-          "Replicate before expecting remote data to be available.",
-          "Always close swarms, cores, databases, drives, and model sessions on cleanup.",
-        ],
-      },
+      { type: "cards", items: [
+        { title: "Pear and Bare", body: "Application and minimal JavaScript runtimes from Holepunch." },
+        { title: "Hyperswarm", body: "Peer discovery and encrypted connections over the DHT." },
+        { title: "Hypercore and Corestore", body: "Append-only logs and lifecycle management for collections of cores." },
+        { title: "Hyperbee / HyperDB", body: "Local key-value storage and the validated multi-writer collection pattern." },
+        { title: "Hyperdrive", body: "Versioned P2P file storage built on Hypercore." },
+        { title: "QVAC", body: "Optional local model management and inference." },
+        { title: "WDK", body: "Planned wallet integration; not a supported preview capability." },
+      ] },
     ],
   },
   {
-    slug: "agent-pack",
-    title: "Agent Pack",
-    description: "Portable assistant instructions for building Unstoppable Stack apps with Claude, Cursor, OpenCode, and Codex.",
-    category: "Stack",
+    slug: "support",
+    title: "Support and limitations",
+    description: "Data handling, connectivity, exports, logs, and where to ask for help.",
+    category: "Operate",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "The agent pack gives AI coding assistants stack-specific context: architecture principles, module docs, recipes, skills, hooks, and reusable components.",
-      },
-      { type: "heading", text: "Supported Assistants" },
-      {
-        type: "list",
-        items: [
-          "Claude Code: project instructions and skills.",
-          "Cursor: rules and commands.",
-          "OpenCode: instructions, skills, agents, and permission-aware workflows.",
-          "Codex: AGENTS.md and portable skills.",
-        ],
-      },
-      { type: "heading", text: "Source Of Truth" },
-      {
-        type: "paragraph",
-        text: "Canonical content lives in `packages/agent-pack/src/`. The CLI-bundled copy lives in `packages/cli/agent-pack-src/` and should be synced after agent-pack edits.",
-      },
-      {
-        type: "callout",
-        title: "For docs authors",
-        body: "Website docs are public human-facing docs. Agent-pack docs are assistant-facing implementation guidance. Keep them aligned, but do not blindly render one as the other.",
-      },
+      { type: "lead", text: "This is a developer preview, not a managed application service. Generated apps store and exchange data according to the developer’s code and the peers a user chooses." },
+      { type: "heading", text: "Data paths" },
+      { type: "list", items: [
+        "Local storage stays in the generated app’s configured device storage until application code exports, replicates, or deletes it.",
+        "Local inference keeps prompts on the device running the model. Delegated inference sends them to the selected trusted peer.",
+        "P2P sync sends declared data to connected peers; those peers may retain a copy after disconnect.",
+        "A settings export is not necessarily an application-data backup. Inspect what each tool says it includes.",
+        "Coding-assistant data handling is controlled by the assistant and provider the developer selects, not by the generated application runtime.",
+      ] },
+      { type: "heading", text: "Logs and website" },
+      { type: "paragraph", text: "The project does not add product analytics in this website source. That statement does not mean the hosting provider keeps no network or request logs. Generated apps may log runtime status and errors; developers should avoid writing prompts, secrets, wallet material, or application records to logs." },
+      { type: "heading", text: "Get help" },
+      { type: "paragraph", text: "The repository and issue tracker are not yet anonymously accessible, so this draft does not publish a broken support action. Before launch, add a verified public destination. A useful report should include the CLI version, platform, exact command, expected result, and first relevant error with private data removed." },
     ],
   },
   {
-    slug: "recipes",
-    title: "Recipes",
-    description: "Common implementation paths for P2P data, local AI, mobile, testing, and payments.",
-    category: "Stack",
+    slug: "upgrades",
+    title: "Upgrades",
+    description: "Move between preview releases without hiding compatibility risk.",
+    category: "Operate",
+    verifiedOn,
     blocks: [
-      {
-        type: "lead",
-        text: "Recipes are task-oriented guides. They should show working patterns, cleanup behavior, and test strategy rather than only describing APIs.",
-      },
-      {
-        type: "cards",
-        items: [
-          { title: "P2P RPC", body: "Request/response calls over peer streams discovered by Hyperswarm." },
-          { title: "KV Storage", body: "Local-first records with Hyperbee and replication through Corestore." },
-          { title: "File Sharing", body: "Hyperdrive for files, manifests, and content-addressed sync." },
-          { title: "Local AI Chat", body: "QVAC chat flow with mock mode for reliable tests." },
-          { title: "RAG", body: "Embeddings, local search, and context assembly for private knowledge apps." },
-          { title: "Mobile Runtime Split", body: "React Native UI plus Bare worklet IPC/RPC patterns." },
-        ],
-      },
-      { type: "heading", text: "Recipe Quality Bar" },
-      {
-        type: "list",
-        items: [
-          "State when to use the recipe and when not to use it.",
-          "Include a minimal working path before optional enhancements.",
-          "Handle disconnection, cleanup, and offline behavior.",
-          "Add a test or verification step that does not require live external services.",
-        ],
-      },
+      { type: "list", items: [
+        "Record the current us --version and generated app commit before changing tools.",
+        "Read the release notes for generator, agent-pack, runtime, and storage changes.",
+        "Regenerate into a temporary folder and compare structure instead of overwriting application code blindly.",
+        "Back up irreplaceable local data and test migration on a copy.",
+        "Verify offline reads, writes, reconnect, and shutdown after the upgrade.",
+      ] },
     ],
   },
 ];
@@ -553,54 +263,23 @@ export function getDocPage(slug: string[] | string | undefined) {
 }
 
 export function getDocStaticParams() {
-  return docsPages
-    .filter((page) => page.slug)
-    .map((page) => ({ slug: page.slug.split("/") }));
+  return docsPages.filter((page) => page.slug).map((page) => ({ slug: page.slug.split("/") }));
 }
 
 export function getDocMarkdown(page: DocPage) {
-  const lines = [`# ${page.title}`, "", page.description, ""];
-
+  const lines = [`# ${page.title}`, "", page.description, "", `Verified: ${page.verifiedOn}`, ""];
   for (const block of page.blocks) {
-    if (block.type === "lead" || block.type === "paragraph") {
-      lines.push(block.text, "");
-    }
-
-    if (block.type === "heading") {
-      lines.push(`## ${block.text}`, "");
-    }
-
-    if (block.type === "list") {
-      lines.push(...block.items.map((item) => `- ${item}`), "");
-    }
-
-    if (block.type === "steps") {
-      block.items.forEach((item, index) => {
-        lines.push(`${index + 1}. ${item.title}`, "", item.body, "");
-        if (item.code) lines.push("```bash", item.code, "```", "");
-      });
-    }
-
-    if (block.type === "code") {
-      lines.push(`\`\`\`${block.language}`, block.code, "```", "");
-    }
-
-    if (block.type === "callout") {
-      lines.push(`> ${block.title}: ${block.body}`, "");
-    }
-
-    if (block.type === "cards") {
-      block.items.forEach((item) => {
-        lines.push(`### ${item.title}`, "", item.body, "");
-      });
-    }
+    if (block.type === "lead" || block.type === "paragraph") lines.push(block.text, "");
+    if (block.type === "heading") lines.push(`## ${block.text}`, "");
+    if (block.type === "list") lines.push(...block.items.map((item) => `- ${item}`), "");
+    if (block.type === "steps") block.items.forEach((item, index) => { lines.push(`${index + 1}. ${item.title}`, "", item.body, ""); if (item.code) lines.push("```bash", item.code, "```", ""); });
+    if (block.type === "code") lines.push(`\`\`\`${block.language}`, block.code, "```", "");
+    if (block.type === "callout") lines.push(`> ${block.title}: ${block.body}`, "");
+    if (block.type === "cards") block.items.forEach((item) => lines.push(`### ${item.title}`, "", item.body, ""));
   }
-
   return lines.join("\n").trim();
 }
 
 export function getAllDocsMarkdown() {
-  return docsPages
-    .map((page) => `# ${page.title} (/docs/${page.slug})\n\n${getDocMarkdown(page)}`)
-    .join("\n\n---\n\n");
+  return docsPages.map((page) => `# ${page.title} (/docs/${page.slug})\n\n${getDocMarkdown(page)}`).join("\n\n---\n\n");
 }

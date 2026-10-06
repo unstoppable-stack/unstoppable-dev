@@ -22,6 +22,8 @@ export interface ScaffoldResult {
   assistant: string
   agentFiles: string[]
   installed: boolean
+  installAttempted: boolean
+  installError?: string
 }
 
 /**
@@ -134,7 +136,9 @@ async function updateGitignore(projectDir: string, assistant: AssistantId): Prom
 /**
  * Install dependencies
  */
-async function installDependencies(projectDir: string): Promise<boolean> {
+async function installDependencies(
+  projectDir: string,
+): Promise<{ installed: boolean; error?: string }> {
   try {
     // Try pnpm first, then npm
     const packageManager = existsSync(join(projectDir, 'pnpm-lock.yaml'))
@@ -145,9 +149,10 @@ async function installDependencies(projectDir: string): Promise<boolean> {
       cwd: projectDir,
       stdio: 'pipe'
     })
-    return true
-  } catch {
-    return false
+    return { installed: true }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    return { installed: false, error: message }
   }
 }
 
@@ -185,8 +190,11 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
 
   // 5. Install dependencies
   let installed = false
+  let installError: string | undefined
   if (options.install) {
-    installed = await installDependencies(projectPath)
+    const installResult = await installDependencies(projectPath)
+    installed = installResult.installed
+    installError = installResult.error
   }
 
   return {
@@ -195,6 +203,8 @@ export async function scaffold(options: ScaffoldOptions): Promise<ScaffoldResult
     template: options.template,
     assistant: options.assistant,
     agentFiles,
-    installed
+    installed,
+    installAttempted: options.install,
+    installError,
   }
 }

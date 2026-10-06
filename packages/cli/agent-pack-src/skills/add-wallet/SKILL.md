@@ -3,10 +3,15 @@ name: add-wallet
 description: Crypto wallet and payment capabilities using Tether WDK.
 when_to_use: User wants send/receive payments, balance queries, or transaction history with self-custodial wallets.
 paths: ["src/wallet/**", "src/payments/**"]
-version: "2026-04-14"
+version: "2026-09-24"
 ---
 
 # Wallet Integration
+
+> **Release status:** planned and unvalidated. The current CLI wallet feature is
+> a stub, not a supported payment path. Treat the patterns below as research
+> guidance, verify them against the installed WDK version, and use testnet-only
+> funds until independent security and transaction tests pass.
 
 ## When to Use
 - User wants to add crypto payments or wallet functionality

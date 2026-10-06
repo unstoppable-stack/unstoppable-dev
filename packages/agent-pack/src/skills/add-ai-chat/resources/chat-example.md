@@ -26,8 +26,7 @@ await unloadModel({ modelId })
 ## Variations
 
 - Use `downloadAsset()` first to pre-cache models for offline use.
-- Use `delegate` in `loadModel()` for P2P delegated inference. Pass
-  `healthCheckTimeout: 2000` to RPC-ping the provider before the load attempt.
+- SDK delegation was removed in 0.19. Use local inference for the preview.
 - Use `kvCache: true` to avoid resending context in multi-turn conversations.
 - Tune sampling with `generationParams` (new in 0.9):
 

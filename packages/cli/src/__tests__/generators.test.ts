@@ -353,6 +353,8 @@ describe('expo-mobile generator', () => {
       expect(index).toContain('nodeStatus')
       expect(index).toContain('rpcRequest(7)')
       expect(index).toContain('useEffect')
+      expect(index).toContain('copy verification pending')
+      expect(index).not.toContain('Protected — background replication is active')
     })
 
     it('bare variant does NOT include node-core', () => {

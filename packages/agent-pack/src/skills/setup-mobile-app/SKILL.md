@@ -3,15 +3,17 @@ name: setup-mobile-app
 description: Expo mobile app with Bare runtime worklet for P2P and AI.
 when_to_use: User is customizing an Expo mobile app with Bare worklet backend, or debugging mobile build/runtime issues.
 paths: ["app.json", "app/**", "bare/**"]
-version: "2026-05-21"
+version: "2026-09-24"
 ---
 
 # Setup Mobile App (Expo + Bare)
 
 > **Start with the scaffold:** `us scaffold app -p expo-mobile -n <name> -f <features>`
 >
-> The scaffold generates a validated, buildable project for all feature combinations.
-> This skill documents what to do **after** scaffolding — customization, debugging, and advanced patterns.
+> The scaffold generates an experimental source target. The current dependency
+> set has not passed a fresh native end-to-end build for every feature combination,
+> so Expo Mobile is deferred from the core preview. This skill documents customization,
+> debugging, and the checks required before making a support claim.
 
 ## What the Scaffold Handles (do NOT redo manually)
 
@@ -781,7 +783,6 @@ Both reference apps use this pattern for conflicting transitive dependencies.
 - `reference-apps/qvac-health/` — Full P2P + AI app with multiple Bare worklets (backup, RAG,
   OCR, delegated inference). Uses `postinstall` to automate everything. Uses `bun`.
 
-> **Status**: Updated 2026-03-07. Rewritten based on analysis of both reference
-> apps (`qvac-workbench-mobile` and `qvac-health`). Plugin implementations,
-> Metro config, build automation, and architecture patterns are all aligned
-> with production reference code.
+> **Status**: Reviewed 2026-09-24. The patterns are derived from retained legacy
+> reference apps and current dependency research. They are implementation guidance,
+> not evidence that the generated target passes current simulator and device gates.

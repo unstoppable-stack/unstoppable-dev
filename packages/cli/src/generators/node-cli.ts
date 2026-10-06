@@ -15,8 +15,8 @@ import {
  * Optional features:
  *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
  *   - wallet    → WDK stub
- *   - node-sync → register cores with the local Unstoppable Node for
- *                 replication + backup via @unstoppable-stack/node-core
+ *   - node-sync → register cores with the Personal Node alpha for
+ *                 replication via @unstoppable-stack/node-core
  */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -63,7 +63,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
+    Object.assign(deps, { '@qvac/sdk': '0.21.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync') || has(opts, 'node-host')) {
@@ -85,6 +85,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         version: '0.1.0',
         private: true,
         type: 'module',
+        engines: { node: '>=22.17.0' },
         scripts: {
           ...(has(opts, 'multi-writer')
             ? {
@@ -342,13 +343,11 @@ function nodeSyncManager(opts: GeneratorOptions): GeneratedFile {
   return {
     path: 'src/node-sync.ts',
     content: `/**
- * Unstoppable Node sync.
+ * Personal Node alpha sync.
  *
- * Connects this app to the local Unstoppable Node (if one is running) so the
- * Node replicates and backs up the app's Hyperbee. The app keeps working
- * normally whether or not the Node is reachable — this is best-effort.
- *
- * Start the Node separately:   npx unstoppable-node
+ * Registers this app's Hyperbee with a compatible Personal Node alpha for
+ * replication. Registration is not proof of a verified copy or a complete
+ * backup. The app keeps working normally when the deferred Node is unavailable.
  *
  * To add more resources later, add them to the manifest below — it describes
  * the complete set, so anything omitted stops replicating.
@@ -395,10 +394,10 @@ export function setupNodeSync({ db }: NodeSyncOpts) {
           ],
         },
       })
-      console.log('Connected to Unstoppable Node — replication enabled')
+      console.log('Registered with Personal Node — copy verification pending')
     } catch (err: any) {
       console.log(\`No Unstoppable Node found (\${err.message})\`)
-      console.log('Run \\\`npx unstoppable-node\\\` in another terminal to enable sync')
+      console.log('Personal Node alpha is deferred from the core preview; continuing locally')
     }
   }
 
