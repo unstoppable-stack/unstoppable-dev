@@ -167,9 +167,9 @@ added 188 packages in 21s
 [14:49:23] Unstoppable Stack — Scaffold E2E Test Runner
 [14:49:23] Platform: pear-desktop, Level: 5
 [14:49:23] Output: /tmp/us-e2e-scaffold
-[14:49:23] 
+[14:49:23]
 ╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
-[14:49:24] 
+[14:49:24]
 ━━━ pear-desktop / local-ai ━━━
 [14:49:24]   ○ scaffold (skipped)
 [14:49:24]   ○ npm install (skipped)
@@ -195,9 +195,9 @@ RESULTS
 [14:50:59] Unstoppable Stack — Scaffold E2E Test Runner
 [14:50:59] Platform: pear-desktop, Level: 5
 [14:50:59] Output: /tmp/us-e2e-scaffold
-[14:50:59] 
+[14:50:59]
 ╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
-[14:51:00] 
+[14:51:00]
 ━━━ pear-desktop / local-ai ━━━
 [14:51:00]   ○ scaffold (skipped)
 [14:51:00]   ○ npm install (skipped)

@@ -167,9 +167,9 @@ added 184 packages in 25s
 [14:40:15] Unstoppable Stack — Scaffold E2E Test Runner
 [14:40:15] Platform: pear-desktop, Level: 5
 [14:40:15] Output: /tmp/us-e2e-scaffold
-[14:40:15] 
+[14:40:15]
 ╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
-[14:40:15] 
+[14:40:15]
 ━━━ pear-desktop / local-ai ━━━
 [14:40:15]   ○ scaffold (skipped)
 [14:40:15]   ○ npm install (skipped)
@@ -190,11 +190,11 @@ RESULTS
       Real QVAC model load failed: MODULE_NOT_FOUND: Cannot find module '@qvac/langdetect-text' imported from 'file:///private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/tmp.AdSMYL3nTb/projects/smoke-scaffold/node_modules/@qvac/inference/dist/plugins/ops/translate.js'
       app stdout (last 4KB):
       Downloading Electron binary...
-      
+
       app stderr (last 4KB):
-      
+
       DevTools listening on ws://127.0.0.1:40290/devtools/browser/f406a060-b1c6-43f2-8f02-8d549a193b31
-      
+
 
 0/1 variants passed
 [14:40:30] Report: /tmp/us-e2e-scaffold/report-2026-10-06T14-40-30-796Z.json

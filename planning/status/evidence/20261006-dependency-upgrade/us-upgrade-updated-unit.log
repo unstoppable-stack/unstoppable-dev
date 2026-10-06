@@ -6,7 +6,7 @@
  RUN  v4.1.0 $CANDIDATE_WORKTREE/packages/cli
 
 
-  Snapshots  2 updated 
+  Snapshots  2 updated
  Test Files  14 passed | 1 skipped (15)
       Tests  266 passed | 14 skipped (280)
    Start at  16:41:36
