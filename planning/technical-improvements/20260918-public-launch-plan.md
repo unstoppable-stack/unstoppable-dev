@@ -22,7 +22,7 @@ Companion specification: [website improvement plan](website/20260918-prelaunch-w
 
 ## Progress
 
-PRJ-01 started on 18 September. The initial structured release contract is [`planning/status/public-launch-candidate.json`](../status/public-launch-candidate.json), with a human-readable [candidate checklist](../status/public-launch-checklist.md). It records the current dirty baseline rather than pretending it is a frozen release candidate.
+PRJ-01 started on 18 September. The initial structured release contract is [`planning/status/public-launch-candidate.json`](../status/public-launch-candidate.json), with a human-readable [candidate checklist](../status/public-launch-checklist.md). The updated contract records the scoped frozen technical candidate; independent acceptance and publication remain gated.
 
 The first scope decision is now explicit: **Personal Node and the 0.6 runtime packages are deferred from the core developer preview**. They may ship later as an optional alpha only after their packaging, trust, resource, and replication-status gates pass. The primary path remains a proposed macOS Apple Silicon Pear Desktop journey; it is not a support claim until clean-machine and real-model evidence exists.
 
@@ -345,3 +345,5 @@ Each completed gate should retain: task ID, commit, artifact/version, date, envi
 For the first two weeks, manually review incoming issues and onboarding feedback, fix install/data/trust regressions first, and publish short patch notes. Track successful example builds and recurring support problems. Do not require telemetry or a new account system to use the toolkit; voluntary pilot reports are enough initially.
 
 Consider the next platform, a real WDK integration, broader reference apps, and improved one-command setup only after the primary path remains stable. Stable consumer Personal Node additionally needs verified identity/data recovery, deletion, upgrades, resource-pressure behavior, and a deliberate update strategy.
+
+On 6 October, the scoped candidate `3ce9759` passed fresh installed-artifact real/offline desktop acceptance, CLI and website regression, public peer reconnect and interrupted model download recovery. Matching screenshots and a two-minute screenshot walkthrough are retained. [Current results and remaining gates](../status/public-launch-progress-20261006.md) supersede earlier implementation observations. Draft PR #7 starts the remote preview, CLI and website checks. Human-dependent items remain pending at the user's request.

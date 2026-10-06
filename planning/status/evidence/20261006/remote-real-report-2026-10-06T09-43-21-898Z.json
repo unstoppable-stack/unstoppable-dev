@@ -1,0 +1,47 @@
+{
+  "mode": "single",
+  "platforms": [
+    "pear-desktop"
+  ],
+  "levels": {
+    "pear-desktop": 5
+  },
+  "results": [
+    {
+      "variant": "local-ai",
+      "platform": "pear-desktop",
+      "steps": [
+        {
+          "name": "scaffold",
+          "passed": true,
+          "duration": 0,
+          "skipped": true
+        },
+        {
+          "name": "npm install",
+          "passed": true,
+          "duration": 0,
+          "skipped": true
+        },
+        {
+          "name": "file integrity check",
+          "passed": true,
+          "duration": 1
+        },
+        {
+          "name": "worker spawn test",
+          "passed": true,
+          "duration": 834
+        },
+        {
+          "name": "playwright: feature UI test",
+          "passed": true,
+          "duration": 12141
+        }
+      ],
+      "passed": true,
+      "duration": 12980
+    }
+  ],
+  "totalDurationMs": 13935
+}

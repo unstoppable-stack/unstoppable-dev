@@ -1,6 +1,6 @@
 # Public developer preview candidate
 
-Last updated: 5 October 2026. Status: **blocked; not approved for publication**.
+Last updated: 6 October 2026. Status: **blocked; not approved for publication**.
 
 The machine-readable release contract is [`public-launch-candidate.json`](public-launch-candidate.json). The implementation backlog and acceptance criteria remain in the [public launch plan](../technical-improvements/20260918-public-launch-plan.md).
 
@@ -16,13 +16,13 @@ The machine-readable release contract is [`public-launch-candidate.json`](public
 | Mobile | Deferred from the core preview |
 | Wallets/payments | Planned; excluded |
 | Search, Memory, Remote Coder, Flow, standalone Agent | Excluded from the launch promise |
-| Example | Coffee Assistant, after it is moved from ignored validation material into a tracked public location |
+| Example | Maintained Coffee Assistant in `examples/coffee-assistant`; frozen local acceptance passes; independent reproduction remains pending |
 
 `available` is intentionally not used as a synonym for “present in source.” A default-preview capability remains a **candidate** until its release gates pass against the same frozen commit and final artifacts.
 
 ## Evidence snapshot
 
-- Candidate baseline: `58a12036181a5e9721d8f5cc5a05d175240846c4`; working tree was dirty and is not frozen.
+- Frozen technical candidate: `3ce97590ba2c85eca49917327226d77f69fa3716` on `codex/public-preview-candidate`. See [current acceptance results](public-launch-progress-20261006.md); historical runs below do not supersede them.
 - CLI source version: `0.4.0-beta.1`.
 - Runtime/Node source versions: `0.6.0-alpha.1`; excluded from the core preview.
 - Agent-pack canonical and CLI-bundled directories matched on 18 September.
@@ -51,8 +51,8 @@ The machine-readable release contract is [`public-launch-candidate.json`](public
 - [x] Distinguish proposed, validation-only, experimental/deferred, and planned surfaces.
 - [ ] Assign named owners for Product, Runtime, Web, Release, and Pilot.
 - [x] Reconcile the root README, website, CLI output, roadmap, changelog, and generated docs with this contract.
-- [ ] Replace draft commands with the exact version/tag that passes the artifact smoke.
-- [ ] Freeze a clean candidate commit and add final artifact manifests and checksums.
+- [x] Record the exact locally tested artifact/version install command; keep public instructions on the published baseline until publication.
+- [x] Freeze a clean candidate commit and add final artifact manifests and checksums.
 
 PRJ-01 remains in progress until the unchecked items are complete. Publication remains blocked by the P0 gates listed in the manifest.
 
@@ -70,3 +70,7 @@ PRJ-02 is now split cleanly by scope: the core CLI artifact installs without the
 ## 5 October implementation slice
 
 See [current evidence and remaining gates](public-launch-progress-20261005.md). A maintained example now exists in `examples/coffee-assistant`, with a real application screenshot, locked dependencies, and setup/troubleshooting. Real inference, retry/cancel/recovery, offline restart with persistence, and local-DHT two-app order retrieval passed. Public discovery timed out. The fresh-network artifact install stopped on a network reset; a populated-cache retry then passed the retained tarball through real UI and offline restart with persistence in 62 seconds. Frozen-candidate and clean-machine acceptance remain open. Automated drift and artifact-content/checksum checks now exist. The [pilot observation sheet](public-launch-pilot.md) and [release/rollback runbook](public-launch-release-runbook.md) are prepared; no independent participant or production rollback result is claimed.
+
+## 6 October technical acceptance
+
+The frozen candidate passed a fresh installed-tarball desktop journey with real and offline inference, 261 CLI tests (14 skipped), website checks, public peer reconnect and interrupted model download/offline recovery. Artifact checksum and matching screenshots are retained in `evidence/20261006`. The draft PR starts remote CLI, website and preview CI. Human-dependent and publication gates remain open; see the updated manifest and progress report.

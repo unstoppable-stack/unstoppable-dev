@@ -8,12 +8,20 @@
   "releaseStatus": "blocked",
   "releaseOwner": null,
   "candidate": {
-    "commit": "58a12036181a5e9721d8f5cc5a05d175240846c4",
-    "branchAtCapture": "feat/personal-node-ux",
-    "workingTree": "dirty",
-    "frozen": false,
-    "artifactChecksums": [],
-    "note": "This records the current planning baseline, not an approved or publishable release candidate. Recreate it from the final clean candidate commit."
+    "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+    "branchAtCapture": "codex/public-preview-candidate",
+    "workingTree": "clean",
+    "frozen": true,
+    "artifactChecksums": [
+      {
+        "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
+        "name": "@unstoppable-stack/cli",
+        "version": "0.4.0-beta.1",
+        "bytes": 245727,
+        "sha256": "94afd44a4bb6b62008197785ded043547669da117d6f06869635969d6d1ff3f1"
+      }
+    ],
+    "note": "Frozen technical candidate, not publication approval. Exact tarball passed fresh isolated consumer install and real/offline desktop UI. Original checkout remains independently dirty; validation uses the managed candidate worktree. Evidence: planning/status/evidence/20261006/artifact-manifest.json. Draft PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
   },
   "maturityDefinitions": {
     "candidate": "Intended for the default developer-preview journey, but not publishable until every applicable P0 gate passes against one frozen commit and its final artifacts.",
@@ -27,7 +35,7 @@
     "platform": "Pear Desktop",
     "operatingSystem": "macOS",
     "architecture": "Apple Silicon",
-    "status": "source-validated-pending-frozen-candidate",
+    "status": "frozen-artifact-validated-pending-independent-pilot",
     "assistant": "Codex",
     "steps": [
       "Install the exact preview CLI artifact.",
@@ -37,7 +45,7 @@
       "Make one visible change with the generated assistant instructions.",
       "Verify local persistence and offline restart after the model is installed."
     ],
-    "commandState": "draft-not-frozen",
+    "commandState": "frozen-artifact-validated-unpublished",
     "commands": [
       "us init my-workspace --assistant codex",
       "cd my-workspace",
@@ -45,7 +53,8 @@
       "cd coffee-assistant",
       "npm install",
       "npm run dev"
-    ]
+    ],
+    "artifactInstallCommand": "npm install -g ./unstoppable-stack-cli-0.4.0-beta.1.tgz"
   },
   "releaseScope": [
     {
@@ -71,7 +80,7 @@
         "packages/cli/agent-pack-src"
       ],
       "limitations": [
-        "Source and bundle match as of 2026-10-05; drift is checked by scripts/check-agent-pack.mjs.",
+        "104 canonical and bundled files match; automatic drift checks apply to the candidate.",
         "Recommended assistant path has not completed an independent pilot."
       ]
     },
@@ -97,8 +106,8 @@
         ".github/workflows/node-qvac.yml"
       ],
       "limitations": [
-        "One capability-pack completion and one generated Electron UI completion passed on macOS Apple Silicon from the dirty source build; the frozen candidate has not repeated them.",
-        "Offline restart, cancellation, forced model failure/retry, a subsequent completion, warm-load timing, and process-tree RSS measurement passed in the generated app; cold first-run timing is not current release evidence.",
+        "Frozen installed-artifact UI passed real completion, forced failure/retry, cancellation, post-cancel reuse and network-isolated restart with existing persisted data.",
+        "Cold download and interrupted transfer recovery passed on this Mac; other machines and broader resource limits remain unverified.",
         "Mock mode is test support and is not a public demonstration."
       ]
     },
@@ -112,8 +121,9 @@
         "planning/status/public-launch-progress-20261005.md"
       ],
       "limitations": [
-        "Maintained source now exists in examples/coffee-assistant, pending candidate commit and public repository access.",
-        "Local DHT order retrieval and restart persistence passed; public discovery timed out. Independent reproduction and demo video remain pending."
+        "Maintained source is frozen; repository remains private pending account administration.",
+        "Public DHT retrieval, visible graceful disconnection, persistence and fresh reconnect reads passed using distinct instances on one Mac.",
+        "Matching screenshots and a 126-second screenshot walkthrough exist; independent reproduction remains pending."
       ]
     },
     {
@@ -217,9 +227,9 @@
       "os": "macOS",
       "architecture": "Apple Silicon",
       "runtime": "Pear plus Node.js 20+ development tooling",
-      "featureCoverage": "P2P and local storage; one real local-AI completion from a generated app, pending the remaining PRJ-04 cases and frozen-candidate repeat",
-      "supportStatus": "source-validated-pending-candidate",
-      "lastVerified": "2026-10-02"
+      "featureCoverage": "Installed-artifact actual worker/storage/UI, real inference/retry/cancel, offline restart/persistence; maintained example public peer reconnect and interrupted model recovery on one Mac; separate hosted-Mac installed-artifact real/offline acceptance passed",
+      "supportStatus": "frozen-candidate-validated-local-and-hosted-macos-arm64",
+      "lastVerified": "2026-10-06"
     },
     {
       "surface": "Node.js CLI scaffold",
@@ -276,6 +286,43 @@
     }
   ],
   "verificationRuns": [
+    {
+      "date": "2026-10-06",
+      "scope": "Separate hosted-Mac real-model installed-artifact acceptance",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37444526632",
+      "details": "Fresh macOS arm64 hosted runner installed the packed CLI and generated desktop app, then passed actual worker/storage/UI, real completion, forced model failure/retry, cancellation/reuse and network-isolated restart retrieving previous persisted data. Complete acceptance: 169 seconds. First model-ready: 52.300 seconds; offline cached ready: 3.158 seconds. Process-tree RSS: 1650.5 / 1608.2 MiB. Its artifact checksum exactly matches the locally tested frozen candidate.",
+      "note": "The first hosted run starts without a model cache, although the existing harness labels its time warm; report the first model-ready measurement separately. This is automated second-Mac evidence, not an independent human assistant pilot."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Frozen core CLI production dependency audit",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "details": "npm audit --omit=dev reports zero known vulnerabilities across 69 production dependencies. This covers the core CLI lockfile, not every generated desktop app or deferred Node package.",
+      "note": "See evidence/20261006/frozen-cli-production-audit.json."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Remote hosted-macOS arm64 artifact acceptance (mock AI)",
+      "result": "pass",
+      "candidateEvidence": true,
+      "details": "PR preview lane installed the packed CLI and generated desktop app on a fresh hosted Mac; actual worker/storage/UI passed in 103 seconds. AI was explicitly mocked. Tarball SHA-256 matches the locally real-tested artifact exactly. The PR merge commit is recorded in its separate identity manifest. Remote CLI and website jobs also passed.",
+      "url": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/37444320651",
+      "note": "Separate opt-in real-model hosted-Mac acceptance also passed; see its own run record."
+    },
+    {
+      "date": "2026-10-06",
+      "scope": "Frozen candidate 3ce9759: final installed artifact and website/example regression",
+      "result": "pass",
+      "candidateEvidence": true,
+      "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
+      "details": "Fresh isolated npm prefix/cache installed the CLI tarball and all 202 app dependencies. Complete 65-second acceptance passed command/catalog/doctor/init/generation, real worker/storage/UI, model failure/retry, streamed completion, cancellation/recovery and offline restart fetching the previous unique saved value. Warm model-ready: 1.035 s; offline: 1.021 s. Process-tree RSS: 1680.7 / 1674.8 MiB. CLI: 261 passed, 14 skipped; type checking and website lint/type/build passed (26 routes). Frozen example public peer disconnect/reconnect passed; actual download interrupted at 1,114,112 bytes recovered the checksum-verified model in 17.681 s and passed offline inference.",
+      "note": "Same-Mac acceptance; build/test tools reused. The consumer prefix and npm cache were fresh. First frozen artifact exposed a generated Electron loader regression, which was corrected and separately regression-tested. Remote CI is tracked on draft PR #7; independent pilot and second clean Mac remain pending."
+    },
     {
       "date": "2026-10-06",
       "scope": "Public DHT, disconnect/reconnect, cold model and interrupted download recovery",
@@ -521,26 +568,21 @@
   ],
   "blockingGates": [
     "Assign Product, Runtime, Web, Release, and independent Pilot owners.",
-    "PRJ-02: validate final registry-resolvable artifacts in a clean consumer environment.",
-    "PRJ-03: make workspace setup and app scaffolding an accurate, recoverable journey.",
-    "PRJ-04: record cold first-run timing, then repeat real-model QVAC, offline restart, failure/retry, cancellation, and resource checks against the frozen candidate.",
-    "PRJ-08: validate the generated agent pack on the selected assistant path.",
-    "PRJ-09: finish public peer discovery, independent example reproduction and matching media.",
-    "PRJ-10: attach candidate-specific platform evidence.",
-    "PRJ-11: complete licensing, contribution, security, support, and repository-publication readiness.",
-    "PRJ-12: complete the independent pilot.",
-    "PRJ-13: freeze, publish, and pass the anonymous public smoke."
+    "PRJ-03/08/12: independent selected-assistant onboarding, visible-change and pilot acceptance.",
+    "PRJ-09: independent example reproduction.",
+    "PRJ-11: public repository, issue intake and private vulnerability reporting administration.",
+    "PRJ-13: publication approval, registry/website publication, anonymous public smoke and hosting rollback exercise."
   ],
   "knownLimitations": [
     "Installation and initial model download require network access.",
     "Peer synchronization requires another reachable peer.",
     "The developer's AI coding assistant may use a cloud service even when generated app inference is local.",
-    "The current real-QVAC evidence covers completion, network-isolated restart, forced failure/retry, user cancellation, post-cancel reuse, warm-load timing, and process-tree RSS on macOS Apple Silicon; cold first-run timing and general resource limits are not yet validated.",
     "No wallet or payment path is included.",
     "Settings export is not a full identity or application-data backup.",
     "The deferred Node/desktop production dependency audit has not been performed.",
     "The configured GitHub repository is not anonymously accessible; public issue and private vulnerability routes are not launch-ready.",
     "Several deferred runtime packages declare README or LICENSE files that are absent from their current tarballs.",
-    "No release date, public distribution tag, retained final artifact checksum, or final install command is approved yet."
+    "An explicit preview tag is proposed; no package/site publication or release date is approved.",
+    "Automatic local and separate hosted-Mac acceptance passed; independent onboarding, assistant editing and pilot reproduction remain unverified."
   ]
 }

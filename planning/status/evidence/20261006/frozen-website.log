@@ -1,0 +1,51 @@
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+Done in 183ms using pnpm v11.5.3
+$ pnpm run lint && pnpm run typecheck && pnpm run build
+$ eslint . --max-warnings=0
+$ tsc --noEmit
+$ next build
+   ▲ Next.js 15.5.12
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 2.6s
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/26) ...
+   Generating static pages (6/26)
+   Generating static pages (12/26)
+   Generating static pages (19/26)
+ ✓ Generating static pages (26/26)
+   Finalizing page optimization ...
+   Collecting build traces ...
+   Exporting (0/2) ...
+ ✓ Exporting (2/2)
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    1.55 kB         112 kB
+├ ○ /_not-found                            139 B         102 kB
+├ ○ /docs                                  169 B         106 kB
+├ ● /docs/[...slug]                        169 B         106 kB
+├   ├ /docs/quickstart
+├   ├ /docs/compatibility
+├   ├ /docs/troubleshooting
+├   └ [+9 more paths]
+├ ○ /getting-started                     1.55 kB         107 kB
+├ ○ /icon.svg                                0 B            0 B
+├ ○ /llms-full.txt                         139 B         102 kB
+├ ○ /llms.txt                              139 B         102 kB
+├ ○ /opengraph-image                       139 B         102 kB
+├ ○ /roadmap                               169 B         106 kB
+├ ○ /robots.txt                            139 B         102 kB
+├ ○ /showcase                              174 B         111 kB
+└ ○ /sitemap.xml                           139 B         102 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/6ee9f5d1-21ccf1713a250a03.js  54.2 kB
+  ├ chunks/977-dede25cd00be15f8.js       45.9 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+○  (Static)  prerendered as static content
+●  (SSG)     prerendered as static HTML (uses generateStaticParams)
+
