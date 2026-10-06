@@ -2637,6 +2637,7 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "chat-context.js",
   "electron/main.js",
   "electron/preload.cjs",
   "index.html",
@@ -2652,6 +2653,7 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai: path l
   "README.md",
   "app/bridge.js",
   "app/index.js",
+  "chat-context.js",
   "electron/main.js",
   "electron/preload.cjs",
   "index.html",
@@ -2710,6 +2712,9 @@ dist/
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -2896,6 +2901,9 @@ dist/
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -2907,7 +2915,7 @@ dist/
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@qvac/sdk": "^0.15.0",
+    "@qvac/sdk": "0.21.0",
     "zod": "^4.3.0"
   },
   "devDependencies": {
@@ -3012,8 +3020,6 @@ export async function setupAI() {
     modelType: 'llm',
     modelConfig: {
       ctx_size: CTX_SIZE,
-      // Sliding window — evict oldest ~10% on overflow instead of throwing.
-      n_discarded: Math.floor(CTX_SIZE / 10),
       // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
       // and no stripping reasoning blocks back out of the token stream.
       reasoning_budget: 0,
@@ -3187,6 +3193,9 @@ dist/
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -3463,6 +3472,9 @@ dist/
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -3735,6 +3747,9 @@ dist/
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -4307,6 +4322,9 @@ contextBridge.exposeInMainWorld('unstoppable', {
   "private": true,
   "type": "module",
   "main": "electron/main.js",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
     "dev": "electron .",
@@ -4314,15 +4332,17 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "dependencies": {
     "pear-runtime": "^1.3.1",
-    "bare-rpc": "^1.1.0",
-    "hyperswarm": "^4.17.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.8",
+    "hyperswarm": "^4.17.2",
+    "hyperdht": "^6.34.1",
+    "hypercore": "^11.37.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }",
     "path": "package.json",
@@ -4737,7 +4757,11 @@ onWorkerMessage((msg) => {
       activeChatRequestId = null
       setChatBusy(false)
     }
+    if (msg.type === 'chat-context' && msg.requestId === activeChatRequestId) {
+      appendBubble('system', 'Earlier messages were omitted from model context to fit this request.')
+    }
     if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
+      if (chatHistory.at(-1)?.role === 'user') chatHistory.pop()
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
       activeChatRequestId = null
       setChatBusy(false)
@@ -4802,6 +4826,49 @@ function injectStyles() {
 }
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "import b4a from 'b4a'
+
+export function prepareChatHistory(history, byteBudget) {
+  if (!Array.isArray(history) || !history.length || history.some(m =>
+    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
+    throw new Error('Chat history must contain user and assistant text messages.')
+  }
+  if (history[history.length - 1].role !== 'user') throw new Error('The latest message must be from the user.')
+  const cost = messages => messages.reduce((n, m) => n + b4a.byteLength(m.content, 'utf8') + 32, 0)
+  const latest = history.slice(-1)
+  if (cost(latest) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
+  let selected = history.slice()
+  while (cost(selected) > byteBudget && selected.length > 1) {
+    selected.shift()
+    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
+  }
+  return selected
+}
+
+export async function* streamChat(sdk, modelId, history, byteBudget, onTrim = () => {}) {
+  let selected = prepareChatHistory(history, byteBudget)
+  if (selected.length < history.length) onTrim()
+  let emitted = false
+  for (;;) {
+    try {
+      const result = sdk.completion({ modelId, history: selected, stream: true })
+      for await (const token of result.tokenStream) {
+        if (token) emitted = true
+        yield token
+      }
+      return
+    } catch (err) {
+      // Retry only before visible output, once with the latest user message.
+      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
+      selected = selected.slice(-1)
+      onTrim()
+    }
+  }
+}
+",
+    "path": "chat-context.js",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -4980,6 +5047,9 @@ contextBridge.exposeInMainWorld('unstoppable', {
   "private": true,
   "type": "module",
   "main": "electron/main.js",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
     "dev": "electron .",
@@ -4987,18 +5057,20 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "dependencies": {
     "pear-runtime": "^1.3.1",
-    "bare-rpc": "^1.1.0",
-    "hyperswarm": "^4.17.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.8",
+    "hyperswarm": "^4.17.2",
+    "hyperdht": "^6.34.1",
+    "hypercore": "^11.37.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@qvac/sdk": "^0.15.0",
-    "bare-module": "^7.2.1",
-    "zod": "^4.3.0"
+    "@qvac/inference": "0.21.0",
+    "@qvac/llm-llamacpp": "0.55.0",
+    "bare-process": "^4.5.1"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }",
     "path": "package.json",
@@ -5051,6 +5123,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
+import { streamChat } from './chat-context.js'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -5116,16 +5189,12 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        // QVAC 0.15.0's Bare config loader uses CommonJS require even when
-        // loaded from an ESM worker. Supply Bare's native loader before SDK init.
-        if (typeof globalThis.require !== 'function') {
-          const { createRequire } = await import('bare-module')
-          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
-        }
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
         const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/sdk'),
-          import('@qvac/sdk/llamacpp-completion/plugin'),
-          import('@qvac/sdk/plugins'),
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
         ])
         if (!qvacPluginRegistered) {
           registerPlugin(llmPlugin)
@@ -5137,8 +5206,6 @@ async function handleCommand(msg) {
           modelType: 'llm',
           modelConfig: {
             ctx_size: CTX_SIZE,
-            // Sliding window — evict oldest ~10% on overflow instead of throwing.
-            n_discarded: Math.floor(CTX_SIZE / 10),
             // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
             // and no stripping reasoning blocks back out of the token stream.
             reasoning_budget: 0,
@@ -5176,8 +5243,9 @@ async function handleCommand(msg) {
       try {
         // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
         // tokens arrive as plain content — no reasoning-block filtering needed.
-        const result = sdk.completion({ modelId, history: msg.history, stream: true })
-        for await (const token of result.tokenStream) {
+        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
+          send({ type: 'chat-context', requestId }))
+        for await (const token of tokens) {
           if (activeChatRequestId !== requestId) break
           send({ type: 'chat-token', requestId, token })
         }
@@ -5536,7 +5604,11 @@ onWorkerMessage((msg) => {
       activeChatRequestId = null
       setChatBusy(false)
     }
+    if (msg.type === 'chat-context' && msg.requestId === activeChatRequestId) {
+      appendBubble('system', 'Earlier messages were omitted from model context to fit this request.')
+    }
     if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
+      if (chatHistory.at(-1)?.role === 'user') chatHistory.pop()
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
       activeChatRequestId = null
       setChatBusy(false)
@@ -5601,6 +5673,49 @@ function injectStyles() {
 }
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "import b4a from 'b4a'
+
+export function prepareChatHistory(history, byteBudget) {
+  if (!Array.isArray(history) || !history.length || history.some(m =>
+    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
+    throw new Error('Chat history must contain user and assistant text messages.')
+  }
+  if (history[history.length - 1].role !== 'user') throw new Error('The latest message must be from the user.')
+  const cost = messages => messages.reduce((n, m) => n + b4a.byteLength(m.content, 'utf8') + 32, 0)
+  const latest = history.slice(-1)
+  if (cost(latest) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
+  let selected = history.slice()
+  while (cost(selected) > byteBudget && selected.length > 1) {
+    selected.shift()
+    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
+  }
+  return selected
+}
+
+export async function* streamChat(sdk, modelId, history, byteBudget, onTrim = () => {}) {
+  let selected = prepareChatHistory(history, byteBudget)
+  if (selected.length < history.length) onTrim()
+  let emitted = false
+  for (;;) {
+    try {
+      const result = sdk.completion({ modelId, history: selected, stream: true })
+      for await (const token of result.tokenStream) {
+        if (token) emitted = true
+        yield token
+      }
+      return
+    } catch (err) {
+      // Retry only before visible output, once with the latest user message.
+      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
+      selected = selected.slice(-1)
+      onTrim()
+    }
+  }
+}
+",
+    "path": "chat-context.js",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -5779,6 +5894,9 @@ contextBridge.exposeInMainWorld('unstoppable', {
   "private": true,
   "type": "module",
   "main": "electron/main.js",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
     "dev": "electron .",
@@ -5786,18 +5904,20 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "dependencies": {
     "pear-runtime": "^1.3.1",
-    "bare-rpc": "^1.1.0",
-    "hyperswarm": "^4.17.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.8",
+    "hyperswarm": "^4.17.2",
+    "hyperdht": "^6.34.1",
+    "hypercore": "^11.37.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@qvac/sdk": "^0.15.0",
-    "bare-module": "^7.2.1",
-    "zod": "^4.3.0"
+    "@qvac/inference": "0.21.0",
+    "@qvac/llm-llamacpp": "0.55.0",
+    "bare-process": "^4.5.1"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }",
     "path": "package.json",
@@ -5849,6 +5969,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
+import { streamChat } from './chat-context.js'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -5914,16 +6035,12 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        // QVAC 0.15.0's Bare config loader uses CommonJS require even when
-        // loaded from an ESM worker. Supply Bare's native loader before SDK init.
-        if (typeof globalThis.require !== 'function') {
-          const { createRequire } = await import('bare-module')
-          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
-        }
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
         const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/sdk'),
-          import('@qvac/sdk/llamacpp-completion/plugin'),
-          import('@qvac/sdk/plugins'),
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
         ])
         if (!qvacPluginRegistered) {
           registerPlugin(llmPlugin)
@@ -5935,8 +6052,6 @@ async function handleCommand(msg) {
           modelType: 'llm',
           modelConfig: {
             ctx_size: CTX_SIZE,
-            // Sliding window — evict oldest ~10% on overflow instead of throwing.
-            n_discarded: Math.floor(CTX_SIZE / 10),
             // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
             // and no stripping reasoning blocks back out of the token stream.
             reasoning_budget: 0,
@@ -5974,8 +6089,9 @@ async function handleCommand(msg) {
       try {
         // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
         // tokens arrive as plain content — no reasoning-block filtering needed.
-        const result = sdk.completion({ modelId, history: msg.history, stream: true })
-        for await (const token of result.tokenStream) {
+        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
+          send({ type: 'chat-context', requestId }))
+        for await (const token of tokens) {
           if (activeChatRequestId !== requestId) break
           send({ type: 'chat-token', requestId, token })
         }
@@ -6456,6 +6572,9 @@ contextBridge.exposeInMainWorld('unstoppable', {
   "private": true,
   "type": "module",
   "main": "electron/main.js",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
     "dev": "electron .",
@@ -6463,16 +6582,18 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "dependencies": {
     "pear-runtime": "^1.3.1",
-    "bare-rpc": "^1.1.0",
-    "hyperswarm": "^4.17.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.8",
+    "hyperswarm": "^4.17.2",
+    "hyperdht": "^6.34.1",
+    "hypercore": "^11.37.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }",
     "path": "package.json",
@@ -7055,6 +7176,9 @@ contextBridge.exposeInMainWorld('unstoppable', {
   "private": true,
   "type": "module",
   "main": "electron/main.js",
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
     "dev": "electron .",
@@ -7062,15 +7186,17 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "dependencies": {
     "pear-runtime": "^1.3.1",
-    "bare-rpc": "^1.1.0",
-    "hyperswarm": "^4.17.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.8",
+    "hyperswarm": "^4.17.2",
+    "hyperdht": "^6.34.1",
+    "hypercore": "^11.37.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0"
   },
   "devDependencies": {
-    "electron": "^40.2.1"
+    "electron": "^44.5.1"
   }
 }",
     "path": "package.json",

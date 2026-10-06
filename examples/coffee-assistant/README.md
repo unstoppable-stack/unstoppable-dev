@@ -4,7 +4,7 @@ A maintained first-party developer-preview example: ask a local coffee assistant
 
 ## Run
 
-The proposed validation platform is macOS Apple Silicon with Node.js 20+ and npm. Other platforms are unverified for this example. From this directory:
+The proposed validation platform is macOS Apple Silicon with Node.js 22.17+ and npm. Other platforms are unverified for this example. From this directory:
 
 ```sh
 npm install
@@ -51,6 +51,8 @@ COFFEE_TEST_PUBLIC_DHT=1 node scripts/coffee-example-e2e.mjs
 
 The first command uses a real isolated local DHT network and real app instances; it does not establish Internet reachability. The second uses public discovery; both paths passed retrieval, graceful disconnect, persistence and retrieval of a new value after reconnect on 6 October. Both use separate temporary storage directories and clean up their test data. `COFFEE_P2P_BOOTSTRAP` is an optional test-only bootstrap override, passed from Electron to the worker; normal app launches use the public DHT.
 
-QVAC 0.15.0 configuration files are supported by the worker’s Bare module-loader adapter. For an isolated model cache, set `QVAC_CONFIG_PATH` to a JSON configuration with an absolute `cacheDirectory`. The maintainer-only `node scripts/qvac-download-e2e.mjs` test uses a disposable cache, interrupts a real transfer, verifies the recovered model’s SHA-256 and runs inference again under network isolation. It never deletes the user’s existing model cache.
+QVAC inference 0.21.0 reads configuration through its native dynamic loader; the old global require adapter is removed. For an isolated model cache, set `QVAC_CONFIG_PATH` to a JSON configuration with an absolute `cacheDirectory`. The maintainer-only `node scripts/qvac-download-e2e.mjs` test uses a disposable cache, interrupts a real transfer, verifies the recovered model’s SHA-256 and runs inference again under network isolation. It never deletes the user’s existing model cache.
 
 The selected GGUF model is [Unsloth Qwen 3.5 0.8B](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF), labeled Apache-2.0 by its publisher, with the [upstream Qwen license](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/LICENSE). The repository does not bundle model weights; the app downloads the pinned model on first use.
+
+Context uses bounded recent history, not the removed `n_discarded` setting. Earlier turns can be omitted from inference with visible feedback. An oversized latest request is rejected with an instruction to shorten it. This does not remove displayed conversation history or saved orders.

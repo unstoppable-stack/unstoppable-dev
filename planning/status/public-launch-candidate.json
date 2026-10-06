@@ -11,7 +11,7 @@
     "commit": "3ce97590ba2c85eca49917327226d77f69fa3716",
     "branchAtCapture": "codex/public-preview-candidate",
     "workingTree": "clean",
-    "frozen": true,
+    "frozen": false,
     "artifactChecksums": [
       {
         "file": "unstoppable-stack-cli-0.4.0-beta.1.tgz",
@@ -21,7 +21,7 @@
         "sha256": "94afd44a4bb6b62008197785ded043547669da117d6f06869635969d6d1ff3f1"
       }
     ],
-    "note": "Frozen technical candidate, not publication approval. Exact tarball passed fresh isolated consumer install and real/offline desktop UI. Original checkout remains independently dirty; validation uses the managed candidate worktree. Evidence: planning/status/evidence/20261006/artifact-manifest.json. Draft PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
+    "note": "Dependency upgrade validation in progress. The recorded commit/checksum is the preceding historical candidate and does not approve the new runtime."
   },
   "maturityDefinitions": {
     "candidate": "Intended for the default developer-preview journey, but not publishable until every applicable P0 gate passes against one frozen commit and its final artifacts.",

@@ -1,0 +1,46 @@
+
+> @unstoppable-stack/website@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.27
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1060ms
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/26) ...
+   Generating static pages (6/26)
+   Generating static pages (12/26)
+   Generating static pages (19/26)
+ ✓ Generating static pages (26/26)
+   Finalizing page optimization ...
+   Collecting build traces ...
+   Exporting (0/2) ...
+ ✓ Exporting (2/2)
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    1.54 kB         113 kB
+├ ○ /_not-found                            138 B         103 kB
+├ ○ /docs                                  168 B         106 kB
+├ ● /docs/[...slug]                        168 B         106 kB
+├   ├ /docs/quickstart
+├   ├ /docs/compatibility
+├   ├ /docs/troubleshooting
+├   └ [+9 more paths]
+├ ○ /getting-started                     1.53 kB         107 kB
+├ ○ /icon.svg                                0 B            0 B
+├ ○ /llms-full.txt                         138 B         103 kB
+├ ○ /llms.txt                              138 B         103 kB
+├ ○ /opengraph-image                       138 B         103 kB
+├ ○ /roadmap                               168 B         106 kB
+├ ○ /robots.txt                            138 B         103 kB
+├ ○ /showcase                              172 B         111 kB
+└ ○ /sitemap.xml                           138 B         103 kB
++ First Load JS shared by all             103 kB
+  ├ chunks/690-9407aec55aca4d0c.js       46.4 kB
+  ├ chunks/b1b15c87-77e025003f6faf50.js  54.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+○  (Static)  prerendered as static content
+●  (SSG)     prerendered as static HTML (uses generateStaticParams)

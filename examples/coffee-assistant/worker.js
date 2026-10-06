@@ -1,3 +1,4 @@
+import { streamChat } from './chat-context.js'
 /* global Bare */
 import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
@@ -124,15 +125,12 @@ async function handleCommand(msg) {
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        // QVAC 0.15.0's Bare configuration loader expects a CommonJS loader.
-        if (typeof globalThis.require !== 'function') {
-          const { createRequire } = await import('bare-module')
-          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
-        }
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
         const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/sdk'),
-          import('@qvac/sdk/llamacpp-completion/plugin'),
-          import('@qvac/sdk/plugins'),
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
         ])
         if (!qvacPluginRegistered) {
           registerPlugin(llmPlugin)
@@ -144,8 +142,6 @@ async function handleCommand(msg) {
           modelType: 'llm',
           modelConfig: {
             ctx_size: CTX_SIZE,
-            // Sliding window — evict oldest ~10% on overflow instead of throwing.
-            n_discarded: Math.floor(CTX_SIZE / 10),
             // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
             // and no stripping reasoning blocks back out of the token stream.
             reasoning_budget: 0,
@@ -183,8 +179,9 @@ async function handleCommand(msg) {
       try {
         // Reasoning is disabled at load time via `reasoning_budget: 0`, so
         // tokens arrive as plain content — no reasoning-block filtering needed.
-        const result = sdk.completion({ modelId, history: msg.history, stream: true })
-        for await (const token of result.tokenStream) {
+        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
+          send({ type: 'chat-context', requestId }))
+        for await (const token of tokens) {
           if (activeChatRequestId !== requestId) break
           send({ type: 'chat-token', requestId, token })
         }

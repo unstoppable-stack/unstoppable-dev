@@ -7,7 +7,7 @@ export function has(opts: GeneratorOptions, feature: Feature): boolean {
 /**
  * Default LLM for scaffolded apps.
  *
- * `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` is the smallest LLM in `@qvac/sdk@0.15`'s
+ * `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` is the smallest LLM in the QVAC 0.15 and 0.21
  * model registry (532MB, engine `llamacpp-completion`, addon `llm`). It
  * resolves to the same pinned Hugging Face revision that `tetherto/qvac-app`
  * hardcodes in its own `llm-catalog.ts` — so we get their validated model
@@ -36,19 +36,14 @@ export const DEFAULT_CTX_SIZE = 4096
  *   thinking. Valid in `modelConfig` (load) and in `generationParams`
  *   (per-completion) — verified against the SDK's `load-model` and
  *   `completion-stream` schemas.
- * - `n_discarded` enables the engine's sliding context window: on overflow it
- *   evicts the oldest ~10% instead of throwing `ContextOverflowError`. With
- *   this set, never hand-trim history — the SDK reuses its KV cache by message
- *   count, so dropping old messages forces a full re-prefill that overflows.
- *   (qvac-app ADR-2026-06-23-append-only-history.)
+ * QVAC 0.21 rejects n_discarded. Desktop requests use bounded recent history
+ * and a latest-message-only retry on ContextOverflowError before any output.
  */
 export function llmModelConfig(indent = '    '): string {
   const i = indent
   return [
     '{',
     `${i}  ctx_size: CTX_SIZE,`,
-    `${i}  // Sliding window — evict oldest ~10% on overflow instead of throwing.`,
-    `${i}  n_discarded: Math.floor(CTX_SIZE / 10),`,
     `${i}  // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks`,
     `${i}  // and no stripping reasoning blocks back out of the token stream.`,
     `${i}  reasoning_budget: 0,`,

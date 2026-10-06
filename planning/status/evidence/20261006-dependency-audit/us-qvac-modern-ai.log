@@ -1,0 +1,37 @@
+[09:52:37] Unstoppable Stack — Scaffold E2E Test Runner
+[09:52:37] Platform: pear-desktop, Level: 5
+[09:52:37] Output: /tmp/us-e2e-scaffold
+[09:52:37]
+╔═══ PEAR-DESKTOP · Level 5 · 1 variant(s) ═══╗
+[09:52:38]
+━━━ pear-desktop / local-ai ━━━
+[09:52:38]   ○ scaffold (skipped)
+[09:52:38]   ○ npm install (skipped)
+[09:52:38]   ▸ file integrity check
+[09:52:38]   ✓ file integrity check (0.0s)
+[09:52:38]   ▸ worker spawn test
+[09:52:39]   ✓ worker spawn test (1.8s)
+[09:52:39]   ▸ playwright: feature UI test
+
+DevTools listening on ws://127.0.0.1:38658/devtools/browser/b0e0e058-d965-402d-bd06-a70d9d4befc7
+[09:52:48]   ✗ playwright: feature UI test — Real QVAC model load failed: Invalid request:
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✗ pear-desktop/local-ai           11s
+      ✓ file integrity check
+      ✓ worker spawn test
+      ✗ playwright: feature UI test
+      Real QVAC model load failed: Invalid request:
+      ✖ Unrecognized key: "n_discarded"
+        → at modelConfig
+      app stdout (last 4KB):
+      (empty)
+      app stderr (last 4KB):
+
+      DevTools listening on ws://127.0.0.1:38658/devtools/browser/b0e0e058-d965-402d-bd06-a70d9d4befc7
+
+
+0/1 variants passed
+[09:52:48] Report: /tmp/us-e2e-scaffold/report-2026-10-06T09-52-48-956Z.json

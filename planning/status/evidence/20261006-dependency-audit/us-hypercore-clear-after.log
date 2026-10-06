@@ -1,0 +1,4 @@
+PASS remaining block 0
+PASS remaining block 6
+PASS remaining block 3
+PASS: remaining blocks can replicate after clear()

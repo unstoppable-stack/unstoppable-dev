@@ -63,7 +63,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
+    Object.assign(deps, { '@qvac/sdk': '0.21.0', zod: '^4.3.0' })
   }
 
   if (has(opts, 'node-sync') || has(opts, 'node-host')) {
@@ -85,6 +85,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         version: '0.1.0',
         private: true,
         type: 'module',
+        engines: { node: '>=22.17.0' },
         scripts: {
           ...(has(opts, 'multi-writer')
             ? {

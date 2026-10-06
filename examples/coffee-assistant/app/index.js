@@ -225,7 +225,11 @@ onWorkerMessage((msg) => {
       activeChatRequestId = null
       setChatBusy(false)
     }
+    if (msg.type === 'chat-context' && msg.requestId === activeChatRequestId) {
+      appendBubble('system', 'Earlier messages were omitted from model context to fit this request.')
+    }
     if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
+      if (chatHistory.at(-1)?.role === 'user') chatHistory.pop()
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
       activeChatRequestId = null
       setChatBusy(false)

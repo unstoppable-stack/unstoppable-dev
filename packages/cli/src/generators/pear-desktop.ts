@@ -1,3 +1,4 @@
+import { chatContextSource } from './chat-context.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
@@ -19,6 +20,8 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     appComponent(opts),
   ]
 
+  if (has(opts, 'local-ai')) files.push({ path: 'chat-context.js', content: chatContextSource })
+
   if (has(opts, 'multi-writer')) {
     files.push(schemaBuilder(), {
       // Sits next to worker.js at the project root — the Pear worker is plain
@@ -34,16 +37,18 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
 function packageJson(opts: GeneratorOptions): GeneratedFile {
   const deps: Record<string, string> = {
     'pear-runtime': '^1.3.1',
-    'bare-rpc': '^1.1.0',
-    hyperswarm: '^4.17.0',
-    corestore: '^7.8.0',
+    'bare-rpc': '^1.3.8',
+    hyperswarm: '^4.17.2',
+    hyperdht: '^6.34.1',
+    hypercore: '^11.37.2',
+    corestore: '^7.13.0',
     hyperbee: '^2.27.3',
     b4a: '^1.8.0',
     'hypercore-crypto': '^3.7.0',
   }
 
   if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.15.0', 'bare-module': '^7.2.1', zod: '^4.3.0' })
+    Object.assign(deps, { '@qvac/inference': '0.21.0', '@qvac/llm-llamacpp': '0.55.0', 'bare-process': '^4.5.1' })
   }
 
   if (has(opts, 'node-sync')) {
@@ -63,6 +68,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       private: true,
       type: 'module',
       main: 'electron/main.js',
+      engines: { node: '>=22.17.0' },
       // Valid development-only link so pear-runtime can initialize before
       // the developer creates their own release line with `pear touch`.
       upgrade: 'pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o',
@@ -79,7 +85,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         start: 'electron .',
       },
       dependencies: deps,
-      devDependencies: { electron: '^40.2.1' },
+      devDependencies: { electron: '^44.5.1' },
     }, null, 2),
   }
 }
@@ -426,6 +432,7 @@ ${replicateLine}
     // with P2P and KV storage never coming up either. Loading it lazily in
     // the 'load-ai' handler keeps that failure scoped to the AI feature and
     // reportable over the pipe.
+    imports.push(`import { streamChat } from './chat-context.js'`)
     moduleState.push(`let sdk = null`)
     moduleState.push(`let modelId = null`)
     moduleState.push(`let qvacPluginRegistered = false`)
@@ -468,16 +475,12 @@ ${replicateLine}
       }
       try {
         send({ type: 'status', service: 'ai', status: 'loading' })
-        // QVAC 0.15.0's Bare config loader uses CommonJS require even when
-        // loaded from an ESM worker. Supply Bare's native loader before SDK init.
-        if (typeof globalThis.require !== 'function') {
-          const { createRequire } = await import('bare-module')
-          globalThis.require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
-        }
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
         const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/sdk'),
-          import('@qvac/sdk/llamacpp-completion/plugin'),
-          import('@qvac/sdk/plugins'),
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
         ])
         if (!qvacPluginRegistered) {
           registerPlugin(llmPlugin)
@@ -520,8 +523,9 @@ ${replicateLine}
       try {
         // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
         // tokens arrive as plain content — no reasoning-block filtering needed.
-        const result = sdk.completion({ modelId, history: msg.history, stream: true })
-        for await (const token of result.tokenStream) {
+        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
+          send({ type: 'chat-context', requestId }))
+        for await (const token of tokens) {
           if (activeChatRequestId !== requestId) break
           send({ type: 'chat-token', requestId, token })
         }
@@ -975,7 +979,11 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       activeChatRequestId = null
       setChatBusy(false)
     }
+    if (msg.type === 'chat-context' && msg.requestId === activeChatRequestId) {
+      appendBubble('system', 'Earlier messages were omitted from model context to fit this request.')
+    }
     if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
+      if (chatHistory.at(-1)?.role === 'user') chatHistory.pop()
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
       activeChatRequestId = null
       setChatBusy(false)
