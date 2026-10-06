@@ -121,7 +121,7 @@ import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import PearRuntime from 'pear-runtime'
 
-const require = createRequire(import.meta.url, { referrer: import.meta.cache[import.meta.url] })
+const require = createRequire(import.meta.url)
 const pkg = require('../package.json')
 
 let mainWindow = null

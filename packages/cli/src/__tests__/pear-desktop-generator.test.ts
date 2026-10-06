@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { spawnSync } from 'node:child_process'
 import { generatePearDesktop } from '../generators/pear-desktop.js'
 import type { GeneratorOptions, Feature } from '../generators/types.js'
 
@@ -97,6 +98,16 @@ describe('pear-desktop generator', () => {
   })
 
   describe('Electron main process embeds pear-runtime', () => {
+    it('initializes the generated Node loader without Bare-only module metadata', () => {
+      const main = fileMap(make(['local-ai']))['electron/main.js']
+      const declaration = main.match(/^const require = .*$/m)?.[0]
+      expect(declaration).toBeDefined()
+      const result = spawnSync(process.execPath, ['--input-type=module', '--eval',
+        `import { createRequire } from 'node:module';\n${declaration}\nrequire('node:assert').ok(typeof require === 'function')`,
+      ], { encoding: 'utf8' })
+      expect(result.stderr).toBe('')
+      expect(result.status).toBe(0)
+    })
     it('imports pear-runtime and launches the Bare worker', () => {
       const files = fileMap(make())
       const main = files['electron/main.js']
