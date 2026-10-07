@@ -170,12 +170,16 @@ export class Peer extends EventEmitter {
     this._outbound.set(requestId, { queue, capability, method })
     this.send({ type: MESSAGE.CALL, requestId, capability, method, params })
 
+    let exhausted = false
     try {
       for await (const value of queue) yield value
+      exhausted = true
     } finally {
       // Consumer broke out early (or threw): tell the far side to stop
       // producing rather than leaving a generator running until disconnect.
-      if (!queue.finished) this.send({ type: MESSAGE.CANCEL, requestId })
+      // Closing the local iterator marks its queue finished too. Track
+      // natural exhaustion separately so an early return reaches the host.
+      if (!exhausted && !queue.error) this.send({ type: MESSAGE.CANCEL, requestId })
       if (signal) signal.removeEventListener('abort', onAbort)
       this._outbound.delete(requestId)
     }

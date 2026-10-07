@@ -4,7 +4,7 @@
   "releaseId": "public-developer-preview-2026-09",
   "releaseLabel": "Developer preview",
   "recordedAt": "2026-09-18",
-  "lastUpdatedAt": "2026-10-06",
+  "lastUpdatedAt": "2026-10-07",
   "releaseStatus": "blocked",
   "releaseOwner": null,
   "candidate": {
@@ -21,7 +21,7 @@
         "sha256": "2a53e298e981a4f3f7ad1b48770506eaad3635fcf9bacd613051f4c543c4bda9"
       }
     ],
-    "note": "Frozen final dependency-upgrade artifact, not publication approval. Exact packed CLI passed fresh real/offline UI locally in 50 seconds and on a separate hosted Mac in 146 seconds with identical checksums. Evidence: planning/status/evidence/20261006-dependency-upgrade. Historical screenshots show the preceding 0.15 candidate. Draft PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
+    "note": "Frozen final dependency-upgrade artifact, not publication approval. Exact packed CLI passed fresh real/offline UI locally in 50 seconds and on a separate hosted Mac in 146 seconds with identical checksums. Evidence: planning/status/evidence/20261006-dependency-upgrade. Fresh merged-source walkthrough: planning/status/evidence/20261007/demo. Merged PR: https://github.com/unstoppable-stack/unstoppable-dev/pull/7."
   },
   "maturityDefinitions": {
     "candidate": "Intended for the default developer-preview journey, but not publishable until every applicable P0 gate passes against one frozen commit and its final artifacts.",
@@ -118,12 +118,13 @@
       "evidence": [
         "examples/coffee-assistant",
         "scripts/coffee-example-e2e.mjs",
-        "planning/status/public-launch-progress-20261005.md"
+        "planning/status/public-launch-progress-20261005.md",
+        "planning/status/evidence/20261007/demo/README.md"
       ],
       "limitations": [
         "Maintained source is frozen; repository remains private pending account administration.",
         "Public DHT retrieval, visible graceful disconnection, persistence and fresh reconnect reads passed using distinct instances on one Mac.",
-        "Historical screenshots/walkthrough match the preceding QVAC 0.15 candidate; independent reproduction remains pending."
+        "Fresh screenshots and walkthrough show merged QVAC 0.21 source; independent reproduction remains pending."
       ]
     },
     {
@@ -134,10 +135,11 @@
         "packages/node-core",
         "packages/node-caps-sync",
         "packages/node-caps-ai",
-        "packages/node"
+        "packages/node",
+        "planning/status/public-launch-post-merge-20261007.md"
       ],
       "limitations": [
-        "Local production dependencies prevent a registry-resolvable package graph.",
+        "Post-merge alpha work replaces local production dependencies and passes isolated tarball installation; public registry resolution remains unverified.",
         "Default trust, resource bounds, and replication-status gates are incomplete.",
         "May ship later under an alpha tag only after PRJ-02, PRJ-05, and PRJ-06 pass."
       ]
@@ -660,9 +662,9 @@
     "The developer's AI coding assistant may use a cloud service even when generated app inference is local.",
     "No wallet or payment path is included.",
     "Settings export is not a full identity or application-data backup.",
-    "The deferred Node/desktop production dependency audit has not been performed.",
+    "Post-merge deferred Node desktop audit reports zero production advisories; trust and resource safety remain unverified.",
     "The configured GitHub repository is not anonymously accessible; public issue and private vulnerability routes are not launch-ready.",
-    "Several deferred runtime packages declare README or LICENSE files that are absent from their current tarballs.",
+    "Post-merge Node/core/sync/AI tarballs contain README and LICENSE; other deferred package release gates remain separate.",
     "An explicit preview tag is proposed; no package/site publication or release date is approved.",
     "Automatic local and separate hosted-Mac acceptance passed; independent onboarding, assistant editing and pilot reproduction remain unverified."
   ],

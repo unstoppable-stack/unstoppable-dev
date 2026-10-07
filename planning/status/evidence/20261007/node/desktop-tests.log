@@ -1,0 +1,522 @@
+
+> unstoppable-node-desktop@0.6.0-alpha.1 test
+> node --test --test-force-exit
+
+TAP version 13
+# Subtest: Electron application protocol
+    # Subtest: resolves same-origin application assets inside the package root
+    ok 1 - resolves same-origin application assets inside the package root
+      ---
+      duration_ms: 0.317791
+      type: 'test'
+      ...
+    # Subtest: rejects foreign origins and path traversal
+    ok 2 - rejects foreign origins and path traversal
+      ---
+      duration_ms: 0.206791
+      type: 'test'
+      ...
+    1..2
+ok 1 - Electron application protocol
+  ---
+  duration_ms: 0.950541
+  type: 'suite'
+  ...
+# Subtest: lib/approval — ApprovalGate
+    # Subtest: first request is pending; approve resolves it as approve-remember
+    ok 1 - first request is pending; approve resolves it as approve-remember
+      ---
+      duration_ms: 8.475875
+      type: 'test'
+      ...
+    # Subtest: approve once does not persist
+    ok 2 - approve once does not persist
+      ---
+      duration_ms: 0.819667
+      type: 'test'
+      ...
+    # Subtest: deny resolves to "deny" and remembers
+    ok 3 - deny resolves to "deny" and remembers
+      ---
+      duration_ms: 1.846041
+      type: 'test'
+      ...
+    # Subtest: a known-approved key bypasses the modal entirely
+    ok 4 - a known-approved key bypasses the modal entirely
+      ---
+      duration_ms: 1.432333
+      type: 'test'
+      ...
+    # Subtest: a known-denied key returns deny without prompting
+    ok 5 - a known-denied key returns deny without prompting
+      ---
+      duration_ms: 1.527917
+      type: 'test'
+      ...
+    # Subtest: revoke moves an approved key to denied
+    ok 6 - revoke moves an approved key to denied
+      ---
+      duration_ms: 1.629583
+      type: 'test'
+      ...
+    # Subtest: forget returns a key to "unknown" (next request prompts again)
+    ok 7 - forget returns a key to "unknown" (next request prompts again)
+      ---
+      duration_ms: 1.311292
+      type: 'test'
+      ...
+    # Subtest: persists across instances (TOFU survives restart)
+    ok 8 - persists across instances (TOFU survives restart)
+      ---
+      duration_ms: 1.229708
+      type: 'test'
+      ...
+    # Subtest: forwards deviceName on the pending event so the modal can show it
+    ok 9 - forwards deviceName on the pending event so the modal can show it
+      ---
+      duration_ms: 0.925292
+      type: 'test'
+      ...
+    # Subtest: null deviceName falls through to null on the pending event
+    ok 10 - null deviceName falls through to null on the pending event
+      ---
+      duration_ms: 1.026667
+      type: 'test'
+      ...
+    # Subtest: promote() writes a remembered approval for an auto-paired key
+    ok 11 - promote() writes a remembered approval for an auto-paired key
+      ---
+      duration_ms: 0.804417
+      type: 'test'
+      ...
+    # Subtest: snapshot reflects persisted state and pending requests
+    ok 12 - snapshot reflects persisted state and pending requests
+      ---
+      duration_ms: 1.257792
+      type: 'test'
+      ...
+    # Subtest: imports and persists a validated trust snapshot
+    ok 13 - imports and persists a validated trust snapshot
+      ---
+      duration_ms: 1.017291
+      type: 'test'
+      ...
+    1..13
+ok 2 - lib/approval — ApprovalGate
+  ---
+  duration_ms: 24.164292
+  type: 'suite'
+  ...
+# Subtest: Electron renderer command policy
+    # Subtest: accepts and clones supported daemon commands
+    ok 1 - accepts and clones supported daemon commands
+      ---
+      duration_ms: 0.505209
+      type: 'test'
+      ...
+    # Subtest: rejects unknown, inherited, and oversized commands
+    ok 2 - rejects unknown, inherited, and oversized commands
+      ---
+      duration_ms: 0.852
+      type: 'test'
+      ...
+    # Subtest: only forwards supported daemon launch flags
+    ok 3 - only forwards supported daemon launch flags
+      ---
+      duration_ms: 0.140583
+      type: 'test'
+      ...
+    1..3
+ok 3 - Electron renderer command policy
+  ---
+  duration_ms: 1.899291
+  type: 'suite'
+  ...
+# Subtest: renderer commands match the allowlist
+    # Subtest: accepts every command the dashboard can build
+    ok 1 - accepts every command the dashboard can build
+      ---
+      duration_ms: 0.620333
+      type: 'test'
+      ...
+    # Subtest: still rejects a command the dashboard cannot build
+    ok 2 - still rejects a command the dashboard cannot build
+      ---
+      duration_ms: 0.061125
+      type: 'test'
+      ...
+    1..2
+ok 4 - renderer commands match the allowlist
+  ---
+  duration_ms: 0.752791
+  type: 'suite'
+  ...
+# Subtest: boots and stops the real NodeDaemon inside a Bare sidecar
+ok 5 - boots and stops the real NodeDaemon inside a Bare sidecar # SKIP set RUN_ELECTRON_SIDECAR_E2E=1 (opens a local P2P listener)
+  ---
+  duration_ms: 0.301417
+  type: 'test'
+  ...
+# Subtest: Electron packaging contract
+    # Subtest: keeps the Bare worker outside ASAR and defines native installers
+    ok 1 - keeps the Bare worker outside ASAR and defines native installers
+      ---
+      duration_ms: 0.437
+      type: 'test'
+      ...
+    # Subtest: uses a space-free Linux package path for Electron child processes
+    ok 2 - uses a space-free Linux package path for Electron child processes
+      ---
+      duration_ms: 0.048084
+      type: 'test'
+      ...
+    # Subtest: finds the configured executable on every packaged platform
+    ok 3 - finds the configured executable on every packaged platform
+      ---
+      duration_ms: 0.068916
+      type: 'test'
+      ...
+    # Subtest: disables Electron runtime escape hatches with package-time fuses
+    ok 4 - disables Electron runtime escape hatches with package-time fuses
+      ---
+      duration_ms: 0.054333
+      type: 'test'
+      ...
+    # Subtest: uses Electron by default while preserving Pear commands
+    ok 5 - uses Electron by default while preserving Pear commands
+      ---
+      duration_ms: 0.04125
+      type: 'test'
+      ...
+    # Subtest: cleans generated output before every package and installer build
+    ok 6 - cleans generated output before every package and installer build
+      ---
+      duration_ms: 0.04125
+      type: 'test'
+      ...
+    # Subtest: denies renderer network access and unneeded Electron permissions
+    ok 7 - denies renderer network access and unneeded Electron permissions
+      ---
+      duration_ms: 0.103125
+      type: 'test'
+      ...
+    # Subtest: requires the packaged Bare runtime to resolve the pinned QVAC inference engine
+    ok 8 - requires the packaged Bare runtime to resolve the pinned QVAC inference engine
+      ---
+      duration_ms: 0.10375
+      type: 'test'
+      ...
+    1..8
+ok 6 - Electron packaging contract
+  ---
+  duration_ms: 1.420834
+  type: 'suite'
+  ...
+# Subtest: Electron settings path policy
+    # Subtest: accepts only paths selected for the matching operation
+    ok 1 - accepts only paths selected for the matching operation
+      ---
+      duration_ms: 0.454375
+      type: 'test'
+      ...
+    # Subtest: allows preview then consumes import approval on confirmation
+    ok 2 - allows preview then consumes import approval on confirmation
+      ---
+      duration_ms: 0.145583
+      type: 'test'
+      ...
+    # Subtest: expires approvals
+    ok 3 - expires approvals
+      ---
+      duration_ms: 0.220958
+      type: 'test'
+      ...
+    1..3
+ok 7 - Electron settings path policy
+  ---
+  duration_ms: 1.564625
+  type: 'suite'
+  ...
+# Subtest: native prebuild pruning
+    # Subtest: keeps only target native binaries and leaves nested dependency trees alone
+    ok 1 - keeps only target native binaries and leaves nested dependency trees alone
+      ---
+      duration_ms: 6.086875
+      type: 'test'
+      ...
+    1..1
+ok 8 - native prebuild pruning
+  ---
+  duration_ms: 6.469833
+  type: 'suite'
+  ...
+# Subtest: loads the pinned QVAC inference engine inside the Bare sidecar runtime
+ok 9 - loads the pinned QVAC inference engine inside the Bare sidecar runtime
+  ---
+  duration_ms: 529.143583
+  type: 'test'
+  ...
+# Subtest: lib/registry
+    # Subtest: loads an empty registry when the file is missing
+    ok 1 - loads an empty registry when the file is missing
+      ---
+      duration_ms: 3.609667
+      type: 'test'
+      ...
+    # Subtest: round-trips through save + load
+    ok 2 - round-trips through save + load
+      ---
+      duration_ms: 2.535125
+      type: 'test'
+      ...
+    # Subtest: writes atomically via .tmp then rename
+    ok 3 - writes atomically via .tmp then rename
+      ---
+      duration_ms: 1.664458
+      type: 'test'
+      ...
+    # Subtest: recordApproval moves a key from denied → approved
+    ok 4 - recordApproval moves a key from denied → approved
+      ---
+      duration_ms: 2.361792
+      type: 'test'
+      ...
+    # Subtest: recordDenial moves a key from approved → denied
+    ok 5 - recordDenial moves a key from approved → denied
+      ---
+      duration_ms: 1.821
+      type: 'test'
+      ...
+    # Subtest: revoke is sugar over recordDenial
+    ok 6 - revoke is sugar over recordDenial
+      ---
+      duration_ms: 1.315666
+      type: 'test'
+      ...
+    # Subtest: decisionFor returns the right verdict
+    ok 7 - decisionFor returns the right verdict
+      ---
+      duration_ms: 0.38075
+      type: 'test'
+      ...
+    # Subtest: survives a corrupted file by throwing (not silently resetting)
+    ok 8 - survives a corrupted file by throwing (not silently resetting)
+      ---
+      duration_ms: 1.13825
+      type: 'test'
+      ...
+    # Subtest: rejects future versions, conflicting decisions, and unsafe keys
+    ok 9 - rejects future versions, conflicting decisions, and unsafe keys
+      ---
+      duration_ms: 0.923958
+      type: 'test'
+      ...
+    1..9
+ok 10 - lib/registry
+  ---
+  duration_ms: 17.0835
+  type: 'suite'
+  ...
+# Subtest: formatting
+    # Subtest: formats byte sizes
+    ok 1 - formats byte sizes
+      ---
+      duration_ms: 0.327292
+      type: 'test'
+      ...
+    # Subtest: parses human byte amounts and rejects nonsense
+    ok 2 - parses human byte amounts and rejects nonsense
+      ---
+      duration_ms: 0.159834
+      type: 'test'
+      ...
+    # Subtest: shortens keys without mangling short strings
+    ok 3 - shortens keys without mangling short strings
+      ---
+      duration_ms: 0.093834
+      type: 'test'
+      ...
+    # Subtest: escapes HTML in peer-controlled strings
+    ok 4 - escapes HTML in peer-controlled strings
+      ---
+      duration_ms: 0.081666
+      type: 'test'
+      ...
+    # Subtest: describes grants in plain language, falling back to wire names
+    ok 5 - describes grants in plain language, falling back to wire names
+      ---
+      duration_ms: 0.092042
+      type: 'test'
+      ...
+    # Subtest: reports last activity relative to now
+    ok 6 - reports last activity relative to now
+      ---
+      duration_ms: 0.240542
+      type: 'test'
+      ...
+    1..6
+ok 11 - formatting
+  ---
+  duration_ms: 1.496875
+  type: 'suite'
+  ...
+# Subtest: peer rows
+    # Subtest: attaches resources by owner key, not appId
+    ok 1 - attaches resources by owner key, not appId
+      ---
+      duration_ms: 0.64875
+      type: 'test'
+      ...
+    # Subtest: labels a peer by name, then appId, then key
+    ok 2 - labels a peer by name, then appId, then key
+      ---
+      duration_ms: 0.170209
+      type: 'test'
+      ...
+    # Subtest: reports protection state from the peer's own resources
+    ok 3 - reports protection state from the peer's own resources
+      ---
+      duration_ms: 0.174208
+      type: 'test'
+      ...
+    # Subtest: surfaces the per-peer quota and its default
+    ok 4 - surfaces the per-peer quota and its default
+      ---
+      duration_ms: 0.194209
+      type: 'test'
+      ...
+    # Subtest: reads AI permission from the grants the node gave the peer
+    ok 5 - reads AI permission from the grants the node gave the peer
+      ---
+      duration_ms: 0.167542
+      type: 'test'
+      ...
+    # Subtest: marks trust from the approval registry
+    ok 6 - marks trust from the approval registry
+      ---
+      duration_ms: 0.472667
+      type: 'test'
+      ...
+    # Subtest: builds peek targets from cores and drives
+    ok 7 - builds peek targets from cores and drives
+      ---
+      duration_ms: 0.095542
+      type: 'test'
+      ...
+    1..7
+ok 12 - peer rows
+  ---
+  duration_ms: 2.109833
+  type: 'suite'
+  ...
+# Subtest: storage rows
+    # Subtest: reports each peer's own bytes and limit
+    ok 1 - reports each peer's own bytes and limit
+      ---
+      duration_ms: 0.126958
+      type: 'test'
+      ...
+    1..1
+ok 13 - storage rows
+  ---
+  duration_ms: 0.155417
+  type: 'suite'
+  ...
+# Subtest: capability pills
+    # Subtest: shows AI as off rather than absent when no model is loaded
+    ok 1 - shows AI as off rather than absent when no model is loaded
+      ---
+      duration_ms: 0.06775
+      type: 'test'
+      ...
+    # Subtest: shows AI ready once a model is loaded
+    ok 2 - shows AI ready once a model is loaded
+      ---
+      duration_ms: 0.031166
+      type: 'test'
+      ...
+    # Subtest: omits capabilities the node does not host
+    ok 3 - omits capabilities the node does not host
+      ---
+      duration_ms: 0.036209
+      type: 'test'
+      ...
+    1..3
+ok 14 - capability pills
+  ---
+  duration_ms: 0.169459
+  type: 'suite'
+  ...
+# Subtest: invite rows
+    # Subtest: reports remaining uses and expiry
+    ok 1 - reports remaining uses and expiry
+      ---
+      duration_ms: 9.295041
+      type: 'test'
+      ...
+    1..1
+ok 15 - invite rows
+  ---
+  duration_ms: 9.369958
+  type: 'suite'
+  ...
+# Subtest: summary counts
+    # Subtest: counts peers, resources and connections
+    ok 1 - counts peers, resources and connections
+      ---
+      duration_ms: 0.097166
+      type: 'test'
+      ...
+    # Subtest: survives an empty snapshot
+    ok 2 - survives an empty snapshot
+      ---
+      duration_ms: 0.034792
+      type: 'test'
+      ...
+    1..2
+ok 16 - summary counts
+  ---
+  duration_ms: 0.17175
+  type: 'suite'
+  ...
+# Subtest: command payloads
+    # Subtest: addresses peers by public key
+    ok 1 - addresses peers by public key
+      ---
+      duration_ms: 0.089209
+      type: 'test'
+      ...
+    # Subtest: builds invite commands
+    ok 2 - builds invite commands
+      ---
+      duration_ms: 0.04
+      type: 'test'
+      ...
+    1..2
+ok 17 - command payloads
+  ---
+  duration_ms: 0.15575
+  type: 'suite'
+  ...
+# Subtest: Electron Bare sidecar host
+    # Subtest: round-trips framed messages and shuts down cleanly
+    ok 1 - round-trips framed messages and shuts down cleanly
+      ---
+      duration_ms: 41.523917
+      type: 'test'
+      ...
+    1..1
+ok 18 - Electron Bare sidecar host
+  ---
+  duration_ms: 41.935167
+  type: 'suite'
+  ...
+1..18
+# tests 66
+# suites 16
+# pass 65
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 645.651542

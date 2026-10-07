@@ -1,0 +1,179 @@
+
+> unstoppable-node@0.6.0-alpha.1 test
+> node --test --test-concurrency=1 --test-force-exit --test-timeout 120000 test/*.test.js
+
+TAP version 13
+# Subtest: node config
+    # Subtest: writes defaults on first load
+    ok 1 - writes defaults on first load
+      ---
+      duration_ms: 2.691375
+      type: 'test'
+      ...
+    # Subtest: round-trips through save and load
+    ok 2 - round-trips through save and load
+      ---
+      duration_ms: 1.299875
+      type: 'test'
+      ...
+    # Subtest: migrates a v1 per-app quota to a per-peer quota
+    ok 3 - migrates a v1 per-app quota to a per-peer quota
+      ---
+      duration_ms: 0.0775
+      type: 'test'
+      ...
+    # Subtest: migrates the unversioned beta format
+    ok 4 - migrates the unversioned beta format
+      ---
+      duration_ms: 0.096875
+      type: 'test'
+      ...
+    # Subtest: refuses a config from the future
+    ok 5 - refuses a config from the future
+      ---
+      duration_ms: 0.133875
+      type: 'test'
+      ...
+    # Subtest: rejects unknown options rather than silently ignoring them
+    ok 6 - rejects unknown options rather than silently ignoring them
+      ---
+      duration_ms: 0.072542
+      type: 'test'
+      ...
+    # Subtest: validates types and quota shapes
+    ok 7 - validates types and quota shapes
+      ---
+      duration_ms: 0.078708
+      type: 'test'
+      ...
+    1..7
+ok 1 - node config
+  ---
+  duration_ms: 4.915459
+  type: 'suite'
+  ...
+# Subtest: node export/import
+    # Subtest: exports peers, config and identity
+    ok 1 - exports peers, config and identity
+      ---
+      duration_ms: 6.358333
+      type: 'test'
+      ...
+    # Subtest: restores the same identity, so peers stay paired
+    ok 2 - restores the same identity, so peers stay paired
+      ---
+      duration_ms: 3.880833
+      type: 'test'
+      ...
+    # Subtest: previews a bundle without applying it
+    ok 3 - previews a bundle without applying it
+      ---
+      duration_ms: 2.702709
+      type: 'test'
+      ...
+    # Subtest: rejects a bundle from an unsupported version
+    ok 4 - rejects a bundle from an unsupported version
+      ---
+      duration_ms: 0.541666
+      type: 'test'
+      ...
+    # Subtest: rejects malformed peer records
+    ok 5 - rejects malformed peer records
+      ---
+      duration_ms: 0.441667
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed identity seed
+    ok 6 - rejects a malformed identity seed
+      ---
+      duration_ms: 0.39825
+      type: 'test'
+      ...
+    1..6
+ok 2 - node export/import
+  ---
+  duration_ms: 14.849083
+  type: 'suite'
+  ...
+# Subtest: personal node
+    # Subtest: starts, listens, and reports a stable identity
+    ok 1 - starts, listens, and reports a stable identity
+      ---
+      duration_ms: 118.650875
+      type: 'test'
+      ...
+    # Subtest: replicates a paired app and reports it in status
+    ok 2 - replicates a paired app and reports it in status
+      ---
+      duration_ms: 273.124042
+      type: 'test'
+      ...
+    # Subtest: pauses a peer that exceeds its quota
+    ok 3 - pauses a peer that exceeds its quota
+      ---
+      duration_ms: 261.783833
+      type: 'test'
+      ...
+    # Subtest: changes a peer grant live and persists it
+    ok 4 - changes a peer grant live and persists it
+      ---
+      duration_ms: 88.647375
+      type: 'test'
+      ...
+    # Subtest: unpairs a peer and forgets its resources
+    ok 5 - unpairs a peer and forgets its resources
+      ---
+      duration_ms: 146.101167
+      type: 'test'
+      ...
+    # Subtest: pauses and resumes a peer on request
+    ok 6 - pauses and resumes a peer on request
+      ---
+      duration_ms: 140.106917
+      type: 'test'
+      ...
+    # Subtest: toggles AI through config and reports it in status
+    ok 7 - toggles AI through config and reports it in status
+      ---
+      duration_ms: 64.141958
+      type: 'test'
+      ...
+    # Subtest: brings AI back up from config on restart
+    ok 8 - brings AI back up from config on restart
+      ---
+      duration_ms: 98.311417
+      type: 'test'
+      ...
+    # Subtest: serves delegated inference to a paired peer
+    ok 9 - serves delegated inference to a paired peer
+      ---
+      duration_ms: 99.579292
+      type: 'test'
+      ...
+    # Subtest: reports disk usage for the operator
+    ok 10 - reports disk usage for the operator
+      ---
+      duration_ms: 62.934417
+      type: 'test'
+      ...
+    # Subtest: honours a pairing approval callback
+    ok 11 - honours a pairing approval callback
+      ---
+      duration_ms: 72.394583
+      type: 'test'
+      ...
+    1..11
+ok 3 - personal node
+  ---
+  duration_ms: 1427.082208
+  type: 'suite'
+  ...
+1..3
+# tests 24
+# suites 3
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1724.487417

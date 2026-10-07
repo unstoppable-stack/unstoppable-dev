@@ -4,11 +4,11 @@
  * Apps that can't (or don't want to) run QVAC locally — e.g. lightweight
  * mobile clients or multiple apps sharing one download — can ask a node to
  * run completions on their behalf. Streaming rides the capability bus like
- * any other async-generator method, so multiplexing and cancellation are the
- * bus's problem, not this module's.
+ * any other async-generator method; the bus and provider jointly enforce
+ * cancellation.
  *
- * Opt-in: the `ai` capability is only advertised when the pack is installed
- * and the provider starts. Apps that need it should check for it in the
+ * Opt-in: the `ai` capability is advertised when the pack is installed;
+ * calls report provider readiness separately. Apps that need it should check for it in the
  * peer's advertised capabilities and fall back to their own inference.
  *
  * Two modes:
@@ -19,13 +19,14 @@
  */
 
 import { EventEmitter } from 'bare-events'
+import { loadQvacRuntime } from './qvac-runtime.js'
 
 export class AIProvider extends EventEmitter {
   /**
    * @param {Object} opts
    * @param {boolean} [opts.mock]       Use mock provider (echo input)
    * @param {string}  [opts.modelSrc]   QVAC model URL/preset (real mode)
-   * @param {string}  [opts.modelType]  'llm' | 'embedding' | etc. (real mode)
+   * @param {string}  [opts.modelType]  'llm' (completion provider)
    */
   constructor (opts = {}) {
     super()
@@ -47,25 +48,26 @@ export class AIProvider extends EventEmitter {
     // Real mode — @qvac/sdk is an optional dep. Dynamic import so data-only
     // nodes don't need the binary bits.
     try {
-      this._qvac = await import('@qvac/sdk')
+      this._qvac = await loadQvacRuntime()
     } catch (err) {
       throw new Error(
-        `AI provider enabled but @qvac/sdk is not installed: ${err.message}. ` +
-        `Run \`npm install @qvac/sdk\` alongside this pack, or start in mock mode.`
+        `AI provider QVAC runtime is unavailable: ${err.message}. ` +
+        `Node hosts: install @qvac/sdk@0.21.0; Bare hosts: install inference 0.21.0 and the LLM addon alongside this pack, or start in mock mode.`
       )
     }
 
     const {
       loadModel,
-      LLAMA_3_2_1B_INST_Q4_0
+      QWEN3_5_0_8B_MULTIMODAL_Q4_K_M
     } = this._qvac
 
-    const modelSrc = this.opts.modelSrc || LLAMA_3_2_1B_INST_Q4_0
+    const modelSrc = this.opts.modelSrc || QWEN3_5_0_8B_MULTIMODAL_Q4_K_M
     const modelType = this.opts.modelType || 'llm'
 
     this.modelId = await loadModel({
       modelSrc,
       modelType,
+      modelConfig: { ctx_size: 4096, reasoning_budget: 0, ...this.opts.modelConfig },
       onProgress: (p) => this.emit('progress', p)
     })
     this._ready = true
@@ -85,7 +87,7 @@ export class AIProvider extends EventEmitter {
    * @param {boolean} [req.stream=true]
    * @returns {AsyncIterable<string>}
    */
-  async *runStreaming ({ messages, stream = true }) {
+  async *runStreaming ({ messages, stream = true, signal }) {
     if (!this._ready) throw new Error('AI provider not ready')
     if (!Array.isArray(messages) || messages.length === 0) {
       throw new Error('messages must be a non-empty array')
@@ -102,22 +104,46 @@ export class AIProvider extends EventEmitter {
       return
     }
 
-    const { completion } = this._qvac
-    const result = completion({
-      modelId: this.modelId,
-      history: messages,
-      stream
-    })
-
-    if (result.events) {
-      for await (const event of result.events) {
-        if (event.type === 'contentDelta' && event.text) yield event.text
+    if (signal?.aborted) return
+    if (this._active) throw new Error('AI provider is busy; retry when the current request finishes')
+    this._active = true
+    let run
+    let finished = false
+    let cancelling
+    const cancel = () => {
+      if (!run || finished) return Promise.resolve()
+      if (!cancelling) {
+        cancelling = this._qvac.cancel(run.requestId
+          ? { requestId: run.requestId }
+          : { operation: 'inference', modelId: this.modelId }).catch(error => {
+          this.emit('error', { phase: 'cancel', error: error.message })
+        })
       }
-      return
+      return cancelling
     }
-
-    for await (const token of result.tokenStream) {
-      yield token
+    try {
+      run = this._qvac.completion({ modelId: this.modelId, history: messages, stream })
+      signal?.addEventListener('abort', cancel, { once: true })
+      if (signal?.aborted) await cancel()
+      if (run.events) {
+        for await (const event of run.events) {
+          if (signal?.aborted) break
+          if (event.type === 'completionDone' && event.stopReason === 'error') {
+            finished = true
+            throw new Error(event.error?.message || 'Native inference failed')
+          }
+          if (event.type === 'contentDelta' && event.text) yield event.text
+        }
+      } else {
+        for await (const token of run.tokenStream) {
+          if (signal?.aborted) break
+          yield token
+        }
+      }
+      finished = !signal?.aborted
+    } finally {
+      signal?.removeEventListener('abort', cancel)
+      try { if (!finished) await cancel() } finally { this._active = false }
     }
   }
 

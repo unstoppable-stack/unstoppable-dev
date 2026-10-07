@@ -1,0 +1,27 @@
+
+> @unstoppable-stack/node-caps-ai@0.6.0-alpha.1 test:qvac
+> node --test --test-force-exit --test-timeout 300000 test/ai-provider-real.test.js
+
+TAP version 13
+# Subtest: ai capability pack (real QVAC)
+    # Subtest: loads the requested model and streams non-empty output over the capability bus
+    ok 1 - loads the requested model and streams non-empty output over the capability bus
+      ---
+      duration_ms: 2365.247208
+      type: 'test'
+      ...
+    1..1
+ok 1 - ai capability pack (real QVAC)
+  ---
+  duration_ms: 2365.617459
+  type: 'suite'
+  ...
+1..1
+# tests 1
+# suites 1
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2476.856417

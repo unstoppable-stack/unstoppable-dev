@@ -32,15 +32,15 @@ jobs:
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install node deps
         working-directory: packages/node
         run: npm ci
 
-      - name: Install the exact desktop QVAC SDK without changing the lock
+      - name: Install the exact Node QVAC SDK without changing the lock
         working-directory: packages/node
-        run: npm install --no-save --package-lock=false @qvac/sdk@0.15.0
+        run: npm install --no-save --package-lock=false @qvac/sdk@0.21.0
 
       - name: Run real QVAC E2E
         working-directory: packages/node

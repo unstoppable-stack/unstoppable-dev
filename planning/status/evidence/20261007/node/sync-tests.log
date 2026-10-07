@@ -1,0 +1,63 @@
+
+> @unstoppable-stack/node-caps-sync@0.6.0-alpha.1 test
+> node --test --test-force-exit --test-timeout 120000 test/*.test.js
+
+TAP version 13
+# Subtest: sync capability pack
+    # Subtest: replicates a registered hyperbee over the paired connection
+    ok 1 - replicates a registered hyperbee over the paired connection
+      ---
+      duration_ms: 295.824916
+      type: 'test'
+      ...
+    # Subtest: replicates a hyperdrive
+    ok 2 - replicates a hyperdrive
+      ---
+      duration_ms: 2167.97775
+      type: 'test'
+      ...
+    # Subtest: keeps each peer scoped to its own resources
+    ok 3 - keeps each peer scoped to its own resources
+      ---
+      duration_ms: 2257.296875
+      type: 'test'
+      ...
+    # Subtest: treats the manifest as the complete set and drops what is absent
+    ok 4 - treats the manifest as the complete set and drops what is absent
+      ---
+      duration_ms: 157.577083
+      type: 'test'
+      ...
+    # Subtest: keeps seeding after the app disconnects, and restores across a restart
+    ok 5 - keeps seeding after the app disconnects, and restores across a restart
+      ---
+      duration_ms: 294.332292
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed manifest
+    ok 6 - rejects a malformed manifest
+      ---
+      duration_ms: 75.804458
+      type: 'test'
+      ...
+    # Subtest: does not grant debug peeks by default
+    ok 7 - does not grant debug peeks by default
+      ---
+      duration_ms: 70.916041
+      type: 'test'
+      ...
+    1..7
+ok 1 - sync capability pack
+  ---
+  duration_ms: 5320.612042
+  type: 'suite'
+  ...
+1..1
+# tests 7
+# suites 1
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5482.650167

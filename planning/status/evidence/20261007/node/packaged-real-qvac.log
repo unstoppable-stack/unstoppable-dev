@@ -1,0 +1,10 @@
+
+> unstoppable-node-desktop@0.6.0-alpha.1 test:packaged
+> node scripts/packaged-smoke.mjs
+
+[node-worker] parse: load the model metadata from disk file.
+[node-worker] cmn  common_init_: fit completed in 0.20 seconds: n_gpu_layers = -1, n_ctx = 4096, moe_cache_size = 0, prefetch_weights = off
+[node-worker] cmn          init: llama threadpool init, n_threads = 10
+PERSONAL_NODE_QVAC_READY 0.21.0
+PERSONAL_NODE_QVAC_COMPLETION "Coffee is a powerful tool for breaking the day off and making good coffee is the best way to make a good morning."
+PERSONAL_NODE_SMOKE_READY 8db43f8fe17a4298e48b90ad1a7805c0d20012d834c93d537ed2171cfbde405d
