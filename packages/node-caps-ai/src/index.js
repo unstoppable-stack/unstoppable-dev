@@ -47,7 +47,7 @@ export function aiPack ({ mock = false, modelSrc, modelType, provider, enabled =
 
         node?.emit('inference', { publicKey: ctx.peer.remotePublicKey, appId: ctx.appId })
 
-        for await (const token of ai.runStreaming({ messages, stream: true })) {
+        for await (const token of ai.runStreaming({ messages, stream: true, signal: ctx.signal })) {
           // The bus aborts this signal on cancel, disconnect, or the consumer
           // breaking out of its loop. Checking it here is what stops a model
           // from burning tokens for a peer that stopped listening.

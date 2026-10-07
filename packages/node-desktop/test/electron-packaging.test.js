@@ -78,8 +78,8 @@ describe('Electron packaging contract', () => {
     assert.match(mainSource, /sandbox: true/)
   })
 
-  it('requires the packaged Bare runtime to resolve the pinned QVAC SDK', () => {
+  it('requires the packaged Bare runtime to resolve the pinned QVAC inference engine', () => {
     assert.match(smokeSource, /--qvac-smoke/)
-    assert.match(smokeSource, /PERSONAL_NODE_QVAC_READY 0\.15\.0/)
+    assert.match(smokeSource, /PERSONAL_NODE_QVAC_READY 0\.21\.0/)
   })
 })

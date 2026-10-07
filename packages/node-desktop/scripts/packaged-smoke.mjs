@@ -2,6 +2,10 @@ import { spawn } from 'node:child_process'
 import { join, resolve } from 'node:path'
 import { files, findPackagedExecutable } from './packaged-paths.mjs'
 
+if (process.env.PERSONAL_NODE_REAL_QVAC === '1' && !process.env.QVAC_MODEL_SRC) {
+  throw new Error('QVAC_MODEL_SRC is required for actual packaged inference')
+}
+
 const packageRoot = resolve(import.meta.dirname, '..')
 const out = join(packageRoot, 'out')
 
@@ -18,14 +22,15 @@ let output = ''
 child.stdout.on('data', (data) => { output += data.toString() })
 child.stderr.on('data', (data) => { output += data.toString() })
 
-const timer = setTimeout(() => child.kill(), 30_000)
+const timer = setTimeout(() => child.kill(), process.env.PERSONAL_NODE_REAL_QVAC === '1' ? 120_000 : 30_000)
 const code = await new Promise((resolveExit) => child.once('exit', resolveExit))
 clearTimeout(timer)
 
 if (
   code !== 0 ||
-  !output.includes('PERSONAL_NODE_QVAC_READY 0.15.0') ||
-  !output.includes('PERSONAL_NODE_SMOKE_READY')
+  !output.includes('PERSONAL_NODE_QVAC_READY 0.21.0') ||
+  !output.includes('PERSONAL_NODE_SMOKE_READY') ||
+  (process.env.PERSONAL_NODE_REAL_QVAC === '1' && !output.includes('PERSONAL_NODE_QVAC_COMPLETION'))
 ) {
   throw new Error(`Packaged smoke failed (exit ${code})\n${output}`)
 }

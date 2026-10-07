@@ -39,17 +39,17 @@
   },
   "dependencies": {
     "b4a": "^1.8.0",
-    "corestore": "^7.8.0",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
-    "hypercore": "^11.27.0",
+    "hypercore": "^11.37.2",
     "hyperdrive": "^12.3.0"
   },
   "peerDependencies": {
     "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
   },
   "devDependencies": {
-    "hyperdht": "^6.29.1",
-    "hyperswarm": "^4.17.0",
+    "hyperdht": "^6.34.1",
+    "hyperswarm": "^4.17.2",
     "@unstoppable-stack/node-core": "file:../node-core"
   },
   "license": "MIT"

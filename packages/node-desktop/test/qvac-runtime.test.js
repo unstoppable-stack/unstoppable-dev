@@ -6,7 +6,7 @@ import { createSidecarHost } from '../electron/sidecar-host.js'
 
 const fixtures = join(fileURLToPath(new URL('.', import.meta.url)), '..', 'test-fixtures')
 
-it('loads the pinned QVAC SDK inside the Bare sidecar runtime', { timeout: 20_000 }, async () => {
+it('loads the pinned QVAC inference engine inside the Bare sidecar runtime', { timeout: 20_000 }, async () => {
   let resolveMessage
   let rejectMessage
   const nextMessage = new Promise((resolve, reject) => {
@@ -24,7 +24,7 @@ it('loads the pinned QVAC SDK inside the Bare sidecar runtime', { timeout: 20_00
     const message = await nextMessage
     assert.deepEqual(message, {
       type: 'qvac-imported',
-      version: '0.15.0',
+      version: '0.21.0',
       loadModel: 'function',
       completion: 'function',
       hasDefaultModel: true

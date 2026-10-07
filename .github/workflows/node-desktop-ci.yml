@@ -9,6 +9,7 @@ on:
       - packages/node-caps-ai/**
       - packages/node-desktop/**
       - scripts/node-release-gate.mjs
+      - scripts/node-package-smoke.mjs
       - .github/workflows/node-desktop-*.yml
   push:
     branches: [main]
@@ -19,6 +20,7 @@ on:
       - packages/node-caps-ai/**
       - packages/node-desktop/**
       - scripts/node-release-gate.mjs
+      - scripts/node-package-smoke.mjs
       - .github/workflows/node-desktop-*.yml
 
 permissions:
@@ -60,15 +62,10 @@ jobs:
       # runtime cannot be deleted and silently replaced by the system Node.
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Validate release metadata
         run: node scripts/node-release-gate.mjs
-        env:
-          # The 0.6 packages are not on npm yet, so the shell's internal
-          # file: links warn here instead of failing. Release workflows run
-          # the gate strict, so an actual publish still refuses them.
-          NODE_RELEASE_GATE_UNPUBLISHED_OK: '1'
 
       # file:-linked packages resolve imports from their real paths, so each
       # needs its own node_modules (see node-smoke.yml).
@@ -91,6 +88,9 @@ jobs:
       - name: Install desktop dependencies
         working-directory: packages/node-desktop
         run: npm ci
+
+      - name: Isolated Node tarball consumer
+        run: node scripts/node-package-smoke.mjs
 
       - name: Test desktop and real sidecar boundary
         working-directory: packages/node-desktop

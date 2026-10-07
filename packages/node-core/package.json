@@ -1,7 +1,7 @@
 {
   "name": "@unstoppable-stack/node-core",
   "version": "0.6.0-alpha.1",
-  "description": "Symmetric P2P node runtime — identity, pairing, and a capability bus for apps that act as nodes",
+  "description": "Symmetric P2P node runtime \u2014 identity, pairing, and a capability bus for apps that act as nodes",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -44,7 +44,7 @@
     "bare-events": "^2.8.3",
     "compact-encoding": "^2.16.0",
     "hypercore-crypto": "^3.6.0",
-    "hyperswarm": "^4.17.0",
+    "hyperswarm": "^4.17.2",
     "protomux": "^3.10.1"
   },
   "optionalDependencies": {
@@ -52,7 +52,7 @@
     "bare-os": "^3.6.1"
   },
   "devDependencies": {
-    "hyperdht": "^6.29.1"
+    "hyperdht": "^6.34.1"
   },
   "license": "MIT"
 }
