@@ -1,5 +1,7 @@
 # unstoppable-node
 
+**Development alpha:** Personal Node remains outside the public desktop preview. The 0.6 packages below are unpublished; use the source or the tested tarball workflow until a release is approved.
+
 > Personal sync node for [Unstoppable Stack](https://unstoppable.dev) apps —
 > replicates, backs up, and seeds your P2P data.
 
@@ -35,13 +37,13 @@ Or run the [Pear Desktop dashboard](../node-desktop) for a UI.
 npm install -g unstoppable-node
 ```
 
-The Personal Node desktop app bundles the pinned `@qvac/sdk` runtime. When
+The Personal Node desktop app bundles pinned QVAC inference 0.21.0 inside its Bare sidecar. When
 running the daemon from this source checkout, install the same SDK beside the
 node package before enabling real AI:
 
 ```bash
 cd packages/node
-npm install --no-save --package-lock=false @qvac/sdk@0.15.0
+npm install --no-save --package-lock=false @qvac/sdk@0.21.0
 ```
 
 The standalone npm package does not currently bundle QVAC. Use `--ai-mock` for
@@ -217,3 +219,7 @@ Optional knobs:
 ## License
 
 MIT
+
+### Local package development
+
+Production dependencies use version ranges. The same packages appear as local `file:` development dependencies so unpublished 0.6 work remains installable from source. Install node-core, node-caps-sync and node-caps-ai first, then node. `node scripts/node-package-smoke.mjs` from the repository root packs all four and verifies a paired P2P consumer outside the checkout. Passing this test does not publish the alpha packages or establish standalone npm availability. Real Node inference needs Node 22.17+ and SDK 0.21.0 installed alongside node-caps-ai when developing through local links.

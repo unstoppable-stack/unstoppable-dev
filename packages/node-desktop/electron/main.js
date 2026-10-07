@@ -52,12 +52,13 @@ function showWindow () {
 function sendToRenderer (message) {
   if (smokeMode && message?.type === 'ready') {
     smokeNodeKey = message.publicKey
-    if (qvacSmokeMode) sidecar?.send({ type: 'qvac-runtime-check' })
+    if (qvacSmokeMode) sidecar?.send({ type: 'qvac-runtime-check', modelSrc: process.env.PERSONAL_NODE_REAL_QVAC === '1' ? process.env.QVAC_MODEL_SRC : undefined })
     maybeCompleteSmokeTest()
   }
   if (smokeMode && message?.type === 'qvacRuntimeReady') {
     smokeQvacReady = true
     console.info(`PERSONAL_NODE_QVAC_READY ${message.version}`)
+    if (message.text) console.info(`PERSONAL_NODE_QVAC_COMPLETION ${JSON.stringify(message.text)}`)
     maybeCompleteSmokeTest()
   }
   if (rendererReady && mainWindow && !mainWindow.isDestroyed()) {
@@ -307,7 +308,7 @@ if (hasSingleInstanceLock) {
       smokeTimer = setTimeout(() => {
         console.error('PERSONAL_NODE_SMOKE_TIMEOUT')
         app.exit(1)
-      }, 15_000)
+      }, process.env.PERSONAL_NODE_REAL_QVAC === '1' ? 120_000 : 15_000)
     }
   }).catch((error) => {
     console.error(error)
