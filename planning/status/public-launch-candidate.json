@@ -135,10 +135,11 @@
         "packages/node-core",
         "packages/node-caps-sync",
         "packages/node-caps-ai",
-        "packages/node"
+        "packages/node",
+        "planning/status/public-launch-post-merge-20261007.md"
       ],
       "limitations": [
-        "Local production dependencies prevent a registry-resolvable package graph.",
+        "Post-merge alpha work replaces local production dependencies and passes isolated tarball installation; public registry resolution remains unverified.",
         "Default trust, resource bounds, and replication-status gates are incomplete.",
         "May ship later under an alpha tag only after PRJ-02, PRJ-05, and PRJ-06 pass."
       ]
@@ -661,9 +662,9 @@
     "The developer's AI coding assistant may use a cloud service even when generated app inference is local.",
     "No wallet or payment path is included.",
     "Settings export is not a full identity or application-data backup.",
-    "The deferred Node/desktop production dependency audit has not been performed.",
+    "Post-merge deferred Node desktop audit reports zero production advisories; trust and resource safety remain unverified.",
     "The configured GitHub repository is not anonymously accessible; public issue and private vulnerability routes are not launch-ready.",
-    "Several deferred runtime packages declare README or LICENSE files that are absent from their current tarballs.",
+    "Post-merge Node/core/sync/AI tarballs contain README and LICENSE; other deferred package release gates remain separate.",
     "An explicit preview tag is proposed; no package/site publication or release date is approved.",
     "Automatic local and separate hosted-Mac acceptance passed; independent onboarding, assistant editing and pilot reproduction remain unverified."
   ],

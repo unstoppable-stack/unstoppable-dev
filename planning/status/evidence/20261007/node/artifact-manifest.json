@@ -1,0 +1,35 @@
+{
+  "sourceCommit": "60d57c0d65fbea841065f3ab0d8c91cf7b8cccde",
+  "workingTree": "clean",
+  "artifacts": [
+    {
+      "file": "unstoppable-stack-node-core-0.6.0-alpha.1.tgz",
+      "name": "@unstoppable-stack/node-core",
+      "version": "0.6.0-alpha.1",
+      "bytes": 24400,
+      "sha256": "ed2ba2b37fc8cbeab89af1b3ebabe96b496c74b78260a0c36b2dcde9a403bb89"
+    },
+    {
+      "file": "unstoppable-stack-node-caps-sync-0.6.0-alpha.1.tgz",
+      "name": "@unstoppable-stack/node-caps-sync",
+      "version": "0.6.0-alpha.1",
+      "bytes": 9665,
+      "sha256": "2560b9df07a1030ca5eedf1f4e6455ef79aaad7f73af33a4259cdebe9f47e946"
+    },
+    {
+      "file": "unstoppable-stack-node-caps-ai-0.6.0-alpha.1.tgz",
+      "name": "@unstoppable-stack/node-caps-ai",
+      "version": "0.6.0-alpha.1",
+      "bytes": 5849,
+      "sha256": "bfa9d2ad3dd24c5122271028e27d6dc6b1b1abf982f53de0d2802a556dd805e3"
+    },
+    {
+      "file": "unstoppable-node-0.6.0-alpha.1.tgz",
+      "name": "unstoppable-node",
+      "version": "0.6.0-alpha.1",
+      "bytes": 15391,
+      "sha256": "3ad88b6d0c7d1c691c9e0e25bd96c1d10b9e79a552ad0fd87ccd598591b88cd2"
+    }
+  ],
+  "note": "Unpublished alpha artifacts tested together in an isolated consumer. This is not registry publication evidence."
+}
