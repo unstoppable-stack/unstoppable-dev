@@ -22,7 +22,7 @@ try {
   for (const directory of ['node-core', 'node-caps-sync', 'node-caps-ai', 'node']) {
     const result = JSON.parse(run(['pack', '--json', '--pack-destination', stage], join(root, 'packages', directory)))[0]
     const path = join(stage, result.filename)
-    const entries = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).split('\n')
+    const entries = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).split(/\r?\n/)
     for (const required of ['package/package.json', 'package/README.md', 'package/LICENSE']) {
       if (!entries.includes(required)) throw new Error(`${result.filename} missing ${required}`)
     }
