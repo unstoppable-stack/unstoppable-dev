@@ -1,0 +1,591 @@
+
+> @unstoppable-stack/node-core@0.6.0-alpha.1 test
+> node --test --test-force-exit test/*.test.js
+
+TAP version 13
+# Subtest: portable abort controller
+    # Subtest: starts unaborted and aborts once
+    ok 1 - starts unaborted and aborts once
+      ---
+      duration_ms: 0.314459
+      type: 'test'
+      ...
+    # Subtest: notifies listeners, honouring once
+    ok 2 - notifies listeners, honouring once
+      ---
+      duration_ms: 0.069125
+      type: 'test'
+      ...
+    # Subtest: calls a listener added after abort immediately
+    ok 3 - calls a listener added after abort immediately
+      ---
+      duration_ms: 0.519416
+      type: 'test'
+      ...
+    # Subtest: supports removeEventListener
+    ok 4 - supports removeEventListener
+      ---
+      duration_ms: 0.085167
+      type: 'test'
+      ...
+    # Subtest: throwIfAborted throws the reason
+    ok 5 - throwIfAborted throws the reason
+      ---
+      duration_ms: 0.186625
+      type: 'test'
+      ...
+    1..5
+ok 1 - portable abort controller
+  ---
+  duration_ms: 1.610125
+  type: 'suite'
+  ...
+# Subtest: capability registry
+    # Subtest: detects streaming handlers by async generator
+    ok 1 - detects streaming handlers by async generator
+      ---
+      duration_ms: 0.69075
+      type: 'test'
+      ...
+    # Subtest: describes packs for the handshake
+    ok 2 - describes packs for the handshake
+      ---
+      duration_ms: 0.423167
+      type: 'test'
+      ...
+    # Subtest: resolves methods and flags streaming
+    ok 3 - resolves methods and flags streaming
+      ---
+      duration_ms: 0.082916
+      type: 'test'
+      ...
+    # Subtest: throws typed errors for unknown capability and method
+    ok 4 - throws typed errors for unknown capability and method
+      ---
+      duration_ms: 0.207083
+      type: 'test'
+      ...
+    # Subtest: falls back to pack defaults when nothing is requested
+    ok 5 - falls back to pack defaults when nothing is requested
+      ---
+      duration_ms: 0.081
+      type: 'test'
+      ...
+    # Subtest: grants only the intersection of requested and hosted methods
+    ok 6 - grants only the intersection of requested and hosted methods
+      ---
+      duration_ms: 0.12725
+      type: 'test'
+      ...
+    # Subtest: rejects malformed packs
+    ok 7 - rejects malformed packs
+      ---
+      duration_ms: 0.101042
+      type: 'test'
+      ...
+    # Subtest: refuses duplicate capability names
+    ok 8 - refuses duplicate capability names
+      ---
+      duration_ms: 0.111917
+      type: 'test'
+      ...
+    1..8
+ok 2 - capability registry
+  ---
+  duration_ms: 2.385833
+  type: 'suite'
+  ...
+# Subtest: identity
+    # Subtest: is stable across reloads — the whole point of persisting it
+    ok 1 - is stable across reloads — the whole point of persisting it
+      ---
+      duration_ms: 4.008708
+      type: 'test'
+      ...
+    # Subtest: derives the same key pair from the same seed
+    ok 2 - derives the same key pair from the same seed
+      ---
+      duration_ms: 0.1885
+      type: 'test'
+      ...
+    # Subtest: writes a versioned seed file
+    ok 3 - writes a versioned seed file
+      ---
+      duration_ms: 1.204875
+      type: 'test'
+      ...
+    # Subtest: refuses a corrupt seed rather than silently generating a new identity
+    ok 4 - refuses a corrupt seed rather than silently generating a new identity
+      ---
+      duration_ms: 0.760125
+      type: 'test'
+      ...
+    1..4
+ok 3 - identity
+  ---
+  duration_ms: 6.679667
+  type: 'suite'
+  ...
+# Subtest: invite codes
+    # Subtest: round-trips a public key and secret
+    ok 1 - round-trips a public key and secret
+      ---
+      duration_ms: 0.566834
+      type: 'test'
+      ...
+    # Subtest: tolerates whitespace and dashes people add when copying
+    ok 2 - tolerates whitespace and dashes people add when copying
+      ---
+      duration_ms: 0.166791
+      type: 'test'
+      ...
+    # Subtest: uses an alphabet without ambiguous characters
+    ok 3 - uses an alphabet without ambiguous characters
+      ---
+      duration_ms: 0.087083
+      type: 'test'
+      ...
+    # Subtest: rejects malformed codes
+    ok 4 - rejects malformed codes
+      ---
+      duration_ms: 0.283292
+      type: 'test'
+      ...
+    # Subtest: round-trips arbitrary bytes through base32
+    ok 5 - round-trips arbitrary bytes through base32
+      ---
+      duration_ms: 0.081416
+      type: 'test'
+      ...
+    # Subtest: derives topic, id and proof independently from the secret
+    ok 6 - derives topic, id and proof independently from the secret
+      ---
+      duration_ms: 0.120084
+      type: 'test'
+      ...
+    # Subtest: binds the proof to both identities
+    ok 7 - binds the proof to both identities
+      ---
+      duration_ms: 0.08725
+      type: 'test'
+      ...
+    1..7
+ok 4 - invite codes
+  ---
+  duration_ms: 1.774083
+  type: 'suite'
+  ...
+# Subtest: pairing by invite
+    # Subtest: pairs two app-nodes that have never met
+    ok 1 - pairs two app-nodes that have never met
+      ---
+      duration_ms: 28.629167
+      type: 'test'
+      ...
+    # Subtest: applies the invite grants instead of the pack defaults
+    ok 2 - applies the invite grants instead of the pack defaults
+      ---
+      duration_ms: 11.946709
+      type: 'test'
+      ...
+    # Subtest: bypasses the approval prompt, because the invite is the approval
+    ok 3 - bypasses the approval prompt, because the invite is the approval
+      ---
+      duration_ms: 8.710625
+      type: 'test'
+      ...
+    # Subtest: spends a single-use invite
+    ok 4 - spends a single-use invite
+      ---
+      duration_ms: 12.90075
+      type: 'test'
+      ...
+    # Subtest: honours a multi-use invite
+    ok 5 - honours a multi-use invite
+      ---
+      duration_ms: 10.197958
+      type: 'test'
+      ...
+    # Subtest: refuses an expired invite
+    ok 6 - refuses an expired invite
+      ---
+      duration_ms: 12030.430875
+      type: 'test'
+      ...
+    # Subtest: refuses a revoked invite
+    ok 7 - refuses a revoked invite
+      ---
+      duration_ms: 18.577
+      type: 'test'
+      ...
+    # Subtest: refuses a forged proof from someone who only knows the topic
+    ok 8 - refuses a forged proof from someone who only knows the topic
+      ---
+      duration_ms: 12014.259292
+      type: 'test'
+      ...
+    # Subtest: records the pairing method and invite id
+    ok 9 - records the pairing method and invite id
+      ---
+      duration_ms: 19.484917
+      type: 'test'
+      ...
+    # Subtest: keeps serving an outstanding invite across a restart
+    ok 10 - keeps serving an outstanding invite across a restart
+      ---
+      duration_ms: 13.223542
+      type: 'test'
+      ...
+    # Subtest: lists invites without leaking their secrets
+    ok 11 - lists invites without leaking their secrets
+      ---
+      duration_ms: 4.13025
+      type: 'test'
+      ...
+    1..11
+ok 5 - pairing by invite
+  ---
+  duration_ms: 24173.173084
+  type: 'suite'
+  ...
+# Subtest: invites created by another process
+    # Subtest: serves an invite written to its storage by someone else
+    ok 1 - serves an invite written to its storage by someone else
+      ---
+      duration_ms: 2018.06975
+      type: 'test'
+      ...
+    # Subtest: stops announcing an invite once it is revoked
+    ok 2 - stops announcing an invite once it is revoked
+      ---
+      duration_ms: 6.632333
+      type: 'test'
+      ...
+    1..2
+ok 6 - invites created by another process
+  ---
+  duration_ms: 2024.842958
+  type: 'suite'
+  ...
+# Subtest: app networks
+    # Subtest: derives a stable topic from the network name
+    ok 1 - derives a stable topic from the network name
+      ---
+      duration_ms: 0.583666
+      type: 'test'
+      ...
+    # Subtest: pairs several instances of the same app with each other
+    ok 2 - pairs several instances of the same app with each other
+      ---
+      duration_ms: 138.474334
+      type: 'test'
+      ...
+    # Subtest: records how the peer was found
+    ok 3 - records how the peer was found
+      ---
+      duration_ms: 114.430709
+      type: 'test'
+      ...
+    # Subtest: caps grants at the network ceiling
+    ok 4 - caps grants at the network ceiling
+      ---
+      duration_ms: 118.544292
+      type: 'test'
+      ...
+    # Subtest: ignores nodes on a different network
+    ok 5 - ignores nodes on a different network
+      ---
+      duration_ms: 3016.386792
+      type: 'test'
+      ...
+    # Subtest: consults a per-network approval callback
+    ok 6 - consults a per-network approval callback
+      ---
+      duration_ms: 121.757417
+      type: 'test'
+      ...
+    # Subtest: leaves a network on request
+    ok 7 - leaves a network on request
+      ---
+      duration_ms: 6.877542
+      type: 'test'
+      ...
+    1..7
+ok 7 - app networks
+  ---
+  duration_ms: 3517.958041
+  type: 'suite'
+  ...
+# Subtest: pairing and the capability bus
+    # Subtest: pairs two nodes and calls capabilities in both directions
+    ok 1 - pairs two nodes and calls capabilities in both directions
+      ---
+      duration_ms: 8331.196875
+      type: 'test'
+      ...
+    # Subtest: exchanges identity and profile in the handshake
+    ok 2 - exchanges identity and profile in the handshake
+      ---
+      duration_ms: 8063.567583
+      type: 'test'
+      ...
+    # Subtest: streams chunks from an async generator handler
+    ok 3 - streams chunks from an async generator handler
+      ---
+      duration_ms: 8376.588041
+      type: 'test'
+      ...
+    # Subtest: stops a streaming handler when the consumer breaks early
+    ok 4 - stops a streaming handler when the consumer breaks early
+      ---
+      duration_ms: 8237.999958
+      type: 'test'
+      ...
+    # Subtest: enforces grants per direction
+    ok 5 - enforces grants per direction
+      ---
+      duration_ms: 8412.5745
+      type: 'test'
+      ...
+    # Subtest: narrows grants to what the joiner asked for
+    ok 6 - narrows grants to what the joiner asked for
+      ---
+      duration_ms: 7877.280166
+      type: 'test'
+      ...
+    # Subtest: reports handler failures as typed errors without killing the session
+    ok 7 - reports handler failures as typed errors without killing the session
+      ---
+      duration_ms: 8373.399834
+      type: 'test'
+      ...
+    # Subtest: denies pairing when the approval callback says so
+    ok 8 - denies pairing when the approval callback says so
+      ---
+      duration_ms: 8252.151625
+      type: 'test'
+      ...
+    # Subtest: passes the requesting peer to the approval callback
+    ok 9 - passes the requesting peer to the approval callback
+      ---
+      duration_ms: 8006.321708
+      type: 'test'
+      ...
+    # Subtest: reconnects to a known peer by key across a restart
+    ok 10 - reconnects to a known peer by key across a restart
+      ---
+      duration_ms: 18.72825
+      type: 'test'
+      ...
+    # Subtest: records paired peers in the registry on both sides
+    ok 11 - records paired peers in the registry on both sides
+      ---
+      duration_ms: 7961.824625
+      type: 'test'
+      ...
+    # Subtest: publishes its muxer where the storage stack looks for it
+    ok 12 - publishes its muxer where the storage stack looks for it
+      ---
+      duration_ms: 7888.113584
+      type: 'test'
+      ...
+    # Subtest: cleans up peers when the far side vanishes
+    ok 13 - cleans up peers when the far side vanishes
+      ---
+      duration_ms: 7869.154334
+      type: 'test'
+      ...
+    # Subtest: rejects in-flight requests when the connection drops
+    ok 14 - rejects in-flight requests when the connection drops
+      ---
+      duration_ms: 8274.535917
+      type: 'test'
+      ...
+    # Subtest: times out dialing a key nobody is listening on
+    ok 15 - times out dialing a key nobody is listening on
+      ---
+      duration_ms: 1507.532542
+      type: 'test'
+      ...
+    # Subtest: rejects a bad public key before dialing
+    ok 16 - rejects a bad public key before dialing
+      ---
+      duration_ms: 5.8235
+      type: 'test'
+      ...
+    1..16
+ok 8 - pairing and the capability bus
+  ---
+  duration_ms: 107458.640458
+  type: 'suite'
+  ...
+# Subtest: peer management
+    # Subtest: revokes grants on a live session without a reconnect
+    ok 1 - revokes grants on a live session without a reconnect
+      ---
+      duration_ms: 8425.866583
+      type: 'test'
+      ...
+    # Subtest: persists grant changes across a restart
+    ok 2 - persists grant changes across a restart
+      ---
+      duration_ms: 11.206292
+      type: 'test'
+      ...
+    # Subtest: stores opaque per-peer policy for the composing app
+    ok 3 - stores opaque per-peer policy for the composing app
+      ---
+      duration_ms: 8.172291
+      type: 'test'
+      ...
+    # Subtest: unpairs a peer and closes its session
+    ok 4 - unpairs a peer and closes its session
+      ---
+      duration_ms: 6.681542
+      type: 'test'
+      ...
+    # Subtest: refuses to manage an unknown peer
+    ok 5 - refuses to manage an unknown peer
+      ---
+      duration_ms: 2.068042
+      type: 'test'
+      ...
+    1..5
+ok 9 - peer management
+  ---
+  duration_ms: 8454.265917
+  type: 'suite'
+  ...
+# Subtest: topic discovery
+    # Subtest: finds a host serving a topic and pairs with it
+    ok 1 - finds a host serving a topic and pairs with it
+      ---
+      duration_ms: 8.380166
+      type: 'test'
+      ...
+    # Subtest: passes requested capabilities through discovery
+    ok 2 - passes requested capabilities through discovery
+      ---
+      duration_ms: 6.806834
+      type: 'test'
+      ...
+    # Subtest: times out when nobody serves the topic
+    ok 3 - times out when nobody serves the topic
+      ---
+      duration_ms: 2005.518292
+      type: 'test'
+      ...
+    # Subtest: records the discovered peer so later connects go direct
+    ok 4 - records the discovered peer so later connects go direct
+      ---
+      duration_ms: 18.181375
+      type: 'test'
+      ...
+    1..4
+ok 10 - topic discovery
+  ---
+  duration_ms: 2039.162625
+  type: 'suite'
+  ...
+# Subtest: reconnect
+    # Subtest: re-establishes a connection after the host restarts
+    ok 1 - re-establishes a connection after the host restarts
+      ---
+      duration_ms: 123.280334
+      type: 'test'
+      ...
+    # Subtest: does not chase a peer when reconnect is off
+    ok 2 - does not chase a peer when reconnect is off
+      ---
+      duration_ms: 514.66875
+      type: 'test'
+      ...
+    # Subtest: gives up after maxAttempts
+    ok 3 - gives up after maxAttempts
+      ---
+      duration_ms: 1172.322541
+      type: 'test'
+      ...
+    1..3
+ok 11 - reconnect
+  ---
+  duration_ms: 1810.711708
+  type: 'suite'
+  ...
+# Subtest: peer api proxy
+    # Subtest: exposes the peer's advertised capabilities as callable methods
+    ok 1 - exposes the peer's advertised capabilities as callable methods
+      ---
+      duration_ms: 16.320542
+      type: 'test'
+      ...
+    # Subtest: iterates a streaming method through the same handle
+    ok 2 - iterates a streaming method through the same handle
+      ---
+      duration_ms: 8.978208
+      type: 'test'
+      ...
+    # Subtest: only exposes methods the peer actually advertised
+    ok 3 - only exposes methods the peer actually advertised
+      ---
+      duration_ms: 7.691875
+      type: 'test'
+      ...
+    # Subtest: still enforces grants
+    ok 4 - still enforces grants
+      ---
+      duration_ms: 6.391916
+      type: 'test'
+      ...
+    # Subtest: refuses to be consumed as both a promise and a stream
+    ok 5 - refuses to be consumed as both a promise and a stream
+      ---
+      duration_ms: 6.012208
+      type: 'test'
+      ...
+    1..5
+ok 12 - peer api proxy
+  ---
+  duration_ms: 45.659209
+  type: 'suite'
+  ...
+# Subtest: peer registry
+    # Subtest: persists peers across instances
+    ok 1 - persists peers across instances
+      ---
+      duration_ms: 3.520292
+      type: 'test'
+      ...
+    # Subtest: keys by public key, so one appId on two devices is two peers
+    ok 2 - keys by public key, so one appId on two devices is two peers
+      ---
+      duration_ms: 1.253458
+      type: 'test'
+      ...
+    # Subtest: preserves pairedAt but refreshes updatedAt on re-put
+    ok 3 - preserves pairedAt but refreshes updatedAt on re-put
+      ---
+      duration_ms: 7.522625
+      type: 'test'
+      ...
+    # Subtest: removes peers
+    ok 4 - removes peers
+      ---
+      duration_ms: 1.053458
+      type: 'test'
+      ...
+    1..4
+ok 13 - peer registry
+  ---
+  duration_ms: 13.8785
+  type: 'suite'
+  ...
+1..13
+# tests 81
+# suites 13
+# pass 81
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 119914.993542

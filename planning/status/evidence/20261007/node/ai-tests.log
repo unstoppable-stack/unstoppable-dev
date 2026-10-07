@@ -1,0 +1,107 @@
+
+> @unstoppable-stack/node-caps-ai@0.6.0-alpha.1 test
+> node --test --test-force-exit --test-timeout 60000 test/*.test.js
+
+TAP version 13
+# Subtest: ai capability pack (real QVAC)
+    # Subtest: loads the requested model and streams non-empty output over the capability bus
+    ok 1 - loads the requested model and streams non-empty output over the capability bus # SKIP set RUN_QVAC_E2E=1 and QVAC_MODEL_SRC to run real QVAC validation
+      ---
+      duration_ms: 0.208
+      type: 'test'
+      ...
+    1..1
+ok 1 - ai capability pack (real QVAC)
+  ---
+  duration_ms: 0.51375
+  type: 'suite'
+  ...
+# Subtest: ai capability pack
+    # Subtest: streams tokens to a paired peer
+    ok 1 - streams tokens to a paired peer
+      ---
+      duration_ms: 54.475958
+      type: 'test'
+      ...
+    # Subtest: stops generating when the consumer stops listening
+    ok 2 - stops generating when the consumer stops listening
+      ---
+      duration_ms: 41.886542
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed request
+    ok 3 - rejects a malformed request
+      ---
+      duration_ms: 9.68375
+      type: 'test'
+      ...
+    # Subtest: advertises the capability so peers can detect it
+    ok 4 - advertises the capability so peers can detect it
+      ---
+      duration_ms: 7.135625
+      type: 'test'
+      ...
+    # Subtest: keeps the node usable when the model fails to load
+    ok 5 - keeps the node usable when the model fails to load
+      ---
+      duration_ms: 10.050958
+      type: 'test'
+      ...
+    1..5
+ok 2 - ai capability pack
+  ---
+  duration_ms: 123.748792
+  type: 'suite'
+  ...
+# Subtest: runtime toggle
+    # Subtest: starts disabled and can be enabled at runtime
+    ok 1 - starts disabled and can be enabled at runtime
+      ---
+      duration_ms: 29.796916
+      type: 'test'
+      ...
+    # Subtest: can be disabled without dropping the session
+    ok 2 - can be disabled without dropping the session
+      ---
+      duration_ms: 6.372917
+      type: 'test'
+      ...
+    1..2
+ok 3 - runtime toggle
+  ---
+  duration_ms: 36.402291
+  type: 'suite'
+  ...
+# Subtest: cancels an unfinished native request on early return and reuses the provider
+ok 4 - cancels an unfinished native request on early return and reuses the provider
+  ---
+  duration_ms: 0.759042
+  type: 'test'
+  ...
+# Subtest: peer abort cancels native work even while waiting for the first token
+ok 5 - peer abort cancels native work even while waiting for the first token
+  ---
+  duration_ms: 0.129958
+  type: 'test'
+  ...
+# Subtest: rejects overlapping work without cancelling another peer’s request
+ok 6 - rejects overlapping work without cancelling another peer’s request
+  ---
+  duration_ms: 0.223625
+  type: 'test'
+  ...
+# Subtest: propagates native terminal errors instead of reporting a successful empty stream
+ok 7 - propagates native terminal errors instead of reporting a successful empty stream
+  ---
+  duration_ms: 0.091959
+  type: 'test'
+  ...
+1..7
+# tests 12
+# suites 3
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 1
+# todo 0
+# duration_ms 265.097875

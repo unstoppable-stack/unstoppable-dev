@@ -23,16 +23,8 @@ const failures = []
 const warnings = []
 const check = (condition, message) => { if (!condition) failures.push(message) }
 
-// Until the 0.6 packages exist on npm, the shell can only reference them by
-// file: link — a semver range would make every npm install 404. Release runs
-// stay strict (a published tarball with file: deps is broken for consumers);
-// PR CI sets this to get a loud warning instead of a permanently red check.
-const allowUnpublishedInternal = process.env.NODE_RELEASE_GATE_UNPUBLISHED_OK === '1'
-const internalNodeLineDeps = new Set([
-  '@unstoppable-stack/node-core',
-  '@unstoppable-stack/node-caps-sync',
-  '@unstoppable-stack/node-caps-ai'
-])
+// Local development links are allowed only in devDependencies. Production
+// and peer dependencies must remain registry-resolvable.
 const baseVersion = (version) => version.split('-')[0]
 
 for (const name of nodeLine) {
@@ -41,7 +33,7 @@ for (const name of nodeLine) {
 check(packages.node.version === packages.desktop.version, 'Node and desktop versions must match')
 check(baseVersion(packages.node.version) === '0.6.0', 'Node release line must be 0.6.0')
 check(baseVersion(packages.cli.version) === '0.4.0', 'CLI release line must be 0.4.0')
-check(packages.desktop.dependencies?.['@qvac/sdk'] === '0.15.0', 'Desktop QVAC SDK must be pinned to 0.15.0')
+check(packages.desktop.dependencies?.['@qvac/inference'] === '0.21.0', 'Desktop QVAC inference must be pinned to 0.21.0')
 check(packages.desktop.devDependencies?.['@electron-forge/plugin-fuses'] === '7.11.2', 'Electron Fuse plugin must be pinned to 7.11.2')
 check(packages.desktop.scripts?.['test:packaged-runtime'], 'Desktop package runtime verification script is missing')
 
@@ -52,7 +44,7 @@ for (const [name, file] of Object.entries(packageFiles)) {
   check(lock.packages?.['']?.version === packages[name].version, `${name} package-lock importer version is stale`)
 }
 
-for (const name of [...nodeLine, 'cli']) {
+for (const name of [...nodeLine, 'cli', 'desktop']) {
   const pkg = packages[name]
   const dependencyEntries = Object.entries({
     ...(pkg.dependencies || {}),
@@ -61,10 +53,6 @@ for (const name of [...nodeLine, 'cli']) {
   })
   for (const [depName, value] of dependencyEntries) {
     if (!/^file:|^link:|^workspace:/.test(value)) continue
-    if (allowUnpublishedInternal && internalNodeLineDeps.has(depName)) {
-      warnings.push(`${name} depends on unpublished ${depName} via ${value} — must become a semver range before release`)
-      continue
-    }
     check(false, `${name} public package contains a local dependency (${depName}: ${value})`)
   }
   check(pkg.repository?.url === 'https://github.com/unstoppable-stack/unstoppable-dev.git', `${name} repository URL is not the public repository`)
@@ -142,7 +130,7 @@ check(desktopRelease.includes('npm run test:packaged'), 'Desktop release does no
 
 const qvacRelease = await readFile(resolve(root, '.github/workflows/node-qvac.yml'), 'utf8')
 check(qvacRelease.includes('environment: qvac-validation'), 'Real QVAC validation is missing its protected environment')
-check(qvacRelease.includes('@qvac/sdk@0.15.0'), 'Real QVAC validation does not install the pinned desktop SDK')
+check(qvacRelease.includes('@qvac/sdk@0.21.0'), 'Real QVAC validation does not install the pinned Node SDK')
 for (const runner of ['macos-14', 'ubuntu-24.04', 'windows-2025']) {
   check(qvacRelease.includes(runner), `Real QVAC validation is missing ${runner}`)
 }

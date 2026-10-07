@@ -72,7 +72,18 @@ describe('pairing and the capability bus', () => {
 
   it('stops a streaming handler when the consumer breaks early', async () => {
     env = await createTestEnv()
-    const host = await env.makeNode({ capabilities: [echoPack('notes')] })
+    let observedCancel
+    const cancelled = new Promise(resolve => { observedCancel = resolve })
+    const pack = echoPack('notes')
+    pack.methods.forever = async function * (_params, ctx) {
+      const stopped = new Promise(resolve => ctx.signal.addEventListener('abort', () => {
+        observedCancel(true)
+        resolve()
+      }, { once: true }))
+      yield 0; yield 1; yield 2
+      await stopped
+    }
+    const host = await env.makeNode({ capabilities: [pack] })
     const joiner = await env.makeNode({})
 
     await host.listen()
@@ -84,6 +95,11 @@ describe('pairing and the capability bus', () => {
       if (seen.length === 3) break
     }
     assert.equal(seen.length, 3)
+
+    let timeout
+    try {
+      assert.equal(await Promise.race([cancelled, new Promise(resolve => { timeout = setTimeout(() => resolve(false), 2000) })]), true)
+    } finally { clearTimeout(timeout) }
 
     // The far side observed the cancel and the connection is still usable.
     assert.deepEqual(await peer.call('notes', 'ping', { value: 'still here' }), { pong: 'still here' })

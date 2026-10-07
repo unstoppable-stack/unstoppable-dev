@@ -1,0 +1,5 @@
+
+> unstoppable-node-desktop@0.6.0-alpha.1 test:packaged-runtime
+> node scripts/verify-packaged-runtime.mjs
+
+Packaged runtime verified: QVAC 0.21.0, fuses hardened, 248 MiB
