@@ -32,13 +32,13 @@ global in new apps. They belong to the removed `pear run` runtime.
 | `hyperswarm` | `^4.17.0` | Peer discovery via DHT topics |
 | `hypercore` | `^11.27.0` | Append-only log (foundation) |
 | `hyperbee` | `^2.27.3` | Key-value store on Hypercore |
-| `corestore` | `^7.8.0` | Multi-Hypercore storage manager |
+| `corestore` | `^7.13.0` | Multi-Hypercore storage manager |
 | `protomux` | `^3.10.1` | Protocol multiplexing over streams |
 | `compact-encoding` | `^2.19.0` | Binary encoding for Protomux messages |
 | `@hyperswarm/secret-stream` | `^6.9.1` | Encrypted stream wrapper |
 | `b4a` | `^1.8.0` | Buffer/Uint8Array compatibility |
 | `hyperdht` | `^6.29.1` | DHT node (transitive via hyperswarm; needed directly for local bootstrap in dev) |
-| `bare-rpc` | `^1.1.0` | RPC over duplex streams |
+| `bare-rpc` | `^1.3.2` | RPC over duplex streams |
 
 ## Bare Runtime Modules
 
@@ -60,12 +60,11 @@ installing it, you'll get `MODULE_NOT_FOUND`.
 | `bare-console` | `^6.1.0` | Console API |
 | `bare-os` | `^3.7.1` | OS info (platform, arch, homedir) |
 
-## Mobile (Expo + Bare) — coupled set, **do not bump individually**
+## Mobile (Expo + Bare) — validate as a compatible set
 
-These versions must move **together**. Bumping any single one risks breaking
-the Bare worklet bundling pipeline that the scaffolded mobile app relies on.
+Validate these versions together. A QVAC/Bare-kit update can retain Expo/RN when their requirements still match; an Expo major update requires its matching React Native and Expo package set.
 
-The bundler is now **`bare-pack@^2.2.1`** (the 2.x line). `@qvac/sdk@0.15`
+The bundler is now **`bare-pack@^2.2.1`** (the 2.x line). `@qvac/sdk@0.21`
 depends on `bare-pack@^2.0.1` internally, so the app and the SDK share the 2.x
 toolchain (they dedupe to a single `bare-pack` in the lockfile). The 2.x CLI
 replaced `--target <triple>` (removed in `bare-pack@2.0.0`, Jan 2026) with
@@ -73,16 +72,11 @@ replaced `--target <triple>` (removed in `bare-pack@2.0.0`, Jan 2026) with
 `packages/cli/src/generators/expo-mobile.ts` uses `--host` accordingly. The
 host triples themselves are unchanged.
 
-> ⚠️ **Not yet re-validated end-to-end.** This set was migrated off the old
-> `bare-pack@1.5.1` anchor to 2.x alongside the `@qvac/sdk` 0.11 → 0.15 bump.
-> Dependency **resolution** is verified clean (no ERESOLVE; `bare-fs` resolves
-> to `4.7.4`, `react-native-bare-kit` to `0.15.0`), but a full native build
-> (`expo prebuild` → `bare-pack --host` → iOS/Android compile on a device) has
-> not been run. Do a level-4 simulator + level-6 device pass before shipping.
+> **Mobile remains deferred.** The 9 October compatibility candidate pairs QVAC SDK 0.21.0 with Bare kit 0.15.6 (Bare 1.33.4), Expo 54 and RN 0.81.5. Native build and simulator checks are recorded separately from physical-device real inference. See `planning/status/public-launch-mobile-20261009.md` for acceptance.
 
 | Package | Version | Why |
 |---------|---------|-----|
-| `bare-pack` | `^2.2.1` | Bundler. Matches `@qvac/sdk@0.15`'s internal `bare-pack@^2.0.1`; 2.x uses `--host` (not `--target`). |
+| `bare-pack` | `^2.2.1` | Bundler. Matches `@qvac/sdk@0.21`'s internal `bare-pack@^2.0.1`; 2.x uses `--host` (not `--target`). |
 | `expo` | `~54.0.33` | Pairs cleanly with `react-native@0.81.x`. **Kept on SDK 54** — the QVAC bump does not require Expo 55/56 (RN 0.83/0.85), which are a separate migration. |
 | `expo-build-properties` | `~1.0.9` | Matches Expo SDK 54. Must be in `dependencies`, not just `app.json` plugins. |
 | `expo-router` | `~6.0.23` | Matches Expo SDK 54. |
@@ -92,29 +86,26 @@ host triples themselves are unchanged.
 | `expo-splash-screen` | `~31.0.10` | Matches Expo SDK 54. |
 | `expo-status-bar` | `~3.0.8` | Matches Expo SDK 54. |
 | `react-native` | `0.81.5` (exact) | Exact pin — Expo SDK 54 ships this. |
-| `react` | `19.1.0` (exact) | Exact pin — Expo SDK 54 ships this. |
-| `react-native-bare-kit` | `0.15.0` (exact) | Hosts the Bare runtime inside RN; ships a specific runtime that must match `@qvac/sdk`'s worker bundle. `@qvac/sdk@0.15` declares it as an **optional `*` peer** (no longer an exact requirement), so we track it to the release contemporaneous with the SDK and keep the exact pin ourselves. |
+| `react` / `react-dom` | `19.1.0` (exact) | Matching pair prevents expo-router optional web peers from selecting an incompatible newer React DOM. |
+| `react-native-bare-kit` | `0.15.6` (exact) | Hosts the Bare runtime inside RN; ships a specific runtime that must match `@qvac/sdk`'s worker bundle. `@qvac/sdk@0.21` declares it as an **optional `*` peer** (no longer an exact requirement), so we track it to the runtime verified by the SDK (Bare 1.33.4) and keep the exact pin ourselves. |
 | `react-native-safe-area-context` | `~5.6.0` | Matches Expo SDK 54. |
 | `react-native-screens` | `~4.16.0` | Matches Expo SDK 54. |
-| `bare-rpc` | `^1.1.0` | `1.3.2+` works (covered by caret). |
-| `bare-fs` | resolved transitively | **No override.** The old `bare-fs@4.5.1` exact override existed only for the `bare-pack@1.5.1` pipeline. On 2.x we let it resolve to satisfy `@qvac/sdk@0.15`'s `bare-fs@^4.5.1` (currently `4.7.4`). |
-| `corestore` | `^7.8.0` | Lower-bound floor — caret covers latest. |
+| `bare-rpc` | `^1.3.2` | `1.3.2+` works (covered by caret). |
+| `bare-fs` | resolved transitively | **No override.** The old `bare-fs@4.5.1` exact override existed only for the `bare-pack@1.5.1` pipeline. On 2.x we let it resolve to satisfy `@qvac/sdk@0.21`'s `bare-fs@^4.5.1` (verify the installed version and engines.bare). |
+| `corestore` | `^7.13.0` | Lower-bound floor — caret covers latest. |
 | `hyperbee` | `^2.27.3` | Lower-bound floor — caret covers latest. |
-| Node.js (build host) | `≥ 20 LTS` | Expo SDK 54 + `bare-pack` 2.x toolchain. |
+| Node.js (build host) | `≥ 22.17` | Expo SDK 54 + `bare-pack` 2.x toolchain. |
 
-**Rule**: when bumping Expo, you bump every entry in this table **and**
-re-run `pnpm test:e2e:mobile` end-to-end on both an iOS Simulator (level 4)
-and a physical device (level 6). When bumping any single package without
-re-validating the whole pipeline, **don't** — pin back to this table.
+**Rule:** retain native build and simulator evidence for the complete installed graph after a runtime update. Physical-device AI is a separate gate; keep mobile deferred until its declared support combinations pass.
 
 ## AI (QVAC)
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@qvac/sdk` | `^0.15.0` | Local AI inference SDK |
-| `@qvac/cli` | `^0.8.1` | Optional: OpenAI-compatible HTTP server + Bare worker bundler. **No longer a declared peer of `@qvac/sdk@0.15`** — installs cleanly (no `--legacy-peer-deps`). |
-| `zod` | `^4.3.0` | Schema validation for tool definitions (v4.3+ required by @qvac/sdk@0.10+; 0.15 keeps this floor) |
-| `react-native-bare-kit` | `0.15.0` | (Expo only) Native module that hosts the Bare runtime — exact-pinned by us to match the SDK generation (0.15 declares it as an optional `*` peer) |
+| `@qvac/sdk` | `0.21.0` | Local AI inference SDK |
+| `@qvac/cli` | `^0.15.0` | Optional: OpenAI-compatible HTTP server + Bare worker bundler. **No longer a declared peer of `@qvac/sdk@0.21`** — installs cleanly (no `--legacy-peer-deps`). |
+| `zod` | `^4.3.0` | Schema validation for tool definitions (v4.3+ required by @qvac/sdk@0.10+; 0.21 keeps this floor) |
+| `react-native-bare-kit` | `0.15.6` | (Expo only) Native module that hosts the Bare runtime — exact-pinned by us to match the SDK generation (0.21 declares it as an optional `*` peer) |
 
 ## UI (React + styled-components)
 
@@ -210,28 +201,28 @@ worker for P2P and/or AI operations:
 
 ```json
 "dependencies": {
-  "@qvac/sdk": "^0.15.0",
+  "@qvac/sdk": "0.21.0",
   "zod": "^4.3.0"
 },
 "devDependencies": {
-  "@qvac/cli": "^0.8.1"
+  "@qvac/cli": "^0.15.0"
 }
 ```
 
-`@qvac/sdk@0.15` no longer declares `@qvac/cli` as a peer dependency at all, so
+`@qvac/sdk@0.21` no longer declares `@qvac/cli` as a peer dependency at all, so
 the CLI installs cleanly — no `--legacy-peer-deps` workaround needed:
 
 ```bash
-npm install -D '@qvac/cli@^0.8.1'
+npm install -D '@qvac/cli@^0.15.0'
 ```
 
 For Expo (mobile) apps additionally pin `react-native-bare-kit` to the exact
-version that matches the SDK generation (`@qvac/sdk@0.15` declares it as an
+version that matches the SDK generation (`@qvac/sdk@0.21` declares it as an
 optional `*` peer; we pin exact to keep the Bare runtime aligned with the
 worker bundle):
 
 ```json
 "dependencies": {
-  "react-native-bare-kit": "0.15.0"
+  "react-native-bare-kit": "0.15.6"
 }
 ```

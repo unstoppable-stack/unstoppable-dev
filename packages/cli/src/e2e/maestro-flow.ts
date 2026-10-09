@@ -56,22 +56,7 @@ export function generateMaestroFlow(
     // unknown route back to `/`, so the "Unmatched Route" cold-start
     // failure mode on iOS simulator is handled app-side instead.
     '- launchApp',
-    // The Expo dev LogBox on iOS simulator keeps a per-simulator error history
-    // that can overlay our app on launch — even errors from unrelated past apps
-    // (e.g. a `gameStore.ts` from a previous session). Dismiss proactively.
-    // `optional: true` makes this a no-op when nothing is stale.
-    `- tapOn:`,
-    `    text: "Dismiss"`,
-    `    optional: true`,
-    `- tapOn:`,
-    `    text: "Minimize"`,
-    `    optional: true`,
-    // Defensive: if Expo Router lands on the "Unmatched Route" fallback on
-    // first boot (scheme + empty path), tap "Go back" to navigate to `/`.
-    // `optional: true` makes this a no-op on the happy path.
-    `- tapOn:`,
-    `    text: "Go back"`,
-    `    optional: true`,
+    // Do not auto-dismiss error overlays: they can hide real startup failures.
     `- extendedWaitUntil:`,
     `    visible: "${projectName}"`,
     `    timeout: 30000`,
@@ -95,16 +80,7 @@ export function generateMaestroFlow(
     `    timeout: 20000`,
     '',
     '# --- KV Storage section ---',
-    '# Structural assertion only: verify the section + inputs + buttons render',
-    '# and accept input. We intentionally do NOT assert on the post-save/fetch',
-    '# result text. There is a known issue where the worklet-backed put appears',
-    '# to silently no-op on the iOS simulator (the React state update after the',
-    '# bare-rpc round-trip never lands). Switch-case braces and explicit utf8',
-    '# encoding on the reply were both tried and neither resolved it — the bug',
-    '# is in how bare-rpc delivers replies on iOS, and needs device-side',
-    '# logging to diagnose. Tracked in planning/features/scaffold-e2e-testing.md.',
-    '# L5 is primarily a build-pipeline smoke test; the fire-and-forget taps',
-    '# below still exercise the tap path and prove testIDs resolve correctly.',
+    '# Verify the actual UI → RPC → Hyperbee round trip, not only taps.',
     `- assertVisible: "KV Storage"`,
     `- assertVisible:`,
     `    id: "kv-save-btn"`,
@@ -118,8 +94,14 @@ export function generateMaestroFlow(
     `- inputText: "hello from e2e"`,
     `- tapOn:`,
     `    id: "kv-save-btn"`,
+    `- extendedWaitUntil:`,
+    `    visible: 'Saved.*e2e-key.*'`,
+    `    timeout: 10000`,
     `- tapOn:`,
     `    id: "kv-fetch-btn"`,
+    `- extendedWaitUntil:`,
+    `    visible: '.*e2e-key.*hello from e2e.*'`,
+    `    timeout: 10000`,
   ]
 
   if (hasLocalAi) {
@@ -204,48 +186,20 @@ export function generateMaestroFlow(
       )
     } else {
       // ---------------------------------------------------------------------
-      // Simulator AI wiring smoke (no QVAC_MOCK)
-      //
-      // History: we initially tried a full CPU-inference test on the
-      // simulator (toggle CPU → tap Load → wait 5 min for model →
-      // chat → assert reply). The hypothesis was that llamacpp's CPU
-      // path is plain C and runs fine on Apple Silicon simulators.
-      // In practice (2026-05-21 verification run) the Load Assistant
-      // tap never propagated to React Native's onPress handler — no
-      // download started, no JS logs were produced, the button stayed
-      // visible past the 5-min timeout. The bug appears to be in
-      // Maestro 2.3.0 + Expo dev client tap delivery for that specific
-      // button position; manual taps work but automated ones don't
-      // reliably fire onPress on the simulator. Real model inference
-      // is therefore verified by --device mode (a real iPhone), not
-      // here.
-      //
-      // What we DO catch on the simulator now:
-      //   - missing `react-native-bare-kit` linkage (BareKit red-box on launch)
-      //   - broken QVAC SDK bundle (TurboModule red-box on launch)
-      //   - GPU/CPU toggle regressions (asserted above)
-      //   - the AI section's testIDs resolving correctly
-      //
-      // We deliberately do NOT tap Load Assistant in this flow.
-      // Maestro's tap reliability on that button is too inconsistent
-      // to assert against, and inference itself cannot be verified
-      // here regardless. CI-side coverage that "the scaffold builds
-      // and the AI section renders" is the right scope for the
-      // simulator. Real-load coverage belongs in --device mode.
-      // ---------------------------------------------------------------------
+      // Exercise the real SDK import and the app's explicit simulator
+      // refusal. The guard runs before model download or native inference.
       lines.push(
         '',
         '# --- Simulator AI wiring smoke ---',
-        '# We assert that the AI section renders and that the GPU/CPU toggle',
-        '# works, but we deliberately do NOT tap Load Assistant — automated',
-        '# taps on that button do not reliably propagate to RN onPress on the',
-        '# simulator (Maestro 2.3.0 + Expo dev client interaction). Real',
-        '# inference verification lives in --device mode. See',
-        '# packages/cli/src/e2e/maestro-flow.ts for the full history.',
         `- tapOn:`,
         `    id: "ai-device-switch"`,
         `- assertVisible: "Device: CPU"`,
-        // Defensive: even though we never invoked QVAC SDK here, if
+        `- tapOn:`,
+        `    id: "load-ai-btn"`,
+        `- extendedWaitUntil:`,
+        `    visible: '.*Local AI requires a physical device.*'`,
+        `    timeout: 10000`,
+        // The device guard prevents inference; if
         // BareKit linkage is broken the red-box would have surfaced at
         // app launch (during worklet RPC init). Asserting these here
         // is cheap and catches that regression.
@@ -264,20 +218,6 @@ export function generateMaestroFlow(
       '# --- Relaunch to verify state restores cleanly ---',
       '- stopApp',
       '- launchApp',
-      '# After relaunch, the Expo dev LogBox can pop up on the simulator showing',
-      '# cached errors from *other* apps the user ran in this simulator (RN keeps',
-      '# dev-menu history keyed by simulator, not bundle id). Dismiss it if present',
-      '# so our header assertion isn\'t masked. `optional: true` makes the tap a',
-      '# no-op when the overlay is absent, which is the common case on CI.',
-      `- tapOn:`,
-      `    text: "Dismiss"`,
-      `    optional: true`,
-      `- tapOn:`,
-      `    text: "Minimize"`,
-      `    optional: true`,
-      `- tapOn:`,
-      `    text: "Go back"`,
-      `    optional: true`,
       `- extendedWaitUntil:`,
       `    visible: "${projectName}"`,
       `    timeout: 30000`,
@@ -285,6 +225,18 @@ export function generateMaestroFlow(
       // moment after the project-name title when the worklet remounts.
       `- extendedWaitUntil:`,
       `    visible: "Unstoppable Stack · Expo Mobile"`,
+      `    timeout: 10000`,
+      `- extendedWaitUntil:`,
+      `    visible: "Discovery active"`,
+      `    timeout: 20000`,
+      '# Fetch the previous value after process restart to verify persistence.',
+      `- tapOn:`,
+      `    id: "kv-key-input"`,
+      `- inputText: "e2e-key"`,
+      `- tapOn:`,
+      `    id: "kv-fetch-btn"`,
+      `- extendedWaitUntil:`,
+      `    visible: '.*e2e-key.*hello from e2e.*'`,
       `    timeout: 10000`,
     )
   }
