@@ -1,0 +1,71 @@
+
+> @unstoppable-stack/cli@0.4.0-beta.1 test:e2e:mobile
+> tsx e2e/test-scaffold.ts --platform expo-mobile --level 5 --variant local-ai --skip-build
+
+[06:13:41] Unstoppable Stack — Scaffold E2E Test Runner
+[06:13:41] Platform: expo-mobile, Level: 5 (QVAC_MOCK=1)
+[06:13:41] Simulator: iPhone 17, Runtime: Maestro
+[06:13:41] Output: /tmp/us-e2e-scaffold
+[06:13:41] 
+╔═══ EXPO-MOBILE · Level 5 · 1 variant(s) ═══╗
+[06:13:44] 
+━━━ mobile / local-ai ━━━
+[06:13:44]   ○ scaffold (skipped)
+[06:13:44]   ○ xcodebuild (skipped)
+[06:13:44]   ▸ boot simulator
+[06:13:44]   ✓ boot simulator (0.2s)
+[06:13:44]   ▸ start metro + install app
+[06:13:53]   ✓ start metro + install app (8.6s)
+[06:13:53]   ▸ maestro: feature UI test
+[06:14:26]   ✗ maestro: feature UI test — Command failed (exit 1): maestro test "/tmp/us-e2e-scaffold/mobile/local-ai/.maestro/feature-test.yaml"
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✗ expo-mobile/local-ai           42s
+      ✓ boot simulator
+      ✓ start metro + install app
+      ✗ maestro: feature UI test
+      Command failed (exit 1): maestro test "/tmp/us-e2e-scaffold/mobile/local-ai/.maestro/feature-test.yaml"
+      Running on iPhone 17 - iOS 26.5 - 7A3A4748-C9ED-447A-8F88-041F83A3E975
+       > Flow feature-test
+      Launch app "com.unstoppable.e2elocalai"... COMPLETED
+      Tap on (Optional) "Dismiss"... WARNED
+      
+      
+       Warning: Element not found: Text matching regex: Dismiss
+      Tap on (Optional) "Minimize"... WARNED
+      
+      
+       Warning: Element not found: Text matching regex: Minimize
+      Tap on (Optional) "Go back"... WARNED
+      
+      
+       Warning: Element not found: Text matching regex: Go back
+      Assert that "e2e-local-ai" is visible... COMPLETED
+      Assert that "Unstoppable Stack · Expo Mobile" is visible... COMPLETED
+      Assert that "Docs — unstoppable.dev" is visible... COMPLETED
+      Assert that "P2P Network" is visible... COMPLETED
+      Assert that "Discovery active" is visible... COMPLETED
+      Assert that "KV Storage" is visible... COMPLETED
+      Assert that id: kv-save-btn is visible... COMPLETED
+      Assert that id: kv-fetch-btn is visible... COMPLETED
+      Tap on id: kv-key-input... COMPLETED
+      Input text e2e-key... COMPLETED
+      Tap on id: kv-value-input... COMPLETED
+      Input text hello from e2e... COMPLETED
+      Tap on id: kv-save-btn... COMPLETED
+      Assert that "Saved.*e2e-key.*" is visible... FAILED
+      
+      Assertion is false: "Saved.*e2e-key.*" is visible
+      
+      Assertion '"Saved.*e2e-key.*" is visible' failed. Check the UI hierarchy in debug artifacts to verify the element state and properties.
+      
+      Possible causes:
+      - Element selector may be incorrect - check if there are similar elements with slightly different names/properties.
+      - Element may be temporarily unavailable due to loading state
+      - This could be a real regression that needs to be addressed
+      
+
+0/1 variants passed
+[06:14:26] Report: /tmp/us-e2e-scaffold/report-2026-10-09T06-14-26-408Z.json

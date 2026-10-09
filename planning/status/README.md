@@ -1,10 +1,10 @@
 # Project Status — The Unstoppable Stack
 
-> **Last updated:** 2026-10-07
+> **Last updated:** 2026-10-09
 
 ## Current desktop preview
 
-PR #7 is merged. The scoped desktop candidate passes local and hosted real/offline AI acceptance, peer recovery and website checks. The [post-merge work](public-launch-post-merge-20261007.md) refreshes the QVAC 0.21 walkthrough and records deferred Personal Node compatibility, cancellation, and portable packaging acceptance. See the [dependency upgrade acceptance](public-launch-dependency-upgrade-20261006.md) and [release contract](public-launch-candidate.json). Independent pilots, owners, account setup and publication remain pending and are set aside at the user’s request. Mobile, Personal Node and payments remain deferred. Entries below are historical.
+PR #7 is merged. The scoped desktop candidate passes local and hosted real/offline AI acceptance, peer recovery and website checks. The [post-merge work](public-launch-post-merge-20261007.md) refreshes the QVAC 0.21 walkthrough and records deferred Personal Node compatibility, cancellation, and portable packaging acceptance. See the [dependency upgrade acceptance](public-launch-dependency-upgrade-20261006.md) and [release contract](public-launch-candidate.json). Independent pilots, owners, account setup and publication remain pending and are set aside at the user’s request. The [mobile compatibility work](public-launch-mobile-20261009.md) records fresh native iOS builds, real storage/persistence and mock UI acceptance. Mobile, Personal Node and payments remain deferred. Entries below are historical.
 
 ---
 

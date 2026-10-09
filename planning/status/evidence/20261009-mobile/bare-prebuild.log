@@ -1,0 +1,18 @@
+
+> e2e-bare@0.1.0 prebuild
+> npm run build:bare && npx expo prebuild
+
+
+> e2e-bare@0.1.0 build:bare
+> npx bare-pack --host ios-arm64 --host ios-arm64-simulator --host ios-x64-simulator --host android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js
+
+- Creating native directories (./ios and ./android)
+✔ Created native directories
+- Updating package.json
+✔ Updated package.json | no changes
+- Running prebuild
+[withAndroidNdkVersion] Set NDK version to 29.0.14206865
+- Running prebuild
+✔ Finished prebuild
+- Installing CocoaPods...
+✔ Installed CocoaPods

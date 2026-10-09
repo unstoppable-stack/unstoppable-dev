@@ -4,7 +4,7 @@
   "releaseId": "public-developer-preview-2026-09",
   "releaseLabel": "Developer preview",
   "recordedAt": "2026-09-18",
-  "lastUpdatedAt": "2026-10-07",
+  "lastUpdatedAt": "2026-10-09",
   "releaseStatus": "blocked",
   "releaseOwner": null,
   "candidate": {
@@ -150,10 +150,11 @@
       "releaseDisposition": "exclude-from-core-preview",
       "evidence": [
         "packages/cli/src/generators/expo-mobile.ts",
-        ".github/workflows/cli.yml"
+        ".github/workflows/cli.yml",
+        "planning/status/public-launch-mobile-20261009.md"
       ],
       "limitations": [
-        "The latest recorded iOS native prebuild failed; install-only and mock checks do not establish support."
+        "Post-merge compatibility work passes native iOS arm64 simulator builds, local worker/storage and mocked UI checks; physical-device inference, Android native execution and mobile peer synchronization remain unverified."
       ]
     },
     {

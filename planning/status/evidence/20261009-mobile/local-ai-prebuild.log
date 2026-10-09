@@ -1,0 +1,321 @@
+
+> e2e-local-ai@0.1.0 prebuild
+> npm run build:bare && npx expo prebuild
+
+
+> e2e-local-ai@0.1.0 build:bare
+> npx bare-pack --host ios-arm64 --host ios-arm64-simulator --host ios-x64-simulator --host android-arm64 --linked --defer crypto --out bare/app.bundle.js bare/index.js
+
+[withDeviceInfo] 🔧 QVAC: expo-device in app dependencies, using expo-device info
+[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a
+[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a
+[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a
+[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a
+- Creating native directories (./ios and ./android)
+✔ Created native directories
+- Updating package.json
+✔ Updated package.json | no changes
+- Running prebuild
+[withAndroidArchitecture] 🔧 QVAC: Set Android architectures to arm64-v8a
+- Running prebuild
+[withAndroidNdkVersion] 🔧 QVAC: Set Android NDK version to 29.0.14206865
+- Running prebuild
+🕚 QVAC: Found qvac.config.json, generating tree-shaken bundle...
+- Running prebuild
+✅ QVAC: Patched android/link.mjs for manifest-aware linking
+- Running prebuild
+✅ QVAC: Patched ios/link.mjs for manifest-aware linking
+- Running prebuild
+[sdk:client] 
+📦 Installing addon platform packages with npm:
+- Running prebuild
+[sdk:client]    @qvac/fabric-android-arm64@0.18.1 (android-arm64)
+- Running prebuild
+
+added 2 packages, changed 2 packages, and audited 996 packages in 1s
+
+59 packages are looking for funding
+  run `npm fund` for details
+
+40 vulnerabilities (17 moderate, 23 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[sdk:client]    Installed 1 platform package
+- Running prebuild
+📦 QVAC: Installed addon platform packages: @qvac/fabric-android-arm64@0.18.1
+- Running prebuild
+✅ QVAC: Patched android/link.mjs for manifest-aware linking
+- Running prebuild
+✅ QVAC: Patched ios/link.mjs for manifest-aware linking
+- Running prebuild
+🫡 QVAC: Mobile bundle generated and verified
+- Running prebuild
+[withOpenCL] Added OpenCL exclusion to existing packagingOptions block
+- Running prebuild
+[withAndroidNdkVersion] Set NDK version to 29.0.14206865
+- Running prebuild
+🕚 QVAC: Found qvac.config.json, generating tree-shaken bundle...
+- Running prebuild
+✅ QVAC: Patched android/link.mjs for manifest-aware linking
+- Running prebuild
+✅ QVAC: Patched ios/link.mjs for manifest-aware linking
+- Running prebuild
+[sdk:client] 
+📦 Installing addon platform packages with npm:
+- Running prebuild
+[sdk:client]    @qvac/fabric-ios@0.18.1 (ios-arm64, ios-arm64-simulator, ios-x64-simulator)
+- Running prebuild
+
+added 1 package, changed 2 packages, and audited 997 packages in 1s
+
+59 packages are looking for funding
+  run `npm fund` for details
+
+40 vulnerabilities (17 moderate, 23 high)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+[sdk:client]    Installed 1 platform package
+- Running prebuild
+📦 QVAC: Installed addon platform packages: @qvac/fabric-ios@0.18.1
+- Running prebuild
+✅ QVAC: Patched android/link.mjs for manifest-aware linking
+- Running prebuild
+✅ QVAC: Patched ios/link.mjs for manifest-aware linking
+- Running prebuild
+[QVAC] Using addons manifest (27 addons): @qvac/fabric, @qvac/llm-llamacpp, bare-buffer, bare-cpu-info, bare-crypto, bare-dns, bare-fs, bare-gpu-info, bare-hrtime, bare-inspect, bare-os, bare-path, bare-performance, bare-pipe, bare-signals, bare-tcp, bare-tls, bare-type, bare-url, bare-zlib, fs-native-extensions, quickbit-native, rabin-native, rocksdb-native, simdle-native, sodium-native, udx-native
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-58e533e70ae6f/bare-os.3.9.3.framework/bare-os.3.9.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-58e533e70ae6f/bare-os.3.9.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-58e533e70ae6f/bare-os.3.9.3.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-49e7c0253716d/bare-os.3.9.3.framework/bare-os.3.9.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-49e7c0253716d/bare-os.3.9.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-49e7c0253716d/bare-os.3.9.3.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-os.3.9.3.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-os.3.9.3.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9583af0902a8b/bare-path.3.1.2.framework/bare-path.3.1.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9583af0902a8b/bare-path.3.1.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9583af0902a8b/bare-path.3.1.2.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-404a65385cc8/bare-path.3.1.2.framework/bare-path.3.1.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-404a65385cc8/bare-path.3.1.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-404a65385cc8/bare-path.3.1.2.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-path.3.1.2.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-path.3.1.2.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7a886d5e839b3/bare-buffer.3.7.1.framework/bare-buffer.3.7.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7a886d5e839b3/bare-buffer.3.7.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7a886d5e839b3/bare-buffer.3.7.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8162777740c4d/bare-buffer.3.7.1.framework/bare-buffer.3.7.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8162777740c4d/bare-buffer.3.7.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8162777740c4d/bare-buffer.3.7.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-buffer.3.7.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-buffer.3.7.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-1d59f9cd673c6/bare-url.2.5.4.framework/bare-url.2.5.4
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-1d59f9cd673c6/bare-url.2.5.4.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-1d59f9cd673c6/bare-url.2.5.4.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6d63abe2b0d68/bare-url.2.5.4.framework/bare-url.2.5.4
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6d63abe2b0d68/bare-url.2.5.4.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6d63abe2b0d68/bare-url.2.5.4.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-url.2.5.4.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-url.2.5.4.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5479e0488714c/bare-fs.4.8.3.framework/bare-fs.4.8.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5479e0488714c/bare-fs.4.8.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5479e0488714c/bare-fs.4.8.3.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7559469886235/bare-fs.4.8.3.framework/bare-fs.4.8.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7559469886235/bare-fs.4.8.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7559469886235/bare-fs.4.8.3.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-fs.4.8.3.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-fs.4.8.3.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-227b5206b7c8b/qvac__llm-llamacpp.0.55.0.framework/qvac__llm-llamacpp.0.55.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-227b5206b7c8b/qvac__llm-llamacpp.0.55.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-227b5206b7c8b/qvac__llm-llamacpp.0.55.0.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa19615a76bcb/qvac__llm-llamacpp.0.55.0.framework/qvac__llm-llamacpp.0.55.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa19615a76bcb/qvac__llm-llamacpp.0.55.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa19615a76bcb/qvac__llm-llamacpp.0.55.0.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/qvac__llm-llamacpp.0.55.0.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/qvac__llm-llamacpp.0.55.0.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-0a5f1da47a85e/bare-cpu-info.0.1.1.framework/bare-cpu-info.0.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-0a5f1da47a85e/bare-cpu-info.0.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-0a5f1da47a85e/bare-cpu-info.0.1.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e3954c27a691f/bare-cpu-info.0.1.1.framework/bare-cpu-info.0.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e3954c27a691f/bare-cpu-info.0.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e3954c27a691f/bare-cpu-info.0.1.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-cpu-info.0.1.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-cpu-info.0.1.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-464e115f0868/bare-type.1.4.0.framework/bare-type.1.4.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-464e115f0868/bare-type.1.4.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-464e115f0868/bare-type.1.4.0.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-99af5078e8bff/bare-type.1.4.0.framework/bare-type.1.4.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-99af5078e8bff/bare-type.1.4.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-99af5078e8bff/bare-type.1.4.0.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-type.1.4.0.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-type.1.4.0.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7dd613446e7b6/bare-inspect.3.1.10.framework/bare-inspect.3.1.10
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7dd613446e7b6/bare-inspect.3.1.10.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-7dd613446e7b6/bare-inspect.3.1.10.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9663d6e435cff/bare-inspect.3.1.10.framework/bare-inspect.3.1.10
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9663d6e435cff/bare-inspect.3.1.10.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9663d6e435cff/bare-inspect.3.1.10.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-inspect.3.1.10.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-inspect.3.1.10.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6e00870b6a6ea/bare-crypto.1.15.4.framework/bare-crypto.1.15.4
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6e00870b6a6ea/bare-crypto.1.15.4.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6e00870b6a6ea/bare-crypto.1.15.4.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-94cadcd953e23/bare-crypto.1.15.4.framework/bare-crypto.1.15.4
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-94cadcd953e23/bare-crypto.1.15.4.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-94cadcd953e23/bare-crypto.1.15.4.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-crypto.1.15.4.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-crypto.1.15.4.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-19689fc74572a/bare-dns.2.2.1.framework/bare-dns.2.2.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-19689fc74572a/bare-dns.2.2.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-19689fc74572a/bare-dns.2.2.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9818ec2b75d3c/bare-dns.2.2.1.framework/bare-dns.2.2.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9818ec2b75d3c/bare-dns.2.2.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9818ec2b75d3c/bare-dns.2.2.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-dns.2.2.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-dns.2.2.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e487e2cbefa37/bare-gpu-info.0.1.1.framework/bare-gpu-info.0.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e487e2cbefa37/bare-gpu-info.0.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e487e2cbefa37/bare-gpu-info.0.1.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f2b5d11c55c31/bare-gpu-info.0.1.1.framework/bare-gpu-info.0.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f2b5d11c55c31/bare-gpu-info.0.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f2b5d11c55c31/bare-gpu-info.0.1.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-gpu-info.0.1.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-gpu-info.0.1.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-26440e60ec6d2/bare-hrtime.2.1.2.framework/bare-hrtime.2.1.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-26440e60ec6d2/bare-hrtime.2.1.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-26440e60ec6d2/bare-hrtime.2.1.2.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-860ba0a5f42b5/bare-hrtime.2.1.2.framework/bare-hrtime.2.1.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-860ba0a5f42b5/bare-hrtime.2.1.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-860ba0a5f42b5/bare-hrtime.2.1.2.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-hrtime.2.1.2.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-hrtime.2.1.2.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3a6b193449cfe/bare-performance.2.1.1.framework/bare-performance.2.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3a6b193449cfe/bare-performance.2.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3a6b193449cfe/bare-performance.2.1.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3d859d03caf55/bare-performance.2.1.1.framework/bare-performance.2.1.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3d859d03caf55/bare-performance.2.1.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-3d859d03caf55/bare-performance.2.1.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-performance.2.1.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-performance.2.1.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-69ec9adc043a2/bare-pipe.4.3.1.framework/bare-pipe.4.3.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-69ec9adc043a2/bare-pipe.4.3.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-69ec9adc043a2/bare-pipe.4.3.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fac7255d5c115/bare-pipe.4.3.1.framework/bare-pipe.4.3.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fac7255d5c115/bare-pipe.4.3.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fac7255d5c115/bare-pipe.4.3.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-pipe.4.3.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-pipe.4.3.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-4e44cdbade772/bare-signals.4.2.0.framework/bare-signals.4.2.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-4e44cdbade772/bare-signals.4.2.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-4e44cdbade772/bare-signals.4.2.0.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-12d3754ca18ff/bare-signals.4.2.0.framework/bare-signals.4.2.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-12d3754ca18ff/bare-signals.4.2.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-12d3754ca18ff/bare-signals.4.2.0.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-signals.4.2.0.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-signals.4.2.0.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-40012a392d79/bare-tcp.2.6.1.framework/bare-tcp.2.6.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-40012a392d79/bare-tcp.2.6.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-40012a392d79/bare-tcp.2.6.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-dd4f6b1f3a3a2/bare-tcp.2.6.1.framework/bare-tcp.2.6.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-dd4f6b1f3a3a2/bare-tcp.2.6.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-dd4f6b1f3a3a2/bare-tcp.2.6.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-tcp.2.6.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-tcp.2.6.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f6242ed6d442c/bare-tls.3.1.11.framework/bare-tls.3.1.11
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f6242ed6d442c/bare-tls.3.1.11.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-f6242ed6d442c/bare-tls.3.1.11.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e686b99bdbd3b/bare-tls.3.1.11.framework/bare-tls.3.1.11
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e686b99bdbd3b/bare-tls.3.1.11.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-e686b99bdbd3b/bare-tls.3.1.11.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-tls.3.1.11.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-tls.3.1.11.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa9b89d4722de/bare-zlib.1.4.1.framework/bare-zlib.1.4.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa9b89d4722de/bare-zlib.1.4.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fa9b89d4722de/bare-zlib.1.4.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-d955ef8a91a3e/bare-zlib.1.4.1.framework/bare-zlib.1.4.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-d955ef8a91a3e/bare-zlib.1.4.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-d955ef8a91a3e/bare-zlib.1.4.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-zlib.1.4.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/bare-zlib.1.4.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6f4eae9901b22/fs-native-extensions.1.5.1.framework/fs-native-extensions.1.5.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6f4eae9901b22/fs-native-extensions.1.5.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-6f4eae9901b22/fs-native-extensions.1.5.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-957dc646cdb88/fs-native-extensions.1.5.1.framework/fs-native-extensions.1.5.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-957dc646cdb88/fs-native-extensions.1.5.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-957dc646cdb88/fs-native-extensions.1.5.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/fs-native-extensions.1.5.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/fs-native-extensions.1.5.1.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-a62590b82d0ab/quickbit-native.2.4.9.framework/quickbit-native.2.4.9
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-a62590b82d0ab/quickbit-native.2.4.9.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-a62590b82d0ab/quickbit-native.2.4.9.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-60ab3aa7e6ebb/quickbit-native.2.4.9.framework/quickbit-native.2.4.9
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-60ab3aa7e6ebb/quickbit-native.2.4.9.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-60ab3aa7e6ebb/quickbit-native.2.4.9.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/quickbit-native.2.4.9.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/quickbit-native.2.4.9.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9fcd8eb2868fe/rabin-native.2.0.0.framework/rabin-native.2.0.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9fcd8eb2868fe/rabin-native.2.0.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-9fcd8eb2868fe/rabin-native.2.0.0.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fd38e804bc47/rabin-native.2.0.0.framework/rabin-native.2.0.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fd38e804bc47/rabin-native.2.0.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-fd38e804bc47/rabin-native.2.0.0.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/rabin-native.2.0.0.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/rabin-native.2.0.0.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5b149273c38b/rocksdb-native.3.18.2.framework/rocksdb-native.3.18.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5b149273c38b/rocksdb-native.3.18.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5b149273c38b/rocksdb-native.3.18.2.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-cda640d714d34/rocksdb-native.3.18.2.framework/rocksdb-native.3.18.2
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-cda640d714d34/rocksdb-native.3.18.2.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-cda640d714d34/rocksdb-native.3.18.2.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/rocksdb-native.3.18.2.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/rocksdb-native.3.18.2.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-b2ac0e483d2f/simdle-native.1.3.9.framework/simdle-native.1.3.9
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-b2ac0e483d2f/simdle-native.1.3.9.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-b2ac0e483d2f/simdle-native.1.3.9.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-c4a2c37751648/simdle-native.1.3.9.framework/simdle-native.1.3.9
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-c4a2c37751648/simdle-native.1.3.9.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-c4a2c37751648/simdle-native.1.3.9.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/simdle-native.1.3.9.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/simdle-native.1.3.9.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8189c9ef0e7fc/sodium-native.5.1.0.framework/sodium-native.5.1.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8189c9ef0e7fc/sodium-native.5.1.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8189c9ef0e7fc/sodium-native.5.1.0.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-abcdd7ddcdffe/sodium-native.5.1.0.framework/sodium-native.5.1.0
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-abcdd7ddcdffe/sodium-native.5.1.0.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-abcdd7ddcdffe/sodium-native.5.1.0.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/sodium-native.5.1.0.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/sodium-native.5.1.0.xcframework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8705ff5a83e8c/udx-native.1.21.3.framework/udx-native.1.21.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8705ff5a83e8c/udx-native.1.21.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-8705ff5a83e8c/udx-native.1.21.3.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-22403a1d1009b/udx-native.1.21.3.framework/udx-native.1.21.3
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-22403a1d1009b/udx-native.1.21.3.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-22403a1d1009b/udx-native.1.21.3.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/udx-native.1.21.3.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/udx-native.1.21.3.xcframework
+[QVAC] Linking split addon @qvac/fabric from its platform package
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-14e8db635a991/qvac__fabric.0.18.1.framework/qvac__fabric.0.18.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-14e8db635a991/qvac__fabric.0.18.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-14e8db635a991/qvac__fabric.0.18.1.framework
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5e24e2d11831f/qvac__fabric.0.18.1.framework/qvac__fabric.0.18.1
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5e24e2d11831f/qvac__fabric.0.18.1.framework/Info.plist
+Wrote /private/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/bare-link-5e24e2d11831f/qvac__fabric.0.18.1.framework
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/qvac__fabric.0.18.1.xcframework/Info.plist
+Wrote /private/tmp/us-e2e-scaffold/mobile/local-ai/node_modules/react-native-bare-kit/ios/addons/qvac__fabric.0.18.1.xcframework
+✅ QVAC: Refreshed iOS native addons from the generated manifest
+- Running prebuild
+🫡 QVAC: Mobile bundle generated and verified
+- Running prebuild
+✔ Finished prebuild
+- Installing CocoaPods...
+✔ Installed CocoaPods

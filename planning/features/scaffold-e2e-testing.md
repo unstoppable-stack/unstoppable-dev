@@ -908,3 +908,8 @@ must also set the env var externally — the workflow still does, so the
 behaviour is belt-and-suspenders, but the scripts are now reproducible
 on a dev laptop without extra ceremony.
 
+
+
+### 9 October 2026 — mobile compatibility and actual storage acceptance
+
+[The mobile acceptance report](../status/public-launch-mobile-20261009.md) supersedes earlier installation-only and structural KV claims. QVAC SDK 0.21 / Bare kit 0.15.6 native iOS builds and simulator UI pass for bare/local-AI. The old flow never required a successful write or persistence; a stronger flow reproduced a swallowed Save tap with the keyboard open. The outer scroll view now preserves handled taps and submission dismisses the keyboard. Saved, fetched value and retrieval after process restart are required. Error-overlay auto-dismissals were removed. Real inference and Android native execution remain unverified.

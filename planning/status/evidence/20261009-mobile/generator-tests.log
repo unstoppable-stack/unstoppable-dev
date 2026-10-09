@@ -1,0 +1,9 @@
+
+ RUN  v4.1.0 /Users/simon.iribarren/.codex/worktrees/public-preview-candidate/unstoppable-stack/packages/cli
+
+
+ Test Files  3 passed (3)
+      Tests  85 passed (85)
+   Start at  08:24:34
+   Duration  135ms (transform 106ms, setup 0ms, import 132ms, tests 21ms, environment 0ms)
+

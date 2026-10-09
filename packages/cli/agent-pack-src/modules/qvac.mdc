@@ -5,7 +5,7 @@ alwaysApply: false
 
 # QVAC 0.21
 
-Verified package contents and desktop migration experiments: 6 October 2026. The desktop preview uses `@qvac/inference@0.21.0` and `@qvac/llm-llamacpp@0.55.0`; Node clients use `@qvac/sdk@0.21.0`. Expo remains a deferred generator on its separately pinned 0.15 toolchain until native validation. Do not upgrade mobile pins independently.
+Verified package contents and desktop migration experiments: 6 October 2026. The desktop preview uses `@qvac/inference@0.21.0` and `@qvac/llm-llamacpp@0.55.0`; Node clients use `@qvac/sdk@0.21.0`. Expo remains deferred; its 9 October compatibility candidate uses SDK 0.21.0 and Bare kit 0.15.6 (Bare 1.33.4). Native simulator checks do not establish physical-device inference. Do not upgrade mobile pins independently.
 
 ## Runtime boundary
 

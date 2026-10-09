@@ -87,10 +87,7 @@ Small local models need different prompting than cloud APIs:
   uses `.gguf`).
 - If streaming stalls, verify the runtime has access to model storage and enough
   disk space.
-- If you hit context overflow errors, use `n_discarded: N` in `modelConfig` for
-  an automatic sliding window. Do not shorten history manually — the SDK reuses
-  its KV cache by message count, so trimming forces a full re-prefill that
-  overflows the window anyway.
+- QVAC 0.21 rejects `n_discarded`. Bound conversation history in the app and handle context-overflow errors; do not promise automatic sliding-window eviction.
 - Use `kvCache: sessionId` for multi-turn conversations.
 - Qwen models emit `<think>` blocks — disable with `reasoning_budget: 0` in
   `modelConfig` (`-1` for unlimited). Do not use `/no_think` in the prompt or
