@@ -24,11 +24,11 @@ import WDK from "@tetherto/wdk";
 - `hyperswarm` ^4.14.2 (qvac-health-dev)
 - `hyperdrive` ^13.0.2 (qvac-health-dev)
 - `corestore` ^7.8.0
-- `@qvac/sdk` 0.15.0 (npm latest stable, verified 2026-07-23)
-- `@qvac/cli` ^0.8.1 (optional — OpenAI-compatible server + SDK bundler + auto-runs `qvac verify bundle` during Expo prebuild; no longer a peer of the SDK, installs cleanly)
+- `@qvac/sdk` 0.21.0 (mobile compatibility candidate; physical-device inference pending)
+- `@qvac/cli` ^0.15.0 (optional — OpenAI-compatible server + SDK bundler + auto-runs `qvac verify bundle` during Expo prebuild; no longer a peer of the SDK, installs cleanly)
 - `zod` ^4.3.0 (required by @qvac/sdk@0.10+)
-- `react-native-bare-kit` 0.15.0 exact (Expo only; matches @qvac/sdk@0.15 generation, declared as optional `*` peer)
-- `bare-pack` ^2.2.1 (2.x — uses `--host`, not `--target`; matches @qvac/sdk@0.15's internal `bare-pack@^2.0.1`)
+- `react-native-bare-kit` 0.15.6 exact (Expo only; matches @qvac/sdk@0.21 generation, declared as optional `*` peer)
+- `bare-pack` ^2.2.1 (2.x — uses `--host`, not `--target`; matches @qvac/sdk@0.21's internal `bare-pack@^2.0.1`)
 - Hypercore/Hyperbee/HyperDB versions not found in local sources; verify per
   app.
 - WDK versions not found in local sources; verify per app.
