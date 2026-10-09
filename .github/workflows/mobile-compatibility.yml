@@ -32,7 +32,7 @@ concurrency:
 jobs:
   ios-native:
     name: Deferred iOS native build (${{ matrix.variant }})
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -49,6 +49,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+      # RN 0.81 requires Xcode >=16.1; macos-14 defaults to 15.4.
+      - name: Verify native toolchain
+        run: xcodebuild -version
       - run: pnpm install --frozen-lockfile
       - name: Build full internal CLI (mobile is deferred)
         run: pnpm build:full

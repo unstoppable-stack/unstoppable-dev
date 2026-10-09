@@ -38,6 +38,10 @@ Host: macOS Apple Silicon, Xcode `26.6` (`17F113`), Maestro `2.3.0`. A dedicated
 
 Local runs used the tested working tree; source SHA-256 identities are retained in the evidence folder and the implementation commit is recorded after commit. The non-mock refusal check reused the successful native build (`--skip-build`); it did not perform inference. Hosted native results are linked from the PR once available. The original frozen desktop CLI artifact/checksum is unchanged; the new branch’s smoke artifact does not replace that release candidate.
 
+## Hosted toolchain correction
+
+The first hosted bare job exposed the macOS 14 default Xcode 15.4, below React Native 0.81’s required Xcode 16.1. Expo returned success despite CocoaPods rejecting that toolchain. The mobile lane now uses macOS 15 and records Xcode identity; E2E prebuild requires the generated workspace and Podfile.lock before passing. This follow-up changes the harness/CI, not the scaffold whose local native/UI evidence was captured.
+
 ## Remaining engineering
 
 Physical iOS/Android real inference and Android native execution remain separate acceptance gates. Mobile peer connectivity and opt-in Node integration need their own tests. Personal Node trust/resource controls are the next separate workstream. No package/site publication or release approval was attempted.
