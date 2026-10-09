@@ -1,7 +1,7 @@
 {
   "baselineCommit": "c13ffc8334a2ae9b5f426c7856c4704a283ebbea",
   "branch": "codex/mobile-qvac-compatibility",
-  "captureState": "dirty implementation; source identity finalized separately",
+  "captureState": "Local working-tree run; implementation source hashes verified against commit d12cc79.",
   "host": "macOS Apple Silicon / Xcode 26.6 (17F113) / Maestro 2.3.0",
   "simulator": "iPhone 17 / iOS 26.5 / dedicated disposable simulator",
   "variants": [
@@ -64,5 +64,6 @@
       "nativeBuild": "Debug arm64 iphonesimulator; xcodebuild build success",
       "modelInference": "not performed; local-ai chat explicitly mocked"
     }
-  ]
+  ],
+  "implementationCommit": "d12cc7955d94e710122c7f81f4d35a909b420a9b"
 }
