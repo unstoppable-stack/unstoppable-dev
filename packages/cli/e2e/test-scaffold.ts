@@ -1127,6 +1127,13 @@ async function testMobileVariant(
         // postinstall (so `npm install` can succeed on its own). We run them
         // here, which mirrors what a developer does before `expo run:ios`.
         exec(`npm run prebuild`, { cwd: projectDir, timeout: 300_000, logFile: join(projectDir, 'prebuild.log') })
+        // Expo may exit successfully even when CocoaPods failed. Require
+        // the native outputs before recording prebuild acceptance.
+        if (!existsSync(join(projectDir, `ios/${slug}.xcworkspace`)) ||
+            !existsSync(join(projectDir, 'ios/Podfile.lock'))) {
+          const detail = readFileSync(join(projectDir, 'prebuild.log'), 'utf8').slice(-3000)
+          throw new Error(`Expo prebuild did not finish CocoaPods installation:\n${detail}`)
+        }
       }),
     )
   }
