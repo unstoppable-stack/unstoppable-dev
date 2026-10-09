@@ -20,13 +20,10 @@
  *         expo-mobile:  boot simulator + install app
  *   5  full UI:
  *         expo-mobile:  Maestro flow on simulator. Asserts:
- *                       (a) the AI section + GPU/CPU toggle render,
- *                       (b) tapping Load Assistant in CPU mode does NOT
- *                           surface "TurboModuleRegistry" or "BareKit"
- *                           red-box errors (catches missing
- *                           react-native-bare-kit linkage and broken
- *                           QVAC SDK worker bundles),
- *                       (c) with QVAC_MOCK=1, mocked chat round-trip works.
+ *                       (a) KV write/read and persistence after restart,
+ *                       (b) non-mock model loading refuses simulators before
+ *                           download, with physical-device instructions,
+ *                       (c) QVAC_MOCK=1 exercises mocked chat, not inference.
  *         pear-desktop: launch Electron through CDP, verify the visible KV UI,
  *                       and optionally stream a real QVAC reply with
  *                       QVAC_REAL_E2E=1
@@ -77,7 +74,7 @@
  */
 
 import { execSync, spawn, type ChildProcess } from 'child_process'
-import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync, appendFileSync, readFileSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -164,20 +161,23 @@ function log(msg: string) {
   console.log(`[${ts}] ${msg}`)
 }
 
-function exec(cmd: string, opts?: { cwd?: string; timeout?: number; env?: NodeJS.ProcessEnv }): string {
+function exec(cmd: string, opts?: { cwd?: string; timeout?: number; env?: NodeJS.ProcessEnv; logFile?: string }): string {
   const timeout = opts?.timeout ?? 60_000
   try {
-    return execSync(cmd, {
+    const output = execSync(cmd, {
       cwd: opts?.cwd,
       timeout,
       maxBuffer: 50 * 1024 * 1024,
       encoding: 'utf8',
       stdio: ['pipe', 'pipe', 'pipe'],
       env: opts?.env ?? process.env,
-    }).trim()
+    })
+    if (opts?.logFile) writeFileSync(opts.logFile, output)
+    return output.trim()
   } catch (err: any) {
     const stderr = err.stderr?.toString?.() || ''
     const stdout = err.stdout?.toString?.() || ''
+    if (opts?.logFile) writeFileSync(opts.logFile, stdout + '\n' + stderr)
     throw new Error(
       `Command failed (exit ${err.status}): ${cmd}\n${(stderr || stdout).slice(0, 2000)}`,
     )
@@ -305,6 +305,10 @@ function startMetro(cwd: string): ChildProcess {
     env,
     detached: true,
   })
+  const metroLog = join(cwd, 'metro.log')
+  writeFileSync(metroLog, '')
+  proc.stdout?.on('data', data => appendFileSync(metroLog, data))
+  proc.stderr?.on('data', data => appendFileSync(metroLog, data))
   proc.unref()
   return proc
 }
@@ -1052,11 +1056,8 @@ async function testMobileVariant(
   }
 
   // Level 2: npm install
-  // The slim package.json (only @qvac/sdk + zod + expo-file-system +
-  // expo-device for local-ai) lets npm resolve all of @qvac/sdk's 25+
-  // peer deps transitively without conflict. Plain `npm install` works
-  // — no `--legacy-peer-deps` needed. See the local-ai dependency
-  // comment in expo-mobile.ts for the full reasoning.
+  // Installation is separate from native bundling. The generated manifest
+  // declares the Expo peers while QVAC owns its production dependency graph.
   if (!aborted && opts.level >= 2 && !opts.skipBuild) {
     push(
       await runStep('npm install', async () => {
@@ -1125,7 +1126,7 @@ async function testMobileVariant(
         // Generator deliberately keeps `bare-pack` and `expo prebuild` out of
         // postinstall (so `npm install` can succeed on its own). We run them
         // here, which mirrors what a developer does before `expo run:ios`.
-        exec(`npm run prebuild`, { cwd: projectDir, timeout: 300_000 })
+        exec(`npm run prebuild`, { cwd: projectDir, timeout: 300_000, logFile: join(projectDir, 'prebuild.log') })
       }),
     )
   }
@@ -1142,7 +1143,7 @@ async function testMobileVariant(
           `xcodebuild -workspace ${workspace} -scheme ${slug} ` +
             `-configuration Debug -sdk iphonesimulator -arch arm64 ` +
             `-derivedDataPath ios/build build 2>&1`,
-          { cwd: projectDir, timeout: 600_000 },
+          { cwd: projectDir, timeout: 600_000, logFile: join(projectDir, 'xcodebuild.log') },
         )
 
         if (!output.includes('BUILD SUCCEEDED')) {
@@ -1156,12 +1157,13 @@ async function testMobileVariant(
 
   // Level 4+: simulator + Maestro
   let metro: ChildProcess | undefined
+  let simulatorUdid: string | undefined
 
   if (!aborted && opts.level >= 4) {
     push(
       await runStep('boot simulator', async () => {
-        const udid = getSimulatorUDID()
-        bootSimulator(udid)
+        simulatorUdid = getSimulatorUDID()
+        bootSimulator(simulatorUdid)
       }),
     )
 
@@ -1176,7 +1178,7 @@ async function testMobileVariant(
           })
           if (!appPath) throw new Error('Built .app not found in ios/build/')
 
-          exec(`xcrun simctl install booted "${join(projectDir, appPath)}"`)
+          exec(`xcrun simctl install ${simulatorUdid} "${join(projectDir, appPath)}"`)
         }),
       )
     }
@@ -1196,14 +1198,11 @@ async function testMobileVariant(
 
           // Simulator timeout sizing:
           //   - bare variant: ~30s (no AI section)
-          //   - local-ai (no QVAC_MOCK): ~60s — toggles CPU + asserts no
-          //     red-box. We deliberately do NOT tap Load Assistant on
-          //     the simulator; see the comment in
-          //     src/e2e/maestro-flow.ts for why. Real inference
-          //     verification lives in --device mode.
+          //   - local-ai (no QVAC_MOCK): ~60s — checks storage and
+          //     explicit simulator refusal. Real inference uses --device.
           //   - local-ai + QVAC_MOCK=1: ~45s (mock chat round-trip <10s)
           // 3 min budget covers all of these comfortably.
-          const output = exec(`maestro test "${flowPath}"`, { timeout: 180_000 })
+          const output = exec(`maestro --device ${simulatorUdid} test "${flowPath}"`, { timeout: 180_000 })
 
           if (output.includes('FAILED')) {
             throw new Error(`Maestro test failed:\n${output.slice(-1000)}`)

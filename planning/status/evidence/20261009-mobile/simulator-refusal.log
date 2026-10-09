@@ -1,0 +1,31 @@
+
+> @unstoppable-stack/cli@0.4.0-beta.1 test:e2e:mobile
+> tsx e2e/test-scaffold.ts --platform expo-mobile --level 5 --variant local-ai --skip-build
+
+[06:37:23] Unstoppable Stack — Scaffold E2E Test Runner
+[06:37:23] Platform: expo-mobile, Level: 5
+[06:37:23] Simulator: Unstoppable-Mobile-20261009, Runtime: Maestro
+[06:37:23] Output: /tmp/us-e2e-scaffold
+[06:37:23] 
+╔═══ EXPO-MOBILE · Level 5 · 1 variant(s) ═══╗
+[06:37:25] 
+━━━ mobile / local-ai ━━━
+[06:37:25]   ○ scaffold (skipped)
+[06:37:25]   ○ xcodebuild (skipped)
+[06:37:25]   ▸ boot simulator
+[06:37:25]   ✓ boot simulator (0.2s)
+[06:37:25]   ▸ start metro + install app
+[06:37:33]   ✓ start metro + install app (8.5s)
+[06:37:33]   ▸ maestro: feature UI test
+[06:38:04]   ✓ maestro: feature UI test (30.9s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ expo-mobile/local-ai           40s
+      ✓ boot simulator
+      ✓ start metro + install app
+      ✓ maestro: feature UI test
+
+1/1 variants passed
+[06:38:04] Report: /tmp/us-e2e-scaffold/report-2026-10-09T06-38-04-906Z.json

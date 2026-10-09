@@ -1,0 +1,35 @@
+CodeSign /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app/__preview.dylib (in target 'e2ebare' from project 'e2ebare')
+    cd /tmp/us-e2e-scaffold/mobile/bare/ios
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app/__preview.dylib
+
+CodeSign /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app (in target 'e2ebare' from project 'e2ebare')
+    cd /tmp/us-e2e-scaffold/mobile/bare/ios
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --entitlements /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Intermediates.noindex/e2ebare.build/Debug-iphonesimulator/e2ebare.build/e2ebare.app.xcent --timestamp\=none --generate-entitlement-der /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app
+
+RegisterExecutionPolicyException /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app (in target 'e2ebare' from project 'e2ebare')
+    cd /tmp/us-e2e-scaffold/mobile/bare/ios
+    builtin-RegisterExecutionPolicyException /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app
+
+Validate /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app (in target 'e2ebare' from project 'e2ebare')
+    cd /tmp/us-e2e-scaffold/mobile/bare/ios
+    builtin-validationUtility /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app (in target 'e2ebare' from project 'e2ebare')
+    cd /tmp/us-e2e-scaffold/mobile/bare/ios
+    /usr/bin/touch -c /tmp/us-e2e-scaffold/mobile/bare/ios/build/Build/Products/Debug-iphonesimulator/e2ebare.app
+
+note: Run script build phase '[CP-User] [RNDeps] Replace React Native Dependencies for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'ReactNativeDependencies' from project 'Pods')
+note: Run script build phase '[CP-User] [RNDeps] Replace React Native Core for the right configuration, if needed' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-Core-prebuilt' from project 'Pods')
+warning: Run script build phase '[CP-User] [Hermes] Replace Hermes for the right configuration, if needed' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'hermes-engine' from project 'Pods')
+note: Run script build phase '[CP-User] [RN]Check FBReactNativeSpec' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'React-RCTFBReactNativeSpec' from project 'Pods')
+note: Run script build phase 'Bundle React Native code and images' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'e2ebare' from project 'e2ebare')
+note: Run script build phase '[Expo] Configure project' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'e2ebare' from project 'e2ebare')
+note: Run script build phase '[CP-User] Generate app.config for prebuilt Constants.manifest' will be run during every build because the option to run the script phase "Based on dependency analysis" is unchecked. (in target 'EXConstants' from project 'Pods')
+** BUILD SUCCEEDED **
+

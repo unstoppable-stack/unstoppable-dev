@@ -1,0 +1,68 @@
+{
+  "baselineCommit": "c13ffc8334a2ae9b5f426c7856c4704a283ebbea",
+  "branch": "codex/mobile-qvac-compatibility",
+  "captureState": "dirty implementation; source identity finalized separately",
+  "host": "macOS Apple Silicon / Xcode 26.6 (17F113) / Maestro 2.3.0",
+  "simulator": "iPhone 17 / iOS 26.5 / dedicated disposable simulator",
+  "variants": [
+    {
+      "variant": "bare",
+      "resolvedVersions": {
+        "expo": "54.0.37",
+        "react": "19.1.0",
+        "react-dom": "19.1.0",
+        "react-native": "0.81.5",
+        "react-native-bare-kit": "0.15.6",
+        "bare-pack": "2.2.3",
+        "bare-rpc": "1.3.8",
+        "corestore": "7.13.0",
+        "hypercore": "11.37.2",
+        "bare-fs": "4.8.3",
+        "@qvac/sdk": null,
+        "@qvac/inference": null,
+        "@qvac/llm-llamacpp": null,
+        "@qvac/fabric-ios": null,
+        "@qvac/fabric-android-arm64": null
+      },
+      "filesSha256": {
+        "package-lock.json": "6e81d0084f659ec21fd6d3a410957cb6488731728e01ba4bafe902f459d50762",
+        "ios/Podfile.lock": "040f26ffbc61aa209b6d539b264ff41bdb197063faa325028a0cb73ec6578ee3",
+        "app/index.tsx": "81f396e9416c1017816b738cb4d0593b4acf259a8aea05a1c815272ac1845388",
+        "bare/index.js": "a87a121af5f30c5329cbe9b73744faed1714ec3c4298d69d591c45ab36dbd42e",
+        "src/contexts/WorkletContext.tsx": "9f12db7ef0c1dcecebce44cc7af1cb25a8fc564b32fe292c963a56dda7a9fae1"
+      },
+      "nativeBuild": "Debug arm64 iphonesimulator; xcodebuild build success",
+      "modelInference": "not performed; local-ai chat explicitly mocked"
+    },
+    {
+      "variant": "local-ai",
+      "resolvedVersions": {
+        "expo": "54.0.37",
+        "react": "19.1.0",
+        "react-dom": "19.1.0",
+        "react-native": "0.81.5",
+        "react-native-bare-kit": "0.15.6",
+        "bare-pack": "2.2.3",
+        "bare-rpc": "1.3.8",
+        "corestore": "7.13.0",
+        "hypercore": "11.37.2",
+        "bare-fs": "4.8.3",
+        "@qvac/sdk": "0.21.0",
+        "@qvac/inference": "0.21.0",
+        "@qvac/llm-llamacpp": "0.55.0",
+        "@qvac/fabric-ios": "0.18.1",
+        "@qvac/fabric-android-arm64": "0.18.1"
+      },
+      "filesSha256": {
+        "package-lock.json": "8e4d3135970f64292c3fd3ea49eb12f17c4ae92afebf9b50eeca4057f12175c7",
+        "ios/Podfile.lock": "6d680161de9ad8c334085e1dfec03070d931477dd92b3c1ff0b53653c118b7e9",
+        "app/index.tsx": "b968be157a6458ca8a9c43d228adc36700557d95adae4126a94fcd40a4421a8a",
+        "bare/index.js": "a87a121af5f30c5329cbe9b73744faed1714ec3c4298d69d591c45ab36dbd42e",
+        "src/contexts/WorkletContext.tsx": "af3880949e0ee85f23c56c74afd51f0e598c57d9a83b6378b07e809a01fb1a82",
+        "qvac.config.json": "2e53336922d2d371132916811b3fd80b8dd8375ce8f977129edefc541353bae7"
+      },
+      "nativeBuild": "Debug arm64 iphonesimulator; xcodebuild build success",
+      "modelInference": "not performed; local-ai chat explicitly mocked"
+    }
+  ]
+}

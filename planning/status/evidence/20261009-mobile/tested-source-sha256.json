@@ -1,0 +1,10 @@
+{
+  "captureState": "Local acceptance ran against this working-tree implementation; match against committed files before relying on commit identity.",
+  "files": {
+    "packages/cli/src/generators/expo-mobile.ts": "ccc85d2812fee8b45bf42a0e0a8d23b31573b3b7025eaa1a06630b09425758cc",
+    "packages/cli/src/e2e/maestro-flow.ts": "f7ebea8f0db6fe5d7e57ecedac8f9253e1b16eee77e977ca53a1eb233bc9fce5",
+    "packages/cli/e2e/test-scaffold.ts": "e36ac326d4b871346c9d9888c6f0957e76deab4b60bf9e3801c0c52be4e6378a",
+    "packages/agent-pack/src/components/ai/model-manager.ts": "67174e4a1db066c8797cfff1b857ae9ebfe52fb3275c270f0d4fabc5a90d2759",
+    ".github/workflows/mobile-compatibility.yml": "bc8a5858ef045b8d21e4c1d2d5f48838ca5d4721fcbd62f1d95af6ee555f5c5a"
+  }
+}

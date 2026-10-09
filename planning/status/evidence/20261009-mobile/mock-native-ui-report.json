@@ -1,0 +1,98 @@
+{
+  "mode": "single",
+  "platforms": [
+    "expo-mobile"
+  ],
+  "levels": {
+    "expo-mobile": 5
+  },
+  "results": [
+    {
+      "variant": "bare",
+      "platform": "expo-mobile",
+      "steps": [
+        {
+          "name": "scaffold",
+          "passed": true,
+          "duration": 4549
+        },
+        {
+          "name": "npm install",
+          "passed": true,
+          "duration": 6626
+        },
+        {
+          "name": "expo prebuild",
+          "passed": true,
+          "duration": 19615
+        },
+        {
+          "name": "xcodebuild",
+          "passed": true,
+          "duration": 54654
+        },
+        {
+          "name": "boot simulator",
+          "passed": true,
+          "duration": 633
+        },
+        {
+          "name": "start metro + install app",
+          "passed": true,
+          "duration": 17848
+        },
+        {
+          "name": "maestro: feature UI test",
+          "passed": true,
+          "duration": 40023
+        }
+      ],
+      "passed": true,
+      "duration": 143953
+    },
+    {
+      "variant": "local-ai",
+      "platform": "expo-mobile",
+      "steps": [
+        {
+          "name": "scaffold",
+          "passed": true,
+          "duration": 3863
+        },
+        {
+          "name": "npm install",
+          "passed": true,
+          "duration": 15653
+        },
+        {
+          "name": "expo prebuild",
+          "passed": true,
+          "duration": 33055
+        },
+        {
+          "name": "xcodebuild",
+          "passed": true,
+          "duration": 50999
+        },
+        {
+          "name": "boot simulator",
+          "passed": true,
+          "duration": 206
+        },
+        {
+          "name": "start metro + install app",
+          "passed": true,
+          "duration": 8534
+        },
+        {
+          "name": "maestro: feature UI test",
+          "passed": true,
+          "duration": 36136
+        }
+      ],
+      "passed": true,
+      "duration": 148448
+    }
+  ],
+  "totalDurationMs": 294762
+}

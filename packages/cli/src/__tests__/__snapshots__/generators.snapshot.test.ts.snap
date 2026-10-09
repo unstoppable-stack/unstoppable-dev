@@ -89,7 +89,7 @@ export default function NotFound() {
   },
   {
     "content": "import React, { useState } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput } from 'react-native'
+import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
 
 export default function Home() {
@@ -101,6 +101,7 @@ export default function Home() {
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(5, { key: kvKey, value: kvValue })
       if (res.ok) setKvResult('Saved "' + kvKey + '"')
@@ -113,6 +114,7 @@ export default function Home() {
   async function kvFetch() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(6, { key: kvKey })
       if (res.ok) {
@@ -127,7 +129,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
           <Text style={styles.title}>snap-test</Text>
           <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
@@ -417,6 +419,9 @@ module.exports = config
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -438,13 +443,14 @@ module.exports = config
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.0",
+    "react-native-bare-kit": "0.15.6",
     "bare-pack": "^2.2.1",
-    "bare-rpc": "^1.1.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3"
   },
   "devDependencies": {
@@ -735,7 +741,12 @@ dist/
     "scheme": "snap-test",
     "newArchEnabled": true,
     "plugins": [
-      "@qvac/sdk/expo-plugin",
+      [
+        "@qvac/sdk/expo-plugin",
+        {
+          "installMissingPrebuilds": true
+        }
+      ],
       "expo-router",
       [
         "expo-build-properties",
@@ -801,7 +812,7 @@ export default function NotFound() {
   },
   {
     "content": "import React, { useState, useRef } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
+import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
 import { downloadAsset, loadModel, completion, unloadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M, VERBOSITY } from '@qvac/sdk'
 import * as Device from 'expo-device'
@@ -823,6 +834,7 @@ export default function Home() {
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(5, { key: kvKey, value: kvValue })
       if (res.ok) setKvResult('Saved "' + kvKey + '"')
@@ -835,6 +847,7 @@ export default function Home() {
   async function kvFetch() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(6, { key: kvKey })
       if (res.ok) {
@@ -860,19 +873,13 @@ export default function Home() {
       setAiStatus('ready')
       return
     }
-    // Per QVAC docs: "QVAC currently does not run on emulators. You must
-    // use a physical device." GPU mode reliably fails on simulator (Metal
-    // / Vulkan unavailable), so block early with a clear message. CPU
-    // mode is technically also unsupported by llamacpp on emulators, but
-    // we let users try it — if it fails, the underlying QVAC error is
-    // already surfaced via the catch block below.
-    if (Device.isDevice === false && aiDevice === 'gpu') {
+    // QVAC documents physical devices for mobile inference. Refuse before
+    // downloading a model on either simulator mode; mock UI remains available.
+    if (Device.isDevice === false) {
       setAiError(
-        "GPU inference doesn't run on the iOS Simulator / Android Emulator. " +
-        'Toggle Device → CPU below to try CPU mode (slower, may still ' +
-        'fail on emulators per QVAC limits), or run on a physical device ' +
-        'with: npx expo run:ios --device (or run:android --device). Or ' +
-        'set EXPO_PUBLIC_QVAC_MOCK=1 to exercise the UI without inference.',
+        'Local AI requires a physical device. Run npx expo run:ios --device ' +
+        '(or run:android --device), or set EXPO_PUBLIC_QVAC_MOCK=1 ' +
+        'to exercise the simulator UI without inference.',
       )
       setAiStatus('error')
       return
@@ -903,11 +910,6 @@ export default function Home() {
           // experimentation).
           device: aiDevice,
           ctx_size: CTX_SIZE,
-          // Sliding window — evict oldest ~10% on overflow instead of
-          // throwing. With this set, never hand-trim history: the SDK
-          // reuses its KV cache by message count, so dropping old messages
-          // forces a full re-prefill that overflows the window.
-          n_discarded: Math.floor(CTX_SIZE / 10),
           // 0 = no reasoning, -1 = unlimited. Replaces the old approach of
           // asking for no reasoning in the prompt and stripping the blocks
           // back out of the token stream by hand.
@@ -960,9 +962,14 @@ export default function Home() {
       // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
       // tokens arrive as plain content — no reasoning-block filtering needed.
       let visible = ''
-      for await (const token of result.tokenStream) {
-        visible += token
-        setMessages([...next, { role: 'assistant', content: visible }])
+      for await (const event of result.events) {
+        if (event.type === 'completionDone' && event.stopReason === 'error') {
+          throw new Error(event.error?.message || 'Inference failed')
+        }
+        if (event.type === 'contentDelta') {
+          visible += event.text
+          setMessages([...next, { role: 'assistant', content: visible }])
+        }
       }
     } catch (e: any) {
       setMessages([...next, { role: 'assistant', content: '❌ ' + (e?.message ?? String(e)) }])
@@ -973,7 +980,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
           <Text style={styles.title}>snap-test</Text>
           <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
@@ -1373,6 +1380,9 @@ module.exports = config
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -1394,15 +1404,16 @@ module.exports = config
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.0",
+    "react-native-bare-kit": "0.15.6",
     "bare-pack": "^2.2.1",
-    "bare-rpc": "^1.1.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
-    "@qvac/sdk": "^0.15.0",
+    "@qvac/sdk": "0.21.0",
     "zod": "^4.3.0",
     "expo-device": "~8.0.10"
   },
@@ -1511,6 +1522,14 @@ module.exports = function withAndroidNdkVersion(config, ndkVersion) {
 }
 ",
     "path": "plugins/withAndroidNdkVersion.js",
+  },
+  {
+    "content": "{
+  "plugins": [
+    "@qvac/sdk/llamacpp-completion/plugin"
+  ]
+}",
+    "path": "qvac.config.json",
   },
   {
     "content": "# snap-test
@@ -1760,7 +1779,7 @@ export default function NotFound() {
   },
   {
     "content": "import React, { useState, useEffect } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, TextInput } from 'react-native'
+import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
 
 export default function Home() {
@@ -1773,6 +1792,7 @@ export default function Home() {
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(5, { key: kvKey, value: kvValue })
       if (res.ok) setKvResult('Saved "' + kvKey + '"')
@@ -1785,6 +1805,7 @@ export default function Home() {
   async function kvFetch() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(6, { key: kvKey })
       if (res.ok) {
@@ -1816,7 +1837,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
           <Text style={styles.title}>snap-test</Text>
           <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
@@ -2176,6 +2197,9 @@ module.exports = config
   "name": "snap-test",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.17.0"
+  },
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
@@ -2197,13 +2221,14 @@ module.exports = config
     "expo-splash-screen": "~31.0.10",
     "expo-status-bar": "~3.0.8",
     "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.0",
+    "react-native-bare-kit": "0.15.6",
     "bare-pack": "^2.2.1",
-    "bare-rpc": "^1.1.0",
-    "corestore": "^7.8.0",
+    "bare-rpc": "^1.3.2",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
     "hyperswarm": "^4.17.0",
@@ -2518,6 +2543,7 @@ exports[`generator snapshots > file paths only > expo-mobile / local-ai: path li
   "planning/README.md",
   "plugins/withAndroidArchitecture.js",
   "plugins/withAndroidNdkVersion.js",
+  "qvac.config.json",
   "src/contexts/WorkletContext.tsx",
 ]
 `;

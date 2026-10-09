@@ -24,50 +24,22 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     workletContext(opts),
   ]
 
+  if (has(opts, 'local-ai')) {
+    files.push({
+      path: 'qvac.config.json',
+      content: JSON.stringify({ plugins: ['@qvac/sdk/llamacpp-completion/plugin'] }, null, 2),
+    })
+  }
+
   return files
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  // ====================================================================
-  // MOBILE COUPLED VERSION SET — do NOT bump anything below in isolation.
-  // ====================================================================
-  // The Expo SDK, react-native, react-native-bare-kit, and bare-pack
-  // versions below have been validated as one combination. Bumping any
-  // single entry risks breaking the worklet bundling pipeline that the
-  // scaffolded app depends on at build time.
-  //
-  // BUNDLER: `bare-pack@^2.2.1` (the 2.x line). `@qvac/sdk@0.15` depends on
-  // `bare-pack@^2.0.1` internally, so the app and the SDK now share the 2.x
-  // toolchain. The 2.x CLI replaced the `--target <triple>` flag (removed in
-  // `bare-pack@2.0.0`, Jan 2026) with `--host <triple>`; the `build:bare`
-  // script below has been reworked accordingly. The host triples themselves
-  // are unchanged (`ios-arm64`, `ios-arm64-simulator`, etc. — the values of
-  // `Bare.Addon.host`).
-  //
-  // Coupling rules:
-  //   - Expo SDK MAJOR pins react-native MAJOR (SDK 54 → RN 0.81;
-  //     SDK 55 → RN 0.83; SDK 56 → RN 0.85). Never mix. We stay on Expo
-  //     SDK 54 / RN 0.81 — the QVAC SDK bump does NOT require moving off it,
-  //     and Expo 55/56 are a separate, larger migration.
-  //   - `react-native-bare-kit` is still EXACT-pinned (no caret) because it
-  //     ships a specific Bare runtime that must match `@qvac/sdk`'s worker
-  //     bundle; caret ranges silently install pre-1.0 minors and break QVAC's
-  //     mobile worker bundle with cryptic native errors. `@qvac/sdk@0.15` no
-  //     longer *declares* it as an exact peer (it's now an optional `*` peer),
-  //     so we track it to `0.15.0` — the release contemporaneous with the SDK.
-  //   - When bumping ANY of these, bump ALL of them and re-run the full
-  //     mobile e2e: `pnpm test:e2e:mobile` (level 4 simulator) +
-  //     manual level 6 on a physical device.
-  //
-  // ⚠️ NOT YET RE-VALIDATED END-TO-END: this set was migrated from the
-  //    `bare-pack@1.5.1` anchor to 2.x alongside the `@qvac/sdk` 0.11 → 0.15
-  //    bump without a full native e2e pass. Run `pnpm test:e2e:mobile` on an
-  //    iOS Simulator and a physical device before relying on it in anger.
-  //
-  // Authoritative table: `packages/agent-pack/src/core/verified-versions.mdc`
-  // → "Mobile (Expo + Bare) — coupled set" section.
-  // ====================================================================
-  //
+  // Treat Expo/RN, Bare kit and QVAC as one tested compatibility set.
+  // Expo 54 stays on RN 0.81.5. Kit 0.15.6 embeds Bare 1.33.4 according
+  // to SDK 0.21's runtime table; kit 0.15.0 embeds the older Bare 1.29.4.
+  // Validate native bundling, simulator startup and physical-device AI
+  // separately before extending the support claim.
   // Bare worklet is always required (P2P is base infrastructure)
   const deps: Record<string, string> = {
     expo: '~54.0.33',
@@ -80,14 +52,17 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     'expo-splash-screen': '~31.0.10',
     'expo-status-bar': '~3.0.8',
     react: '19.1.0',
+    // expo-router's optional web peer otherwise selects a newer React DOM
+    // whose React peer range conflicts with Expo 54's native React pin.
+    'react-dom': '19.1.0',
     'react-native': '0.81.5',
     'react-native-safe-area-context': '~5.6.0',
     'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.15.0', // EXACT — see coupling rules above
-    'bare-pack': '^2.2.1', // 2.x — matches @qvac/sdk@0.15's bundler. See notes above.
-    'bare-rpc': '^1.1.0',
+    'react-native-bare-kit': '0.15.6', // Exact: embeds Bare 1.33.4
+    'bare-pack': '^2.2.1', // 2.x — matches @qvac/sdk@0.21's bundler. See notes above.
+    'bare-rpc': '^1.3.2',
     // Base P2P + KV infra — always required by bare/index.js worklet
-    corestore: '^7.8.0',
+    corestore: '^7.13.0',
     hyperbee: '^2.27.3',
   }
 
@@ -131,7 +106,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   // No `overrides` needed on the 2.x bundler. The previous `bare-fs@4.5.1`
   // exact override existed only because newer `bare-fs` (Bare 4.7.x) had not
   // been validated against the old `bare-pack@1.5.1` pipeline. Now that we're
-  // on `bare-pack@2.x` and `@qvac/sdk@0.15` depends on `bare-fs@^4.5.1`, we let
+  // on `bare-pack@2.x` and `@qvac/sdk@0.21` depends on `bare-fs@^4.5.1`, we let
   // the resolver pick a compatible `bare-fs` transitively rather than forcing
   // a stale exact pin that could conflict with the 2.x toolchain.
   const overrides: Record<string, string> = {}
@@ -148,22 +123,15 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
   }
 
   if (has(opts, 'local-ai')) {
-    // Mirrors the official QVAC Expo tutorial dep surface
-    // (https://docs.qvac.tether.io/sdk/tutorials/expo/) and the QVAC
-    // reference mobile app (qvac-workbench-mobile). We deliberately do
-    // NOT enumerate @qvac/sdk's 25+ peer deps (bare-buffer, bare-crypto,
-    // hyperswarm, tar-stream, etc.) — modern npm resolves them
-    // transitively. Listing them with our own version pins is what
-    // forced previous scaffolds to require `npm install --legacy-peer-deps`,
-    // because any pin range that didn't perfectly overlap with @qvac/sdk's
-    // peer-dep range produced a hard ERESOLVE error.
+    // The SDK owns its native dependency graph. Let it select compatible
+    // transitives; separately declare the Expo peers this app actually uses.
     Object.assign(deps, {
-      '@qvac/sdk': '^0.15.0',
+      '@qvac/sdk': '0.21.0',
       // Zod v4.3+ — @qvac/sdk@0.10 bumped its zod floor from ^4.0.17 to
       // ^4.3.0 because finetune schemas use z.union/z.nan combinations
       // only available in 4.3+. Pinning lower causes runtime
       // `z.xor is not a function` crashes when finetune schemas load.
-      // 0.15 keeps the same `zod@^4.3.0` floor.
+      // 0.21 keeps the same `zod@^4.3.0` floor.
       zod: '^4.3.0',
       // expo-file-system: where @qvac/sdk caches model files. Optional
       // peer of @qvac/sdk but always required in practice.
@@ -181,8 +149,8 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     // `expo prebuild`.
     //
     // When you DO want it, install the latest line:
-    //   npm i -D '@qvac/cli@^0.8.1'
-    // Unlike the 0.11 era, `@qvac/sdk@0.15` no longer declares `@qvac/cli`
+    //   npm i -D '@qvac/cli@^0.15.0'
+    // Unlike the 0.11 era, `@qvac/sdk@0.21` no longer declares `@qvac/cli`
     // as a peer dependency at all, so no `--legacy-peer-deps` workaround is
     // needed — it installs cleanly. See the add-openai-server skill for the
     // opt-in flow.
@@ -195,6 +163,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         name: opts.projectName,
         version: '0.1.0',
         private: true,
+        engines: { node: '>=22.17.0' },
         main: 'expo-router/entry',
         scripts,
         dependencies: deps,
@@ -227,7 +196,7 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (has(opts, 'local-ai')) {
-    plugins.unshift('@qvac/sdk/expo-plugin')
+    plugins.unshift(['@qvac/sdk/expo-plugin', { installMissingPrebuilds: true }])
   }
 
   return {
@@ -503,6 +472,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     'StyleSheet',
     'SafeAreaView',
     'ScrollView',
+    'Keyboard',
     'TouchableOpacity',
     'Linking',
     'TextInput',
@@ -582,6 +552,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(5, { key: kvKey, value: kvValue })
       if (res.ok) setKvResult('Saved "' + kvKey + '"')
@@ -594,6 +565,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   async function kvFetch() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(6, { key: kvKey })
       if (res.ok) {
@@ -652,19 +624,13 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       setAiStatus('ready')
       return
     }
-    // Per QVAC docs: "QVAC currently does not run on emulators. You must
-    // use a physical device." GPU mode reliably fails on simulator (Metal
-    // / Vulkan unavailable), so block early with a clear message. CPU
-    // mode is technically also unsupported by llamacpp on emulators, but
-    // we let users try it — if it fails, the underlying QVAC error is
-    // already surfaced via the catch block below.
-    if (Device.isDevice === false && aiDevice === 'gpu') {
+    // QVAC documents physical devices for mobile inference. Refuse before
+    // downloading a model on either simulator mode; mock UI remains available.
+    if (Device.isDevice === false) {
       setAiError(
-        "GPU inference doesn't run on the iOS Simulator / Android Emulator. " +
-        'Toggle Device → CPU below to try CPU mode (slower, may still ' +
-        'fail on emulators per QVAC limits), or run on a physical device ' +
-        'with: npx expo run:ios --device (or run:android --device). Or ' +
-        'set EXPO_PUBLIC_QVAC_MOCK=1 to exercise the UI without inference.',
+        'Local AI requires a physical device. Run npx expo run:ios --device ' +
+        '(or run:android --device), or set EXPO_PUBLIC_QVAC_MOCK=1 ' +
+        'to exercise the simulator UI without inference.',
       )
       setAiStatus('error')
       return
@@ -695,11 +661,6 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           // experimentation).
           device: aiDevice,
           ctx_size: CTX_SIZE,
-          // Sliding window — evict oldest ~10% on overflow instead of
-          // throwing. With this set, never hand-trim history: the SDK
-          // reuses its KV cache by message count, so dropping old messages
-          // forces a full re-prefill that overflows the window.
-          n_discarded: Math.floor(CTX_SIZE / 10),
           // 0 = no reasoning, -1 = unlimited. Replaces the old approach of
           // asking for no reasoning in the prompt and stripping the blocks
           // back out of the token stream by hand.
@@ -752,9 +713,14 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
       // tokens arrive as plain content — no reasoning-block filtering needed.
       let visible = ''
-      for await (const token of result.tokenStream) {
-        visible += token
-        setMessages([...next, { role: 'assistant', content: visible }])
+      for await (const event of result.events) {
+        if (event.type === 'completionDone' && event.stopReason === 'error') {
+          throw new Error(event.error?.message || 'Inference failed')
+        }
+        if (event.type === 'contentDelta') {
+          visible += event.text
+          setMessages([...next, { role: 'assistant', content: visible }])
+        }
       }
     } catch (e: any) {
       setMessages([...next, { role: 'assistant', content: '❌ ' + (e?.message ?? String(e)) }])
@@ -969,7 +935,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
           <Text style={styles.title}>${opts.projectName}</Text>
           <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>

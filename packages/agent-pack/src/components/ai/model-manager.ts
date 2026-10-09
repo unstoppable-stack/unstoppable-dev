@@ -19,8 +19,6 @@ export interface ModelManagerOptions {
   modelSrc?: any
   /** Context window size. Default: 4096 */
   ctxSize?: number
-  /** Sliding window discard count. Default: ctxSize / 10 */
-  nDiscarded?: number
   /** Enable native tool-calling support (tools: true in modelConfig). Default: true for tool-calling models.
    * ALWAYS set to true when using tool-calling models — without it, tools silently don't work.
    * The model can still generate free text alongside tool calls. */
@@ -40,7 +38,6 @@ export class ModelManager {
     this.opts = {
       modelSrc: opts.modelSrc ?? LLAMA_3_2_1B_INST_Q4_0,
       ctxSize: opts.ctxSize ?? 4096,
-      nDiscarded: opts.nDiscarded ?? Math.floor((opts.ctxSize ?? 4096) / 10),
       ...opts,
     }
   }
@@ -59,7 +56,7 @@ export class ModelManager {
   /**
    * Load the model into memory. Must be called before inference.
    *
-   * IMPORTANT: Context config (ctx_size, n_discarded) goes here, NOT in completion().
+   * IMPORTANT: Context size (ctx_size) goes here, NOT in completion().
    */
   async load(): Promise<string> {
     if (this.modelId) return this.modelId
@@ -73,7 +70,6 @@ export class ModelManager {
         onProgress: this.opts.onProgress,
         modelConfig: {
           ctx_size: this.opts.ctxSize,
-          n_discarded: this.opts.nDiscarded,
           ...(this.opts.enableTools !== false ? { tools: true } : {}),
         },
       })

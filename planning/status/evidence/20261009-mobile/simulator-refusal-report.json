@@ -1,0 +1,47 @@
+{
+  "mode": "single",
+  "platforms": [
+    "expo-mobile"
+  ],
+  "levels": {
+    "expo-mobile": 5
+  },
+  "results": [
+    {
+      "variant": "local-ai",
+      "platform": "expo-mobile",
+      "steps": [
+        {
+          "name": "scaffold",
+          "passed": true,
+          "duration": 0,
+          "skipped": true
+        },
+        {
+          "name": "xcodebuild",
+          "passed": true,
+          "duration": 0,
+          "skipped": true
+        },
+        {
+          "name": "boot simulator",
+          "passed": true,
+          "duration": 194
+        },
+        {
+          "name": "start metro + install app",
+          "passed": true,
+          "duration": 8534
+        },
+        {
+          "name": "maestro: feature UI test",
+          "passed": true,
+          "duration": 30945
+        }
+      ],
+      "passed": true,
+      "duration": 39675
+    }
+  ],
+  "totalDurationMs": 41849
+}

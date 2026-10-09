@@ -1,0 +1,65 @@
+
+> @unstoppable-stack/cli@0.4.0-beta.1 test:e2e:mobile
+> tsx e2e/test-scaffold.ts --platform expo-mobile --level 5
+
+[06:25:19] Unstoppable Stack — Scaffold E2E Test Runner
+[06:25:19] Platform: expo-mobile, Level: 5 (QVAC_MOCK=1)
+[06:25:19] Simulator: Unstoppable-Mobile-20261009, Runtime: Maestro
+[06:25:19] Output: /tmp/us-e2e-scaffold
+[06:25:19] 
+╔═══ EXPO-MOBILE · Level 5 · 2 variant(s) ═══╗
+[06:25:21] 
+━━━ mobile / bare ━━━
+[06:25:21]   ▸ scaffold
+[06:25:26]   ✓ scaffold (4.5s)
+[06:25:26]   ▸ npm install
+[06:25:33]   ✓ npm install (6.6s)
+[06:25:33]   ▸ expo prebuild
+[06:25:52]   ✓ expo prebuild (19.6s)
+[06:25:52]   ▸ xcodebuild
+[06:26:47]   ✓ xcodebuild (54.7s)
+[06:26:47]   ▸ boot simulator
+[06:26:47]   ✓ boot simulator (0.6s)
+[06:26:47]   ▸ start metro + install app
+[06:27:05]   ✓ start metro + install app (17.8s)
+[06:27:05]   ▸ maestro: feature UI test
+[06:27:45]   ✓ maestro: feature UI test (40.0s)
+[06:27:45] 
+━━━ mobile / local-ai ━━━
+[06:27:45]   ▸ scaffold
+[06:27:49]   ✓ scaffold (3.9s)
+[06:27:49]   ▸ npm install
+[06:28:05]   ✓ npm install (15.7s)
+[06:28:05]   ▸ expo prebuild
+[06:28:38]   ✓ expo prebuild (33.1s)
+[06:28:38]   ▸ xcodebuild
+[06:29:29]   ✓ xcodebuild (51.0s)
+[06:29:29]   ▸ boot simulator
+[06:29:29]   ✓ boot simulator (0.2s)
+[06:29:29]   ▸ start metro + install app
+[06:29:38]   ✓ start metro + install app (8.5s)
+[06:29:38]   ▸ maestro: feature UI test
+[06:30:14]   ✓ maestro: feature UI test (36.1s)
+
+════════════════════════════════════════════════════════════
+RESULTS
+════════════════════════════════════════════════════════════
+  ✓ expo-mobile/bare               144s
+      ✓ scaffold
+      ✓ npm install
+      ✓ expo prebuild
+      ✓ xcodebuild
+      ✓ boot simulator
+      ✓ start metro + install app
+      ✓ maestro: feature UI test
+  ✓ expo-mobile/local-ai           148s
+      ✓ scaffold
+      ✓ npm install
+      ✓ expo prebuild
+      ✓ xcodebuild
+      ✓ boot simulator
+      ✓ start metro + install app
+      ✓ maestro: feature UI test
+
+2/2 variants passed
+[06:30:14] Report: /tmp/us-e2e-scaffold/report-2026-10-09T06-30-14-319Z.json
