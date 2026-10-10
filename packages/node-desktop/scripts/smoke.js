@@ -34,7 +34,7 @@ let daemon
 try {
   daemon = spawn(
     runtime,
-    [path.join(nodeDesktopRoot, 'bin/headless.js'), '--storage', storagePath, '--ai-mock'],
+    [path.join(nodeDesktopRoot, 'bin/headless.js'), '--storage', storagePath, '--ai-mock', '--dev-auto-approve'],
     {
       cwd: nodeDesktopRoot,
       stdio: ['pipe', 'pipe', 'pipe'],

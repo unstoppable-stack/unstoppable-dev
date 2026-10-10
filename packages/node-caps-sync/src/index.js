@@ -1,3 +1,4 @@
+import { NodeError, CancelledError } from '@unstoppable-stack/node-core'
 import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import { ReplicationEngine } from './replication.js'
@@ -11,11 +12,12 @@ export { validateResourceManifest } from './resource-manifest.js'
 // Ownership is keyed by peer public key, not appId: two devices running the
 // same app are two peers with two resource sets. Every method is scoped to the
 // calling peer — a peer can never see or touch another peer's resources.
-export function syncPack ({ store, storage } = {}) {
+export function syncPack ({ store, storage, admit = async () => {} } = {}) {
   if (!store && !storage) {
     throw new Error('syncPack() needs either an existing `store` or a `storage` path')
   }
 
+  let applyingManifest = false
   let node = null
   let engine = null
   let manifests = null
@@ -27,9 +29,10 @@ export function syncPack ({ store, storage } = {}) {
     return entry?.value || null
   }
 
-  async function applyManifest (owner, manifest) {
+  async function applyManifest (owner, manifest, signal) {
     const applied = []
     for (const resource of manifest.resources) {
+      if (signal?.aborted || node.peerRegistry.isDenied(owner)) throw new CancelledError('Resource registration cancelled')
       const common = {
         key: resource.key,
         name: resource.name,
@@ -40,6 +43,11 @@ export function syncPack ({ store, storage } = {}) {
       }
       if (resource.kind === 'hyperdrive') await engine.addDrive(common)
       else await engine.addCore({ ...common, type: resource.kind })
+      if (signal?.aborted || node.peerRegistry.isDenied(owner)) {
+        await engine.removeOwnerCores(owner)
+        await manifests.del(`owners/${owner}`)
+        throw new CancelledError('Resource registration cancelled')
+      }
       applied.push({ id: resource.id, key: resource.key })
     }
 
@@ -67,11 +75,18 @@ export function syncPack ({ store, storage } = {}) {
     methods: {
       // Replace the caller's complete resource set.
       'manifest.replace': async (params, ctx) => {
-        const owner = ctx.peer.remotePublicKey
-        const manifest = validateResourceManifest(params?.manifest)
-        const resources = await applyManifest(owner, manifest)
-        await manifests.put(`owners/${owner}`, manifest)
-        return { manifest, resources }
+        if (applyingManifest) throw new NodeError('RESOURCE_LIMIT', 'Another resource manifest is being applied; retry later')
+        applyingManifest = true
+        try {
+          const owner = ctx.peer.remotePublicKey
+          await admit(owner)
+          const manifest = validateResourceManifest(params?.manifest)
+          const otherResources = engine.getStats().filter(r => r.owner !== owner).length + engine.getDriveStats().filter(r => r.owner !== owner).length
+          if (otherResources + manifest.resources.length > 512) throw new NodeError('RESOURCE_LIMIT', 'Node resource capacity reached (512 resources)')
+          const resources = await applyManifest(owner, manifest, ctx.signal)
+          await manifests.put(`owners/${owner}`, manifest)
+          return { manifest, resources }
+        } finally { applyingManifest = false }
       },
 
       // The caller's own resources and their protection state. Never another
@@ -98,6 +113,7 @@ export function syncPack ({ store, storage } = {}) {
 
       resume: async (params, ctx) => {
         const owner = ctx.peer.remotePublicKey
+        await admit(owner)
         return { resumed: await engine.resumeOwner(owner) }
       },
 
@@ -133,7 +149,7 @@ export function syncPack ({ store, storage } = {}) {
       })
       await manifests.ready()
 
-      engine = new ReplicationEngine(store, node.swarm)
+      engine = new ReplicationEngine(store, node.swarm, { admit })
 
       // Replication attaches to every swarm connection. For a paired peer this
       // rides the same connection as control traffic: Corestore resolves the
@@ -153,6 +169,7 @@ export function syncPack ({ store, storage } = {}) {
       for await (const entry of manifests.createReadStream({ gte: 'owners/', lt: 'owners0' })) {
         const owner = entry.key.slice('owners/'.length)
         try {
+          if (node.peerRegistry.isDenied(owner)) { await manifests.del(entry.key); continue }
           await applyManifest(owner, entry.value)
         } catch (err) {
           node.emit('error', { type: 'restore', owner, error: err.message })

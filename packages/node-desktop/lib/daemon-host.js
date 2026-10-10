@@ -42,6 +42,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
   const node = new PersonalNode(storagePath, {
     ai,
+    isDenied: async (key) => { await approvalGate.ready(); return Object.hasOwn(approvalGate.snapshot().denied, key) },
     approvePairing: async (req) => {
       const config = await node.getConfig()
       if (config.pairing.requireApproval === false) return 'approve'
@@ -69,7 +70,10 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('paired', (info) => send({ type: 'paired', ...info }))
   node.on('pairDenied', (info) => send({ type: 'pairDenied', ...info }))
   node.on('connection', (info) => send({ type: 'peerConnected', ...info }))
-  node.on('peerDisconnected', (info) => send({ type: 'peerDisconnected', ...info }))
+  node.on('peerDisconnected', (info) => {
+    approvalGate.cancel(info.publicKey)
+    send({ type: 'peerDisconnected', ...info })
+  })
   node.on('error', (info) => send({ type: 'error', ...info }))
   node.on('requestError', (info) => send({ type: 'requestError', ...info }))
   node.on('aiReady', (info) => send({ type: 'aiReady', ...info }))
@@ -132,6 +136,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
       case 'forget-trust':
         await approvalGate.forget(msg.publicKey)
+        await node.node.peerRegistry.forgetDenial(msg.publicKey)
         break
 
       case 'promote-trust':
@@ -308,6 +313,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
   async function cleanup () {
     clearInterval(statusTimer)
+    approvalGate.close()
     await node.close()
     if (typeof exit === 'function') exit()
   }

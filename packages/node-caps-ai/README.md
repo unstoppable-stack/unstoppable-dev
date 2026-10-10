@@ -66,3 +66,7 @@ capability bus. It also checks peer cancellation and a subsequent completion on 
 MIT
 
 Bare hosts install inference 0.21.0, llama.cpp 0.55.0, bare-process and the eager language/audio helpers. The Personal Node desktop app supplies these. QVAC is an optional peer so data-only installs do not pull model addons. The default model is Qwen 3.5 0.8B with context 4096 and reasoning disabled. Each provider accepts one active completion; overlapping requests receive a busy error. Early consumer return or peer abort cancels the native request before freeing that slot. This does not replace admission, trust or durable resource-budget gates.
+
+## Admission limits
+
+All providers, including mocks and injected providers, share one active completion slot. Requests allow up to 64 text messages (user/assistant/system), 64 KiB UTF-8 JSON prompt, 256 KiB output and 60 seconds of inference. The capability bus additionally bounds frames, requests and consumer buffers. `RESOURCE_LIMIT` reports overload/size refusal; `REQUEST_TIMEOUT` reports the host deadline. Cancellation, grant revocation and peer disconnect abort provider work; capacity remains busy until iterator cleanup finishes. Providers must honor their AbortSignal. No arbitrary plugin can be forcibly preempted in-process.

@@ -1,6 +1,6 @@
 const RESOURCE_KINDS = new Set(['hypercore', 'hyperbee', 'hyperdrive'])
 const PROTECTION_MODES = new Set(['mirror', 'metadata-only'])
-const MAX_RESOURCES = 10_000
+const MAX_RESOURCES = 128
 const MAX_METADATA_ENTRIES = 32
 
 export function validateResourceManifest (value) {
