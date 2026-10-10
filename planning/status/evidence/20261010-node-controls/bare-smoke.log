@@ -1,0 +1,60 @@
+
+> unstoppable-node-desktop@0.6.0-alpha.1 test:smoke
+> node scripts/smoke.js
+
+{"type":"workerReady","aiEnabled":true,"aiMock":true}
+{"type":"aiReady","mock":true,"modelId":"mock-model"}
+{"type":"status","protocolVersion":2,"nodePublicKey":"ea6b2aa42946d32ed12710a0a6269b5471884a1491035750b1605098c28c7a8f","capabilities":{"sync":{"version":1,"methods":["manifest.replace","status","usage","pause","resume","peek.core","peek.drive"]},"ai":{"version":1,"methods":["completion.stream"]}},"peers":[],"pairedPeers":0,"cores":[],"drives":[],"connectedPeers":0,"storagePath":"/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/unstoppable-node-smoke-2BlVou","storage":{"totalCores":0,"totalDrives":0,"total":0,"perOwner":{},"quotas":{"global":{"used":0,"limit":null,"exceeded":false},"perPeerLimit":null,"perPeer":{},"enforced":[]}},"invites":[],"ai":{"ready":true,"mock":true,"modelId":"mock-model","error":null},"trust":{"approved":{},"denied":{},"pending":[]}}
+{"type":"status","protocolVersion":2,"nodePublicKey":"ea6b2aa42946d32ed12710a0a6269b5471884a1491035750b1605098c28c7a8f","capabilities":{"sync":{"version":1,"methods":["manifest.replace","status","usage","pause","resume","peek.core","peek.drive"]},"ai":{"version":1,"methods":["completion.stream"]}},"peers":[],"pairedPeers":0,"cores":[],"drives":[],"connectedPeers":0,"storagePath":"/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/unstoppable-node-smoke-2BlVou","storage":{"totalCores":0,"totalDrives":0,"total":0,"perOwner":{},"quotas":{"global":{"used":0,"limit":null,"exceeded":false},"perPeerLimit":null,"perPeer":{},"enforced":[]}},"invites":[],"ai":{"ready":true,"mock":true,"modelId":"mock-model","error":null},"trust":{"approved":{},"denied":{},"pending":[]}}
+{"type":"status","protocolVersion":2,"nodePublicKey":"ea6b2aa42946d32ed12710a0a6269b5471884a1491035750b1605098c28c7a8f","capabilities":{"sync":{"version":1,"methods":["manifest.replace","status","usage","pause","resume","peek.core","peek.drive"]},"ai":{"version":1,"methods":["completion.stream"]}},"peers":[],"pairedPeers":0,"cores":[],"drives":[],"connectedPeers":0,"storagePath":"/var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/unstoppable-node-smoke-2BlVou","storage":{"totalCores":0,"totalDrives":0,"total":0,"perOwner":{},"quotas":{"global":{"used":0,"limit":null,"exceeded":false},"perPeerLimit":null,"perPeer":{},"enforced":[]}},"invites":[],"ai":{"ready":true,"mock":true,"modelId":"mock-model","error":null},"trust":{"approved":{},"denied":{},"pending":[]}}
+{"type":"ready","publicKey":"ea6b2aa42946d32ed12710a0a6269b5471884a1491035750b1605098c28c7a8f","topic":"fe5590787e773f8dbac0172b567fce7c080f3edb5508bfea0068dc499a19100d","capabilities":{"sync":{"version":1,"methods":["manifest.replace","status","usage","pause","resume","peek.core","peek.drive"]},"ai":{"version":1,"methods":["completion.stream"]}},"config":{"configVersion":2,"ai":{"enabled":true,"mode":"mock","modelSrc":""},"storage":{"globalQuotaBytes":null,"perPeerQuotaBytes":null},"pairing":{"requireApproval":true,"autoApproveLocal":false},"notifications":{"pairRequests":true,"pairRequestSound":false,"pairRequestAutoRestore":false},"ui":{"showWelcome":true}},"trust":{"approved":{},"denied":{},"pending":[]}}
+[smoke] daemon ready: {"capabilities":["sync","ai"],"topicMode":"isolated"}
+[smoke] demo run 1/2
+
+[36m▸[0m Node Demo (node-demo-bxpqrj)
+
+[36m▸[0m Phase 1 — local Hyperbee
+[2m·[0m core 2ff12039e9cfae52…  entries before: 0
+[32m✓[0m wrote 3 entries  (version: 4)
+[32m✓[0m announced core on DHT (replication ready)
+
+[36m▸[0m Phase 2 — pair with the Node
+[32m✓[0m paired in 1609ms
+[2m·[0m node key: ea6b2aa42946d32e…
+[2m·[0m capabilities: sync, ai
+[2m·[0m registered core: notes (2ff12039e9cf…)
+
+[36m▸[0m Phase 3 — remote inference
+[2m·[0m prompt: "Reply with one short sentence: what year is it?"
+Mock: Reply with one short sentence: what year is it?
+[32m✓[0m streamed 53 tokens in 129ms
+
+[36m▸[0m Phase 4 — hold open 5s for byte replication
+[32m✓[0m replication window elapsed
+
+[32m✓[0m demo PASSED
+[smoke] demo run 2/2
+
+[36m▸[0m Node Demo (node-demo-ltabej)
+
+[36m▸[0m Phase 1 — local Hyperbee
+[2m·[0m core 2ff12039e9cfae52…  entries before: 3
+[32m✓[0m wrote 3 entries  (version: 7)
+[32m✓[0m announced core on DHT (replication ready)
+
+[36m▸[0m Phase 2 — pair with the Node
+[32m✓[0m paired in 1556ms
+[2m·[0m node key: ea6b2aa42946d32e…
+[2m·[0m capabilities: sync, ai
+[2m·[0m registered core: notes (2ff12039e9cf…)
+
+[36m▸[0m Phase 3 — remote inference
+[2m·[0m prompt: "Reply with one short sentence: what year is it?"
+Mock: Reply with one short sentence: what year is it?
+[32m✓[0m streamed 53 tokens in 131ms
+
+[36m▸[0m Phase 4 — hold open 5s for byte replication
+[32m✓[0m replication window elapsed
+
+[32m✓[0m demo PASSED
+[smoke] PASS

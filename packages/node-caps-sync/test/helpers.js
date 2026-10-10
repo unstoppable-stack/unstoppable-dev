@@ -41,7 +41,7 @@ export async function createTestEnv () {
     const dir = storage || await tmpDir('node-')
     const capabilities = opts.capabilities || []
     if (sync) capabilities.push(syncPack({ storage: join(dir, 'store') }))
-    const node = createNode({ storage: dir, swarm: { bootstrap }, ...opts, capabilities })
+    const node = createNode({ pairing: { autoApprove: true }, storage: dir, swarm: { bootstrap }, ...opts, capabilities })
     nodes.push(node)
     await node.ready()
     return node

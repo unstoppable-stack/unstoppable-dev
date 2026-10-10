@@ -8,7 +8,7 @@
 A long-running Node.js / Bare process that:
 
 - Joins a local Hyperswarm topic so your apps can find it without configuration
-- Pairs with apps that ask (with an optional approval gate)
+- Requires approval or a scoped invitation before granting capability access
 - Replicates Hypercores and Hyperdrives the peers register with it
 - Optionally serves AI inference (mock or QVAC-backed)
 - Persists a registry of paired peers under its storage directory
@@ -124,30 +124,19 @@ data, stable node identity seeds, or replicated app payloads.
 
 ## Storage quotas
 
-Quotas are advisory safety limits, not hard write barriers. The daemon tracks
-replicated bytes, reports quota state in `getStatus().storage.quotas`, and pauses
-app announcements when an app exceeds its configured limit. Existing local data
-is not deleted, and writes already flowing through Hypercore/Corestore may still
-arrive.
+New storage starts with a 10 GiB node-wide and 1 GiB per-peer logical replication budget. Existing explicit settings, including `null` for unlimited, are preserved. Set limits through Config or `setPeerQuota(publicKey, bytes)`; `null` on the peer override uses the configured default.
 
-Quota sources:
+Admission runs before registration/resume and after metadata arrives before mirror downloads. A one-second background check runs even without status polling. Exceeding a quota pauses discovery and cancels the active mirror range; resume is refused until the quota is raised or usage is below it. Resource manifests allow 128 resources per peer and 512 registered resources node-wide. Manifest changes serialize and refuse overlap rather than queueing arbitrary work.
 
-| Scope | Where to set it |
-| ----- | --------------- |
-| Global total | Dashboard Config → Global storage quota |
-| Default per-app | Dashboard Config → Per-app storage quota |
-| Specific app | Dashboard app row → Quota, or `node.setAppQuota(appId, bytes)` |
-
-Use `null` for unlimited/default values. Resume an over-quota app after raising
-or clearing its quota with `node.resumeApp(appId)` or the dashboard Resume
-button.
+These are logical replication budgets, not hard filesystem quotas: retained blocks, metadata overhead, and bytes already in flight are not reclaimed. No per-peer purge or general backup/recovery is promised.
 
 ## Pairing trust boundary
 
-The standalone/headless daemon auto-accepts pairing when no `approvePairing`
-callback is supplied. The Personal Node desktop app supplies an approval gate
-and persists trust decisions. Apps still receive only the capability methods
-they requested and the node currently offers.
+Standalone/headless Personal Node denies direct unknown-peer pairing unless `approvePairing` is supplied or the operator explicitly disables `pairing.requireApproval` for development. Use a scoped invitation for unattended operation. The desktop gate prompts and remembers decisions, with 32 pending decisions and a 30-second expiry. Revoked peers remain denied across restart and cannot bypass revocation with another invite. Clearing denial is an explicit local operator action. Remembered grants remain a ceiling across reconnect.
+
+The desktop’s embedded headless binary follows the same policy. Its `--dev-auto-approve` flag is solely an explicit development/test opt-in; smoke fixtures supply it deliberately. Local discovery and self-reported device names do not prove local identity; `autoApproveLocal` grants no bypass.
+
+The shared bus enforces request/frame/stream limits documented in [node-core](../node-core/README.md). AI additionally admits one completion, at most 64 text messages / 64 KiB prompt, 256 KiB output, and 60 seconds of inference. Native cancellation must finish before admission is reusable. Settings exports retain revoked keys; importing an older export without this field preserves existing denials.
 
 ## Resource manifests
 

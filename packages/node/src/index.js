@@ -69,13 +69,13 @@ ${chalk.bold('Options:')}
   --storage <path>     Storage directory (default: ~/.unstoppable-node)
   --ai                 Enable AI provider (loads a model via @qvac/sdk)
   --ai-mock            Enable AI provider in mock mode (for tests/demos)
-  --ai-model <src>     QVAC model source to load (default: llama-3.2-1B)
+  --ai-model <src>     QVAC model source to load (default: Qwen 3.5 0.8B)
 
 ${chalk.bold('Environment:')}
   UNSTOPPABLE_AI=1          Same as --ai
   UNSTOPPABLE_AI_MOCK=1     Same as --ai-mock
 
-${chalk.dim('The node replicates, backs up, and seeds data from your P2P apps.')}
+${chalk.dim('The node replicates and seeds data from approved P2P apps. Headless pairing requires a scoped invitation.')}
 ${chalk.dim('With --ai it also offers on-demand inference to paired peers.')}
 `)
   } else {
@@ -160,7 +160,7 @@ async function startNode (storagePath, cli = {}) {
     const caps = Object.keys(node.node.capabilities.describe()).join(' ')
     console.log(chalk.dim('  Capabilities: ') + chalk.green(caps))
     console.log()
-    console.log(chalk.dim('  Share the public key to pair an app with this node.'))
+    console.log(chalk.dim('  Pair with a scoped invitation; a public key alone is not approval.'))
     console.log(chalk.dim('  Waiting for apps to connect...'))
     console.log()
   })

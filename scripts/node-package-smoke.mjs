@@ -62,7 +62,8 @@ const host = createNode({ storage: './host', swarm: { bootstrap }, capabilities:
 const client = createNode({ storage: './client', swarm: { bootstrap } })
 try {
   await host.ready(); await client.ready(); await host.listen()
-  const peer = await client.connect(host.publicKey)
+  const invitation = await host.createInvite({ grants: { ai: ['completion.stream'], sync: ['status'] } })
+  const peer = await client.pair(invitation.code)
   assert.ok(peer.capabilities.sync)
   let text = ''
   for await (const token of peer.stream('ai', 'completion.stream', { messages: [{ role: 'user', content: 'portable packages' }] })) text += token

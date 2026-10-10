@@ -35,7 +35,7 @@ const host = createDaemonHost({
   storagePath,
   args,
   send,
-  approvalMode: 'auto',
+  approvalMode: args.includes('--dev-auto-approve') ? 'auto' : 'prompt',
   exit
 })
 

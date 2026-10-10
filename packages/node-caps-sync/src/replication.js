@@ -5,7 +5,8 @@ import Hyperdrive from 'hyperdrive'
 const CLOSE_DRAIN_MS = 2_000
 
 export class ReplicationEngine {
-  constructor (store, swarm) {
+  constructor (store, swarm, { admit = async () => {} } = {}) {
+    this.admit = admit
     this.store = store
     this.swarm = swarm
     // Two separate maps keyed by hex-encoded key so we can cleanly report
@@ -193,14 +194,16 @@ export class ReplicationEngine {
     let touched = 0
     for (const [key, info] of this.replicating) {
       if (info.owner !== owner || info.paused) continue
-      try { await this.swarm.leave(info.topic) } catch {}
       info.paused = true
+      info.download?.destroy()
+      try { await this.swarm.leave(info.topic) } catch {}
       touched++
     }
     for (const [, info] of this.drives) {
       if (info.owner !== owner || info.paused) continue
-      try { await this.swarm.leave(info.topic) } catch {}
       info.paused = true
+      info.download?.destroy()
+      try { await this.swarm.leave(info.topic) } catch {}
       touched++
     }
     return touched
@@ -444,13 +447,20 @@ export class ReplicationEngine {
       info.observedPeer = true
       await info.core.update({ wait: true })
     }
+    if (info.paused || this._closing) return
+    await this.admit(info.owner)
     const targetLength = info.core.length
     if (!info.observedPeer) {
       info.protection.state = 'pending'
       return
     }
     info.protection.targetLength = targetLength
-    if (targetLength > 0) await info.core.download({ start: 0, end: targetLength, linear: true }).done()
+    if (info.paused || this._closing) return
+    if (targetLength > 0) {
+      info.download = info.core.download({ start: 0, end: targetLength, linear: true })
+      try { await info.download.done() } finally { info.download = null }
+    }
+    if (info.paused || this._closing) return
     const complete = targetLength === 0 || await info.core.has(0, targetLength)
     info.protection.state = complete ? 'protected' : 'pending'
     if (complete) info.protection.caughtUpAt = new Date().toISOString()
@@ -488,13 +498,27 @@ export class ReplicationEngine {
       info.observedPeer = true
       await info.drive.update({ wait: true })
     }
+    if (info.paused || this._closing) return
+    await this.admit(info.owner)
     const targetVersion = info.drive.version
     if (!info.observedPeer) {
       info.protection.state = 'pending'
       return
     }
     info.protection.targetVersion = targetVersion
-    await info.drive.download('/')
+    // Download one file range at a time, retaining its cancellation handle.
+    // Hyperdrive.download('/') otherwise hides handles for every file.
+    for await (const entry of info.drive.list('/')) {
+      if (info.paused || this._closing) return
+      const blob = entry.value?.blob
+      if (!blob) continue
+      const blobs = await info.drive.getBlobs()
+      await this.admit(info.owner)
+      if (info.paused || this._closing) return
+      info.download = blobs.core.download({ start: blob.blockOffset, length: blob.blockLength })
+      try { await info.download.done() } finally { info.download = null }
+    }
+    if (info.paused || this._closing) return
     const progress = await driveProgress(info.drive)
     Object.assign(info.protection, progress)
     const complete = progress.bytesRemaining === 0 && info.drive.version === targetVersion
