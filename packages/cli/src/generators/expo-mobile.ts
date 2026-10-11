@@ -1,3 +1,4 @@
+import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
@@ -10,6 +11,7 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     gitignore(),
     readme(opts),
     planningReadme(),
+    ...projectFiles(opts),
     packageJson(opts),
     appJson(opts),
     metroConfig(opts),
@@ -35,41 +37,9 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  // Treat Expo/RN, Bare kit and QVAC as one tested compatibility set.
-  // Expo 54 stays on RN 0.81.5. Kit 0.15.6 embeds Bare 1.33.4 according
-  // to SDK 0.21's runtime table; kit 0.15.0 embeds the older Bare 1.29.4.
-  // Validate native bundling, simulator startup and physical-device AI
-  // separately before extending the support claim.
-  // Bare worklet is always required (P2P is base infrastructure)
-  const deps: Record<string, string> = {
-    expo: '~54.0.33',
-    'expo-build-properties': '~1.0.9',
-    'expo-file-system': '^19.0.15',
-    // Required transitively by `expo-router/build/views/Unmatched.js` — not
-    // installed automatically by expo-router in bare (non-managed) apps.
-    'expo-linking': '~8.0.11',
-    'expo-router': '~6.0.23',
-    'expo-splash-screen': '~31.0.10',
-    'expo-status-bar': '~3.0.8',
-    react: '19.1.0',
-    // expo-router's optional web peer otherwise selects a newer React DOM
-    // whose React peer range conflicts with Expo 54's native React pin.
-    'react-dom': '19.1.0',
-    'react-native': '0.81.5',
-    'react-native-safe-area-context': '~5.6.0',
-    'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.15.6', // Exact: embeds Bare 1.33.4
-    'bare-pack': '^2.2.1', // 2.x — matches @qvac/sdk@0.21's bundler. See notes above.
-    'bare-rpc': '^1.3.2',
-    // Base P2P + KV infra — always required by bare/index.js worklet
-    corestore: '^7.13.0',
-    hyperbee: '^2.27.3',
-  }
-
-  const devDeps: Record<string, string> = {
-    '@types/react': '~19.1.10',
-    typescript: '~5.9.2',
-  }
+  const profile = profileFor(opts.platform)
+  const deps = dependenciesFor(opts)
+  const devDeps = profile.devDependencies
 
   const scripts: Record<string, string> = {
     start: 'expo start',
@@ -103,59 +73,6 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     preandroid: 'npm run build:bare',
   }
 
-  // No `overrides` needed on the 2.x bundler. The previous `bare-fs@4.5.1`
-  // exact override existed only because newer `bare-fs` (Bare 4.7.x) had not
-  // been validated against the old `bare-pack@1.5.1` pipeline. Now that we're
-  // on `bare-pack@2.x` and `@qvac/sdk@0.21` depends on `bare-fs@^4.5.1`, we let
-  // the resolver pick a compatible `bare-fs` transitively rather than forcing
-  // a stale exact pin that could conflict with the 2.x toolchain.
-  const overrides: Record<string, string> = {}
-
-  if (has(opts, 'node-sync')) {
-    // node-core + its transitive runtime deps. `hyperswarm` already enters
-    // the graph via `local-ai` too, so guard so we don't double-declare.
-    Object.assign(deps, {
-      '@unstoppable-stack/node-core': '^0.6.0-alpha.1',
-      hyperswarm: '^4.17.0',
-      b4a: '^1.8.0',
-      events: '^3.3.0',
-    })
-  }
-
-  if (has(opts, 'local-ai')) {
-    // The SDK owns its native dependency graph. Let it select compatible
-    // transitives; separately declare the Expo peers this app actually uses.
-    Object.assign(deps, {
-      '@qvac/sdk': '0.21.0',
-      // Zod v4.3+ — @qvac/sdk@0.10 bumped its zod floor from ^4.0.17 to
-      // ^4.3.0 because finetune schemas use z.union/z.nan combinations
-      // only available in 4.3+. Pinning lower causes runtime
-      // `z.xor is not a function` crashes when finetune schemas load.
-      // 0.21 keeps the same `zod@^4.3.0` floor.
-      zod: '^4.3.0',
-      // expo-file-system: where @qvac/sdk caches model files. Optional
-      // peer of @qvac/sdk but always required in practice.
-      'expo-file-system': '^19.0.15',
-      // expo-device: used by our scaffold to detect simulator vs physical
-      // device and refuse fast with a clear error (per QVAC docs:
-      // "QVAC currently does not run on emulators").
-      'expo-device': '~8.0.10',
-    })
-    // NOTE: @qvac/cli is intentionally NOT listed here. It's an optional
-    // tool used for two scenarios: (1) running an OpenAI-compatible HTTP
-    // server (`qvac serve openai`), (2) bundling a tree-shaken SDK worker
-    // (`qvac bundle sdk`). The default scaffold doesn't need either — the
-    // @qvac/sdk Expo plugin handles bundling automatically during
-    // `expo prebuild`.
-    //
-    // When you DO want it, install the latest line:
-    //   npm i -D '@qvac/cli@^0.15.0'
-    // Unlike the 0.11 era, `@qvac/sdk@0.21` no longer declares `@qvac/cli`
-    // as a peer dependency at all, so no `--legacy-peer-deps` workaround is
-    // needed — it installs cleanly. See the add-openai-server skill for the
-    // opt-in flow.
-  }
-
   return {
     path: 'package.json',
     content: JSON.stringify(
@@ -163,14 +80,11 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         name: opts.projectName,
         version: '0.1.0',
         private: true,
-        engines: { node: '>=22.17.0' },
+        engines: profile.engines,
         main: 'expo-router/entry',
         scripts,
         dependencies: deps,
         devDependencies: devDeps,
-        // Only emit `overrides` when non-empty (keeps generated package.json
-        // clean now that the bare-fs override is gone).
-        ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
       },
       null,
       2,

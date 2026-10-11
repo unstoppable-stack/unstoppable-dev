@@ -1,4 +1,5 @@
-import { chatContextSource } from './chat-context.js'
+import { manifest } from '../compatibility/index.js'
+import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
@@ -11,6 +12,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     gitignore(),
     readme(opts),
     planningReadme(),
+    ...projectFiles(opts),
     packageJson(opts),
     indexHtml(opts),
     electronMainJs(opts),
@@ -20,7 +22,6 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     appComponent(opts),
   ]
 
-  if (has(opts, 'local-ai')) files.push({ path: 'chat-context.js', content: chatContextSource })
 
   if (has(opts, 'multi-writer')) {
     files.push(schemaBuilder(), {
@@ -35,33 +36,8 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  const deps: Record<string, string> = {
-    'pear-runtime': '^1.3.1',
-    'bare-rpc': '^1.3.8',
-    hyperswarm: '^4.17.2',
-    hyperdht: '^6.34.1',
-    hypercore: '^11.37.2',
-    corestore: '^7.13.0',
-    hyperbee: '^2.27.3',
-    b4a: '^1.8.0',
-    'hypercore-crypto': '^3.7.0',
-  }
-
-  if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/inference': '0.21.0', '@qvac/llm-llamacpp': '0.55.0',
-      // 0.21's public API eagerly imports translation/audio helpers.
-      '@qvac/langdetect-text': '^0.1.2',
-      '@qvac/decoder-audio': '^0.7.0', 'bare-process': '^4.5.1' })
-  }
-
-  if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable-stack/node-core': '^0.6.0-alpha.1' })
-  }
-
-  if (has(opts, 'multi-writer')) {
-    Object.assign(deps, MULTI_WRITER_DEPS)
-    delete deps.hyperbee
-  }
+  const profile = profileFor(opts.platform)
+  const deps = dependenciesFor(opts)
 
   return {
     path: 'package.json',
@@ -71,7 +47,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       private: true,
       type: 'module',
       main: 'electron/main.js',
-      engines: { node: '>=22.17.0' },
+      engines: profile.engines,
       // Valid development-only link so pear-runtime can initialize before
       // the developer creates their own release line with `pear touch`.
       upgrade: 'pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o',
@@ -88,7 +64,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         start: 'electron .',
       },
       dependencies: deps,
-      devDependencies: { electron: '^44.5.1' },
+      devDependencies: profile.devDependencies,
     }, null, 2),
   }
 }
@@ -428,134 +404,61 @@ ${replicateLine}
   ]
 
   if (has(opts, 'local-ai')) {
-    // The SDK is NOT imported at module scope. A static import runs the
-    // SDK's native-module resolution as a side effect of loading worker.js,
-    // so any SDK problem kills the worker at import time — before it can
-    // write anything on its pipe, which surfaces to the UI as a silent hang
-    // with P2P and KV storage never coming up either. Loading it lazily in
-    // the 'load-ai' handler keeps that failure scoped to the AI feature and
-    // reportable over the pipe.
-    imports.push(`import { streamChat } from './chat-context.js'`)
-    moduleState.push(`let sdk = null`)
-    moduleState.push(`let modelId = null`)
-    moduleState.push(`let qvacPluginRegistered = false`)
+    imports.push(`import { createAISession, createBareAdapter, createMockAdapter } from './.unstoppable/runtime-ai/index.js'`)
+    moduleState.push(`const MOCK_AI = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env?.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env?.QVAC_MOCK === '1')`)
+    moduleState.push(`const ai = createAISession({ adapter: MOCK_AI ? createMockAdapter() : createBareAdapter(), byteBudget: ${Math.floor(DEFAULT_CTX_SIZE / 2)} })`)
     moduleState.push(`let activeChatRequestId = null`)
-    moduleState.push(`const CTX_SIZE = ${DEFAULT_CTX_SIZE}`)
-    moduleState.push(`let modelLoading = false`)
-    // QVAC_MOCK is read at module load (not inside init) so handleCommand
-    // can use it too. The worker runs in two different runtimes:
-    //   * Node — when driven by scripts/tests via `node worker.js`
-    //   * Bare — when hosted by pear-runtime
-    // `process.env` only exists in Node; Bare exposes env through
-    // `Bare.env`. Referencing an undefined `process` in Bare throws a
-    // ReferenceError at import time, hard-failing the worker before it
-    // can write anything on its pipe — so probe both safely.
-    moduleState.push(
-      `const MOCK_AI = (\n  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||\n  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')\n)`,
-    )
-    // Emit an initial "idle" status so the UI can render the Load button
-    // instead of assuming the model is silently (de)loading on boot.
-    initCode.push(`
-  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
-  `)
-    cleanupCode.push(`  if (activeChatRequestId !== null && modelId && modelId !== 'mock-model' && sdk) {
-    activeChatRequestId = null
-    await sdk.cancel({ operation: 'inference', modelId }).catch(() => {})
+    initCode.push(`  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })`)
+    cleanupCode.unshift(`  activeChatRequestId = null
+  try { await ai.close() } catch (err) {
+    send({ type: 'error', service: 'ai', code: err.code, error: err.message })
   }`)
-    cleanupCode.push(`  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })`)
-
     commandHandlers.push(`
     case 'load-ai': {
-      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
-      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
-      modelLoading = true
-      if (MOCK_AI) {
-        await new Promise((r) => setTimeout(r, 200))
-        modelId = 'mock-model'
-        modelLoading = false
-        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-        break
-      }
+      send({ type: 'status', service: 'ai', status: 'loading', mock: ai.mock })
       try {
-        send({ type: 'status', service: 'ai', status: 'loading' })
-        const { default: process } = await import('bare-process')
-        globalThis.process = process
-        const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/inference'),
-          import('@qvac/inference/llamacpp-completion/plugin'),
-          import('@qvac/inference/plugins'),
-        ])
-        if (!qvacPluginRegistered) {
-          registerPlugin(llmPlugin)
-          qvacPluginRegistered = true
-        }
-        sdk = loadedSdk
-        modelId = await sdk.loadModel({
-          modelSrc: msg.modelSrc || sdk.${DEFAULT_LLM_CONST},
+        const modelId = await ai.load({
+          modelSrc: msg.modelSrc,
+          modelConstant: '${DEFAULT_LLM_CONST}',
+          modelChecksum: '${manifest.model.sha256Checksum}',
           modelType: 'llm',
           modelConfig: ${llmModelConfig('          ')},
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
-        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: ai.mock })
       } catch (err) {
-        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
-      } finally {
-        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'error', code: err.code, error: err.message })
       }
       break
     }
     case 'chat': {
       const requestId = msg.requestId
-      if (!modelId) { send({ type: 'chat-error', requestId, error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
       activeChatRequestId = requestId
-      if (MOCK_AI) {
-        const last = msg.history[msg.history.length - 1]
-        const reply = \`Mock: \${last?.content ?? '(empty)'}\`
-        for (const ch of reply) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token: ch })
-          await new Promise((r) => setTimeout(r, 5))
-        }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
-        break
-      }
       try {
-        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
-        // tokens arrive as plain content — no reasoning-block filtering needed.
-        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
-          send({ type: 'chat-context', requestId }))
-        for await (const token of tokens) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token })
+        for await (const token of ai.stream(msg.history, {
+          requestId,
+          onTrim: () => send({ type: 'chat-context', requestId }),
+        })) {
+          if (activeChatRequestId === requestId) send({ type: 'chat-token', requestId, token })
         }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-done', requestId })
       } catch (err) {
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-error', requestId, error: String(err && err.message || err) })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-error', requestId, code: err.code, error: err.message })
+      } finally {
+        if (activeChatRequestId === requestId) activeChatRequestId = null
       }
       break
     }
     case 'cancel-chat': {
       const requestId = msg.requestId
-      if (activeChatRequestId !== requestId) {
-        send({ type: 'chat-cancelled', requestId })
-        break
-      }
-      activeChatRequestId = null
+      if (activeChatRequestId === requestId) activeChatRequestId = null
       try {
-        if (!MOCK_AI) await sdk.cancel({ operation: 'inference', modelId })
+        await ai.cancel(requestId)
         send({ type: 'chat-cancelled', requestId })
       } catch (err) {
-        send({ type: 'chat-error', requestId, error: \`Cancellation failed: \${String(err && err.message || err)}\` })
+        send({ type: 'chat-error', requestId, code: err.code, error: 'Cancellation failed: ' + err.message })
       }
       break
     }`)
