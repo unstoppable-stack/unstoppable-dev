@@ -532,3 +532,29 @@ for the testing strategy.
 ## License
 
 MIT © The Unstoppable Stack contributors
+
+
+## App contracts and compatibility
+
+Generated apps record their selected platform/features, generator/profile version,
+model identity, dependency declarations and maturity in `.unstoppable/project.json`.
+Desktop/Node local AI uses a versioned runtime at `.unstoppable/runtime-ai/`;
+app code owns prompts/UI/history, while the session owns model lifecycle,
+bounded context, native cancellation and shutdown. Expo has its own experimental
+native profile.
+
+```bash
+us compatibility list -o <workspace>
+us compatibility check -o <app>
+```
+
+These commands inspect profiles and propose upgrade differences without changing
+files. They detect edited vendored runtime, declaration/profile differences and
+exact npm lockfile pin mismatches. Matching declarations do not certify every
+resolved native graph. Preserve application edits and validate explicit migrations;
+do not re-scaffold edited apps with `--force`.
+
+Maintainers edit `packages/runtime-ai/src/` and
+`packages/cli/src/compatibility/profiles.json`, then run
+`node scripts/sync-stack-assets.mjs` from the repository root. Builds generate
+CLI runtime assets and compatibility guidance; tests check source/bundle parity.

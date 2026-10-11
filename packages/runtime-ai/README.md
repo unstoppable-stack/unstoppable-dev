@@ -1,0 +1,27 @@
+# Unstoppable AI runtime
+
+Maintained source for the local AI session used by desktop and Node scaffolds.
+The CLI vendors this package into `.unstoppable/runtime-ai/`; it does not require
+an unpublished npm package. Run `node scripts/sync-stack-assets.mjs` after editing
+this package. Generated apps keep their recorded version until deliberately migrated.
+
+`createAISession({ adapter, byteBudget })` owns loading, bounded history, one
+active request, native cancellation, error codes, and unloading. The app owns
+history, prompts, UI, and IPC request IDs. Call `load(options)`, then iterate
+`stream(history, { requestId, signal, onTrim })`. Use `cancel(requestId)` for Stop
+and `close()` on shutdown. Cancellation holds the session busy until the stream
+settles. Consume or return the stream; do not leave an iterator suspended while
+waiting for `cancel()` or `close()` to finish.
+
+QVAC cancellation is scoped to a model. The concurrency limit is one request
+per session; do not share its model with unrelated completions. A failed native
+cancel is reported as `CANCEL_FAILED`; the runtime cannot promise recovery from
+an engine that will not settle. Do not automatically replay partially emitted output.
+
+The Bare and Node adapters load native modules lazily. A failed load can be retried.
+Mock mode uses the same session contract and visibly emits `Mock:`. Expo remains
+on its separate experimental profile and does not consume this runtime yet.
+
+Run `npm test` here for contract tests. Real inference, cancellation/reuse, and
+network-isolated cached startup must also pass the generated-app acceptance gates
+before claiming native support. The compatibility manifest records that distinction.

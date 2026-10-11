@@ -5,8 +5,7 @@ description: Build a desktop app with Electron, Pear OTA (pear-runtime), and a B
 
 # Set Up Pear Desktop
 
-**Migration:** 6 October 2026 · macOS Apple Silicon · QVAC inference 0.21.0 + llama.cpp 0.55.0, Pear Runtime 1.3.1, Electron 44.5.1. Release evidence must identify the new candidate/artifact; prior 0.15 checks do not approve this update.
-
+Read the app’s `.unstoppable/project.json` and generated compatibility table before changing native dependencies. The maintained local AI session lives in `.unstoppable/runtime-ai/`; preserve its lifecycle contract when extending the worker.
 Use the current Pear OTA architecture. `pear run`, the ambient `global.Pear`
 API, `pear-electron`, `pear-bridge`, `pear-run`, `pear.pre`, and `pear release`
 are legacy APIs removed by Pear v3. Never add them to a new desktop app.
@@ -38,32 +37,9 @@ app/
     └── index.js
 ```
 
-## Package configuration
+## Generated host configuration
 
-```json
-{
-  "type": "module",
-  "main": "electron/main.js",
-  "upgrade": "pear://<VALID_DEVELOPMENT_LINK>",
-  "scripts": {
-    "dev": "electron .",
-    "start": "electron ."
-  },
-  "dependencies": {
-    "pear-runtime": "^1.3.1"
-  },
-  "devDependencies": {
-    "electron": "^44.5.1"
-  }
-}
-```
-
-Create the real upgrade link with `pear touch` before enabling OTA updates.
-Local development should disable updates unless `--updates` is explicitly
-passed, so an OTA build cannot replace local source unexpectedly.
-
-Do not emit the removed `pear.pre`, `pear.routes`, `pear.unrouted`, or
-`pear.gui` fields.
+Keep package scripts, dependency versions and Electron/Pear initialization in the generated host. Inspect the app's compatibility profile before changing them. Configure a real Pear upgrade link before enabling OTA; keep local updates opt-in so a deployed build cannot replace development source unexpectedly.
 
 ## Electron host
 
@@ -90,20 +66,7 @@ pipe.on('data', onData)
 pipe.write(JSON.stringify({ type: 'workerReady' }) + '\n')
 ```
 
-QVAC plugins must be registered explicitly in a direct Bare worker before its
-first SDK call:
-
-```js
-const [{ llmPlugin }, { registerPlugin }] = await Promise.all([
-  import('@qvac/inference/llamacpp-completion/plugin'),
-  import('@qvac/inference/plugins'),
-])
-registerPlugin(llmPlugin)
-```
-
-For streaming inference, send a request ID across the bridge and implement Stop
-with `cancel({ operation: 'inference', modelId })`. Ignore late stream events
-whose request ID is no longer active, and cancel before model unload on exit.
+For local AI, use the generated `.unstoppable/runtime-ai/index.js` session. Its Bare adapter owns native imports and plugin registration. The app owns prompts and IPC messages; send request IDs across the bridge, stream through the session, call `cancel(requestId)` for Stop, and await `close()` during shutdown. Keep consuming or return the iterator so cancellation can settle.
 
 Use newline-delimited JSON or a typed RPC protocol. Never use stdout as the
 application IPC channel. Call `Bare.exit()` only after P2P, storage, model,
@@ -150,8 +113,6 @@ deployment tool:
 
 Do not generate `pear release`; it was removed in Pear v3.
 
-## QVAC 0.21 Bare integration
+## Native compatibility
 
-Use Node >=22.17 for development tooling. Install `@qvac/inference@0.21.0`, `@qvac/llm-llamacpp@0.55.0` and `bare-process@^4.5.1`. Set `globalThis.process` from bare-process before dynamically importing inference. Configuration files now load through dynamic import; remove the 0.15 global require shim.
-
-Use generated `chat-context.js` to bound recent requests and recover from SDK overflow before streaming. The removed `n_discarded` option must not be generated. Native addons and the embedded Bare runtime must be tested together; keep inference outside Electron/renderer Node code.
+Use the recorded profile for host requirements and coupled native dependencies. The session owns bounded recent history and overflow recovery; preserve displayed conversation in app code. Test the native graph, actual streaming, Stop/reuse and cached offline startup together. Keep inference outside the Electron renderer and use installed types and version-matched upstream documentation for advanced SDK APIs.

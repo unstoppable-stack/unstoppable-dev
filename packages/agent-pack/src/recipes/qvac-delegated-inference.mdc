@@ -1,14 +1,10 @@
 ---
-description: Migration boundary for removed QVAC delegated inference; project capability RPC is separate and experimental.
+description: Delegated AI boundaries integration guidance.
 alwaysApply: false
 ---
 
-# Remote inference migration boundary
+# Delegated AI boundaries
 
-QVAC 0.19 removed the SDK's DHT delegation APIs. Do not use `delegate` in `loadModel`, `cancel` or `heartbeat`, or generate `startQVACProvider`. Older 0.15 examples do not apply to 0.21.
+The deferred node-caps-ai pack is a separate experimental capability transport. It is not the local AI session or current QVAC distributed-GPU RPC. Validate its installed engine version, grants, resource policy and native cancellation before use. Do not generate the removed provider/delegate APIs.
 
-For the supported desktop preview, run `@qvac/inference` locally in its Bare worker. The project’s deferred Node capability pack exposes its own RPC completion protocol; that requires pairing/trust, bounded requests, provider lifecycle and separate real-model acceptance. It is not a built-in QVAC delegation call.
-
-QVAC 0.21 can expose native llama.cpp RPC for distributed GPU inference. Its endpoint/discovery and non-loopback opt-in rules differ from the removed SDK feature. Use current official examples and validate network exposure/resource bounds before adding it. It is outside the default preview.
-
-See [QVAC migration notes](https://github.com/tetherto/qvac/releases/tag/sdk-v0.19.0) and the QVAC module reference for current runtime APIs.
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

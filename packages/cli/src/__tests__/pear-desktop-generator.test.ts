@@ -146,23 +146,25 @@ describe('pear-desktop generator', () => {
     }
 
     it('local-ai: lazy-imports @qvac/sdk (ESM) and supports QVAC_MOCK', () => {
-      const worker = fileMap(make(['local-ai']))['worker.js']
+      const files = fileMap(make(['local-ai']))
+      const worker = files['worker.js']
+      const adapter = files['.unstoppable/runtime-ai/adapters.js']
       // The SDK must NOT be imported at module scope: a static import runs
       // native-module resolution when worker.js loads, so an SDK failure
       // kills the worker before it can report anything on its pipe — taking
       // P2P and KV storage down with it. It is imported inside 'load-ai'.
-      expect(worker).toContain("import('@qvac/inference')")
-      expect(worker).toContain("import('@qvac/inference/llamacpp-completion/plugin')")
-      expect(worker).toContain("import('@qvac/inference/plugins')")
-      expect(worker).toContain('registerPlugin(llmPlugin)')
-      expect(worker).toContain(`modelSrc: msg.modelSrc || sdk.`)
-      expect(worker).toContain("sdk.cancel({ operation: 'inference', modelId })")
+      expect(adapter).toContain("import('@qvac/inference')")
+      expect(adapter).toContain("import('@qvac/inference/llamacpp-completion/plugin')")
+      expect(adapter).toContain("import('@qvac/inference/plugins')")
+      expect(adapter).toContain('registerPlugin(llmPlugin)')
+      expect(worker).toContain('modelSrc: msg.modelSrc')
+      expect(adapter).toContain("engine.cancel({ operation: 'inference', modelId })")
       expect(worker).toContain("case 'cancel-chat'")
       expect(worker).not.toContain("require('@qvac/sdk')")
       expect(worker).not.toMatch(/^import .* from '@qvac\/sdk'$/m)
       expect(worker).toContain('QVAC_MOCK')
       expect(worker).toContain('MOCK_AI')
-      expect(worker).toContain("'mock-model'")
+      expect(adapter).toContain("'mock-model'")
       const app = fileMap(make(['local-ai']))['app/index.js']
       expect(app).toContain('~532 MB download on first run')
       expect(app).toContain('~1.4–1.5 GiB')
@@ -173,9 +175,9 @@ describe('pear-desktop generator', () => {
 
     it('local-ai: disables reasoning via reasoning_budget, not prompt hacks', () => {
       const worker = fileMap(make(['local-ai']))['worker.js']
-      expect(worker).toContain('reasoning_budget: 0')
+      expect(worker).toContain('"reasoning_budget": 0')
       expect(worker).not.toContain('n_discarded')
-      expect(worker).toContain('streamChat')
+      expect(worker).toContain('ai.stream')
       // The old approach — '/no_think' in the system prompt plus a manual
       // <think> stripping state machine over the token stream.
       expect(worker).not.toContain('/no_think')

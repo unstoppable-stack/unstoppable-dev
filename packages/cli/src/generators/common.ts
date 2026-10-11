@@ -1,26 +1,15 @@
+import { manifest } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions, Feature } from './types.js'
 
 export function has(opts: GeneratorOptions, feature: Feature): boolean {
   return opts.features.includes(feature)
 }
 
-/**
- * Default LLM for scaffolded apps.
- *
- * `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` is the smallest LLM in the QVAC 0.15 and 0.21
- * model registry (532MB, engine `llamacpp-completion`, addon `llm`). It
- * resolves to the same pinned Hugging Face revision that `tetherto/qvac-app`
- * hardcodes in its own `llm-catalog.ts` — so we get their validated model
- * without maintaining a parallel `registry://` catalog.
- *
- * Supersedes `QWEN3_600M_INST_Q4` (Qwen 3 0.6B, 382MB). That constant still
- * exists in the SDK, but Qwen 3 emits `<think>` blocks that had to be stripped
- * from the token stream by hand; Qwen 3.5 supports `reasoning_budget` instead.
- */
-export const DEFAULT_LLM_CONST = 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M'
-export const DEFAULT_LLM_LABEL = 'Qwen 3.5 0.8B'
-export const DEFAULT_LLM_SIZE_MB = 532
-export const DEFAULT_CTX_SIZE = 4096
+// Model identity and configuration come from the compatibility manifest.
+export const DEFAULT_LLM_CONST = manifest.model.constant
+export const DEFAULT_LLM_LABEL = manifest.model.label
+export const DEFAULT_LLM_SIZE_MB = manifest.model.sizeMB
+export const DEFAULT_CTX_SIZE = manifest.model.config.ctx_size
 
 /**
  * `modelConfig` passed to `loadModel`, as JS source (generators inline this
@@ -40,26 +29,11 @@ export const DEFAULT_CTX_SIZE = 4096
  * and a latest-message-only retry on ContextOverflowError before any output.
  */
 export function llmModelConfig(indent = '    '): string {
-  const i = indent
-  return [
-    '{',
-    `${i}  ctx_size: CTX_SIZE,`,
-    `${i}  // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks`,
-    `${i}  // and no stripping reasoning blocks back out of the token stream.`,
-    `${i}  reasoning_budget: 0,`,
-    `${i}  system_prompt: 'You are a helpful assistant.',`,
-    `${i}}`,
-  ].join('\n')
+  return JSON.stringify(manifest.model.config, null, 2).replaceAll('\n', '\n' + indent)
 }
 
 /** Dependencies added by the `multi-writer` feature, shared by all platforms. */
-export const MULTI_WRITER_DEPS: Record<string, string> = {
-  // Pinned exact: upstream marks Autobee experimental and expects breaking
-  // changes. Verified working at 1.0.10 (Node + Bare, two-writer convergence).
-  autobee: '1.0.10',
-  hyperdb: '^6.7.0',
-  hyperschema: '^1.21.0',
-}
+export const MULTI_WRITER_DEPS: Record<string, string> = manifest.profiles['pear-desktop'].featureDependencies['multi-writer']
 
 /**
  * `schema/build.js` — declares the replicated (`@app`) and device-private

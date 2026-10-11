@@ -1,5 +1,9 @@
 # Agent Pack & Researcher Improvements
 
+> Implementation update (10 October 2026): the pack now guides app contracts and explicit compatibility migrations. Local AI lifecycle is maintained in packages/runtime-ai; the CLI emits per-app manifests and read-only compatibility checks. The historical research-driven roadmap below is retained for context, not the current content pipeline.
+
+> Distribution planning (11 October 2026): see [the harness plugin plan](harness-plugin.md) for Codex/Claude Code packaging, shared content assembly, project-pack coexistence, additional harness adapters and release acceptance gates.
+
 ## Purpose
 
 This document audits the current agent pack system, synthesizes best practices from leading open-source agent configurations, and proposes a roadmap for continuously improving the agents that help developers build Unstoppable Stack apps.
@@ -564,4 +568,3 @@ The current Cursor output only has one glob-scoped rule (`p2p-patterns.mdc`). Ad
 
 ### Recipes (15 files)
 - file-sharing, local-inference, local-p2p-testing, offline-first-app, p2p-data-sync, p2p-ndjson-messaging, p2p-rpc, qvac-delegated-inference, qvac-embeddings-rag-sqlite, qvac-kv-cache, qvac-logging, qvac-model-sources, qvac-multimodal-vision, qvac-tool-calling, qvac-transcription, qvac-translation, secure-communication, wallet-integration
-

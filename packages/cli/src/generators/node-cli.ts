@@ -1,3 +1,5 @@
+import { manifest } from '../compatibility/index.js'
+import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, tsconfig, gitignore, readme, planningReadme,
@@ -24,6 +26,7 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
     gitignore(),
     readme(opts),
     planningReadme(),
+    ...projectFiles(opts),
     packageJson(opts),
     entryPoint(opts),
     swarmManager(),
@@ -48,34 +51,9 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  const deps: Record<string, string> = {
-    hyperswarm: '^4.17.0',
-    corestore: '^7.8.0',
-    hyperbee: '^2.27.3',
-    b4a: '^1.8.0',
-    'hypercore-crypto': '^3.7.0',
-  }
-
-  const devDeps: Record<string, string> = {
-    '@types/node': '^20.0.0',
-    typescript: '^5.0.0',
-    tsx: '^4.0.0',
-  }
-
-  if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '0.21.0', zod: '^4.3.0' })
-  }
-
-  if (has(opts, 'node-sync') || has(opts, 'node-host')) {
-    Object.assign(deps, { '@unstoppable-stack/node-core': '^0.6.0-alpha.1' })
-  }
-
-  if (has(opts, 'multi-writer')) {
-    Object.assign(deps, MULTI_WRITER_DEPS)
-    // Hyperbee is only the default single-writer store; multi-writer uses
-    // Autobee (which brings hyperbee2 itself).
-    delete deps.hyperbee
-  }
+  const profile = profileFor(opts.platform)
+  const deps = dependenciesFor(opts)
+  const devDeps = profile.devDependencies
 
   return {
     path: 'package.json',
@@ -85,7 +63,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         version: '0.1.0',
         private: true,
         type: 'module',
-        engines: { node: '>=22.17.0' },
+        engines: profile.engines,
         scripts: {
           ...(has(opts, 'multi-writer')
             ? {
@@ -249,90 +227,31 @@ function multiWriterStore(): GeneratedFile {
 function aiManager(): GeneratedFile {
   return {
     path: 'src/ai-manager.ts',
-    content: `/**
- * AI manager using QVAC SDK.
- *
- * Set QVAC_MOCK=1 in the environment to use a stub implementation that
- * echoes input back — useful for E2E tests where loading a real model
- * is impractical.
- */
+    content: `import { createAISession, createNodeAdapter, createMockAdapter } from '../.unstoppable/runtime-ai/index.js'
 
-// The SDK is imported lazily, inside setupAI(), rather than at module
-// scope. A top-level import runs the SDK's native-module resolution as a
-// side effect of loading this file, so an SDK problem takes down the whole
-// CLI before it can print anything useful. Deferring it keeps the failure
-// local to AI setup and keeps mock mode free of any SDK dependency.
-type QvacSdk = typeof import('@qvac/sdk')
-
-const MOCK_MODE = process.env.QVAC_MOCK === '1'
-const CTX_SIZE = ${DEFAULT_CTX_SIZE}
-
-let modelId: string | null = null
-let sdk: QvacSdk | null = null
+const ai = createAISession({
+  adapter: process.env.QVAC_MOCK === '1' ? createMockAdapter() : createNodeAdapter(),
+  byteBudget: ${Math.floor(DEFAULT_CTX_SIZE / 2)},
+})
+let requestId = 0
 
 export async function setupAI() {
-  if (MOCK_MODE) {
-    console.log('AI mock mode enabled — skipping model load')
-    modelId = 'mock-model'
-    return {
-      async chat(message: string) {
-        return {
-          async *tokenStream() {
-            const reply = \`Mock: \${message}\`
-            for (const ch of reply) {
-              yield ch
-              await new Promise((r) => setTimeout(r, 5))
-            }
-          },
-        }
-      },
-      async cleanup() {
-        modelId = null
-      },
-    }
-  }
-
-  sdk = await import('@qvac/sdk')
-  const { loadModel, ${DEFAULT_LLM_CONST} } = sdk
-
-  console.log('Loading AI model (${DEFAULT_LLM_LABEL}, ~${DEFAULT_LLM_SIZE_MB}MB on first run)...')
-  modelId = await loadModel({
-    modelSrc: ${DEFAULT_LLM_CONST},
+  if (ai.mock) console.log('AI mock mode enabled — skipping model load')
+  await ai.load({
+    modelConstant: '${DEFAULT_LLM_CONST}',
+          modelChecksum: '${manifest.model.sha256Checksum}',
     modelType: 'llm',
     modelConfig: ${llmModelConfig('    ')},
-    onProgress: (progress: any) => {
-      if (progress.percentage) {
-        process.stdout.write(
-          \`\\rDownloading model: \${Math.round(progress.percentage)}%\`,
-        )
-      }
-    },
+    onProgress: (p: any) => console.log('Model download:', p.percentage),
   })
-  console.log('\\nModel loaded:', modelId)
-
   return {
     async chat(message: string) {
-      if (!modelId || !sdk) throw new Error('Model not loaded')
-      const result = sdk.completion({
-        modelId,
-        history: [{ role: 'user', content: message }],
-        stream: true,
-      })
-      return result
+      const id = ++requestId
+      return { tokenStream: () => ai.stream([{ role: 'user', content: message }], { requestId: id }) }
     },
-
-    /** Stop an in-flight completion. Safe to call when nothing is running. */
-    async abort() {
-      if (!modelId || !sdk) return
-      await sdk.cancel({ operation: 'inference', modelId })
-    },
-
-    async cleanup() {
-      if (modelId && modelId !== 'mock-model' && sdk) {
-        await sdk.unloadModel({ modelId })
-      }
-      modelId = null
-    },
+    abort: () => ai.cancel(),
+    cleanup: () => ai.close(),
+    session: ai,
   }
 }
 `,

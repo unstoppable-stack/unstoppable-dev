@@ -1,18 +1,10 @@
 ---
-description: QVAC 0.21 history bounds, overflow handling, system prompts and optional KV caching.
+description: Cache ownership integration guidance.
 alwaysApply: false
 ---
 
-# Context and KV caching
+# Cache ownership
 
-QVAC 0.21 removes `n_discarded`; use bounded history and SDK overflow recovery.
+The default local session does not opt into named caches. Any advanced adapter extension using named caches must manage prefix changes, trimming, cancellation and deletion explicitly according to installed SDK types. Cache support is not automatic sliding-window context eviction.
 
-Use the scaffold's `chat-context.js` for bounded recent history. It counts UTF-8 bytes conservatively, preserves complete turns and the latest request, and rejects an oversized latest request instead of cutting its text. Tell the user when older history is omitted. These bounds reserve space but are not token counts; handle the actual engine's `ContextOverflowError` too.
-
-A retry may use only the latest user message, once, before any output is visible. Never restart a partly streamed answer automatically. On persistent overflow, ask for a shorter request or start a new conversation. Remove failed user requests from the active model history so the next valid request can succeed.
-
-The scaffold does not request a named KV cache. If adding `kvCache: sessionId`, maintain a stable message prefix; trimming or editing it requires a fresh cache identity or deliberate cache clearing. Caller-owned caches have their own deletion lifecycle. Do not send a full prompt on one turn and assume a shortened prefix will reuse the same state correctly.
-
-QVAC 0.20 automatic caches preserve the last committed message boundary after restart and after cancelled/failed warm turns. This is a performance feature, not an application-data backup. A system message in history is respected with KV caching; otherwise the model's configured `system_prompt` applies.
-
-See [upstream cache/prompt behavior](https://github.com/tetherto/qvac/releases/tag/sdk-v0.20.0) and the current API schemas before adding long-context or named-cache features.
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

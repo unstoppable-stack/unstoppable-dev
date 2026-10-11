@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { Buffer } from 'node:buffer'
 import { chatContextSource } from '../generators/chat-context.js'
 
-const { prepareChatHistory, streamChat } = new Function('b4a',
-  chatContextSource.replace("import b4a from 'b4a'", '').replaceAll('export ', '') + '\nreturn { prepareChatHistory, streamChat }',
-)({ byteLength: Buffer.byteLength })
+const { prepareChatHistory, streamChat } = new Function(
+  chatContextSource.replaceAll('export ', '') + '\nreturn { prepareChatHistory, streamChat }',
+)()
+const asAdapter = (sdk: any) => ({ stream: (modelId: string, history: any[]) => sdk.completion({ modelId, history, stream: true }).tokenStream })
 const collect = async (tokens: AsyncIterable<string>) => {
   const output = []
   for await (const token of tokens) output.push(token)
@@ -32,7 +32,7 @@ describe('generated chat context', () => {
       })() }
     } }
     const history = [{ role: 'user', content: 'old' }, { role: 'assistant', content: 'reply' }, { role: 'user', content: 'new' }]
-    expect(await collect(streamChat(sdk, 'model', history, 2048, () => notices++))).toBe('ready')
+    expect(await collect(streamChat(asAdapter(sdk), 'model', history, 2048, () => notices++))).toBe('ready')
     expect(calls[1].history).toEqual(history.slice(-1))
     expect(notices).toBe(1)
   })
@@ -42,13 +42,13 @@ describe('generated chat context', () => {
       yield 'partial'
       throw Object.assign(new Error('full'), { name: 'ContextOverflowError' })
     })() } } }
-    await expect(collect(streamChat(sdk, 'model', [{ role: 'user', content: 'old' }, { role: 'user', content: 'new' }], 2048))).rejects.toThrow('full')
+    await expect(collect(streamChat(asAdapter(sdk), 'model', [{ role: 'user', content: 'old' }, { role: 'user', content: 'new' }], 2048))).rejects.toThrow('full')
     expect(calls).toBe(1)
   })
   it('does not loop when the latest message alone overflows the model', async () => {
     let calls = 0
     const sdk = { completion: () => { calls++; throw Object.assign(new Error('full'), { name: 'ContextOverflowError' }) } }
-    await expect(collect(streamChat(sdk, 'model', [{ role: 'user', content: 'new' }], 2048))).rejects.toThrow('full')
+    await expect(collect(streamChat(asAdapter(sdk), 'model', [{ role: 'user', content: 'new' }], 2048))).rejects.toThrow('full')
     expect(calls).toBe(1)
   })
 })
