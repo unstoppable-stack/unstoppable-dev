@@ -31,10 +31,12 @@ const { EventEmitter } = typeof globalThis.Bare !== 'undefined'
   : await import('node:events')
 
 export class ApprovalGate extends EventEmitter {
-  constructor ({ registryPath }) {
+  constructor ({ registryPath, maxPending = 32, timeoutMs = 30_000 }) {
     super()
     if (!registryPath) throw new Error('ApprovalGate requires registryPath')
     this.registryPath = registryPath
+    this.maxPending = maxPending
+    this.timeoutMs = timeoutMs
     this._cache = { version: 1, approved: {}, denied: {} }
     this._pending = new Map() // publicKey → { resolve, info }
     this._ready = false
@@ -60,8 +62,11 @@ export class ApprovalGate extends EventEmitter {
       return 'approve'
     }
 
-    // First time we see this key. Block until the UI decides.
-    return new Promise((resolve) => {
+    if (this._pending.has(publicKey)) return this._pending.get(publicKey).promise
+    if (this._pending.size >= this.maxPending) return 'deny'
+    let resolve
+    const promise = new Promise(r => { resolve = r })
+    {
       const info = {
         appId,
         appName,
@@ -70,9 +75,12 @@ export class ApprovalGate extends EventEmitter {
         remoteKey: typeof remoteKey === 'string' ? remoteKey : null,
         receivedAt: new Date().toISOString()
       }
-      this._pending.set(publicKey, { resolve, info })
+      const timer = setTimeout(() => this.cancel(publicKey), this.timeoutMs)
+      timer.unref?.()
+      this._pending.set(publicKey, { resolve, info, promise, timer })
       this.emit('pending', info)
-    })
+    }
+    return promise
   }
 
   // Called by the UI bridge when the user clicks an approval button.
@@ -90,6 +98,7 @@ export class ApprovalGate extends EventEmitter {
       })
     }
 
+    clearTimeout(entry.timer)
     this._pending.delete(publicKey)
     entry.resolve(remember ? 'approve-remember' : 'approve')
     this.emit('decided', {
@@ -115,6 +124,7 @@ export class ApprovalGate extends EventEmitter {
     }
 
     if (entry) {
+      clearTimeout(entry.timer)
       this._pending.delete(publicKey)
       entry.resolve('deny')
       this.emit('decided', {
@@ -169,6 +179,18 @@ export class ApprovalGate extends EventEmitter {
     this.emit('imported', this.snapshot())
     return this.snapshot()
   }
+
+  cancel (publicKey) {
+    const entry = this._pending.get(publicKey)
+    if (!entry) return false
+    clearTimeout(entry.timer)
+    this._pending.delete(publicKey)
+    entry.resolve('deny')
+    this.emit('decided', { publicKey, appId: entry.info.appId, appName: entry.info.appName, decision: 'deny', reason: 'request expired or disconnected' })
+    return true
+  }
+
+  close () { for (const key of this._pending.keys()) this.cancel(key) }
 
   listPending () {
     return Array.from(this._pending.values()).map((e) => e.info)

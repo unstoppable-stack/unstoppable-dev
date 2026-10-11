@@ -26,3 +26,6 @@ export {
   toPublicKeyHex
 } from './protocol.js'
 export * from './errors.js'
+
+export { AbortControllerImpl } from './abort.js'
+export { DEFAULT_LIMITS } from './limits.js'

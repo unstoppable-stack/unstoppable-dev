@@ -102,8 +102,7 @@ createNode({ …, pairing: { request: { photos: ['thumbnail'] } } })
 
 ## Pairing approval
 
-Without an `approve` callback a node accepts pair requests (headless/CLI
-behaviour). With one, it awaits a decision for peers it does not already know:
+Without an `approve` callback a host denies direct pairing. Use a scoped invitation, an explicit approval callback, or the deliberate development option `pairing: { autoApprove: true }`. An outgoing connection authorizes its chosen remote key. With a callback, direct/network reconnects consult it again:
 
 ```js
 createNode({
@@ -116,7 +115,7 @@ createNode({
 ```
 
 Return `'approve'`, `'approve-remember'`, `'deny'`, or any other string as a
-denial reason. Known peers in the registry skip approval.
+denial reason. Remembering approval is owned by the caller’s trust gate. Peers paired through an invitation can reconnect using their persisted grants. Reconnects intersect requested methods with the stored ceiling; they cannot restore removed grants. `unpair(key)` now stores a persistent denial. To authorize a fresh pairing after revocation, call `peerRegistry.forgetDenial(key)` locally. Invites without explicit grants carry only the pack defaults, never arbitrary methods requested by the redeemer.
 
 ## Identity
 
@@ -203,6 +202,21 @@ a server is how peers end up greeting each other.
 Every rejection is a `NodeError` with a stable `code`: `PEER_NOT_FOUND`,
 `PAIR_DENIED`, `NOT_GRANTED`, `UNKNOWN_CAPABILITY`, `UNKNOWN_METHOD`,
 `REQUEST_FAILED`, `REQUEST_TIMEOUT`, `CANCELLED`, `INVALID_OPTION`, `CLOSED`.
+
+## Resource limits
+
+`createNode({ limits })` accepts operator-owned overrides of the finite defaults:
+
+| Boundary | Default |
+| --- | --- |
+| Live control peers | 128 |
+| Encoded JSON control frame | 256 KiB, checked before JSON decoding |
+| Active incoming requests | 8 per peer, 64 per node |
+| Server request lifetime | 120 seconds |
+| Total stream output | 1 MiB encoded JSON |
+| Consumer stream buffer | 64 chunks / 1 MiB |
+
+Excess capacity/output/buffering reports `RESOURCE_LIMIT`; host deadlines report `REQUEST_TIMEOUT`. Streaming respects transport drain. A slow consumer is cancelled when its finite buffer fills rather than receiving an unbounded backlog. Grant removal aborts matching active work. Duplicate active request IDs and unsolicited pairing responses cannot replace controllers or authorize peers. Handlers must honor `ctx.signal`; a handler that ignores cancellation retains its capacity slot until it actually returns. This bounds admission but does not forcibly terminate arbitrary in-process plugin code. Replication binary channels are separate from these capability JSON limits.
 
 ## Transport
 
