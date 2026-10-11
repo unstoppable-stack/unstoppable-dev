@@ -259,3 +259,28 @@ describe('lib/approval — ApprovalGate', () => {
     await assert.rejects(gate.importSnapshot({ approved: [] }), /approved entries/)
   })
 })
+
+it('expires pending decisions, bounds their count and resolves duplicate requests together', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'bounded-gate-'))
+  const gate = new ApprovalGate({ registryPath: join(dir, 'trust.json'), maxPending: 1, timeoutMs: 20 })
+  try {
+    await gate.ready()
+    const decisions = []
+    gate.on('decided', info => decisions.push(info))
+    const first = gate.request({ publicKey: 'one' })
+    const duplicate = gate.request({ publicKey: 'one' })
+    await Promise.resolve()
+    assert.equal(await gate.request({ publicKey: 'two' }), 'deny')
+    // Keep the test alive; the gate's timer deliberately does not keep a host alive.
+    await new Promise(resolve => setTimeout(resolve, 30))
+    assert.equal(await first, 'deny')
+    assert.equal(await duplicate, 'deny')
+    assert.equal(decisions[0].publicKey, 'one')
+    assert.equal(decisions[0].decision, 'deny')
+    assert.equal(gate.listPending().length, 0)
+    const pending = gate.request({ publicKey: 'two' })
+    await Promise.resolve()
+    gate.close()
+    assert.equal(await pending, 'deny')
+  } finally { gate.close(); await rm(dir, { recursive: true, force: true }) }
+})

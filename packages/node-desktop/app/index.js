@@ -126,7 +126,7 @@ document.getElementById('app').innerHTML = `
               <input id="cfg-storage-app" type="number" min="0" placeholder="unlimited">
             </label>
             <label class="field-check"><input type="checkbox" id="cfg-pair-approval"> Require app approval</label>
-            <label class="field-check"><input type="checkbox" id="cfg-pair-auto-local"> Auto-approve local apps</label>
+            <p class="dim">Local discovery does not prove identity. Invitations and remembered approvals authorize apps.</p>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-pair"> Notify for pair requests</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-sound"> Play sound for pair requests</label>
             <label class="field-check"><input type="checkbox" id="cfg-notifications-restore"> Restore window for pair requests</label>
@@ -361,6 +361,7 @@ onWorkerMessage((msg) => {
       pushLog(`Auto-${msg.decision === 'approve' ? 'approved' : 'denied'} ${msg.appName || msg.appId}`, msg.decision === 'approve' ? 'ok' : 'info')
       break
     case 'pairDecisionRecorded':
+      dismissApproval(msg.publicKey)
       pushLog(`Decision: ${msg.decision} for ${msg.appName || msg.appId}`, msg.decision.startsWith('approve') ? 'ok' : 'info')
       break
     case 'pairDenied':
@@ -591,7 +592,6 @@ function renderConfigForm (config) {
   setValue('cfg-storage-global', config.storage?.globalQuotaBytes ?? '')
   setValue('cfg-storage-app', config.storage?.perAppQuotaBytes ?? '')
   setChecked('cfg-pair-approval', config.pairing?.requireApproval !== false)
-  setChecked('cfg-pair-auto-local', !!config.pairing?.autoApproveLocal)
   setChecked('cfg-notifications-pair', config.notifications?.pairRequests !== false)
   setChecked('cfg-notifications-sound', !!config.notifications?.pairRequestSound)
   setChecked('cfg-notifications-restore', !!config.notifications?.pairRequestAutoRestore)
@@ -875,6 +875,14 @@ function enqueueApproval (req) {
   if (!approvalCurrent) showNextApproval()
   else updatePendingCount()
   updateApprovalBadge()
+}
+
+function dismissApproval (publicKey) {
+  for (let i = approvalQueue.length - 1; i >= 0; i--) {
+    if (approvalQueue[i].publicKey === publicKey) approvalQueue.splice(i, 1)
+  }
+  if (approvalCurrent?.publicKey === publicKey) showNextApproval()
+  else { updatePendingCount(); updateApprovalBadge() }
 }
 
 function showNextApproval () {
@@ -1304,7 +1312,7 @@ function collectConfigPatch () {
     },
     pairing: {
       requireApproval: getChecked('cfg-pair-approval'),
-      autoApproveLocal: getChecked('cfg-pair-auto-local')
+      autoApproveLocal: false
     },
     notifications: {
       pairRequests: getChecked('cfg-notifications-pair'),

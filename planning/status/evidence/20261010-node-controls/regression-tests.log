@@ -1,0 +1,1506 @@
+TAP version 13
+# (node:39936) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: rejects oversized UTF-8 prompts and message count before invoking inference
+ok 1 - rejects oversized UTF-8 prompts and message count before invoking inference
+  ---
+  duration_ms: 1.0255
+  type: 'test'
+  ...
+# Subtest: limits output and releases admission after iterator cleanup
+ok 2 - limits output and releases admission after iterator cleanup
+  ---
+  duration_ms: 0.297583
+  type: 'test'
+  ...
+# Subtest: enforces one completion even for custom/mock providers and refuses before starting overlap
+ok 3 - enforces one completion even for custom/mock providers and refuses before starting overlap
+  ---
+  duration_ms: 0.148792
+  type: 'test'
+  ...
+# Subtest: aborts timed-out inference before its first token and reports the host deadline
+ok 4 - aborts timed-out inference before its first token and reports the host deadline
+  ---
+  duration_ms: 0.496417
+  type: 'test'
+  ...
+# Subtest: ai capability pack (real QVAC)
+    # Subtest: loads the requested model and streams non-empty output over the capability bus
+    ok 1 - loads the requested model and streams non-empty output over the capability bus # SKIP set RUN_QVAC_E2E=1 and QVAC_MODEL_SRC to run real QVAC validation
+      ---
+      duration_ms: 0.195792
+      type: 'test'
+      ...
+    1..1
+ok 5 - ai capability pack (real QVAC)
+  ---
+  duration_ms: 0.82025
+  type: 'suite'
+  ...
+# Subtest: ai capability pack
+    # Subtest: streams tokens to a paired peer
+    ok 1 - streams tokens to a paired peer
+      ---
+      duration_ms: 56.079542
+      type: 'test'
+      ...
+    # Subtest: stops generating when the consumer stops listening
+    ok 2 - stops generating when the consumer stops listening
+      ---
+      duration_ms: 43.405458
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed request
+    ok 3 - rejects a malformed request
+      ---
+      duration_ms: 9.012834
+      type: 'test'
+      ...
+    # Subtest: advertises the capability so peers can detect it
+    ok 4 - advertises the capability so peers can detect it
+      ---
+      duration_ms: 7.028791
+      type: 'test'
+      ...
+    # Subtest: keeps the node usable when the model fails to load
+    ok 5 - keeps the node usable when the model fails to load
+      ---
+      duration_ms: 8.522542
+      type: 'test'
+      ...
+    1..5
+ok 6 - ai capability pack
+  ---
+  duration_ms: 124.596084
+  type: 'suite'
+  ...
+# Subtest: runtime toggle
+    # Subtest: starts disabled and can be enabled at runtime
+    ok 1 - starts disabled and can be enabled at runtime
+      ---
+      duration_ms: 28.04975
+      type: 'test'
+      ...
+    # Subtest: can be disabled without dropping the session
+    ok 2 - can be disabled without dropping the session
+      ---
+      duration_ms: 6.011459
+      type: 'test'
+      ...
+    1..2
+ok 7 - runtime toggle
+  ---
+  duration_ms: 34.323083
+  type: 'suite'
+  ...
+# Subtest: cancels an unfinished native request on early return and reuses the provider
+ok 8 - cancels an unfinished native request on early return and reuses the provider
+  ---
+  duration_ms: 0.653875
+  type: 'test'
+  ...
+# Subtest: peer abort cancels native work even while waiting for the first token
+ok 9 - peer abort cancels native work even while waiting for the first token
+  ---
+  duration_ms: 0.114416
+  type: 'test'
+  ...
+# Subtest: rejects overlapping work without cancelling another peer’s request
+ok 10 - rejects overlapping work without cancelling another peer’s request
+  ---
+  duration_ms: 0.185125
+  type: 'test'
+  ...
+# Subtest: propagates native terminal errors instead of reporting a successful empty stream
+ok 11 - propagates native terminal errors instead of reporting a successful empty stream
+  ---
+  duration_ms: 0.073625
+  type: 'test'
+  ...
+# Subtest: sync capability pack
+    # Subtest: replicates a registered hyperbee over the paired connection
+    ok 1 - replicates a registered hyperbee over the paired connection
+      ---
+      duration_ms: 296.204791
+      type: 'test'
+      ...
+    # Subtest: replicates a hyperdrive
+    ok 2 - replicates a hyperdrive
+      ---
+      duration_ms: 2174.010959
+      type: 'test'
+      ...
+    # Subtest: keeps each peer scoped to its own resources
+    ok 3 - keeps each peer scoped to its own resources
+      ---
+      duration_ms: 244.373791
+      type: 'test'
+      ...
+    # Subtest: treats the manifest as the complete set and drops what is absent
+    ok 4 - treats the manifest as the complete set and drops what is absent
+      ---
+      duration_ms: 141.032083
+      type: 'test'
+      ...
+    # Subtest: keeps seeding after the app disconnects, and restores across a restart
+    ok 5 - keeps seeding after the app disconnects, and restores across a restart
+      ---
+      duration_ms: 284.298458
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed manifest
+    ok 6 - rejects a malformed manifest
+      ---
+      duration_ms: 62.141292
+      type: 'test'
+      ...
+    # Subtest: does not grant debug peeks by default
+    ok 7 - does not grant debug peeks by default
+      ---
+      duration_ms: 65.200583
+      type: 'test'
+      ...
+    1..7
+ok 12 - sync capability pack
+  ---
+  duration_ms: 3268.051375
+  type: 'suite'
+  ...
+# Subtest: portable abort controller
+    # Subtest: starts unaborted and aborts once
+    ok 1 - starts unaborted and aborts once
+      ---
+      duration_ms: 0.343708
+      type: 'test'
+      ...
+    # Subtest: notifies listeners, honouring once
+    ok 2 - notifies listeners, honouring once
+      ---
+      duration_ms: 0.075958
+      type: 'test'
+      ...
+    # Subtest: calls a listener added after abort immediately
+    ok 3 - calls a listener added after abort immediately
+      ---
+      duration_ms: 0.41375
+      type: 'test'
+      ...
+    # Subtest: supports removeEventListener
+    ok 4 - supports removeEventListener
+      ---
+      duration_ms: 0.058334
+      type: 'test'
+      ...
+    # Subtest: throwIfAborted throws the reason
+    ok 5 - throwIfAborted throws the reason
+      ---
+      duration_ms: 0.164917
+      type: 'test'
+      ...
+    1..5
+ok 13 - portable abort controller
+  ---
+  duration_ms: 1.517084
+  type: 'suite'
+  ...
+# Subtest: capability registry
+    # Subtest: detects streaming handlers by async generator
+    ok 1 - detects streaming handlers by async generator
+      ---
+      duration_ms: 0.61275
+      type: 'test'
+      ...
+    # Subtest: describes packs for the handshake
+    ok 2 - describes packs for the handshake
+      ---
+      duration_ms: 0.368459
+      type: 'test'
+      ...
+    # Subtest: resolves methods and flags streaming
+    ok 3 - resolves methods and flags streaming
+      ---
+      duration_ms: 0.074625
+      type: 'test'
+      ...
+    # Subtest: throws typed errors for unknown capability and method
+    ok 4 - throws typed errors for unknown capability and method
+      ---
+      duration_ms: 0.191584
+      type: 'test'
+      ...
+    # Subtest: falls back to pack defaults when nothing is requested
+    ok 5 - falls back to pack defaults when nothing is requested
+      ---
+      duration_ms: 0.07375
+      type: 'test'
+      ...
+    # Subtest: grants only the intersection of requested and hosted methods
+    ok 6 - grants only the intersection of requested and hosted methods
+      ---
+      duration_ms: 0.122875
+      type: 'test'
+      ...
+    # Subtest: rejects malformed packs
+    ok 7 - rejects malformed packs
+      ---
+      duration_ms: 0.099666
+      type: 'test'
+      ...
+    # Subtest: refuses duplicate capability names
+    ok 8 - refuses duplicate capability names
+      ---
+      duration_ms: 0.104959
+      type: 'test'
+      ...
+    1..8
+ok 14 - capability registry
+  ---
+  duration_ms: 2.175792
+  type: 'suite'
+  ...
+# Subtest: identity
+    # Subtest: is stable across reloads — the whole point of persisting it
+    ok 1 - is stable across reloads — the whole point of persisting it
+      ---
+      duration_ms: 2.5725
+      type: 'test'
+      ...
+    # Subtest: derives the same key pair from the same seed
+    ok 2 - derives the same key pair from the same seed
+      ---
+      duration_ms: 0.141167
+      type: 'test'
+      ...
+    # Subtest: writes a versioned seed file
+    ok 3 - writes a versioned seed file
+      ---
+      duration_ms: 1.013334
+      type: 'test'
+      ...
+    # Subtest: refuses a corrupt seed rather than silently generating a new identity
+    ok 4 - refuses a corrupt seed rather than silently generating a new identity
+      ---
+      duration_ms: 0.604125
+      type: 'test'
+      ...
+    1..4
+ok 15 - identity
+  ---
+  duration_ms: 4.741042
+  type: 'suite'
+  ...
+# Subtest: invite codes
+    # Subtest: round-trips a public key and secret
+    ok 1 - round-trips a public key and secret
+      ---
+      duration_ms: 1.008167
+      type: 'test'
+      ...
+    # Subtest: tolerates whitespace and dashes people add when copying
+    ok 2 - tolerates whitespace and dashes people add when copying
+      ---
+      duration_ms: 0.221875
+      type: 'test'
+      ...
+    # Subtest: uses an alphabet without ambiguous characters
+    ok 3 - uses an alphabet without ambiguous characters
+      ---
+      duration_ms: 0.09675
+      type: 'test'
+      ...
+    # Subtest: rejects malformed codes
+    ok 4 - rejects malformed codes
+      ---
+      duration_ms: 0.307583
+      type: 'test'
+      ...
+    # Subtest: round-trips arbitrary bytes through base32
+    ok 5 - round-trips arbitrary bytes through base32
+      ---
+      duration_ms: 0.08475
+      type: 'test'
+      ...
+    # Subtest: derives topic, id and proof independently from the secret
+    ok 6 - derives topic, id and proof independently from the secret
+      ---
+      duration_ms: 0.125958
+      type: 'test'
+      ...
+    # Subtest: binds the proof to both identities
+    ok 7 - binds the proof to both identities
+      ---
+      duration_ms: 0.380792
+      type: 'test'
+      ...
+    1..7
+ok 16 - invite codes
+  ---
+  duration_ms: 2.640375
+  type: 'suite'
+  ...
+# Subtest: pairing by invite
+    # Subtest: pairs two app-nodes that have never met
+    ok 1 - pairs two app-nodes that have never met
+      ---
+      duration_ms: 30.516334
+      type: 'test'
+      ...
+    # Subtest: applies the invite grants instead of the pack defaults
+    ok 2 - applies the invite grants instead of the pack defaults
+      ---
+      duration_ms: 11.203791
+      type: 'test'
+      ...
+    # Subtest: bypasses the approval prompt, because the invite is the approval
+    ok 3 - bypasses the approval prompt, because the invite is the approval
+      ---
+      duration_ms: 8.442042
+      type: 'test'
+      ...
+    # Subtest: spends a single-use invite
+    ok 4 - spends a single-use invite
+      ---
+      duration_ms: 13.069875
+      type: 'test'
+      ...
+    # Subtest: honours a multi-use invite
+    ok 5 - honours a multi-use invite
+      ---
+      duration_ms: 10.256084
+      type: 'test'
+      ...
+    # Subtest: refuses an expired invite
+    ok 6 - refuses an expired invite
+      ---
+      duration_ms: 12029.533459
+      type: 'test'
+      ...
+    # Subtest: refuses a revoked invite
+    ok 7 - refuses a revoked invite
+      ---
+      duration_ms: 18.827167
+      type: 'test'
+      ...
+    # Subtest: refuses a forged proof from someone who only knows the topic
+    ok 8 - refuses a forged proof from someone who only knows the topic
+      ---
+      duration_ms: 12008.183667
+      type: 'test'
+      ...
+    # Subtest: records the pairing method and invite id
+    ok 9 - records the pairing method and invite id
+      ---
+      duration_ms: 8.881875
+      type: 'test'
+      ...
+    # Subtest: keeps serving an outstanding invite across a restart
+    ok 10 - keeps serving an outstanding invite across a restart
+      ---
+      duration_ms: 8.824792
+      type: 'test'
+      ...
+    # Subtest: lists invites without leaking their secrets
+    ok 11 - lists invites without leaking their secrets
+      ---
+      duration_ms: 3.181375
+      type: 'test'
+      ...
+    1..11
+ok 17 - pairing by invite
+  ---
+  duration_ms: 24151.524083
+  type: 'suite'
+  ...
+# Subtest: invites created by another process
+    # Subtest: serves an invite written to its storage by someone else
+    ok 1 - serves an invite written to its storage by someone else
+      ---
+      duration_ms: 2017.354042
+      type: 'test'
+      ...
+    # Subtest: stops announcing an invite once it is revoked
+    ok 2 - stops announcing an invite once it is revoked
+      ---
+      duration_ms: 5.893458
+      type: 'test'
+      ...
+    1..2
+ok 18 - invites created by another process
+  ---
+  duration_ms: 2023.400959
+  type: 'suite'
+  ...
+# Subtest: app networks
+    # Subtest: derives a stable topic from the network name
+    ok 1 - derives a stable topic from the network name
+      ---
+      duration_ms: 0.516458
+      type: 'test'
+      ...
+    # Subtest: pairs several instances of the same app with each other
+    ok 2 - pairs several instances of the same app with each other
+      ---
+      duration_ms: 135.477666
+      type: 'test'
+      ...
+    # Subtest: records how the peer was found
+    ok 3 - records how the peer was found
+      ---
+      duration_ms: 112.998
+      type: 'test'
+      ...
+    # Subtest: caps grants at the network ceiling
+    ok 4 - caps grants at the network ceiling
+      ---
+      duration_ms: 127.457042
+      type: 'test'
+      ...
+    # Subtest: ignores nodes on a different network
+    ok 5 - ignores nodes on a different network
+      ---
+      duration_ms: 3016.533083
+      type: 'test'
+      ...
+    # Subtest: consults a per-network approval callback
+    ok 6 - consults a per-network approval callback
+      ---
+      duration_ms: 119.747292
+      type: 'test'
+      ...
+    # Subtest: leaves a network on request
+    ok 7 - leaves a network on request
+      ---
+      duration_ms: 6.929083
+      type: 'test'
+      ...
+    1..7
+ok 19 - app networks
+  ---
+  duration_ms: 3520.655583
+  type: 'suite'
+  ...
+# Subtest: pairing and the capability bus
+    # Subtest: pairs two nodes and calls capabilities in both directions
+    ok 1 - pairs two nodes and calls capabilities in both directions
+      ---
+      duration_ms: 7638.566208
+      type: 'test'
+      ...
+    # Subtest: exchanges identity and profile in the handshake
+    ok 2 - exchanges identity and profile in the handshake
+      ---
+      duration_ms: 7616.032583
+      type: 'test'
+      ...
+    # Subtest: streams chunks from an async generator handler
+    ok 3 - streams chunks from an async generator handler
+      ---
+      duration_ms: 7844.230292
+      type: 'test'
+      ...
+    # Subtest: stops a streaming handler when the consumer breaks early
+    ok 4 - stops a streaming handler when the consumer breaks early
+      ---
+      duration_ms: 7926.447375
+      type: 'test'
+      ...
+    # Subtest: enforces grants per direction
+    ok 5 - enforces grants per direction
+      ---
+      duration_ms: 7553.948917
+      type: 'test'
+      ...
+    # Subtest: narrows grants to what the joiner asked for
+    ok 6 - narrows grants to what the joiner asked for
+      ---
+      duration_ms: 7855.421542
+      type: 'test'
+      ...
+    # Subtest: reports handler failures as typed errors without killing the session
+    ok 7 - reports handler failures as typed errors without killing the session
+      ---
+      duration_ms: 7657.277875
+      type: 'test'
+      ...
+    # Subtest: denies pairing when the approval callback says so
+    ok 8 - denies pairing when the approval callback says so
+      ---
+      duration_ms: 8185.016625
+      type: 'test'
+      ...
+    # Subtest: passes the requesting peer to the approval callback
+    ok 9 - passes the requesting peer to the approval callback
+      ---
+      duration_ms: 8133.584917
+      type: 'test'
+      ...
+    # Subtest: reconnects to a known peer by key across a restart
+    ok 10 - reconnects to a known peer by key across a restart
+      ---
+      duration_ms: 17.053042
+      type: 'test'
+      ...
+    # Subtest: records paired peers in the registry on both sides
+    ok 11 - records paired peers in the registry on both sides
+      ---
+      duration_ms: 7912.5755
+      type: 'test'
+      ...
+    # Subtest: publishes its muxer where the storage stack looks for it
+    ok 12 - publishes its muxer where the storage stack looks for it
+      ---
+      duration_ms: 7797.89125
+      type: 'test'
+      ...
+    # Subtest: cleans up peers when the far side vanishes
+    ok 13 - cleans up peers when the far side vanishes
+      ---
+      duration_ms: 7964.090666
+      type: 'test'
+      ...
+    # Subtest: rejects in-flight requests when the connection drops
+    ok 14 - rejects in-flight requests when the connection drops
+      ---
+      duration_ms: 7794.385833
+      type: 'test'
+      ...
+    # Subtest: times out dialing a key nobody is listening on
+    ok 15 - times out dialing a key nobody is listening on
+      ---
+      duration_ms: 1505.758916
+      type: 'test'
+      ...
+    # Subtest: rejects a bad public key before dialing
+    ok 16 - rejects a bad public key before dialing
+      ---
+      duration_ms: 7.196917
+      type: 'test'
+      ...
+    1..16
+ok 20 - pairing and the capability bus
+  ---
+  duration_ms: 103411.228833
+  type: 'suite'
+  ...
+# Subtest: peer management
+    # Subtest: revokes grants on a live session without a reconnect
+    ok 1 - revokes grants on a live session without a reconnect
+      ---
+      duration_ms: 8033.9965
+      type: 'test'
+      ...
+    # Subtest: persists grant changes across a restart
+    ok 2 - persists grant changes across a restart
+      ---
+      duration_ms: 11.181875
+      type: 'test'
+      ...
+    # Subtest: stores opaque per-peer policy for the composing app
+    ok 3 - stores opaque per-peer policy for the composing app
+      ---
+      duration_ms: 7.238458
+      type: 'test'
+      ...
+    # Subtest: unpairs a peer and closes its session
+    ok 4 - unpairs a peer and closes its session
+      ---
+      duration_ms: 7.14125
+      type: 'test'
+      ...
+    # Subtest: refuses to manage an unknown peer
+    ok 5 - refuses to manage an unknown peer
+      ---
+      duration_ms: 1.705834
+      type: 'test'
+      ...
+    1..5
+ok 21 - peer management
+  ---
+  duration_ms: 8061.556667
+  type: 'suite'
+  ...
+# Subtest: topic discovery
+    # Subtest: finds a host serving a topic and pairs with it
+    ok 1 - finds a host serving a topic and pairs with it
+      ---
+      duration_ms: 8.203791
+      type: 'test'
+      ...
+    # Subtest: passes requested capabilities through discovery
+    ok 2 - passes requested capabilities through discovery
+      ---
+      duration_ms: 6.2815
+      type: 'test'
+      ...
+    # Subtest: times out when nobody serves the topic
+    ok 3 - times out when nobody serves the topic
+      ---
+      duration_ms: 2003.165459
+      type: 'test'
+      ...
+    # Subtest: records the discovered peer so later connects go direct
+    ok 4 - records the discovered peer so later connects go direct
+      ---
+      duration_ms: 17.578292
+      type: 'test'
+      ...
+    1..4
+ok 22 - topic discovery
+  ---
+  duration_ms: 2035.528
+  type: 'suite'
+  ...
+# Subtest: reconnect
+    # Subtest: re-establishes a connection after the host restarts
+    ok 1 - re-establishes a connection after the host restarts
+      ---
+      duration_ms: 124.900667
+      type: 'test'
+      ...
+    # Subtest: does not chase a peer when reconnect is off
+    ok 2 - does not chase a peer when reconnect is off
+      ---
+      duration_ms: 512.362333
+      type: 'test'
+      ...
+    # Subtest: gives up after maxAttempts
+    ok 3 - gives up after maxAttempts
+      ---
+      duration_ms: 1169.65375
+      type: 'test'
+      ...
+    1..3
+ok 23 - reconnect
+  ---
+  duration_ms: 1807.36
+  type: 'suite'
+  ...
+# Subtest: peer api proxy
+    # Subtest: exposes the peer's advertised capabilities as callable methods
+    ok 1 - exposes the peer's advertised capabilities as callable methods
+      ---
+      duration_ms: 16.826417
+      type: 'test'
+      ...
+    # Subtest: iterates a streaming method through the same handle
+    ok 2 - iterates a streaming method through the same handle
+      ---
+      duration_ms: 8.634583
+      type: 'test'
+      ...
+    # Subtest: only exposes methods the peer actually advertised
+    ok 3 - only exposes methods the peer actually advertised
+      ---
+      duration_ms: 6.95175
+      type: 'test'
+      ...
+    # Subtest: still enforces grants
+    ok 4 - still enforces grants
+      ---
+      duration_ms: 5.716583
+      type: 'test'
+      ...
+    # Subtest: refuses to be consumed as both a promise and a stream
+    ok 5 - refuses to be consumed as both a promise and a stream
+      ---
+      duration_ms: 6.578625
+      type: 'test'
+      ...
+    1..5
+ok 24 - peer api proxy
+  ---
+  duration_ms: 44.966792
+  type: 'suite'
+  ...
+# Subtest: peer registry
+    # Subtest: persists peers across instances
+    ok 1 - persists peers across instances
+      ---
+      duration_ms: 3.041167
+      type: 'test'
+      ...
+    # Subtest: keys by public key, so one appId on two devices is two peers
+    ok 2 - keys by public key, so one appId on two devices is two peers
+      ---
+      duration_ms: 1.099208
+      type: 'test'
+      ...
+    # Subtest: preserves pairedAt but refreshes updatedAt on re-put
+    ok 3 - preserves pairedAt but refreshes updatedAt on re-put
+      ---
+      duration_ms: 6.890167
+      type: 'test'
+      ...
+    # Subtest: removes peers
+    ok 4 - removes peers
+      ---
+      duration_ms: 0.946167
+      type: 'test'
+      ...
+    1..4
+ok 25 - peer registry
+  ---
+  duration_ms: 12.485
+  type: 'suite'
+  ...
+# Subtest: retains narrowed grants after host restart and blocks revoked keys, including new invites
+ok 26 - retains narrowed grants after host restart and blocks revoked keys, including new invites
+  ---
+  duration_ms: 248.965
+  type: 'test'
+  ...
+# Subtest: bounds simultaneous requests, cancels timed-out work, and admits subsequent calls
+ok 27 - bounds simultaneous requests, cancels timed-out work, and admits subsequent calls
+  ---
+  duration_ms: 164.742875
+  type: 'test'
+  ...
+# Subtest: cancels an active stream when its grant is removed
+ok 28 - cancels an active stream when its grant is removed
+  ---
+  duration_ms: 110.122416
+  type: 'test'
+  ...
+# Subtest: cancels slow consumers instead of buffering indefinitely
+ok 29 - cancels slow consumers instead of buffering indefinitely
+  ---
+  duration_ms: 61.253375
+  type: 'test'
+  ...
+# Subtest: rejects oversized control frames before parsing and outbound allocation
+ok 30 - rejects oversized control frames before parsing and outbound allocation
+  ---
+  duration_ms: 0.646459
+  type: 'test'
+  ...
+# Subtest: clears buffered data on failure and counts UTF-8 bytes
+ok 31 - clears buffered data on failure and counts UTF-8 bytes
+  ---
+  duration_ms: 0.155292
+  type: 'test'
+  ...
+# Subtest: ignores unsolicited pairing responses that could bypass host approval
+ok 32 - ignores unsolicited pairing responses that could bypass host approval
+  ---
+  duration_ms: 2.733334
+  type: 'test'
+  ...
+# Subtest: default core hosts refuse unknown peers without an invitation or explicit approval
+ok 33 - default core hosts refuse unknown peers without an invitation or explicit approval
+  ---
+  duration_ms: 12.604459
+  type: 'test'
+  ...
+# Subtest: checks total stream output independently of the consumer buffer
+ok 34 - checks total stream output independently of the consumer buffer
+  ---
+  duration_ms: 24.189292
+  type: 'test'
+  ...
+# Subtest: Electron application protocol
+    # Subtest: resolves same-origin application assets inside the package root
+    ok 1 - resolves same-origin application assets inside the package root
+      ---
+      duration_ms: 0.297834
+      type: 'test'
+      ...
+    # Subtest: rejects foreign origins and path traversal
+    ok 2 - rejects foreign origins and path traversal
+      ---
+      duration_ms: 0.199875
+      type: 'test'
+      ...
+    1..2
+ok 35 - Electron application protocol
+  ---
+  duration_ms: 0.913583
+  type: 'suite'
+  ...
+# Subtest: lib/approval — ApprovalGate
+    # Subtest: first request is pending; approve resolves it as approve-remember
+    ok 1 - first request is pending; approve resolves it as approve-remember
+      ---
+      duration_ms: 4.541625
+      type: 'test'
+      ...
+    # Subtest: approve once does not persist
+    ok 2 - approve once does not persist
+      ---
+      duration_ms: 0.450375
+      type: 'test'
+      ...
+    # Subtest: deny resolves to "deny" and remembers
+    ok 3 - deny resolves to "deny" and remembers
+      ---
+      duration_ms: 1.126167
+      type: 'test'
+      ...
+    # Subtest: a known-approved key bypasses the modal entirely
+    ok 4 - a known-approved key bypasses the modal entirely
+      ---
+      duration_ms: 1.3085
+      type: 'test'
+      ...
+    # Subtest: a known-denied key returns deny without prompting
+    ok 5 - a known-denied key returns deny without prompting
+      ---
+      duration_ms: 0.74925
+      type: 'test'
+      ...
+    # Subtest: revoke moves an approved key to denied
+    ok 6 - revoke moves an approved key to denied
+      ---
+      duration_ms: 1.13275
+      type: 'test'
+      ...
+    # Subtest: forget returns a key to "unknown" (next request prompts again)
+    ok 7 - forget returns a key to "unknown" (next request prompts again)
+      ---
+      duration_ms: 0.900625
+      type: 'test'
+      ...
+    # Subtest: persists across instances (TOFU survives restart)
+    ok 8 - persists across instances (TOFU survives restart)
+      ---
+      duration_ms: 0.815292
+      type: 'test'
+      ...
+    # Subtest: forwards deviceName on the pending event so the modal can show it
+    ok 9 - forwards deviceName on the pending event so the modal can show it
+      ---
+      duration_ms: 0.757458
+      type: 'test'
+      ...
+    # Subtest: null deviceName falls through to null on the pending event
+    ok 10 - null deviceName falls through to null on the pending event
+      ---
+      duration_ms: 0.80075
+      type: 'test'
+      ...
+    # Subtest: promote() writes a remembered approval for an auto-paired key
+    ok 11 - promote() writes a remembered approval for an auto-paired key
+      ---
+      duration_ms: 0.725542
+      type: 'test'
+      ...
+    # Subtest: snapshot reflects persisted state and pending requests
+    ok 12 - snapshot reflects persisted state and pending requests
+      ---
+      duration_ms: 1.052375
+      type: 'test'
+      ...
+    # Subtest: imports and persists a validated trust snapshot
+    ok 13 - imports and persists a validated trust snapshot
+      ---
+      duration_ms: 0.840042
+      type: 'test'
+      ...
+    1..13
+ok 36 - lib/approval — ApprovalGate
+  ---
+  duration_ms: 15.863541
+  type: 'suite'
+  ...
+# Subtest: expires pending decisions, bounds their count and resolves duplicate requests together
+ok 37 - expires pending decisions, bounds their count and resolves duplicate requests together
+  ---
+  duration_ms: 30.886542
+  type: 'test'
+  ...
+# Subtest: Electron renderer command policy
+    # Subtest: accepts and clones supported daemon commands
+    ok 1 - accepts and clones supported daemon commands
+      ---
+      duration_ms: 0.448333
+      type: 'test'
+      ...
+    # Subtest: rejects unknown, inherited, and oversized commands
+    ok 2 - rejects unknown, inherited, and oversized commands
+      ---
+      duration_ms: 0.658541
+      type: 'test'
+      ...
+    # Subtest: only forwards supported daemon launch flags
+    ok 3 - only forwards supported daemon launch flags
+      ---
+      duration_ms: 0.129666
+      type: 'test'
+      ...
+    1..3
+ok 38 - Electron renderer command policy
+  ---
+  duration_ms: 1.597584
+  type: 'suite'
+  ...
+# Subtest: renderer commands match the allowlist
+    # Subtest: accepts every command the dashboard can build
+    ok 1 - accepts every command the dashboard can build
+      ---
+      duration_ms: 0.706
+      type: 'test'
+      ...
+    # Subtest: still rejects a command the dashboard cannot build
+    ok 2 - still rejects a command the dashboard cannot build
+      ---
+      duration_ms: 0.054833
+      type: 'test'
+      ...
+    1..2
+ok 39 - renderer commands match the allowlist
+  ---
+  duration_ms: 0.823416
+  type: 'suite'
+  ...
+# Subtest: boots and stops the real NodeDaemon inside a Bare sidecar
+ok 40 - boots and stops the real NodeDaemon inside a Bare sidecar # SKIP set RUN_ELECTRON_SIDECAR_E2E=1 (opens a local P2P listener)
+  ---
+  duration_ms: 0.239042
+  type: 'test'
+  ...
+# Subtest: Electron packaging contract
+    # Subtest: keeps the Bare worker outside ASAR and defines native installers
+    ok 1 - keeps the Bare worker outside ASAR and defines native installers
+      ---
+      duration_ms: 0.359875
+      type: 'test'
+      ...
+    # Subtest: uses a space-free Linux package path for Electron child processes
+    ok 2 - uses a space-free Linux package path for Electron child processes
+      ---
+      duration_ms: 0.04225
+      type: 'test'
+      ...
+    # Subtest: finds the configured executable on every packaged platform
+    ok 3 - finds the configured executable on every packaged platform
+      ---
+      duration_ms: 0.0565
+      type: 'test'
+      ...
+    # Subtest: disables Electron runtime escape hatches with package-time fuses
+    ok 4 - disables Electron runtime escape hatches with package-time fuses
+      ---
+      duration_ms: 0.040584
+      type: 'test'
+      ...
+    # Subtest: uses Electron by default while preserving Pear commands
+    ok 5 - uses Electron by default while preserving Pear commands
+      ---
+      duration_ms: 0.034791
+      type: 'test'
+      ...
+    # Subtest: cleans generated output before every package and installer build
+    ok 6 - cleans generated output before every package and installer build
+      ---
+      duration_ms: 0.034958
+      type: 'test'
+      ...
+    # Subtest: denies renderer network access and unneeded Electron permissions
+    ok 7 - denies renderer network access and unneeded Electron permissions
+      ---
+      duration_ms: 0.094208
+      type: 'test'
+      ...
+    # Subtest: requires the packaged Bare runtime to resolve the pinned QVAC inference engine
+    ok 8 - requires the packaged Bare runtime to resolve the pinned QVAC inference engine
+      ---
+      duration_ms: 0.087041
+      type: 'test'
+      ...
+    1..8
+ok 41 - Electron packaging contract
+  ---
+  duration_ms: 1.189083
+  type: 'suite'
+  ...
+# Subtest: Electron settings path policy
+    # Subtest: accepts only paths selected for the matching operation
+    ok 1 - accepts only paths selected for the matching operation
+      ---
+      duration_ms: 0.374459
+      type: 'test'
+      ...
+    # Subtest: allows preview then consumes import approval on confirmation
+    ok 2 - allows preview then consumes import approval on confirmation
+      ---
+      duration_ms: 0.118875
+      type: 'test'
+      ...
+    # Subtest: expires approvals
+    ok 3 - expires approvals
+      ---
+      duration_ms: 0.323292
+      type: 'test'
+      ...
+    1..3
+ok 42 - Electron settings path policy
+  ---
+  duration_ms: 1.168
+  type: 'suite'
+  ...
+# Subtest: native prebuild pruning
+    # Subtest: keeps only target native binaries and leaves nested dependency trees alone
+    ok 1 - keeps only target native binaries and leaves nested dependency trees alone
+      ---
+      duration_ms: 2.983834
+      type: 'test'
+      ...
+    1..1
+ok 43 - native prebuild pruning
+  ---
+  duration_ms: 3.286791
+  type: 'suite'
+  ...
+# Subtest: loads the pinned QVAC inference engine inside the Bare sidecar runtime
+ok 44 - loads the pinned QVAC inference engine inside the Bare sidecar runtime
+  ---
+  duration_ms: 637.504792
+  type: 'test'
+  ...
+# Subtest: lib/registry
+    # Subtest: loads an empty registry when the file is missing
+    ok 1 - loads an empty registry when the file is missing
+      ---
+      duration_ms: 2.871833
+      type: 'test'
+      ...
+    # Subtest: round-trips through save + load
+    ok 2 - round-trips through save + load
+      ---
+      duration_ms: 2.337625
+      type: 'test'
+      ...
+    # Subtest: writes atomically via .tmp then rename
+    ok 3 - writes atomically via .tmp then rename
+      ---
+      duration_ms: 1.227459
+      type: 'test'
+      ...
+    # Subtest: recordApproval moves a key from denied → approved
+    ok 4 - recordApproval moves a key from denied → approved
+      ---
+      duration_ms: 2.224
+      type: 'test'
+      ...
+    # Subtest: recordDenial moves a key from approved → denied
+    ok 5 - recordDenial moves a key from approved → denied
+      ---
+      duration_ms: 1.212167
+      type: 'test'
+      ...
+    # Subtest: revoke is sugar over recordDenial
+    ok 6 - revoke is sugar over recordDenial
+      ---
+      duration_ms: 1.589125
+      type: 'test'
+      ...
+    # Subtest: decisionFor returns the right verdict
+    ok 7 - decisionFor returns the right verdict
+      ---
+      duration_ms: 0.516042
+      type: 'test'
+      ...
+    # Subtest: survives a corrupted file by throwing (not silently resetting)
+    ok 8 - survives a corrupted file by throwing (not silently resetting)
+      ---
+      duration_ms: 1.291917
+      type: 'test'
+      ...
+    # Subtest: rejects future versions, conflicting decisions, and unsafe keys
+    ok 9 - rejects future versions, conflicting decisions, and unsafe keys
+      ---
+      duration_ms: 1.049375
+      type: 'test'
+      ...
+    1..9
+ok 45 - lib/registry
+  ---
+  duration_ms: 15.575166
+  type: 'suite'
+  ...
+# Subtest: formatting
+    # Subtest: formats byte sizes
+    ok 1 - formats byte sizes
+      ---
+      duration_ms: 0.401375
+      type: 'test'
+      ...
+    # Subtest: parses human byte amounts and rejects nonsense
+    ok 2 - parses human byte amounts and rejects nonsense
+      ---
+      duration_ms: 0.189583
+      type: 'test'
+      ...
+    # Subtest: shortens keys without mangling short strings
+    ok 3 - shortens keys without mangling short strings
+      ---
+      duration_ms: 0.136834
+      type: 'test'
+      ...
+    # Subtest: escapes HTML in peer-controlled strings
+    ok 4 - escapes HTML in peer-controlled strings
+      ---
+      duration_ms: 0.084541
+      type: 'test'
+      ...
+    # Subtest: describes grants in plain language, falling back to wire names
+    ok 5 - describes grants in plain language, falling back to wire names
+      ---
+      duration_ms: 0.116458
+      type: 'test'
+      ...
+    # Subtest: reports last activity relative to now
+    ok 6 - reports last activity relative to now
+      ---
+      duration_ms: 0.101667
+      type: 'test'
+      ...
+    1..6
+ok 46 - formatting
+  ---
+  duration_ms: 1.618709
+  type: 'suite'
+  ...
+# Subtest: peer rows
+    # Subtest: attaches resources by owner key, not appId
+    ok 1 - attaches resources by owner key, not appId
+      ---
+      duration_ms: 0.686709
+      type: 'test'
+      ...
+    # Subtest: labels a peer by name, then appId, then key
+    ok 2 - labels a peer by name, then appId, then key
+      ---
+      duration_ms: 0.18475
+      type: 'test'
+      ...
+    # Subtest: reports protection state from the peer's own resources
+    ok 3 - reports protection state from the peer's own resources
+      ---
+      duration_ms: 0.284541
+      type: 'test'
+      ...
+    # Subtest: surfaces the per-peer quota and its default
+    ok 4 - surfaces the per-peer quota and its default
+      ---
+      duration_ms: 0.214167
+      type: 'test'
+      ...
+    # Subtest: reads AI permission from the grants the node gave the peer
+    ok 5 - reads AI permission from the grants the node gave the peer
+      ---
+      duration_ms: 0.158583
+      type: 'test'
+      ...
+    # Subtest: marks trust from the approval registry
+    ok 6 - marks trust from the approval registry
+      ---
+      duration_ms: 0.091833
+      type: 'test'
+      ...
+    # Subtest: builds peek targets from cores and drives
+    ok 7 - builds peek targets from cores and drives
+      ---
+      duration_ms: 0.09125
+      type: 'test'
+      ...
+    1..7
+ok 47 - peer rows
+  ---
+  duration_ms: 2.35675
+  type: 'suite'
+  ...
+# Subtest: storage rows
+    # Subtest: reports each peer's own bytes and limit
+    ok 1 - reports each peer's own bytes and limit
+      ---
+      duration_ms: 0.137375
+      type: 'test'
+      ...
+    1..1
+ok 48 - storage rows
+  ---
+  duration_ms: 0.162792
+  type: 'suite'
+  ...
+# Subtest: capability pills
+    # Subtest: shows AI as off rather than absent when no model is loaded
+    ok 1 - shows AI as off rather than absent when no model is loaded
+      ---
+      duration_ms: 0.062458
+      type: 'test'
+      ...
+    # Subtest: shows AI ready once a model is loaded
+    ok 2 - shows AI ready once a model is loaded
+      ---
+      duration_ms: 0.028834
+      type: 'test'
+      ...
+    # Subtest: omits capabilities the node does not host
+    ok 3 - omits capabilities the node does not host
+      ---
+      duration_ms: 0.031416
+      type: 'test'
+      ...
+    1..3
+ok 49 - capability pills
+  ---
+  duration_ms: 0.153334
+  type: 'suite'
+  ...
+# Subtest: invite rows
+    # Subtest: reports remaining uses and expiry
+    ok 1 - reports remaining uses and expiry
+      ---
+      duration_ms: 23.064167
+      type: 'test'
+      ...
+    1..1
+ok 50 - invite rows
+  ---
+  duration_ms: 23.146375
+  type: 'suite'
+  ...
+# Subtest: summary counts
+    # Subtest: counts peers, resources and connections
+    ok 1 - counts peers, resources and connections
+      ---
+      duration_ms: 0.127083
+      type: 'test'
+      ...
+    # Subtest: survives an empty snapshot
+    ok 2 - survives an empty snapshot
+      ---
+      duration_ms: 0.034125
+      type: 'test'
+      ...
+    1..2
+ok 51 - summary counts
+  ---
+  duration_ms: 0.205416
+  type: 'suite'
+  ...
+# Subtest: command payloads
+    # Subtest: addresses peers by public key
+    ok 1 - addresses peers by public key
+      ---
+      duration_ms: 0.086625
+      type: 'test'
+      ...
+    # Subtest: builds invite commands
+    ok 2 - builds invite commands
+      ---
+      duration_ms: 0.036667
+      type: 'test'
+      ...
+    1..2
+ok 52 - command payloads
+  ---
+  duration_ms: 0.149
+  type: 'suite'
+  ...
+# Subtest: Electron Bare sidecar host
+    # Subtest: round-trips framed messages and shuts down cleanly
+    ok 1 - round-trips framed messages and shuts down cleanly
+      ---
+      duration_ms: 47.418375
+      type: 'test'
+      ...
+    1..1
+ok 53 - Electron Bare sidecar host
+  ---
+  duration_ms: 47.867917
+  type: 'suite'
+  ...
+# Subtest: node config
+    # Subtest: writes defaults on first load
+    ok 1 - writes defaults on first load
+      ---
+      duration_ms: 3.5525
+      type: 'test'
+      ...
+    # Subtest: round-trips through save and load
+    ok 2 - round-trips through save and load
+      ---
+      duration_ms: 2.201041
+      type: 'test'
+      ...
+    # Subtest: migrates a v1 per-app quota to a per-peer quota
+    ok 3 - migrates a v1 per-app quota to a per-peer quota
+      ---
+      duration_ms: 0.120833
+      type: 'test'
+      ...
+    # Subtest: migrates the unversioned beta format
+    ok 4 - migrates the unversioned beta format
+      ---
+      duration_ms: 0.132125
+      type: 'test'
+      ...
+    # Subtest: refuses a config from the future
+    ok 5 - refuses a config from the future
+      ---
+      duration_ms: 0.182416
+      type: 'test'
+      ...
+    # Subtest: rejects unknown options rather than silently ignoring them
+    ok 6 - rejects unknown options rather than silently ignoring them
+      ---
+      duration_ms: 0.101708
+      type: 'test'
+      ...
+    # Subtest: validates types and quota shapes
+    ok 7 - validates types and quota shapes
+      ---
+      duration_ms: 0.105292
+      type: 'test'
+      ...
+    1..7
+ok 54 - node config
+  ---
+  duration_ms: 7.053167
+  type: 'suite'
+  ...
+# Subtest: node export/import
+    # Subtest: exports peers, config and identity
+    ok 1 - exports peers, config and identity
+      ---
+      duration_ms: 6.956125
+      type: 'test'
+      ...
+    # Subtest: restores the same identity, so peers stay paired
+    ok 2 - restores the same identity, so peers stay paired
+      ---
+      duration_ms: 5.114208
+      type: 'test'
+      ...
+    # Subtest: previews a bundle without applying it
+    ok 3 - previews a bundle without applying it
+      ---
+      duration_ms: 2.940791
+      type: 'test'
+      ...
+    # Subtest: rejects a bundle from an unsupported version
+    ok 4 - rejects a bundle from an unsupported version
+      ---
+      duration_ms: 0.617833
+      type: 'test'
+      ...
+    # Subtest: rejects malformed peer records
+    ok 5 - rejects malformed peer records
+      ---
+      duration_ms: 0.5015
+      type: 'test'
+      ...
+    # Subtest: rejects a malformed identity seed
+    ok 6 - rejects a malformed identity seed
+      ---
+      duration_ms: 0.416834
+      type: 'test'
+      ...
+    1..6
+ok 55 - node export/import
+  ---
+  duration_ms: 17.09475
+  type: 'suite'
+  ...
+# Subtest: retains peer revocations through settings export and import
+ok 56 - retains peer revocations through settings export and import
+  ---
+  duration_ms: 3.045125
+  type: 'test'
+  ...
+# Subtest: personal node
+    # Subtest: starts, listens, and reports a stable identity
+    ok 1 - starts, listens, and reports a stable identity
+      ---
+      duration_ms: 104.72875
+      type: 'test'
+      ...
+    # Subtest: replicates a paired app and reports it in status
+    ok 2 - replicates a paired app and reports it in status
+      ---
+      duration_ms: 261.063167
+      type: 'test'
+      ...
+    # Subtest: pauses a peer that exceeds its quota
+    ok 3 - pauses a peer that exceeds its quota
+      ---
+      duration_ms: 240.761416
+      type: 'test'
+      ...
+    # Subtest: changes a peer grant live and persists it
+    ok 4 - changes a peer grant live and persists it
+      ---
+      duration_ms: 69.236875
+      type: 'test'
+      ...
+    # Subtest: unpairs a peer and forgets its resources
+    ok 5 - unpairs a peer and forgets its resources
+      ---
+      duration_ms: 132.067333
+      type: 'test'
+      ...
+    # Subtest: pauses and resumes a peer on request
+    ok 6 - pauses and resumes a peer on request
+      ---
+      duration_ms: 124.965834
+      type: 'test'
+      ...
+    # Subtest: toggles AI through config and reports it in status
+    ok 7 - toggles AI through config and reports it in status
+      ---
+      duration_ms: 58.850625
+      type: 'test'
+      ...
+    # Subtest: brings AI back up from config on restart
+    ok 8 - brings AI back up from config on restart
+      ---
+      duration_ms: 90.991583
+      type: 'test'
+      ...
+    # Subtest: serves delegated inference to a paired peer
+    ok 9 - serves delegated inference to a paired peer
+      ---
+      duration_ms: 94.03725
+      type: 'test'
+      ...
+    # Subtest: reports disk usage for the operator
+    ok 10 - reports disk usage for the operator
+      ---
+      duration_ms: 59.895875
+      type: 'test'
+      ...
+    # Subtest: honours a pairing approval callback
+    ok 11 - honours a pairing approval callback
+      ---
+      duration_ms: 65.143167
+      type: 'test'
+      ...
+    1..11
+ok 57 - personal node
+  ---
+  duration_ms: 1302.830875
+  type: 'suite'
+  ...
+# Subtest: headless defaults refuse public-key pairing but accept scoped invitations
+ok 58 - headless defaults refuse public-key pairing but accept scoped invitations
+  ---
+  duration_ms: 96.608
+  type: 'test'
+  ...
+# Subtest: enforces quotas without a status poll and refuses peer attempts to resume or register more resources
+ok 59 - enforces quotas without a status poll and refuses peer attempts to resume or register more resources
+  ---
+  duration_ms: 160.704417
+  type: 'test'
+  ...
+1..59
+# tests 207
+# suites 36
+# pass 205
+# fail 0
+# cancelled 0
+# skipped 2
+# todo 0
+# duration_ms 153343.552208

@@ -1,0 +1,101 @@
+TAP version 13
+# Subtest: lib/approval — ApprovalGate
+    # Subtest: first request is pending; approve resolves it as approve-remember
+    ok 1 - first request is pending; approve resolves it as approve-remember
+      ---
+      duration_ms: 4.318958
+      type: 'test'
+      ...
+    # Subtest: approve once does not persist
+    ok 2 - approve once does not persist
+      ---
+      duration_ms: 0.569
+      type: 'test'
+      ...
+    # Subtest: deny resolves to "deny" and remembers
+    ok 3 - deny resolves to "deny" and remembers
+      ---
+      duration_ms: 1.23625
+      type: 'test'
+      ...
+    # Subtest: a known-approved key bypasses the modal entirely
+    ok 4 - a known-approved key bypasses the modal entirely
+      ---
+      duration_ms: 1.256083
+      type: 'test'
+      ...
+    # Subtest: a known-denied key returns deny without prompting
+    ok 5 - a known-denied key returns deny without prompting
+      ---
+      duration_ms: 0.773833
+      type: 'test'
+      ...
+    # Subtest: revoke moves an approved key to denied
+    ok 6 - revoke moves an approved key to denied
+      ---
+      duration_ms: 1.194875
+      type: 'test'
+      ...
+    # Subtest: forget returns a key to "unknown" (next request prompts again)
+    ok 7 - forget returns a key to "unknown" (next request prompts again)
+      ---
+      duration_ms: 1.10125
+      type: 'test'
+      ...
+    # Subtest: persists across instances (TOFU survives restart)
+    ok 8 - persists across instances (TOFU survives restart)
+      ---
+      duration_ms: 0.93075
+      type: 'test'
+      ...
+    # Subtest: forwards deviceName on the pending event so the modal can show it
+    ok 9 - forwards deviceName on the pending event so the modal can show it
+      ---
+      duration_ms: 0.746292
+      type: 'test'
+      ...
+    # Subtest: null deviceName falls through to null on the pending event
+    ok 10 - null deviceName falls through to null on the pending event
+      ---
+      duration_ms: 1.006708
+      type: 'test'
+      ...
+    # Subtest: promote() writes a remembered approval for an auto-paired key
+    ok 11 - promote() writes a remembered approval for an auto-paired key
+      ---
+      duration_ms: 0.64025
+      type: 'test'
+      ...
+    # Subtest: snapshot reflects persisted state and pending requests
+    ok 12 - snapshot reflects persisted state and pending requests
+      ---
+      duration_ms: 1.113583
+      type: 'test'
+      ...
+    # Subtest: imports and persists a validated trust snapshot
+    ok 13 - imports and persists a validated trust snapshot
+      ---
+      duration_ms: 0.750167
+      type: 'test'
+      ...
+    1..13
+ok 1 - lib/approval — ApprovalGate
+  ---
+  duration_ms: 16.298792
+  type: 'suite'
+  ...
+# Subtest: expires pending decisions, bounds their count and resolves duplicate requests together
+ok 2 - expires pending decisions, bounds their count and resolves duplicate requests together
+  ---
+  duration_ms: 30.7745
+  type: 'test'
+  ...
+1..2
+# tests 14
+# suites 1
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 77.190875

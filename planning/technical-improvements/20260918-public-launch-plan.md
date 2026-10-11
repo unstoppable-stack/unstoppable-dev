@@ -165,11 +165,13 @@ Add or verify bounded requests, concurrent inference limits, stream backpressure
 
 **Done when:**
 
-- [ ] An unknown peer cannot use sync or AI merely by reaching the public key.
-- [ ] Expired/revoked invitations, denied grants, and revoked peers are rejected.
-- [ ] Per-peer access remains scoped after restart/reconnect.
-- [ ] The documented concurrency/size limits are exercised with meaningful failure tests.
-- [ ] Desktop and headless instructions describe their actual approval behavior.
+- [x] An unknown peer cannot use sync or AI merely by reaching the public key.
+- [x] Expired/revoked invitations, denied grants, and revoked peers are rejected.
+- [x] Per-peer access remains scoped after restart/reconnect.
+- [x] The documented concurrency/size limits are exercised with meaningful failure tests.
+- [x] Desktop and headless instructions describe their actual approval behavior.
+
+**Progress (10 October):** Explicit approval/scoped-invitation defaults, persisted grant ceilings and revocations, bounded capability/AI requests, stream cancellation and soft storage admission are implemented with regression and real QVAC evidence. See [acceptance report](../status/public-launch-node-controls-20261010.md). Hosted checks must pass on the PR; Node remains a deferred alpha with hard resource-pressure, retention/recovery and registry gates outstanding.
 
 ### PRJ-06 — Correct replication, retention, and recovery claims
 

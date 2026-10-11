@@ -4,7 +4,7 @@
   "releaseId": "public-developer-preview-2026-09",
   "releaseLabel": "Developer preview",
   "recordedAt": "2026-09-18",
-  "lastUpdatedAt": "2026-10-09",
+  "lastUpdatedAt": "2026-10-10",
   "releaseStatus": "blocked",
   "releaseOwner": null,
   "candidate": {
@@ -136,11 +136,12 @@
         "packages/node-caps-sync",
         "packages/node-caps-ai",
         "packages/node",
-        "planning/status/public-launch-post-merge-20261007.md"
+        "planning/status/public-launch-post-merge-20261007.md",
+        "planning/status/public-launch-node-controls-20261010.md"
       ],
       "limitations": [
         "Post-merge alpha work replaces local production dependencies and passes isolated tarball installation; public registry resolution remains unverified.",
-        "Default trust, resource bounds, and replication-status gates are incomplete.",
+        "Focused trust/resource controls and honest replication status are implemented; hard CPU/RAM/disk pressure, retention/deletion and recovery acceptance remain incomplete.",
         "May ship later under an alpha tag only after PRJ-02, PRJ-05, and PRJ-06 pass."
       ]
     },

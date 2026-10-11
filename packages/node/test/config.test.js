@@ -27,7 +27,7 @@ describe('node config', { after: async () => {
     const dir = await tmp()
     const config = await loadConfig(dir)
     assert.equal(config.configVersion, CONFIG_VERSION)
-    assert.deepEqual(config.storage, { globalQuotaBytes: null, perPeerQuotaBytes: null })
+    assert.deepEqual(config.storage, { globalQuotaBytes: 10 * 1024 ** 3, perPeerQuotaBytes: 1024 ** 3 })
 
     const onDisk = JSON.parse(await readFile(join(dir, 'node-config.json'), 'utf8'))
     assert.equal(onDisk.configVersion, CONFIG_VERSION)

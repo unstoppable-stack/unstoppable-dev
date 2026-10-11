@@ -39,7 +39,7 @@ describe('ai capability pack', () => {
     async function makeNode (opts = {}) {
       const dir = await mkdtemp(join(tmpdir(), 'caps-ai-'))
       dirs.push(dir)
-      const node = createNode({ storage: dir, swarm: { bootstrap }, ...opts })
+      const node = createNode({ pairing: { autoApprove: true }, storage: dir, swarm: { bootstrap }, ...opts })
       nodes.push(node)
       await node.ready()
       return node
@@ -77,6 +77,11 @@ describe('ai capability pack', () => {
     }
     assert.equal(received, 3)
 
+    // Cancellation is asynchronous: capacity is not reusable until the
+    // old provider iterator has returned and native cancellation completed.
+    const deadline = Date.now() + 1000
+    while (host._activeRequests > 0 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 5))
+    assert.equal(host._activeRequests, 0)
     // Session survives the cancel and can serve a fresh request.
     let out = ''
     for await (const token of peer.stream('ai', 'completion.stream', {
@@ -149,7 +154,7 @@ describe('runtime toggle', () => {
     return async function makeNode (opts = {}) {
       const dir = await mkdtemp(join(tmpdir(), 'caps-ai-'))
       dirs2.push(dir)
-      const node = createNode({ storage: dir, swarm: { bootstrap }, ...opts })
+      const node = createNode({ pairing: { autoApprove: true }, storage: dir, swarm: { bootstrap }, ...opts })
       nodes2.push(node)
       await node.ready()
       return node

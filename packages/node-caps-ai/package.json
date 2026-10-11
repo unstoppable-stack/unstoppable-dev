@@ -38,7 +38,8 @@
     "test:qvac": "node --test --test-force-exit --test-timeout 300000 test/ai-provider-real.test.js"
   },
   "dependencies": {
-    "bare-events": "^2.8.3"
+    "bare-events": "^2.8.3",
+    "b4a": "^1.8.0"
   },
   "peerDependencies": {
     "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
