@@ -5,6 +5,11 @@ It ships to Claude, Cursor, OpenCode and Codex through thin tool wrappers and
 on-demand skills. Detailed SDK APIs belong to upstream documentation and the
 installed dependency types.
 
+Self-contained local Codex and Claude Code plugin packages are also available.
+See [plugin setup and validation status](PLUGIN.md); build them with
+`node packages/agent-pack/scripts/build-plugin.mjs` from the repository root
+after syncing maintained assets.
+
 ## Ownership
 
 - `src/core/`: local-first policy, runtime boundaries and composition decisions.

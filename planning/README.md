@@ -35,6 +35,7 @@ Deep planning docs for major features and workstreams.
 | File | Contents |
 |------|----------|
 | `agent-pack.md` | Agent pack v2 architecture: skills, hooks, auto-activation, researcher |
+| [Harness plugin](features/harness-plugin.md) | Installable stack workflows for Codex/Claude Code, shared packaging, other harness adapters and acceptance gates |
 | `website.md` | unstoppable.dev — pages, components, design tokens, partner logos |
 | `node.md` | Unstoppable Node — personal sync hub, 3 services, discovery protocol |
 | `node-technical.md` | Node technical architecture — Data Sync, File Sync, AI Provider |
