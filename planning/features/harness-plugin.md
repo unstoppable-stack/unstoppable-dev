@@ -1,7 +1,7 @@
 # Unstoppable Stack plugin for coding harnesses
 
-**Status:** local packaging prototype implemented; P0 behavior/activation gates and later milestones pending; not published  
-**Date:** 11 October 2026  
+**Status:** local packaging prototype implemented; P0 behavior/activation gates and later milestones pending; not published
+**Date:** 11 October 2026
 **First targets:** Codex and Claude Code; Cursor and OpenCode follow through adapters
 
 **Implementation update:** [11 October evidence](../status/evidence/20261011-harness-plugin/README.md) records the entry skill, self-contained packages, host parser validation and regression checks. See [local setup](../../packages/agent-pack/PLUGIN.md) to try the prototype. Parsing checks do not complete P0's model-driven workflow gates.
