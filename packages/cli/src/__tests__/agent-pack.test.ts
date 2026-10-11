@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, dirname, resolve } from 'node:path'
 import { buildAgentPack } from '../agent-pack/index.js'
 import type { AssistantId } from '../constants.js'
 
@@ -20,6 +20,11 @@ describe('agent-pack app integration', () => {
           await expect(readFile(join(outputDir, path, '..', match[1]), 'utf8')).resolves.toBeTruthy()
         }
       }
+      for (const { path, text } of contents.filter(file => file.path.endsWith('/SKILL.md'))) {
+        for (const match of text.matchAll(/\]\((\.\.\/[^)]+)\)/g)) {
+          await expect(readFile(resolve(outputDir, dirname(path), match[1]), 'utf8')).resolves.toBeTruthy()
+        }
+      }
       const root = tool === 'claude' ? 'CLAUDE.md' : tool === 'cursor' ? '.cursor/rules/project.mdc' : 'AGENTS.md'
       const instructions = await readFile(join(outputDir, root), 'utf8')
       expect(instructions).toContain('us compatibility list')
@@ -33,5 +38,11 @@ describe('agent-pack app integration', () => {
     const result = await buildAgentPack({ tool: 'codex', template: 'blank', projectName: 'test', outputDir, platform: 'node-cli', features: [] })
     expect(result.filesWritten).not.toContain('.agents/skills/add-ai-chat/SKILL.md')
     expect(result.filesWritten).not.toContain('.unstoppable/guidance/modules/qvac.md')
+    const entry = '.agents/skills/build-with-unstoppable/SKILL.md'
+    expect(result.filesWritten).toContain(entry)
+    const text = await readFile(join(outputDir, entry), 'utf8')
+    for (const match of text.matchAll(/\]\((\.\.\/[^)]+)\)/g)) {
+      await expect(readFile(resolve(outputDir, dirname(entry), match[1]), 'utf8')).resolves.toBeTruthy()
+    }
   })
 })

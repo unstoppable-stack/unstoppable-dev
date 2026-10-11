@@ -4,6 +4,8 @@
 
 > Distribution planning (11 October 2026): see [the harness plugin plan](harness-plugin.md) for Codex/Claude Code packaging, shared content assembly, project-pack coexistence, additional harness adapters and release acceptance gates.
 
+> Distribution planning (11 October 2026): see [the harness plugin plan](harness-plugin.md) for Codex/Claude Code packaging, project-pack coexistence and release acceptance gates.
+
 ## Purpose
 
 This document audits the current agent pack system, synthesizes best practices from leading open-source agent configurations, and proposes a roadmap for continuously improving the agents that help developers build Unstoppable Stack apps.
