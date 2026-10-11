@@ -12,7 +12,7 @@
 #   2. Installs the selected tarballs into an ISOLATED prefix (no pollution of
 #      your real global npm).
 #   3. Asserts `us --version` reports the expected version + minimal profile.
-#   4. Asserts only the core `init`, `scaffold`, and `doctor` commands ship.
+#   4. Asserts the core `init`, `scaffold`, `doctor`, and read-only `compatibility` commands ship.
 #   5. Verifies the scaffold catalog excludes deferred/planned targets.
 #   6. Runs `us doctor`, `us init`, and a Pear Desktop scaffold.
 #
@@ -68,7 +68,9 @@ step() { STEP=$((STEP + 1)); printf '\n\033[1m[%d] %s\033[0m\n' "$STEP" "$1"; }
 cleanup() { rm -rf "$WORK"; }
 trap cleanup EXIT
 
+node "$REPO_ROOT/scripts/sync-stack-assets.mjs" --check
 node "$REPO_ROOT/scripts/check-agent-pack.mjs"
+node --test "$REPO_ROOT"/packages/runtime-ai/test/*.test.js
 
 EXPECTED_CLI_VERSION="$(node -p "require('$REPO_ROOT/packages/cli/package.json').version")"
 INCLUDE_NODE_ALPHA="${INCLUDE_NODE_ALPHA:-0}"
@@ -145,10 +147,10 @@ pass "reports $EXPECTED_CLI_VERSION (minimal)"
 step "Command surface"
 # ---------------------------------------------------------------------------
 HELP_OUT="$(us --help)"
-for cmd in init scaffold doctor; do
+for cmd in init scaffold doctor compatibility; do
   echo "$HELP_OUT" | grep -q "^  $cmd" || fail "missing command: $cmd"
 done
-pass "init, scaffold, doctor present"
+pass "init, scaffold, doctor, compatibility present"
 for cmd in remote research search node memory; do
   if echo "$HELP_OUT" | grep -q "^  $cmd"; then
     fail "'$cmd' command present — it is outside the core preview"
@@ -207,7 +209,7 @@ node -e "const p=require('$PROJECTS/smoke-scaffold/package.json'); if (!p.depend
   || fail "local-ai scaffold did not declare @qvac/inference"
 pass "scaffolded Pear Desktop local-ai app"
 
-for generated_js in electron/main.js electron/preload.cjs worker.js chat-context.js app/bridge.js app/index.js; do
+for generated_js in electron/main.js electron/preload.cjs worker.js .unstoppable/runtime-ai/index.js .unstoppable/runtime-ai/history.js .unstoppable/runtime-ai/adapters.js app/bridge.js app/index.js; do
   node --check "$PROJECTS/smoke-scaffold/$generated_js" >/dev/null \
     || fail "generated syntax check failed: $generated_js"
 done

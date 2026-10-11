@@ -1,100 +1,18 @@
 ---
-description: How Unstoppable Stack modules fit together: runtimes, data layers, AI, and P2P networking
-alwaysApply: true
+description: Ownership and runtime boundaries for generated Unstoppable apps.
+alwaysApply: false
 ---
 
-# Unstoppable Stack Architecture Overview
+# Architecture
 
-## How Modules Fit Together
+`App UI/domain code -> generated manager or IPC bridge -> maintained runtime contract -> upstream SDK`
 
-- Pear OTA (`pear-runtime`) is embedded in a standard desktop host and supplies
-  P2P updates, application storage, and Bare workers. The Pear CLI handles
-  build, staging, provisioning, installation, and multisig releases.
-- Bare is the low-level JS runtime used by Pear and on mobile worklets.
-- Hyperswarm (over HyperDHT) discovers peers by topic and provides encrypted
-  streams.
-- Hypercore is the append-only log foundation for replication; Hyperbee adds a
-  key-value view; Hyperdrive adds a filesystem view.
-- HyperDB is a schema/index layer that can run on Hyperbee (P2P) or RocksDB
-  (local).
-- QVAC runs local inference in Bare workers (Node/Bare/Expo) and can delegate
-  inference over P2P topics.
-- WDK handles self-custodial wallets and payments across chains.
+Desktop: Electron main embeds Pear Runtime; sandboxed renderer uses preload/IPC; Bare worker owns P2P, storage and the AI session. Node: app manager owns a session with the Node adapter; QVAC manages its own worker. Expo: React Native hosts its pinned QVAC SDK, while the separate Bare worklet hosts networking/storage. Do not move QVAC into the app's mobile networking worklet.
 
-## Data Flow (ASCII)
+The runtime is shipped at `.unstoppable/runtime-ai/` with a recorded version. Generated apps own their copy until migrated; edit prompts/UI in app code. Avoid copying new engine setup into each feature. Use direct advanced SDK access inside a runtime boundary only after checking installed types and native support.
 
-```
-UI (Pear Desktop / Expo RN)
-  |  (RPC/IPC)
-  v
-Bare Worklet / Pear Terminal Engine
-  |  (Hyperswarm encrypted streams)
-  v
-P2P Network (DHT topics)
-  |  (Hypercore replication)
-  v
-Local-first Storage
-  - Hypercore (log)
-  - Hyperbee (KV view)
-  - Hyperdrive (FS view)
-```
+Storage: Corestore manages Hypercores; Hyperbee supplies the default KV view. Multi-writer apps use Autobee with HyperDB and deterministic domain merge policy. Schemas and domain policy belong to the app. Keep the local namespace outside replication.
 
-## Security Model (Summary)
+Use node-core for identity, pairing, grants and capability transport when those features are installed. Simple core/database replication does not require a Personal Node. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
 
-- Capability keys: Hypercore/Hyperdrive public keys grant read access; treat
-  them as secrets.
-- Encrypted transport: Hyperswarm connections are Noise-encrypted; use
-  `@hyperswarm/secret-stream` for app-level protocols.
-- Installed P2P applications are addressed by `pear://` links; document the
-  expected link and signer trust model.
-- Secrets at rest: store wallet seeds and auth tokens in OS keychains or secure
-  stores.
-- Delegate boundaries: if using delegated inference, scope providers to explicit
-  topics and public keys.
-
-## Decision Tree
-
-- If the user mentions desktop distribution, app sharing, or `pear://` links,
-  USE Pear.
-- If the user mentions mobile or React Native, ASK: "Do you need a Bare worklet
-  backend?" If yes, USE Expo + Bare worklet + `bare-pack`.
-- If the user needs append-only replication or activity logs, USE Hypercore.
-- If the user needs key-value sync, ASK: "Do you need schemas/indexes?" If yes,
-  USE HyperDB; otherwise USE Hyperbee.
-- If the user needs file sharing, folder sync, or filesystem semantics, USE
-  Hyperdrive.
-- If the user mentions AI, LLMs, or inference, ASK: "Do you need local inference
-  (QVAC for offline) or a cloud API?" If local, USE QVAC SDK.
-- If the user mentions payments, wallets, or crypto, USE WDK.
-
-## Module Map
-
-- Runtime: Pear (desktop), Bare (worklets/embedded), Expo Bare (mobile).
-- Networking: Hyperswarm (peer discovery), HyperDHT (DHT layer).
-- Data: Hypercore (log), Hyperbee (KV), HyperDB (schema/index), Hyperdrive (FS),
-  Corestore (multi-core storage).
-- AI: QVAC SDK (local + delegated inference).
-- Payments: WDK (wallet + payments).
-
-## Example Architectures
-
-1. Pear Desktop LLM App
-   - UI: Electron renderer
-   - Engine: Bare worker launched by `pear-runtime`
-   - Bridge: Electron preload IPC + `Bare.IPC` streaming tokens
-
-2. P2P Sync App (Desktop/Terminal)
-   - Networking: Hyperswarm topic per workspace
-   - Storage: Hypercore (log) + Hyperbee (KV index)
-   - Sync: `core.replicate(conn)` on swarm connections
-
-3. Mobile P2P App
-   - UI: React Native (Expo)
-   - Backend: Bare worklet
-   - Bridge: `bare-rpc` over Worklet IPC
-   - Storage: Hypercore/Hyperdrive inside worklet
-
-4. Payments-Enabled App
-   - WDK in Bare/Node
-   - Wallets registered per chain
-   - Optional: Account abstraction for gasless UX
+The app manifest and local compatibility profiles distinguish preview, experimental and deferred combinations. A scaffold does not certify support. Select guidance for the installed profile before reading upstream docs.

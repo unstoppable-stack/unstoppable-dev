@@ -56,3 +56,9 @@ QVAC inference 0.21.0 reads configuration through its native dynamic loader; the
 The selected GGUF model is [Unsloth Qwen 3.5 0.8B](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF), labeled Apache-2.0 by its publisher, with the [upstream Qwen license](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/LICENSE). The repository does not bundle model weights; the app downloads the pinned model on first use.
 
 Context uses bounded recent history, not the removed `n_discarded` setting. Earlier turns can be omitted from inference with visible feedback. An oversized latest request is rejected with an instruction to shorten it. This does not remove displayed conversation history or saved orders.
+
+## Maintained runtime migration — 10 October 2026
+
+The worker now uses the shared AI session implementation vendored in `.unstoppable/runtime-ai/`. Its compatibility profile, model identity and runtime version are recorded in `.unstoppable/project.json`; `us compatibility check -o examples/coffee-assistant` reports differences without editing files. Coffee prompts, order storage and peer-sharing logic remain app-owned.
+
+After this migration, the two-app local-DHT test passed remote retrieval, visible disconnection, full restart persistence and retrieval of the updated order after reconnect. Native model streaming, Stop/reuse, failed-load retry, context-limit recovery and cached network-isolated inference passed on a newly generated desktop app using this same runtime and the example’s existing native dependency graph. This does not establish fresh installation, public-DHT revalidation, another operating system, or cold/interrupted-download acceptance for the new runtime. See `planning/technical-improvements/20261010-agent-pack-implementation.md` for the evidence and remaining gates.

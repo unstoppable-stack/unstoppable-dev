@@ -5,11 +5,19 @@ on:
     branches: [main]
     paths:
       - 'packages/cli/**'
+      - 'packages/runtime-ai/**'
+      - 'packages/agent-pack/src/**'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
   pull_request:
     branches: [main]
     paths:
       - 'packages/cli/**'
+      - 'packages/runtime-ai/**'
+      - 'packages/agent-pack/src/**'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
   schedule:
     # Nightly at 03:00 UTC — runs ios-build-nightly job
@@ -45,6 +53,8 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests (vitest)
         run: pnpm test
+      - name: AI runtime contract tests
+        run: pnpm test:runtime
       - name: Build CLI
         run: pnpm build
       - name: Upload dist

@@ -1,68 +1,10 @@
 ---
-description: Experimental QVAC 0.21 integration in Expo with a separate P2P Bare worklet.
-globs:
+description: Mobile runtime boundary integration guidance.
 alwaysApply: false
 ---
 
-# QVAC 0.21 in Expo
+# Mobile runtime boundary
 
-Mobile remains deferred. Use the full internal CLI source build, not the minimal public-preview CLI. See `skills/setup-mobile-app/SKILL.md` for commands and acceptance boundaries.
+Read the recorded Expo profile. QVAC belongs in the React Native host; the separate app Bare worklet owns networking/storage. Upgrade Expo, React Native, BareKit, bundler and native addons as a coupled graph. Physical-device checks are required; desktop adapter tests do not validate Expo.
 
-## Two workers
-
-The app calls `@qvac/sdk` through static React Native imports. The SDK starts its own Bare worker. The custom `bare/index.js` worklet owns local storage and any P2P logic you add, and must not import the SDK. Worker readiness does not prove discovery or replication. Worklet IPC and bare-rpc connect that custom worklet to the UI.
-
-## Compatible package set
-
-Use Expo 54, RN 0.81.5, React/React DOM 19.1.0, `react-native-bare-kit@0.15.6`, and `@qvac/sdk@0.21.0`. Kit 0.15.6 embeds Bare 1.33.4; pinning it prevents silent runtime changes. See `core/verified-versions.mdc`.
-
-Select only the capability the app uses:
-
-```json
-{
-  "plugins": ["@qvac/sdk/llamacpp-completion/plugin"]
-}
-```
-
-Save this as `qvac.config.json`; Expo uses JSON configuration. In app.json:
-
-```json
-{
-  "expo": {
-    "plugins": [
-      ["@qvac/sdk/expo-plugin", { "installMissingPrebuilds": true }],
-      "expo-router",
-      ["expo-build-properties", { "android": { "minSdkVersion": 29 } }]
-    ]
-  }
-}
-```
-
-The plugin bundles and verifies the SDK worker, installs published platform addons and refreshes native linking. Keep a lockfile after prebuild. The custom worklet is bundled separately with `bare-pack --host ios-arm64 --host ios-arm64-simulator --host ios-x64-simulator --host android-arm64 --linked`. Do not move SDK imports into that bundle to avoid maintaining its own bundle.
-
-## Completion
-
-```ts
-import { loadModel, completion, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M } from '@qvac/sdk'
-
-const modelId = await loadModel({
-  modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
-  modelType: 'llm',
-  modelConfig: { ctx_size: 4096, reasoning_budget: 0 },
-})
-
-let text = ''
-const run = completion({ modelId, history: [{ role: 'user', content: 'Hello' }], stream: true })
-for await (const event of run.events) {
-  if (event.type === 'completionDone' && event.stopReason === 'error') {
-    throw new Error(event.error?.message || 'Inference failed')
-  }
-  if (event.type === 'contentDelta') text += event.text
-}
-```
-
-QVAC 0.21 rejects `n_discarded`; manage bounded history and overflow in the app. The maintained scaffold checks device type before model load. Its `EXPO_PUBLIC_QVAC_MOCK=1` path echoes text and does not call native inference.
-
-## Acceptance
-
-Install, bare-pack, Expo prebuild and native compilation must pass before testing runtime. On a simulator verify worker startup, KV persistence and optional mock chat. Real inference requires a physical device according to QVAC documentation. Do not equate a mock result, successful build or SDK bundle verification with real mobile inference. Keep Android and physical-device claims pending until their own evidence exists.
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

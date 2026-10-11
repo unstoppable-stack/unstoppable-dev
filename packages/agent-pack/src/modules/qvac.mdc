@@ -1,83 +1,36 @@
 ---
-description: QVAC 0.21 local AI: runtime boundaries, model lifecycle, streaming, cancellation and bounded context.
+description: Local AI session ownership and native adapter boundaries for generated apps.
 alwaysApply: false
 ---
 
-# QVAC 0.21
+# QVAC integration contract
 
-Verified package contents and desktop migration experiments: 6 October 2026. The desktop preview uses `@qvac/inference@0.21.0` and `@qvac/llm-llamacpp@0.55.0`; Node clients use `@qvac/sdk@0.21.0`. Expo remains deferred; its 9 October compatibility candidate uses SDK 0.21.0 and Bare kit 0.15.6 (Bare 1.33.4). Native simulator checks do not establish physical-device inference. Do not upgrade mobile pins independently.
+Read the target app's .unstoppable/project.json and installed dependency types first. The compatibility table selects desktop/Node versus experimental Expo. Renderer code uses IPC only; native imports live inside adapters. Upstream docs own detailed SDK APIs: https://docs.qvac.tether.io/sdk/js-ts-sdk/.
 
-## Runtime boundary
+## Local session
 
-- **Bare worker:** import `@qvac/inference`, install only the native addons backing registered plugins, and set `globalThis.process` from `bare-process` before importing the engine. Register plugins explicitly. Inference stays inside the existing Bare process.
-- **Node:** use `@qvac/sdk`; it manages its own worker. Node must be >=22.17.
-- **Electron renderer:** browser-safe UI and IPC only; never import native inference engines here. The desktop host uses Electron 44 and Pear Runtime 1.3.1 to run the Bare worker.
-- **Expo:** SDK imports belong in React Native, not an application's Bare networking worklet. Check the SDK plugin, actual Bare-kit host runtime, addon prebuilds and physical-device execution as a coherent release.
+Maintained source for the local AI session used by desktop and Node scaffolds.
+The CLI vendors this package into `.unstoppable/runtime-ai/`; it does not require
+an unpublished npm package. Run `node scripts/sync-stack-assets.mjs` after editing
+this package. Generated apps keep their recorded version until deliberately migrated.
 
-Current inference requires Bare >=1.30.3. A dependency such as bare-module 7 may require a newer runtime still; validate the complete addon/module graph. Bare configuration uses dynamic import in 0.21; the old SDK 0.15 global `require` shim is unnecessary in the migrated worker. Node's `createRequire` is a separate API and must not receive Bare-only metadata.
+`createAISession({ adapter, byteBudget })` owns loading, bounded history, one
+active request, native cancellation, error codes, and unloading. The app owns
+history, prompts, UI, and IPC request IDs. Call `load(options)`, then iterate
+`stream(history, { requestId, signal, onTrim })`. Use `cancel(requestId)` for Stop
+and `close()` on shutdown. Cancellation holds the session busy until the stream
+settles. Consume or return the stream; do not leave an iterator suspended while
+waiting for `cancel()` or `close()` to finish.
 
-## Bare LLM initialization
+QVAC cancellation is scoped to a model. The concurrency limit is one request
+per session; do not share its model with unrelated completions. A failed native
+cancel is reported as `CANCEL_FAILED`; the runtime cannot promise recovery from
+an engine that will not settle. Do not automatically replay partially emitted output.
 
-```js
-const { default: process } = await import('bare-process')
-globalThis.process = process
-const sdk = await import('@qvac/inference')
-const { llmPlugin } = await import('@qvac/inference/llamacpp-completion/plugin')
-const { registerPlugin } = await import('@qvac/inference/plugins')
-registerPlugin(llmPlugin)
-const modelId = await sdk.loadModel({
-  modelSrc: sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
-  modelType: 'llm',
-  modelConfig: { ctx_size: 4096, reasoning_budget: 0, system_prompt: 'You are a helpful assistant.' },
-  onProgress: progress => console.log(progress.percentage),
-})
-```
+The Bare and Node adapters load native modules lazily. A failed load can be retried.
+Mock mode uses the same session contract and visibly emits `Mock:`. Expo remains
+on its separate experimental profile and does not consume this runtime yet.
 
-Native dependency: `@qvac/llm-llamacpp@0.55.0`. Keep engine/addon versions tested together. Other plugins need their own explicitly selected addons.
-
-## Node LLM initialization
-
-```js
-import { loadModel, completion, unloadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M } from '@qvac/sdk'
-const modelId = await loadModel({ modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M })
-try {
-  const result = completion({ modelId, history: [{ role: 'user', content: 'Hello' }], stream: true })
-  for await (const token of result.tokenStream) process.stdout.write(token)
-} finally {
-  await unloadModel({ modelId })
-}
-```
-
-Model loading/download requires network on first use; cached inference can work offline. Keep paths and cache directories explicit when testing. QVAC 0.19+ verifies Hugging Face downloads against Hub SHA-256; checksum policy is not evidence that arbitrary third-party models are safe or compatible.
-
-## Context, prompts and caching
-
-`n_discarded` was removed in 0.19 and is rejected by current schemas. Set `ctx_size` at load, then manage history in the app. Never claim automatic sliding-window eviction.
-
-The scaffold bounds request history conservatively by UTF-8 bytes, drops complete old turns, preserves the latest request intact and tells the user when history is omitted. This is not a tokenizer. The SDK's actual `ContextOverflowError` remains authoritative. Retry once with the latest user message only, before any tokens are shown; never replay a partially displayed answer. Reject an oversized latest request with a clear instruction to shorten it. Reserve space for the system prompt, templates and output. Long chats need explicit context/summarization policy.
-
-Caching is optional (`completion().kvCache`). If trimming history, do not reuse a named cache whose prefix no longer matches. The default scaffold does not opt into a named KV cache. QVAC 0.20 preserves committed automatic-cache boundaries after cancelled or failed warm turns. Caller-owned named caches need explicit lifecycle management.
-
-System messages in history apply with KV caching in 0.20+. The loaded `system_prompt` applies when history has no system message. Specify the intended prompt rather than relying on older implicit behavior.
-
-## Streaming and cancellation
-
-Use `result.tokenStream` or typed events, with request IDs on every IPC message. A user Stop control calls `sdk.cancel({ operation: 'inference', modelId })`; ignore late events after that request becomes inactive. Test a subsequent completion on the same model. QVAC can also cancel individual native request IDs when parallel inference is explicitly configured; avoid model-wide cancellation across unrelated users.
-
-Close P2P/storage resources, cancel active inference, unload the model and close the engine as applicable before exiting the worker. Lazy-load inference so an unavailable AI addon does not disable storage/networking startup.
-
-## Removed delegation and peripheral capabilities
-
-The old SDK `delegate`, `startQVACProvider` and delegated heartbeat path were removed in 0.19. Do not generate those APIs. The project's experimental Node capability RPC is an independent protocol with its own trust/resource checks. New QVAC native RPC is a distinct opt-in distributed-GPU feature; it is not a drop-in replacement or a supported preview claim.
-
-QVAC also supports embeddings/RAG, translation, transcription, vision, tools, OCR, image/audio/video generation and model-fit diagnostics. Consult the version-matched schemas and official examples before implementing a capability that has not been validated here. 0.21 changes `assessModelFit` inputs to load-model fields and renames several catalog constants. Register/install only plugins and addons the app actually uses.
-
-## Ground truth
-
-- [Current SDK and Bare integration](https://docs.qvac.tether.io/sdk/js-ts-sdk/)
-- [0.19 migration](https://github.com/tetherto/qvac/releases/tag/sdk-v0.19.0)
-- [0.20 cache/prompt changes](https://github.com/tetherto/qvac/releases/tag/sdk-v0.20.0)
-- [0.21 release](https://github.com/tetherto/qvac/releases/tag/sdk-v0.21.0)
-- Generated `worker.js` and `chat-context.js`, and maintained `examples/coffee-assistant`, are the tested desktop implementation. Old upstream application guidance can target 0.15; do not copy removed fields into 0.21.
-
-QVAC inference 0.21 eagerly imports language detection and audio decoding from its public API. Install `@qvac/langdetect-text@^0.1.2` and `@qvac/decoder-audio@^0.7.0` explicitly even for this LLM-only app; a fresh install cannot rely on optional peers left over from an older SDK.
+Run `npm test` here for contract tests. Real inference, cancellation/reuse, and
+network-isolated cached startup must also pass the generated-app acceptance gates
+before claiming native support. The compatibility manifest records that distinction.

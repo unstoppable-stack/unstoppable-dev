@@ -65,8 +65,8 @@ describe('node-cli generator', () => {
       const ai = files['src/ai-manager.ts']
       expect(ai).toBeDefined()
       expect(ai).toContain('QVAC_MOCK')
-      expect(ai).toContain('MOCK_MODE')
-      expect(ai).toContain('Mock:')
+      expect(ai).toContain('createMockAdapter')
+      expect(files['.unstoppable/runtime-ai/adapters.js']).toContain('Mock:')
     })
 
     it('entry point imports setupAI', () => {
