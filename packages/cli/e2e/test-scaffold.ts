@@ -375,7 +375,7 @@ function checkDesktopFiles(projectDir: string, features: string[]) {
 
   // Optional features
   if (features.includes('local-ai')) {
-    if (!worker.includes('@qvac/sdk') && !worker.includes('@qvac/inference')) throw new Error('worker.js missing @qvac/sdk for local-ai')
+    if (!worker.includes('createAISession') || !existsSync(join(projectDir, '.unstoppable/runtime-ai/adapters.js'))) throw new Error('worker.js missing local AI session runtime')
     if (!worker.includes('QVAC_MOCK')) throw new Error('worker.js missing QVAC_MOCK support')
     if (!ui.includes('data-testid="ai-section"')) throw new Error('app/index.js missing AI section')
   }
@@ -521,7 +521,7 @@ async function runWorkerSpawnTest(projectDir: string, features: string[]): Promi
         'AI service ready (mock)',
       )
 
-      send({ type: 'chat', history: [{ role: 'user', content: 'ping' }] })
+      send({ type: 'chat', requestId: 'worker-smoke', history: [{ role: 'user', content: 'ping' }] })
 
       await waitFor((m) => m.some((x) => x.type === 'chat-token'), 5_000, 'chat-token')
       await waitFor((m) => m.some((x) => x.type === 'chat-done'), 5_000, 'chat-done')
@@ -886,7 +886,7 @@ async function runPearPlaywrightTest(
         )
         // Modern scaffolds bound Unicode input and recent history. An error
         // must not poison the next request or replay a partial response.
-        if (existsSync(join(projectDir, 'chat-context.js'))) {
+        if (existsSync(join(projectDir, '.unstoppable/runtime-ai/history.js')) || existsSync(join(projectDir, 'chat-context.js'))) {
           await chatInput.fill('☕'.repeat(800))
           await page.locator('[data-testid="chat-send-btn"]').click()
           await page.waitForFunction(() => {

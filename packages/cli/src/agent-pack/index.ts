@@ -1,1172 +1,132 @@
-import { mkdir, readFile, writeFile, readdir } from 'fs/promises'
-import { existsSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { AssistantId, TemplateId } from '../constants.js'
+import type { Platform, Feature } from '../generators/types.js'
+import { manifest } from '../compatibility/index.js'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-
-// Path to agent pack source (in package root, not in dist)
-const AGENT_PACK_SRC = join(__dirname, '..', 'agent-pack-src')
+const moduleDirectory = dirname(fileURLToPath(import.meta.url))
+// Bundled CLI modules live in dist; source execution lives in src/agent-pack.
+const AGENT_PACK_SRC = [join(moduleDirectory, '..', 'agent-pack-src'), join(moduleDirectory, '..', '..', 'agent-pack-src')]
+  .find(path => existsSync(join(path, 'skills')))
 
 export interface BuildOptions {
   tool: AssistantId
   template: TemplateId
   outputDir: string
   projectName: string
+  platform?: Platform
+  features?: Feature[]
+}
+export interface BuildResult { filesWritten: string[]; warnings: string[] }
+interface Reference { id: string; content: string }
+interface Skill { id: string; content: string; resources: { name: string; content: string }[] }
+
+function stripFrontmatter(content: string) { return content.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').trim() }
+function description(content: string, fallback: string) {
+  const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] || ''
+  return frontmatter.match(/^description:\s*(.+)$/m)?.[1].replace(/^["']|["']$/g, '') || fallback
 }
 
-export interface BuildResult {
-  filesWritten: string[]
-  warnings: string[]
+async function references(group: string): Promise<Reference[]> {
+  const dir = join(AGENT_PACK_SRC!, group)
+  const files = (await readdir(dir)).filter(f => /\.mdc?$/.test(f)).sort()
+  return Promise.all(files.map(async name => ({ id: name.replace(/\.mdc?$/, ''), content: await readFile(join(dir, name), 'utf8') })))
 }
-
-// ─── Content Loading ─────────────────────────────────────────────────────────
-
-async function loadContent() {
-  const content = {
-    modules: [] as { id: string; content: string }[],
-    recipes: [] as { id: string; content: string }[],
-    core: [] as { id: string; content: string }[],
-    skills: [] as { id: string; skillMd: string; resources: { name: string; content: string }[] }[],
-    hooks: {
-      skillRules: null as any,
+async function skills(): Promise<Skill[]> {
+  const dir = join(AGENT_PACK_SRC!, 'skills')
+  const entries = (await readdir(dir, { withFileTypes: true })).filter(e => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name))
+  return Promise.all(entries.map(async entry => {
+    const resources = join(dir, entry.name, 'resources')
+    const names = existsSync(resources) ? (await readdir(resources)).filter(n => n.endsWith('.md')).sort() : []
+    return {
+      id: entry.name, content: await readFile(join(dir, entry.name, 'SKILL.md'), 'utf8'),
+      resources: await Promise.all(names.map(async name => ({ name, content: await readFile(join(resources, name), 'utf8') }))),
     }
-  }
-
-  const isRule = (f: string) => f.endsWith('.md') || f.endsWith('.mdc')
-  const stripExt = (f: string) => f.replace(/\.mdc?$/, '')
-
-  // Load ALL modules
-  const modulesDir = join(AGENT_PACK_SRC, 'modules')
-  if (existsSync(modulesDir)) {
-    const moduleFiles = await readdir(modulesDir)
-    for (const file of moduleFiles.filter(isRule)) {
-      content.modules.push({
-        id: stripExt(file),
-        content: await readFile(join(modulesDir, file), 'utf-8')
-      })
-    }
-  }
-
-  // Load ALL recipes
-  const recipesDir = join(AGENT_PACK_SRC, 'recipes')
-  if (existsSync(recipesDir)) {
-    const recipes = await readdir(recipesDir)
-    for (const recipe of recipes.filter(isRule)) {
-      content.recipes.push({
-        id: stripExt(recipe),
-        content: await readFile(join(recipesDir, recipe), 'utf-8')
-      })
-    }
-  }
-
-  // Load ALL core
-  const coreDir = join(AGENT_PACK_SRC, 'core')
-  if (existsSync(coreDir)) {
-    const coreFiles = await readdir(coreDir)
-    for (const file of coreFiles.filter(isRule)) {
-      content.core.push({
-        id: stripExt(file),
-        content: await readFile(join(coreDir, file), 'utf-8')
-      })
-    }
-  }
-
-  // Load ALL skills (thin SKILL.md + resources/)
-  const skillsDir = join(AGENT_PACK_SRC, 'skills')
-  if (existsSync(skillsDir)) {
-    const skillDirs = await readdir(skillsDir, { withFileTypes: true })
-    for (const dir of skillDirs.filter(d => d.isDirectory())) {
-      const skillMdPath = join(skillsDir, dir.name, 'SKILL.md')
-      if (!existsSync(skillMdPath)) continue
-
-      const skillMd = await readFile(skillMdPath, 'utf-8')
-      const resources: { name: string; content: string }[] = []
-
-      const resourcesDir = join(skillsDir, dir.name, 'resources')
-      if (existsSync(resourcesDir)) {
-        const resFiles = await readdir(resourcesDir)
-        for (const resFile of resFiles.filter(f => f.endsWith('.md'))) {
-          resources.push({
-            name: resFile,
-            content: await readFile(join(resourcesDir, resFile), 'utf-8')
-          })
-        }
-      }
-
-      content.skills.push({ id: dir.name, skillMd, resources })
-    }
-  }
-
-  // Load hooks
-  const skillRulesPath = join(AGENT_PACK_SRC, 'hooks', 'skill-rules.json')
-  if (existsSync(skillRulesPath)) {
-    content.hooks.skillRules = JSON.parse(await readFile(skillRulesPath, 'utf-8'))
-  }
-
-  return content
+  }))
 }
-
-// ─── Utilities ───────────────────────────────────────────────────────────────
-
-/**
- * Frontmatter descriptions are often YAML-quoted and prefixed with "Recipe:".
- * Strip both so index lines read cleanly.
- */
-function recipeDescription(recipe: { id: string; content: string }): string {
-  const { data } = parseFrontmatter(recipe.content)
-  return String(data.description || recipe.id)
-    .replace(/^\s*["']|["']\s*$/g, '')
-    .replace(/^Recipe:\s*/i, '')
-    .trim()
-}
-
-/**
- * One-line-per-recipe index so an agent can pick the right file without
- * loading all of them.
- */
-function recipeIndex(recipes: { id: string; content: string }[], dir: string): string {
-  const rows = recipes.map((r) => {
-    return `- [\`${r.id}\`](${dir}/${r.id}.md) — ${recipeDescription(r)}`
-  }).join('\n')
-
-  return `# Recipes
-
-Working patterns for common tasks. Read the one that matches what you are
-building — they are reference material, not always-on instructions.
-
-${rows}
-`
-}
-
-function stripFrontmatter(content: string): string {
-  if (!content.trimStart().startsWith('---')) return content
-  const match = content.match(/^---\n[\s\S]*?\n---\n([\s\S]*)$/)
-  return match ? match[1].trim() : content
-}
-
-function parseFrontmatter(content: string): { data: any; body: string } {
-  if (!content.trimStart().startsWith('---')) {
-    return { data: {}, body: content }
-  }
-  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
-  if (!match) return { data: {}, body: content }
-
-  const data: any = {}
-  match[1].split('\n').forEach(line => {
-    const colonIndex = line.indexOf(':')
-    if (colonIndex > 0) {
-      const key = line.substring(0, colonIndex).trim()
-      const value = line.substring(colonIndex + 1).trim()
-      data[key] = value
-    }
-  })
-  return { data, body: match[2] }
-}
-
-// ─── Claude Code Builder ─────────────────────────────────────────────────────
-
-async function buildClaude(
-  content: any,
-  options: BuildOptions
-): Promise<BuildResult> {
-  const files: string[] = []
-
-  // 1. Build SLIM CLAUDE.md
-  let claudeMd = `# ${options.projectName}
-
-## Overview
-This is an Unstoppable Stack project using the ${options.template} template.
-
-Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
-
-## Commands
-- \`npm run dev\` - Start development
-- \`npm run build\` - Build for production
-- \`npm test\` - Run tests
-
-## Project Structure
-\`\`\`
-├── planning/         # Architecture decisions & feature plans
-├── src/              # Application source code
-│   ├── app/          # Application logic
-│   ├── p2p/          # P2P networking
-│   ├── data/         # Database/storage
-│   └── ui/           # UI components
-└── README.md
-\`\`\`
-
-## Before Building
-
-**You MUST follow this process:**
-
-1. **Ask the pre-implementation checklist questions** (see Principles in .claude/rules/)
-2. **Propose an architecture** listing all apps to be created
-3. **Get user confirmation** before writing any code
-4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
-5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
-
-### Scaffolding Commands
-\`\`\`bash
-us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
-us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
-\`\`\`
-
-## Available Agents
-
-Delegate to specialized agents for domain-specific tasks:
-
-- \`@p2p-expert\` — P2P patterns, Hypercore, HyperDB, Hyperswarm, Hyperdrive
-- \`@ai-expert\` — QVAC local AI inference, model selection, tool calling
-- \`@planner\` — Implementation plans and architecture decisions
-
-## Available Skills
-
-Use these slash commands for guided implementation:
-
-${content.skills.map((s: any) => {
-    const { data } = parseFrontmatter(s.skillMd)
-    return `- \`/${s.id}\` — ${data.description || s.id}`
-  }).join('\n')}
-
-## Key Patterns
-
-- **Local-first**: Always write locally first, sync is opportunistic
-- **P2P**: No central servers — data lives on user devices
-- **Privacy**: Users control their data
-- **Offline AI**: Local inference via QVAC, no API calls needed
-
-For detailed architecture, patterns, and module docs, see \`.claude/rules/\`.
-For working patterns (P2P sync, conflict resolution, local inference, …), see
-\`.claude/recipes/INDEX.md\` and read the recipe that matches your task.
-For specialized agents, see \`.claude/agents/\`.
-`
-
-  await writeFile(join(options.outputDir, 'CLAUDE.md'), claudeMd)
-  files.push('CLAUDE.md')
-
-  // 2. Create .claude directories
-  const claudeDir = join(options.outputDir, '.claude')
-  await mkdir(join(claudeDir, 'rules'), { recursive: true })
-  await mkdir(join(claudeDir, 'skills'), { recursive: true })
-
-  // 3. Write settings.json with hooks
-  const settings: any = {
-    permissions: {
-      allow: [
-        'Bash(npm:*)', 'Bash(pnpm:*)', 'Bash(bun:*)', 'Bash(pear:*)',
-        'Bash(git add:*)', 'Bash(git commit:*)'
-      ],
-      ask: ['Bash(git push:*)'],
-      deny: ['Read(.env*)', 'Edit(.env*)']
-    },
-    hooks: {
-      PostToolUse: [
-        {
-          matcher: 'Edit|Write',
-          hooks: [{
-            type: 'command',
-            command: 'npx prettier --write "$CLAUDE_FILE" 2>/dev/null || true'
-          }]
-        }
-      ]
-    }
-  }
-
-  await writeFile(join(claudeDir, 'settings.json'), JSON.stringify(settings, null, 2))
-  files.push('.claude/settings.json')
-
-  // 4. Write core docs as path-agnostic rules
-  for (const core of content.core) {
-    await writeFile(join(claudeDir, 'rules', `${core.id}.md`), stripFrontmatter(core.content))
-    files.push(`.claude/rules/${core.id}.md`)
-  }
-
-  // 5. Write ALL module docs as path-scoped rules (each module gets its own paths)
-  const claudeModulePaths: Record<string, string[]> = {
-    hyperdb: ['src/data/**/*.ts', 'src/db/**/*.ts'],
-    hyperdrive: ['src/files/**/*.ts', 'src/storage/**/*.ts'],
-    hyperswarm: ['src/p2p/**/*.ts', 'src/network/**/*.ts'],
-    hypercore: ['src/data/**/*.ts', 'src/p2p/**/*.ts'],
-    hyperbee: ['src/data/**/*.ts', 'src/db/**/*.ts'],
-    hyperdht: ['src/p2p/**/*.ts', 'src/network/**/*.ts'],
-    corestore: ['src/data/**/*.ts'],
-    qvac: ['src/ai/**/*.ts', 'src/inference/**/*.ts'],
-    wdk: ['src/wallet/**/*.ts', 'src/payments/**/*.ts'],
-    pear: ['index.js', 'index.html', 'src/ui/**/*.ts', 'src/components/**/*.tsx'],
-    bare: ['src/**/*.ts', 'worker/**/*.ts', 'bare/**/*.js'],
-    'expo-bare': ['app/**/*.tsx', 'bare/**/*.js', 'src/**/*.ts'],
-  }
-
-  for (const mod of content.modules) {
-    const body = stripFrontmatter(mod.content)
-    const paths = claudeModulePaths[mod.id] || ['src/**/*.ts']
-    const pathLines = paths.map(p => `  - "${p}"`).join('\n')
-    const pathScoped = `---
-paths:
-${pathLines}
----
-
-${body}
-`
-    await writeFile(join(claudeDir, 'rules', `module-${mod.id}.md`), pathScoped)
-    files.push(`.claude/rules/module-${mod.id}.md`)
-  }
-
-  // 5b. Write ALL recipes to .claude/recipes/ as on-demand reference.
-  // Recipes are situational (pick one when the task matches), so they are NOT
-  // emitted as always-loaded rules — CLAUDE.md carries a one-line index and
-  // the agent reads the file it needs.
-  await mkdir(join(claudeDir, 'recipes'), { recursive: true })
-  for (const recipe of content.recipes) {
-    await writeFile(join(claudeDir, 'recipes', `${recipe.id}.md`), stripFrontmatter(recipe.content))
-    files.push(`.claude/recipes/${recipe.id}.md`)
-  }
-  await writeFile(join(claudeDir, 'recipes', 'INDEX.md'), recipeIndex(content.recipes, '.claude/recipes'))
-  files.push('.claude/recipes/INDEX.md')
-
-  // 6. Write ALL skills with resources (progressive disclosure)
-  for (const skill of content.skills) {
-    const skillDir = join(claudeDir, 'skills', skill.id)
-    await mkdir(skillDir, { recursive: true })
-    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
-    files.push(`.claude/skills/${skill.id}/SKILL.md`)
-
-    if (skill.resources.length > 0) {
-      const resDir = join(skillDir, 'resources')
-      await mkdir(resDir, { recursive: true })
-      for (const res of skill.resources) {
-        await writeFile(join(resDir, res.name), res.content)
-        files.push(`.claude/skills/${skill.id}/resources/${res.name}`)
-      }
-    }
-  }
-
-  // 7. Write custom subagents (.claude/agents/)
-  const agentsDir = join(claudeDir, 'agents')
-  await mkdir(agentsDir, { recursive: true })
-
-  await writeFile(join(agentsDir, 'p2p-expert.md'), `# P2P Expert Agent
-
-You are an expert in P2P application development with the Holepunch stack.
-
-## Your Knowledge
-- Hypercore append-only logs and replication
-- HyperDB distributed database with schemas
-- Hyperswarm P2P networking and discovery
-- Hyperdrive P2P filesystem
-- Pear desktop and terminal runtime
-
-## Key Patterns
-- Always await \`db.ready()\` / \`core.ready()\`
-- Handle peer disconnection gracefully
-- Use proper replication patterns (replicate both sides, await swarm.flush())
-- Manage Hyperswarm topics correctly
-- Use Corestore for multi-core management
-- Don't block on peer discovery — read local data first
-
-## When to Use
-The user should delegate to you for P2P data sync, connection debugging, replication setup, or peer discovery issues.
-`)
-  files.push('.claude/agents/p2p-expert.md')
-
-  await writeFile(join(agentsDir, 'ai-expert.md'), `# AI Expert Agent
-
-You are an expert in local AI inference with QVAC.
-
-## Your Knowledge
-- QVAC SDK setup, model loading, streaming
-- Model selection (Llama 3.2 for chat, Qwen 3 for tool calling)
-- Tool calling with Zod schemas (no refinements)
-- KV cache for multi-turn conversations
-- Memory management and context overflow
-- Mobile considerations (static imports, Expo runtime)
-
-## Key Patterns
-- Use streaming for responsive UX
-- Always \`unloadModel()\` when done
-- Use \`kvCache: sessionId\` for multi-turn conversations
-- Use Qwen models for tool calling (\`tools: true\` in modelConfig)
-- Validate constraints in handlers, not Zod schemas
-
-## When to Use
-The user should delegate to you for model setup, inference debugging, tool calling patterns, or performance optimization.
-`)
-  files.push('.claude/agents/ai-expert.md')
-
-  await writeFile(join(agentsDir, 'planner.md'), `# Planning Agent
-
-Help create clear, actionable implementation plans in \`planning/\`.
-
-## Process
-1. Understand the goal — What are we building?
-2. Identify modules — Which stack modules will this use?
-3. Break into phases — Logical implementation steps
-4. Document patterns — Which skills/recipes apply?
-5. Write the plan — Create markdown in \`planning/\`
-
-## Plan Template
-
-\`\`\`markdown
-# Feature: [Name]
-
-## Goal
-[Clear description]
-
-## Modules Required
-- [Module]: [Why]
-
-## Implementation Steps
-### Phase 1: [Name]
-- [ ] Step 1
-- [ ] Step 2
-
-## Skills to Use
-- [/skill-name]: [Why]
-
-## Testing Strategy
-[How to verify]
-\`\`\`
-`)
-  files.push('.claude/agents/planner.md')
-
-  return { filesWritten: files, warnings: [] }
-}
-
-// ─── Cursor Builder ──────────────────────────────────────────────────────────
-
-async function buildCursor(
-  content: any,
-  options: BuildOptions
-): Promise<BuildResult> {
-  const files: string[] = []
-
-  const rulesDir = join(options.outputDir, '.cursor', 'rules')
-  await mkdir(rulesDir, { recursive: true })
-
-  // 1. Project overview (always apply) — slim
-  const projectMdc = `---
-description: ${options.projectName} - Unstoppable Stack project overview and key patterns
-alwaysApply: true
----
-
-# ${options.projectName}
-
-Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
-
-## Commands
-- \`npm run dev\` - Start development
-- \`npm run build\` - Build for production
-- \`npm test\` - Run tests
-
-## Project Structure
-\`\`\`
-├── planning/         # Architecture decisions & feature plans
-├── src/
-│   ├── app/          # Application logic
-│   ├── p2p/          # P2P networking
-│   ├── data/         # Database/storage
-│   └── ui/           # UI components
-└── README.md
-\`\`\`
-
-## Before Building
-
-**You MUST follow this process:**
-
-1. **Ask the pre-implementation checklist questions** (see @principles rule)
-2. **Propose an architecture** listing all apps to be created
-3. **Get user confirmation** before writing any code
-4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
-5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
-
-### Scaffolding Commands
-\`\`\`bash
-us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
-us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
-\`\`\`
-
-## Core Principles
-
-- **Local-first**: Apps work offline, sync when connected
-- **P2P**: No central servers, data lives on user devices
-- **Privacy**: Users control their data
-- **Offline AI**: Local inference, no API calls
-`
-
-  await writeFile(join(rulesDir, 'project.mdc'), projectMdc)
-  files.push('.cursor/rules/project.mdc')
-
-  // 2. Core docs as individual rules (agent-choice via description)
-  for (const core of content.core) {
-    const body = stripFrontmatter(core.content)
-    const coreMdc = `---
-description: ${core.id} - Unstoppable Stack core knowledge for architecture, patterns, and best practices
----
-
-${body}
-`
-    await writeFile(join(rulesDir, `core-${core.id}.mdc`), coreMdc)
-    files.push(`.cursor/rules/core-${core.id}.mdc`)
-  }
-
-  // 3. ALL module docs with specific descriptions and file globs
-  const moduleGlobs: Record<string, string[]> = {
-    hyperdb: ['src/data/**/*.ts', 'src/db/**/*.ts'],
-    hyperdrive: ['src/files/**/*.ts', 'src/storage/**/*.ts'],
-    hyperswarm: ['src/p2p/**/*.ts', 'src/network/**/*.ts'],
-    hypercore: ['src/data/**/*.ts', 'src/p2p/**/*.ts'],
-    hyperbee: ['src/data/**/*.ts', 'src/db/**/*.ts'],
-    corestore: ['src/data/**/*.ts'],
-    qvac: ['src/ai/**/*.ts', 'src/inference/**/*.ts'],
-    wdk: ['src/wallet/**/*.ts', 'src/payments/**/*.ts'],
-    pear: ['index.html', 'app.js', 'src/ui/**/*.ts', 'src/components/**/*.tsx'],
-    bare: ['src/**/*.ts'],
-  }
-
-  for (const mod of content.modules) {
-    const body = stripFrontmatter(mod.content)
-    const globs = moduleGlobs[mod.id] || []
-    const globLine = globs.length > 0 ? `\nglobs: ${JSON.stringify(globs)}` : ''
-    const modMdc = `---
-description: ${mod.id} module - API reference, patterns, and gotchas for ${mod.id}${globLine}
----
-
-${body}
-`
-    await writeFile(join(rulesDir, `module-${mod.id}.mdc`), modMdc)
-    files.push(`.cursor/rules/module-${mod.id}.mdc`)
-  }
-
-  // 3b. ALL recipes as description-triggered rules. The source frontmatter
-  // already carries `alwaysApply: false` + a description, which is exactly
-  // Cursor's on-demand mechanism — so preserve the description and let Cursor
-  // pull the recipe in when the task matches.
-  for (const recipe of content.recipes) {
-    const { body } = parseFrontmatter(recipe.content)
-    const recipeMdc = `---
-description: ${recipeDescription(recipe)}
-alwaysApply: false
----
-
-${body}
-`
-    await writeFile(join(rulesDir, `recipe-${recipe.id}.mdc`), recipeMdc)
-    files.push(`.cursor/rules/recipe-${recipe.id}.mdc`)
-  }
-
-  // 4. ALL skills as description-triggered rules + their resources
-  for (const skill of content.skills) {
-    const { data, body } = parseFrontmatter(skill.skillMd)
-    const skillMdc = `---
-description: Skill - ${data.description || skill.id}
----
-
-${body}
-`
-    await writeFile(join(rulesDir, `skill-${skill.id}.mdc`), skillMdc)
-    files.push(`.cursor/rules/skill-${skill.id}.mdc`)
-
-    // Write skill resources as separate .mdc files so Cursor can find them
-    for (const res of skill.resources) {
-      const resName = res.name.replace('.md', '')
-      const resBody = stripFrontmatter(res.content)
-      const resMdc = `---
-description: ${skill.id} skill resource - ${resName} (detailed reference, examples, and troubleshooting)
----
-
-${resBody}
-`
-      await writeFile(join(rulesDir, `skill-${skill.id}-${resName}.mdc`), resMdc)
-      files.push(`.cursor/rules/skill-${skill.id}-${resName}.mdc`)
-    }
-  }
-
-  // 5. P2P patterns (glob-scoped)
-  const p2pMdc = `---
-description: P2P coding patterns for Hypercore stack - connection handling, replication, and discovery
-globs: ["src/p2p/**/*.ts", "src/data/**/*.ts"]
----
-
-# P2P Patterns
-
-## Always Do
-- Await \`db.ready()\` / \`core.ready()\` before operations
-- Handle peer disconnection gracefully (\`conn.on('close')\`, \`conn.on('error')\`)
-- Use proper error handling on socket errors
-- Replicate your data structures over connections
-- Use \`swarm.flush()\` before reading on the consumer side
-
-## Common Mistakes
-- Don't assume peers are always connected
-- Don't store large blobs in HyperDB (use Hyperdrive)
-- Don't hardcode discovery keys
-- Don't forget to close connections on cleanup
-- Don't block app startup waiting for peers — read local data first
-`
-  await writeFile(join(rulesDir, 'p2p-patterns.mdc'), p2pMdc)
-  files.push('.cursor/rules/p2p-patterns.mdc')
-
-  // 6. QVAC patterns (glob-scoped)
-  const qvacMdc = `---
-description: QVAC local AI inference patterns - model loading, streaming, tool calling
-globs: ["src/ai/**/*.ts", "src/inference/**/*.ts"]
----
-
-# QVAC Patterns
-
-## Always Do
-- Always \`unloadModel()\` when done to free memory
-- Use \`onProgress\` callback for download UX
-- Use \`kvCache: true\` for multi-turn conversations
-- Use streaming (\`stream: true\`) for responsive UX
-
-## Model Selection
-- General chat: LLAMA_3_2 family
-- Tool calling: QWEN_3 family (3B+ recommended)
-- Mobile: 1B variants
-- Desktop quality: 3B or 7B variants
-
-## Common Mistakes
-- Don't run multiple models simultaneously (memory)
-- Don't use Zod refinements (.integer(), .min()) in ToolInput schemas
-- Don't send entire conversation history without trimming
-`
-  await writeFile(join(rulesDir, 'qvac-patterns.mdc'), qvacMdc)
-  files.push('.cursor/rules/qvac-patterns.mdc')
-
-  // 7. .cursorignore
-  const cursorignore = `# Cursor ignore
-node_modules/
-dist/
-.pear/
-*.log
-.env*
-`
-  await writeFile(join(options.outputDir, '.cursorignore'), cursorignore)
-  files.push('.cursorignore')
-
-  return { filesWritten: files, warnings: [] }
-}
-
-// ─── OpenCode Builder ────────────────────────────────────────────────────────
-
-async function buildOpenCode(
-  content: any,
-  options: BuildOptions
-): Promise<BuildResult> {
-  const files: string[] = []
-
-  const openCodeDir = join(options.outputDir, '.opencode')
-  await mkdir(join(openCodeDir, 'agents'), { recursive: true })
-  await mkdir(join(openCodeDir, 'skills'), { recursive: true })
-
-  // 1. Build opencode.json — all skills enabled
-  const config: any = {
-    $schema: 'https://opencode.ai/config.json',
-    model: 'anthropic/claude-sonnet-4-5',
-    instructions: ['.opencode/instructions.md'],
-    default_agent: 'build',
-    permission: {
-      edit: 'allow',
-      bash: {
-        'npm *': 'allow', 'pnpm *': 'allow', 'bun *': 'allow', 'pear *': 'allow',
-        'git commit *': 'allow', 'git push *': 'ask'
-      },
-      skill: { '*': 'allow' }
-    },
-    formatter: {
-      prettier: {
-        command: ['npx', 'prettier', '--write', '$FILE'],
-        extensions: ['.ts', '.tsx', '.js', '.jsx']
-      }
-    },
-    agent: {}
-  }
-
-  // Always include all agents
-  config.agent['planner'] = {
-    description: 'Planning agent - helps create implementation plans before coding',
-    mode: 'subagent',
-    prompt: '.opencode/agents/planner.md'
-  }
-
-  config.agent['p2p-expert'] = {
-    description: 'Expert in P2P patterns, Hypercore, HyperDB, Hyperswarm, Hyperdrive',
-    mode: 'subagent',
-    prompt: '.opencode/agents/p2p-expert.md'
-  }
-
-  config.agent['ai-expert'] = {
-    description: 'Expert in QVAC local AI inference, model selection, and tool calling',
-    mode: 'subagent',
-    prompt: '.opencode/agents/ai-expert.md'
-  }
-
-  await writeFile(join(options.outputDir, 'opencode.json'), JSON.stringify(config, null, 2))
-  files.push('opencode.json')
-
-  // 2. Build SLIM instructions.md
-  let instructions = `# ${options.projectName}
-
-Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments.
-
-## Commands
-- \`npm run dev\` - Start development
-- \`npm run build\` - Build for production
-- \`npm test\` - Run tests
-
-## Before Building
-
-**You MUST follow this process:**
-1. Ask the pre-implementation checklist questions
-2. Propose an architecture listing all apps
-3. Get user confirmation before writing any code
-4. Scaffold each app using \`us scaffold app\` — do NOT write boilerplate from scratch
-5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
-
-### Scaffolding Commands
-\`\`\`bash
-us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
-us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
-\`\`\`
-
-## Available Agents
-${Object.entries(config.agent).map(([name, agent]: [string, any]) => `- \`@${name}\`: ${agent.description}`).join('\n')}
-
-## Available Skills
-
-Use \`/skill-name\` to invoke. Only load skill resources when actively implementing.
-
-${content.skills.map((s: any) => {
-    const { data } = parseFrontmatter(s.skillMd)
-    return `- \`/${s.id}\` — ${data.description || s.id}`
-  }).join('\n')}
-
-## Core Principles
-
-- **Local-first**: Always write locally first, sync is opportunistic
-- **P2P**: No central servers — data lives on user devices
-- **Offline AI**: Local inference via QVAC, no API calls
-
-## Key Patterns
-
-- Always \`await db.ready()\` / \`core.ready()\` before operations
-- Handle peer disconnection gracefully
-- Use Hyperswarm topics for discoverability
-- Replicate data structures over connections
-
-For detailed module docs, use the relevant skill or agent.
-For working patterns, see \`.opencode/recipes/INDEX.md\` and read the recipe
-that matches your task.
-`
-
-  await writeFile(join(openCodeDir, 'instructions.md'), instructions)
-  files.push('.opencode/instructions.md')
-
-  // 2b. Recipes as on-demand reference files.
-  await mkdir(join(openCodeDir, 'recipes'), { recursive: true })
-  for (const recipe of content.recipes) {
-    await writeFile(join(openCodeDir, 'recipes', `${recipe.id}.md`), stripFrontmatter(recipe.content))
-    files.push(`.opencode/recipes/${recipe.id}.md`)
-  }
-  await writeFile(
-    join(openCodeDir, 'recipes', 'INDEX.md'),
-    recipeIndex(content.recipes, '.opencode/recipes'),
-  )
-  files.push('.opencode/recipes/INDEX.md')
-
-  // 3. Write agent files
-  await writeFile(join(openCodeDir, 'agents', 'planner.md'), `---
-description: Planning agent for creating implementation plans
-mode: subagent
----
-
-# Planning Agent
-
-Help create clear, actionable implementation plans in \`planning/\`.
-
-## Process
-1. Understand the goal — What are we building?
-2. Identify modules — Which stack modules will this use?
-3. Break into phases — Logical implementation steps
-4. Document patterns — Which skills/recipes apply?
-5. Write the plan — Create markdown in \`planning/\`
-
-## Plan Template
-
-\`\`\`markdown
-# Feature: [Name]
-
-## Goal
-[Clear description]
-
-## Modules Required
-- [Module]: [Why]
-
-## Implementation Steps
-### Phase 1: [Name]
-- [ ] Step 1
-- [ ] Step 2
-
-## Skills to Use
-- [/skill-name]: [Why]
-
-## Testing Strategy
-[How to verify]
-\`\`\`
-`)
-  files.push('.opencode/agents/planner.md')
-
-  await writeFile(join(openCodeDir, 'agents', 'p2p-expert.md'), `---
-description: Expert in P2P patterns and Holepunch stack
-mode: subagent
----
-
-# P2P Expert Agent
-
-You are an expert in P2P application development with the Holepunch stack.
-
-## Your Knowledge
-- Hypercore append-only logs and replication
-- HyperDB distributed database with schemas
-- Hyperswarm P2P networking and discovery
-- Hyperdrive P2P filesystem
-- Pear desktop and terminal runtime
-
-## Key Patterns
-- Always await \`db.ready()\` / \`core.ready()\`
-- Handle peer disconnection gracefully
-- Use proper replication patterns
-- Manage Hyperswarm topics correctly
-- Read local data first, sync opportunistically
-
-## When to Use
-Call me for P2P data sync, connection debugging, replication setup, or peer discovery issues.
-`)
-  files.push('.opencode/agents/p2p-expert.md')
-
-  await writeFile(join(openCodeDir, 'agents', 'ai-expert.md'), `---
-description: Expert in QVAC local AI inference
-mode: subagent
----
-
-# AI Expert Agent
-
-You are an expert in local AI inference with QVAC.
-
-## Your Knowledge
-- QVAC SDK setup, model loading, streaming
-- Model selection (Llama, Qwen families)
-- Tool calling with Zod schemas
-- KV cache, delegated inference
-- Memory management and context overflow
-
-## Key Patterns
-- Use streaming for responsive UX
-- Always unloadModel() when done
-- Use kvCache for multi-turn conversations
-- Use Qwen models for tool calling
-- Validate constraints in handlers, not Zod schemas
-
-## When to Use
-Call me for model setup, inference debugging, tool calling, or performance optimization.
-`)
-  files.push('.opencode/agents/ai-expert.md')
-
-  // 4. Write ALL skills with resources
-  for (const skill of content.skills) {
-    const skillDir = join(openCodeDir, 'skills', skill.id)
-    await mkdir(skillDir, { recursive: true })
-    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
-    files.push(`.opencode/skills/${skill.id}/SKILL.md`)
-
-    if (skill.resources.length > 0) {
-      const resDir = join(skillDir, 'resources')
-      await mkdir(resDir, { recursive: true })
-      for (const res of skill.resources) {
-        await writeFile(join(resDir, res.name), res.content)
-        files.push(`.opencode/skills/${skill.id}/resources/${res.name}`)
-      }
-    }
-  }
-
-  return { filesWritten: files, warnings: [] }
-}
-
-// ─── Codex Builder ──────────────────────────────────────────────────────────
-
-async function buildCodex(
-  content: any,
-  options: BuildOptions
-): Promise<BuildResult> {
-  const files: string[] = []
-
-  // Codex uses AGENTS.md as its primary config and, since v0.140+, natively
-  // discovers skills under `.agents/skills/`. It merges the AGENTS.md chain
-  // from the git root down to the working directory, capped at
-  // `project_doc_max_bytes` (32 KiB default). So we keep every AGENTS.md lean
-  // and emit all heavy guidance as progressively-loaded skills instead of
-  // inlining it (which previously blew past the cap and got silently truncated).
-
-  const skillsRoot = join(options.outputDir, '.agents', 'skills')
-
-  // ── 1. Emit all authored skills to `.agents/skills/` (Codex-native) ─────────
-  for (const skill of content.skills) {
-    const skillDir = join(skillsRoot, skill.id)
-    await mkdir(skillDir, { recursive: true })
-    await writeFile(join(skillDir, 'SKILL.md'), skill.skillMd)
-    files.push(`.agents/skills/${skill.id}/SKILL.md`)
-
-    if (skill.resources.length > 0) {
-      const resDir = join(skillDir, 'resources')
-      await mkdir(resDir, { recursive: true })
-      for (const res of skill.resources) {
-        await writeFile(join(resDir, res.name), res.content)
-        files.push(`.agents/skills/${skill.id}/resources/${res.name}`)
-      }
-    }
-  }
-
-  // ── 2. Synthetic "foundations" skill — core principles/patterns/versions ────
-  const foundationsDir = join(skillsRoot, 'unstoppable-foundations')
-  await mkdir(join(foundationsDir, 'resources'), { recursive: true })
-  const foundationRefs: string[] = []
-  for (const c of content.core) {
-    const name = `${c.id}.md`
-    await writeFile(join(foundationsDir, 'resources', name), stripFrontmatter(c.content))
-    files.push(`.agents/skills/unstoppable-foundations/resources/${name}`)
-    foundationRefs.push(`- \`resources/${name}\``)
-  }
-  const foundationsSkill = `---
-name: unstoppable-foundations
-description: Core architecture, principles, patterns, and verified dependency versions for Unstoppable Stack apps. Load before designing, scaffolding, or reviewing any P2P, local-AI, or wallet code.
----
-
-# Unstoppable Stack — Foundations
-
-Read the reference files below before writing or reviewing code. Each covers a
-distinct area (principles, patterns, architecture, verified versions, and more):
-
-${foundationRefs.join('\n')}
-`
-  await writeFile(join(foundationsDir, 'SKILL.md'), foundationsSkill)
-  files.push('.agents/skills/unstoppable-foundations/SKILL.md')
-
-  // ── 3. Synthetic "modules" skill — per-module API references ────────────────
-  const modulesDir = join(skillsRoot, 'unstoppable-modules')
-  await mkdir(join(modulesDir, 'resources'), { recursive: true })
-  const moduleRefName = (id: string) => `${id}.md`
-  for (const m of content.modules) {
-    await writeFile(
-      join(modulesDir, 'resources', moduleRefName(m.id)),
-      stripFrontmatter(m.content)
-    )
-    files.push(`.agents/skills/unstoppable-modules/resources/${moduleRefName(m.id)}`)
-  }
-  const moduleRefs = content.modules
-    .map((m: any) => `- \`resources/${moduleRefName(m.id)}\``)
-    .join('\n')
-  const modulesSkill = `---
-name: unstoppable-modules
-description: API reference, patterns, and gotchas for each Unstoppable Stack module (Hyperswarm, Hypercore, HyperDB, Hyperdrive, QVAC local AI, WDK wallet, and more). Load the relevant module reference before implementing against that module.
----
-
-# Unstoppable Stack — Module References
-
-Open the reference for whichever module you are implementing against:
-
-${moduleRefs}
-`
-  await writeFile(join(modulesDir, 'SKILL.md'), modulesSkill)
-  files.push('.agents/skills/unstoppable-modules/SKILL.md')
-
-  // ── 3b. Synthetic "recipes" skill — working patterns ────────────────────────
-  const recipesDir = join(skillsRoot, 'unstoppable-recipes')
-  await mkdir(join(recipesDir, 'resources'), { recursive: true })
-  const recipeRefs: string[] = []
-  for (const r of content.recipes) {
-    await writeFile(join(recipesDir, 'resources', `${r.id}.md`), stripFrontmatter(r.content))
-    files.push(`.agents/skills/unstoppable-recipes/resources/${r.id}.md`)
-    recipeRefs.push(`- \`resources/${r.id}.md\` — ${recipeDescription(r)}`)
-  }
-  const recipesSkill = `---
-name: unstoppable-recipes
-description: Working patterns for common Unstoppable Stack tasks — P2P sync and conflict resolution, multi-writer data, local inference, tool calling, KV cache, mobile Expo setup, and more. Load the recipe matching the task before implementing it.
----
-
-# Unstoppable Stack — Recipes
-
-Read the recipe that matches what you are building:
-
-${recipeRefs.join('\n')}
-`
-  await writeFile(join(recipesDir, 'SKILL.md'), recipesSkill)
-  files.push('.agents/skills/unstoppable-recipes/SKILL.md')
-
-  // ── 4. Lean root AGENTS.md (well under the 32 KiB merge cap) ─────────────────
-  const skillIndex = content.skills.map((s: any) => {
-    const { data } = parseFrontmatter(s.skillMd)
-    return `- **$${s.id}** — ${data.description || s.id}`
-  }).join('\n')
-
-  const agentsMd = `# ${options.projectName}
-
-## Overview
-This is an Unstoppable Stack project using the ${options.template} template.
-
-Build truly unstoppable apps: P2P networking, local-first data, offline AI, and crypto payments — all without centralized servers.
-
-## Commands
-- \`npm run dev\` - Start development
-- \`npm run build\` - Build for production
-- \`npm test\` - Run tests
-
-## Project Structure
-\`\`\`
-├── planning/         # Architecture decisions & feature plans
-├── src/              # Application source code
-│   ├── app/          # Application logic
-│   ├── p2p/          # P2P networking (see src/p2p/AGENTS.md)
-│   ├── data/         # Database/storage (see src/data/AGENTS.md)
-│   ├── ai/           # AI inference (see src/ai/AGENTS.md)
-│   └── ui/           # UI components
-└── README.md
-\`\`\`
-
-## Before Building
-
-**You MUST follow this process:**
-
-1. **Load the \`$unstoppable-foundations\` skill** and ask the pre-implementation checklist questions
-2. **Propose an architecture** listing all apps to be created
-3. **Get user confirmation** before writing any code
-4. **Scaffold each app using \`us scaffold app\`** — do NOT write boilerplate from scratch
-5. For multi-app projects, use an \`apps/\` folder structure and scaffold each app with \`-o\`
-
-### Scaffolding Commands
-\`\`\`bash
-us scaffold app -p <platform> -n <name> [-f features] [-o output-dir]
-us scaffold list-platforms   # pear-desktop, expo-mobile, node-cli
-us scaffold list-features    # local-ai, wallet, node-sync, multi-writer (P2P + KV storage are always included)
-\`\`\`
-
-## Skills
-
-This project ships Codex skills in \`.agents/skills/\`. Codex loads them
-automatically when relevant, or you can invoke one explicitly with \`/skills\`
-or by mentioning it as \`$skill-name\`.
-
-- **$unstoppable-foundations** — architecture, principles, patterns, verified versions (load first)
-- **$unstoppable-modules** — per-module API references (Hyperswarm, QVAC, WDK, …)
-- **$unstoppable-recipes** — working patterns (P2P sync, conflict resolution, local inference, …)
-
-Implementation guides:
-
-${skillIndex}
-
-## P2P Development Rules
-
-- Always await \`db.ready()\` / \`core.ready()\` before operations
-- Handle peer disconnection gracefully (\`conn.on('close')\`, \`conn.on('error')\`)
-- Use Hyperswarm topics for discoverability
-- Replicate data structures over connections
-- Use \`swarm.flush()\` before reading on the consumer side
-- Don't store large blobs in HyperDB (use Hyperdrive)
-- Don't hardcode discovery keys
-- Don't forget to close connections on cleanup
-- Don't block app startup waiting for peers — read local data first
-
-## QVAC (Local AI) Rules
-
-- Always \`unloadModel()\` when done to free memory
-- Use \`onProgress\` callback for download UX
-- Use \`kvCache: sessionId\` for multi-turn conversations
-- Set \`tools: true\` in \`modelConfig\` when using tool-calling models
-- Use streaming (\`stream: true\`) for responsive UX
-- Don't run multiple models simultaneously (memory)
-- Don't use Zod refinements (\`.integer()\`, \`.min()\`) in ToolInput schemas
-
----
-
-For full principles and patterns, load the **$unstoppable-foundations** skill.
-See directory-scoped \`AGENTS.md\` files in \`src/p2p/\`, \`src/data/\`, \`src/ai/\`, and \`src/wallet/\` for module-specific pointers.
-`
-
-  await writeFile(join(options.outputDir, 'AGENTS.md'), agentsMd)
-  files.push('AGENTS.md')
-
-  // ── 5. Thin directory-scoped AGENTS.md files ────────────────────────────────
-  // Auto-discovered per directory; kept lean so the merged root+scoped chain
-  // stays under the cap. Full module docs live in the `$unstoppable-modules`
-  // skill and are pointed to here rather than inlined.
-  const scopedDirs: Record<string, { modules: string[], description: string }> = {
-    'src/p2p': {
-      modules: ['hyperswarm', 'hypercore', 'hyperdht', 'corestore'],
-      description: 'P2P Networking'
-    },
-    'src/data': {
-      modules: ['hyperdb', 'hyperbee', 'hyperdrive'],
-      description: 'Data & Storage'
-    },
-    'src/ai': {
-      modules: ['qvac'],
-      description: 'AI Inference'
-    },
-    'src/wallet': {
-      modules: ['wdk'],
-      description: 'Wallet & Payments'
-    }
-  }
-
-  for (const [dir, config] of Object.entries(scopedDirs)) {
-    const dirModules = content.modules.filter((m: any) => config.modules.includes(m.id))
-    if (dirModules.length === 0) continue
-
-    const refList = dirModules
-      .map((m: any) => `- \`.agents/skills/unstoppable-modules/resources/${moduleRefName(m.id)}\``)
-      .join('\n')
-    const dirAgentsMd = `# ${config.description}
-
-Working in this directory involves these Unstoppable Stack modules:
-${dirModules.map((m: any) => `- **${m.id}**`).join('\n')}
-
-Load the **$unstoppable-modules** skill and read the matching reference(s)
-before implementing:
-${refList}
-`
-    const fullDir = join(options.outputDir, dir)
-    await mkdir(fullDir, { recursive: true })
-    await writeFile(join(fullDir, 'AGENTS.md'), dirAgentsMd)
-    files.push(`${dir}/AGENTS.md`)
-  }
-
-  return { filesWritten: files, warnings: [] }
-}
-
-// ─── Main ────────────────────────────────────────────────────────────────────
 
 export async function buildAgentPack(options: BuildOptions): Promise<BuildResult> {
-  if (options.tool === 'none') {
-    return { filesWritten: [], warnings: [] }
+  if (options.tool === 'none') return { filesWritten: [], warnings: [] }
+  if (!AGENT_PACK_SRC) throw new Error('CLI agent-pack assets are missing. Reinstall the CLI.')
+  const [core, allModules, recipes, allSkills] = await Promise.all([references('core'), references('modules'), references('recipes'), skills()])
+  const aiEnabled = !options.platform || options.features?.includes('local-ai')
+  const modules = allModules.filter(m => aiEnabled || m.id !== 'qvac')
+  const selectedSkills = allSkills.filter(s => aiEnabled || !(s.id.startsWith('add-ai-') || s.id === 'add-openai-server'))
+  const files: string[] = []
+  async function emit(path: string, content: string) {
+    await mkdir(dirname(join(options.outputDir, path)), { recursive: true })
+    await writeFile(join(options.outputDir, path), content)
+    files.push(path)
   }
-
-  const content = await loadContent()
-
-  switch (options.tool) {
-    case 'claude':
-      return buildClaude(content, options)
-    case 'cursor':
-      return buildCursor(content, options)
-    case 'opencode':
-      return buildOpenCode(content, options)
-    case 'codex':
-      return buildCodex(content, options)
-    default:
-      return { filesWritten: [], warnings: ['Unknown tool'] }
+  const guidance = '.unstoppable/guidance'
+  for (const [group, refs] of Object.entries({ core, modules, recipes })) {
+    for (const ref of refs) await emit(`${guidance}/${group}/${ref.id}.md`, stripFrontmatter(ref.content) + '\n')
+    await emit(`${guidance}/${group}/INDEX.md`, `# ${group}\n\nRead only the reference relevant to the task.\n\n` + refs.map(ref => `- [${ref.id}](${ref.id}.md): ${description(ref.content, ref.id)}`).join('\n') + '\n')
   }
+  await emit('.unstoppable/compatibility-profiles.json', JSON.stringify(manifest, null, 2) + '\n')
+
+  const skillRoot = { claude: '.claude/skills', codex: '.agents/skills', opencode: '.opencode/skills', cursor: '.cursor/skills' }[options.tool]
+  for (const skill of selectedSkills) {
+    await emit(`${skillRoot}/${skill.id}/SKILL.md`, skill.content)
+    for (const resource of skill.resources) await emit(`${skillRoot}/${skill.id}/resources/${resource.name}`, resource.content)
+  }
+  // Keep existing foundation/module/recipe names as thin, on-demand routers.
+  for (const [name, group, purpose] of [
+    ['unstoppable-foundations', 'core', 'Architecture and lifecycle invariants for Unstoppable apps'],
+    ['unstoppable-modules', 'modules', 'Runtime boundaries and integration notes for stack modules'],
+    ['unstoppable-recipes', 'recipes', 'Composition patterns for extending scaffolded apps'],
+  ]) {
+    await emit(`${skillRoot}/${name}/SKILL.md`, `---\nname: ${name}\ndescription: ${purpose}; read only the relevant reference when designing or extending an app.\n---\n\n# ${purpose}\n\nDiscover the target app and read its \`.unstoppable/project.json\` first. Open \`${guidance}/${group}/INDEX.md\` relative to the workspace root, then select the matching reference. Installed contracts and version-matched SDK types take precedence over generic examples.\n`)
+  }
+  const project = `# ${options.projectName}
+
+This workspace builds local-first apps with the Unstoppable Stack.
+
+## Find the app before changing it
+
+Run \`us compatibility list -o .\` or locate \`.unstoppable/project.json\` files.
+Read the target app's metadata, package.json, scripts, and generated entrypoints.
+${options.platform ? `Target: ${options.platform}; selected features: ${(options.features || []).join(', ') || 'base P2P and storage'}.` : 'This workspace can contain several apps with different runtimes and compatibility profiles.'}
+For older apps without metadata, inspect the installed dependencies and runtime before applying guidance. Do not infer support from a current web page.
+
+## Extend the existing contract
+
+- Create a new supported target with \`us scaffold app\`; inspect \`us scaffold list-platforms\` and \`us scaffold list-features\` for the installed CLI's actual surface.
+- Existing apps already have infrastructure. Extend their UI, domain logic, prompts, and schemas through generated managers and runtime contracts.
+- Desktop native code runs in the Bare worker; the renderer uses the preload/IPC bridge.
+${aiEnabled ? `- Desktop/Node local AI uses \`.unstoppable/runtime-ai/index.js\`. Read the AI contract in \`${guidance}/modules/qvac.md\` before changing lifecycle behavior.` : '- This target has no local AI feature; do not assume an AI runtime is installed.'}
+- Data is local-first. Read locally before waiting for peers; keep private data outside replicated stores. Pairing and grants use node-core only when that feature is present.
+- Read the relevant local integration note or skill. Use version-matched upstream docs and installed types for detailed SDK APIs.
+- Dependency/native-runtime upgrades are deliberate migrations. Run \`us compatibility check -o <app>\`; preserve app edits and validate the new combination. Never use \`--force\` to upgrade an edited app.
+- Expo, wallet and Personal Node maturity is recorded separately; a scaffold or mock test alone does not establish native support.
+
+## Validate the change
+
+Use the app's own scripts. Exercise affected behavior, including failure/retry, real cancellation followed by reuse, and cached offline startup when changing AI. Keep mock evidence visibly identified. Do not claim native acceptance from structural checks.
+
+## On-demand guidance
+
+- \`${guidance}/core/INDEX.md\`: architecture and app policy
+- \`${guidance}/modules/INDEX.md\`: runtime integration notes
+- \`${guidance}/recipes/INDEX.md\`: composition patterns
+- Skills: \`${skillRoot}/\`; load the matching workflow only
+
+Use existing user decisions and authorization. Clarify only missing decisions that materially affect the task.
+`
+  if (options.tool === 'claude') {
+    await emit('CLAUDE.md', project)
+    await emit('.claude/settings.json', JSON.stringify({ permissions: { allow: ['Bash(npm:*)', 'Bash(pnpm:*)', 'Bash(pear:*)'], ask: ['Bash(git push:*)'] } }, null, 2) + '\n')
+  } else if (options.tool === 'cursor') {
+    await emit('.cursor/rules/project.mdc', `---\ndescription: Discover app profiles and extend Unstoppable runtime contracts\nalwaysApply: true\n---\n\n${project}`)
+    // Cursor can select skills through ordinary description-triggered rules.
+    for (const skill of selectedSkills) {
+      await emit(`.cursor/rules/skill-${skill.id}.mdc`, `---\ndescription: ${description(skill.content, skill.id)}\nalwaysApply: false\n---\n\nRead \`${skillRoot}/${skill.id}/SKILL.md\` when this workflow applies.\n`)
+    }
+  } else {
+    await emit('AGENTS.md', project)
+    if (options.tool === 'opencode') await emit('opencode.json', JSON.stringify({ $schema: 'https://opencode.ai/config.json', instructions: ['AGENTS.md'] }, null, 2) + '\n')
+  }
+  return { filesWritten: files, warnings: [] }
 }

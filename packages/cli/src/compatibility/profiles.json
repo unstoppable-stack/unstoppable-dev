@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "model": {
+    "constant": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
+    "label": "Qwen 3.5 0.8B",
+    "sizeMB": 532,
+    "identity": "unsloth/Qwen3.5-0.8B-GGUF at 6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "config": {
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
+    },
+    "registryPath": "unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expectedSize": 532517120,
+    "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+  },
+  "profiles": {
+    "pear-desktop": {
+      "id": "pear-desktop-qvac-0.21",
+      "revision": 1,
+      "maturity": "preview",
+      "engines": {
+        "node": ">=22.17.0"
+      },
+      "dependencies": {
+        "pear-runtime": "^1.3.1",
+        "bare-rpc": "^1.3.8",
+        "hyperswarm": "^4.17.2",
+        "hyperdht": "^6.34.1",
+        "hypercore": "^11.37.2",
+        "corestore": "^7.13.0",
+        "hyperbee": "^2.27.3",
+        "b4a": "^1.8.0",
+        "hypercore-crypto": "^3.7.0"
+      },
+      "devDependencies": {
+        "electron": "^44.5.1"
+      },
+      "featureDependencies": {
+        "local-ai": {
+          "@qvac/inference": "0.21.0",
+          "@qvac/llm-llamacpp": "0.55.0",
+          "@qvac/langdetect-text": "^0.1.2",
+          "@qvac/decoder-audio": "^0.7.0",
+          "bare-process": "^4.5.1"
+        },
+        "node-sync": {
+          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+        },
+        "multi-writer": {
+          "autobee": "1.0.10",
+          "hyperdb": "^6.7.0",
+          "hyperschema": "^1.21.0"
+        },
+        "wallet": {},
+        "node-host": {}
+      },
+      "aiRuntime": "0.1.0",
+      "validation": {
+        "baseline": "2026-10-06",
+        "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+        "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+      },
+      "featureMaturity": {
+        "local-ai": "preview-adapter",
+        "node-sync": "deferred-alpha",
+        "node-host": "experimental",
+        "multi-writer": "experimental",
+        "wallet": "stub"
+      },
+      "runtimeRequirements": {
+        "nativeGraphMustBeValidated": true,
+        "bare": ">=1.30.3"
+      }
+    },
+    "node-cli": {
+      "id": "node-cli-qvac-0.21",
+      "revision": 1,
+      "maturity": "experimental",
+      "engines": {
+        "node": ">=22.17.0"
+      },
+      "dependencies": {
+        "hyperswarm": "^4.17.0",
+        "corestore": "^7.8.0",
+        "hyperbee": "^2.27.3",
+        "b4a": "^1.8.0",
+        "hypercore-crypto": "^3.7.0"
+      },
+      "devDependencies": {
+        "@types/node": "^20.0.0",
+        "typescript": "^5.0.0",
+        "tsx": "^4.0.0"
+      },
+      "featureDependencies": {
+        "local-ai": {
+          "@qvac/sdk": "0.21.0",
+          "zod": "^4.3.0"
+        },
+        "node-sync": {
+          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+        },
+        "multi-writer": {
+          "autobee": "1.0.10",
+          "hyperdb": "^6.7.0",
+          "hyperschema": "^1.21.0"
+        },
+        "wallet": {},
+        "node-host": {
+          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+        }
+      },
+      "aiRuntime": "0.1.0",
+      "validation": {
+        "baseline": "2026-10-06",
+        "adapter": "contract-tested; native acceptance pending",
+        "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+      },
+      "featureMaturity": {
+        "local-ai": "experimental",
+        "node-sync": "deferred-alpha",
+        "node-host": "experimental",
+        "multi-writer": "experimental",
+        "wallet": "stub"
+      },
+      "runtimeRequirements": {
+        "nativeGraphMustBeValidated": true,
+        "bare": ">=1.30.3"
+      }
+    },
+    "expo-mobile": {
+      "id": "expo-54-qvac-0.21",
+      "revision": 1,
+      "maturity": "experimental",
+      "engines": {
+        "node": ">=22.17.0"
+      },
+      "dependencies": {
+        "expo": "~54.0.33",
+        "expo-build-properties": "~1.0.9",
+        "expo-file-system": "^19.0.15",
+        "expo-linking": "~8.0.11",
+        "expo-router": "~6.0.23",
+        "expo-splash-screen": "~31.0.10",
+        "expo-status-bar": "~3.0.8",
+        "react": "19.1.0",
+        "react-dom": "19.1.0",
+        "react-native": "0.81.5",
+        "react-native-safe-area-context": "~5.6.0",
+        "react-native-screens": "~4.16.0",
+        "react-native-bare-kit": "0.15.6",
+        "bare-pack": "^2.2.1",
+        "bare-rpc": "^1.3.2",
+        "corestore": "^7.13.0",
+        "hyperbee": "^2.27.3"
+      },
+      "devDependencies": {
+        "@types/react": "~19.1.10",
+        "typescript": "~5.9.2"
+      },
+      "featureDependencies": {
+        "local-ai": {
+          "@qvac/sdk": "0.21.0",
+          "zod": "^4.3.0",
+          "expo-device": "~8.0.10"
+        },
+        "node-sync": {
+          "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
+          "hyperswarm": "^4.17.0",
+          "b4a": "^1.8.0",
+          "events": "^3.3.0"
+        },
+        "multi-writer": {},
+        "wallet": {},
+        "node-host": {}
+      },
+      "aiRuntime": null,
+      "validation": {
+        "baseline": "2026-10-09",
+        "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+        "evidence": "planning/status/public-launch-mobile-20261009.md"
+      },
+      "featureMaturity": {
+        "local-ai": "experimental-native",
+        "node-sync": "deferred-alpha",
+        "node-host": "experimental",
+        "multi-writer": "experimental",
+        "wallet": "stub"
+      },
+      "runtimeRequirements": {
+        "nativeGraphMustBeValidated": true,
+        "bare": "hosted by the pinned BareKit; verify complete native graph"
+      }
+    }
+  }
+}

@@ -365,3 +365,18 @@ When working on this codebase:
 7. **Research material** - `research/` contains fetched QVAC docs and SDK examples. Consult when writing or validating agent pack content.
 
 8. **Sandbox** - `sandbox/` is gitignored but accessible to you. It contains battle-tested apps (`coffee-assistant`, `coffee-assistant-ui`, `slack-p2p-copy`) and CLI test builds. The battle-tested apps have `fixes/` folders with critical learnings. Scan `FEEDBACK.md` files for improvement opportunities.
+
+
+## Maintained app contracts (2026-10-09)
+
+- Local AI lifecycle/adapters: `packages/runtime-ai/src/`. Desktop/Node generators
+  vendor this implementation into `.unstoppable/runtime-ai/`; keep prompts/UI and
+  domain logic in app code. Expo retains its separate experimental implementation.
+- Compatibility source: `packages/cli/src/compatibility/profiles.json`. Generate
+  dependency guidance from this manifest rather than maintaining version tables.
+- After source changes run `node scripts/sync-stack-assets.mjs`; it generates CLI
+  runtime assets, compatibility guidance and the CLI-bundled agent pack.
+- `us compatibility list/check` discover app profiles and propose read-only upgrade
+  differences. Preserve edited app files and migrate explicitly; do not use
+  `--force` regeneration as an upgrade.
+- Native inference/cancellation/offline gates are distinct from contract/mock tests.

@@ -14,6 +14,74 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "expo-mobile",
+  "features": [],
+  "compatibility": {
+    "id": "expo-54-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {},
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": "hosted by the pinned BareKit; verify complete native graph"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-09",
+    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "evidence": "planning/status/public-launch-mobile-20261009.md"
+  },
+  "expected": {
+    "dependencies": {
+      "expo": "~54.0.33",
+      "expo-build-properties": "~1.0.9",
+      "expo-file-system": "^19.0.15",
+      "expo-linking": "~8.0.11",
+      "expo-router": "~6.0.23",
+      "expo-splash-screen": "~31.0.10",
+      "expo-status-bar": "~3.0.8",
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "react-native": "0.81.5",
+      "react-native-safe-area-context": "~5.6.0",
+      "react-native-screens": "~4.16.0",
+      "react-native-bare-kit": "0.15.6",
+      "bare-pack": "^2.2.1",
+      "bare-rpc": "^1.3.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3"
+    },
+    "devDependencies": {
+      "@types/react": "~19.1.10",
+      "typescript": "~5.9.2"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
     "content": "{
   "expo": {
     "name": "snap-test",
@@ -729,6 +797,94 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "expo-mobile",
+  "features": [
+    "local-ai"
+  ],
+  "compatibility": {
+    "id": "expo-54-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "local-ai": "experimental-native"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": "hosted by the pinned BareKit; verify complete native graph"
+  },
+  "aiRuntime": null,
+  "model": {
+    "constant": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
+    "label": "Qwen 3.5 0.8B",
+    "sizeMB": 532,
+    "identity": "unsloth/Qwen3.5-0.8B-GGUF at 6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "config": {
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
+    },
+    "registryPath": "unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expectedSize": 532517120,
+    "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+  },
+  "validation": {
+    "baseline": "2026-10-09",
+    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "evidence": "planning/status/public-launch-mobile-20261009.md"
+  },
+  "expected": {
+    "dependencies": {
+      "expo": "~54.0.33",
+      "expo-build-properties": "~1.0.9",
+      "expo-file-system": "^19.0.15",
+      "expo-linking": "~8.0.11",
+      "expo-router": "~6.0.23",
+      "expo-splash-screen": "~31.0.10",
+      "expo-status-bar": "~3.0.8",
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "react-native": "0.81.5",
+      "react-native-safe-area-context": "~5.6.0",
+      "react-native-screens": "~4.16.0",
+      "react-native-bare-kit": "0.15.6",
+      "bare-pack": "^2.2.1",
+      "bare-rpc": "^1.3.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "@qvac/sdk": "0.21.0",
+      "zod": "^4.3.0",
+      "expo-device": "~8.0.10"
+    },
+    "devDependencies": {
+      "@types/react": "~19.1.10",
+      "typescript": "~5.9.2"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "{
@@ -1704,6 +1860,82 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "expo-mobile",
+  "features": [
+    "node-sync"
+  ],
+  "compatibility": {
+    "id": "expo-54-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "node-sync": "deferred-alpha"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": "hosted by the pinned BareKit; verify complete native graph"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-09",
+    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "evidence": "planning/status/public-launch-mobile-20261009.md"
+  },
+  "expected": {
+    "dependencies": {
+      "expo": "~54.0.33",
+      "expo-build-properties": "~1.0.9",
+      "expo-file-system": "^19.0.15",
+      "expo-linking": "~8.0.11",
+      "expo-router": "~6.0.23",
+      "expo-splash-screen": "~31.0.10",
+      "expo-status-bar": "~3.0.8",
+      "react": "19.1.0",
+      "react-dom": "19.1.0",
+      "react-native": "0.81.5",
+      "react-native-safe-area-context": "~5.6.0",
+      "react-native-screens": "~4.16.0",
+      "react-native-bare-kit": "0.15.6",
+      "bare-pack": "^2.2.1",
+      "bare-rpc": "^1.3.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
+      "hyperswarm": "^4.17.0",
+      "b4a": "^1.8.0",
+      "events": "^3.3.0"
+    },
+    "devDependencies": {
+      "@types/react": "~19.1.10",
+      "typescript": "~5.9.2"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
     "content": "{
   "expo": {
     "name": "snap-test",
@@ -2510,6 +2742,8 @@ export function useWorklet() {
 exports[`generator snapshots > file paths only > expo-mobile / bare: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app.json",
   "app/+not-found.tsx",
@@ -2530,6 +2764,8 @@ exports[`generator snapshots > file paths only > expo-mobile / bare: path list m
 exports[`generator snapshots > file paths only > expo-mobile / local-ai: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app.json",
   "app/+not-found.tsx",
@@ -2551,6 +2787,8 @@ exports[`generator snapshots > file paths only > expo-mobile / local-ai: path li
 exports[`generator snapshots > file paths only > expo-mobile / node-sync: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app.json",
   "app/+not-found.tsx",
@@ -2571,6 +2809,8 @@ exports[`generator snapshots > file paths only > expo-mobile / node-sync: path l
 exports[`generator snapshots > file paths only > node-cli / bare: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "package.json",
   "planning/README.md",
@@ -2585,6 +2825,12 @@ exports[`generator snapshots > file paths only > node-cli / bare: path list matc
 exports[`generator snapshots > file paths only > node-cli / local-ai: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
+  ".unstoppable/runtime-ai/adapters.js",
+  ".unstoppable/runtime-ai/history.js",
+  ".unstoppable/runtime-ai/index.d.ts",
+  ".unstoppable/runtime-ai/index.js",
   "README.md",
   "package.json",
   "planning/README.md",
@@ -2600,6 +2846,8 @@ exports[`generator snapshots > file paths only > node-cli / local-ai: path list 
 exports[`generator snapshots > file paths only > node-cli / node-host: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "package.json",
   "planning/README.md",
@@ -2615,6 +2863,8 @@ exports[`generator snapshots > file paths only > node-cli / node-host: path list
 exports[`generator snapshots > file paths only > node-cli / node-sync: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "package.json",
   "planning/README.md",
@@ -2630,6 +2880,8 @@ exports[`generator snapshots > file paths only > node-cli / node-sync: path list
 exports[`generator snapshots > file paths only > node-cli / wallet: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "package.json",
   "planning/README.md",
@@ -2645,6 +2897,8 @@ exports[`generator snapshots > file paths only > node-cli / wallet: path list ma
 exports[`generator snapshots > file paths only > pear-desktop / bare: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app/bridge.js",
   "app/index.js",
@@ -2660,10 +2914,15 @@ exports[`generator snapshots > file paths only > pear-desktop / bare: path list 
 exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
+  ".unstoppable/runtime-ai/adapters.js",
+  ".unstoppable/runtime-ai/history.js",
+  ".unstoppable/runtime-ai/index.d.ts",
+  ".unstoppable/runtime-ai/index.js",
   "README.md",
   "app/bridge.js",
   "app/index.js",
-  "chat-context.js",
   "electron/main.js",
   "electron/preload.cjs",
   "index.html",
@@ -2676,10 +2935,15 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
 exports[`generator snapshots > file paths only > pear-desktop / local-ai: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
+  ".unstoppable/runtime-ai/adapters.js",
+  ".unstoppable/runtime-ai/history.js",
+  ".unstoppable/runtime-ai/index.d.ts",
+  ".unstoppable/runtime-ai/index.js",
   "README.md",
   "app/bridge.js",
   "app/index.js",
-  "chat-context.js",
   "electron/main.js",
   "electron/preload.cjs",
   "index.html",
@@ -2692,6 +2956,8 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai: path l
 exports[`generator snapshots > file paths only > pear-desktop / node-sync: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app/bridge.js",
   "app/index.js",
@@ -2707,6 +2973,8 @@ exports[`generator snapshots > file paths only > pear-desktop / node-sync: path 
 exports[`generator snapshots > file paths only > pear-desktop / wallet: path list matches snapshot 1`] = `
 [
   ".gitignore",
+  ".unstoppable/APP.md",
+  ".unstoppable/project.json",
   "README.md",
   "app/bridge.js",
   "app/index.js",
@@ -2731,6 +2999,63 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "node-cli",
+  "features": [],
+  "compatibility": {
+    "id": "node-cli-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {},
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; native acceptance pending",
+    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+  },
+  "expected": {
+    "dependencies": {
+      "hyperswarm": "^4.17.0",
+      "corestore": "^7.8.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.0.0",
+      "tsx": "^4.0.0"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "{
@@ -2922,6 +3247,367 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "node-cli",
+  "features": [
+    "local-ai"
+  ],
+  "compatibility": {
+    "id": "node-cli-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "local-ai": "experimental"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": {
+    "version": "0.1.0",
+    "delivery": "vendored",
+    "path": ".unstoppable/runtime-ai"
+  },
+  "model": {
+    "constant": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
+    "label": "Qwen 3.5 0.8B",
+    "sizeMB": 532,
+    "identity": "unsloth/Qwen3.5-0.8B-GGUF at 6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "config": {
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
+    },
+    "registryPath": "unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expectedSize": 532517120,
+    "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+  },
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; native acceptance pending",
+    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+  },
+  "expected": {
+    "dependencies": {
+      "hyperswarm": "^4.17.0",
+      "corestore": "^7.8.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@qvac/sdk": "0.21.0",
+      "zod": "^4.3.0"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.0.0",
+      "tsx": "^4.0.0"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
+    "content": "// Only this adapter knows QVAC API fields. Native imports remain lazy.
+function qvacAdapter(loadEngine) {
+  let engine = null
+  return {
+    mock: false,
+    async load({ modelConstant, modelChecksum, ...options }) {
+      engine = await loadEngine()
+      const modelSrc = options.modelSrc || engine[modelConstant]
+      if (!modelSrc) throw new Error(\`Model constant is unavailable: \${modelConstant}\`)
+      if (!options.modelSrc && modelChecksum && modelSrc.sha256Checksum !== modelChecksum) {
+        throw new Error('Model catalog identity differs from the recorded profile; review the model migration')
+      }
+      return engine.loadModel({ ...options, modelSrc })
+    },
+    stream(modelId, history) {
+      return engine.completion({ modelId, history, stream: true }).tokenStream
+    },
+    async cancel(modelId) { await engine.cancel({ operation: 'inference', modelId }) },
+    async unload(modelId) { await engine.unloadModel({ modelId }) },
+  }
+}
+
+export function createNodeAdapter({ loadEngine = () => import('@qvac/sdk') } = {}) {
+  return qvacAdapter(loadEngine)
+}
+
+let bareEngine = null
+export function createBareAdapter() {
+  return qvacAdapter(async () => {
+    if (!bareEngine) {
+      bareEngine = (async () => {
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
+        const [engine, { llmPlugin }, { registerPlugin }] = await Promise.all([
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
+        ])
+        registerPlugin(llmPlugin)
+        return engine
+      })().catch(err => { bareEngine = null; throw err })
+    }
+    return bareEngine
+  })
+}
+
+export function createMockAdapter({ delay = 5 } = {}) {
+  let cancelled = false
+  return {
+    mock: true,
+    async load() { return 'mock-model' },
+    async *stream(_modelId, history) {
+      cancelled = false
+      for (const token of \`Mock: \${history.at(-1).content}\`) {
+        if (cancelled) return
+        yield token
+        if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    },
+    async cancel() { cancelled = true },
+    async unload() {},
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/adapters.js",
+  },
+  {
+    "content": "// UTF-8 byte bounds are conservative input limits, not token counts.
+function byteLength(text) {
+  let bytes = 0
+  for (const char of text) {
+    const code = char.codePointAt(0)
+    bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4
+  }
+  return bytes
+}
+
+export function prepareChatHistory(history, byteBudget) {
+  if (!Number.isSafeInteger(byteBudget) || byteBudget <= 0) throw new Error('Invalid history byte budget')
+  if (!Array.isArray(history) || !history.length || history.some(m =>
+    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
+    throw new Error('Chat history must contain user and assistant text messages.')
+  }
+  if (history.at(-1).role !== 'user') throw new Error('The latest message must be from the user.')
+  const cost = messages => messages.reduce((n, m) => n + byteLength(m.content) + 32, 0)
+  if (cost(history.slice(-1)) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
+  const selected = history.map(m => ({ role: m.role, content: m.content }))
+  while (cost(selected) > byteBudget && selected.length > 1) {
+    selected.shift()
+    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
+  }
+  return selected
+}
+
+export async function* streamChat(adapter, modelId, history, byteBudget, onTrim = () => {}) {
+  let selected = prepareChatHistory(history, byteBudget)
+  if (selected.length < history.length) onTrim()
+  let emitted = false
+  for (;;) {
+    try {
+      for await (const token of adapter.stream(modelId, selected)) {
+        if (token) emitted = true
+        yield token
+      }
+      return
+    } catch (err) {
+      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
+      selected = selected.slice(-1)
+      onTrim()
+    }
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/history.js",
+  },
+  {
+    "content": "export interface Message { role: 'user' | 'assistant'; content: string }
+export interface Adapter {
+  mock?: boolean
+  load(options: Record<string, unknown>): Promise<string>
+  stream(modelId: string, history: Message[]): AsyncIterable<string>
+  cancel(modelId: string): Promise<void>
+  unload(modelId: string): Promise<void>
+}
+export class AIError extends Error { constructor(code: string, message: string, cause?: unknown); code: string }
+export function createAISession(options: { adapter: Adapter; byteBudget?: number }): {
+  readonly state: string
+  readonly modelId: string | null
+  readonly mock: boolean
+  readonly lastError: AIError | null
+  readonly capabilities: { streaming: true; cancellation: 'model'; concurrency: 1 }
+  load(options?: Record<string, unknown>): Promise<string>
+  stream(history: Message[], options: { requestId: string | number; signal?: AbortSignal; onTrim?: () => void }): AsyncIterable<string>
+  cancel(requestId?: string | number): Promise<boolean>
+  close(): Promise<void>
+}
+export function createBareAdapter(): Adapter
+export function createNodeAdapter(): Adapter
+export function createMockAdapter(options?: { delay?: number }): Adapter
+export function prepareChatHistory(history: Message[], byteBudget: number): Message[]
+export function streamChat(adapter: Adapter, modelId: string, history: Message[], byteBudget: number, onTrim?: () => void): AsyncIterable<string>
+",
+    "path": ".unstoppable/runtime-ai/index.d.ts",
+  },
+  {
+    "content": "import { streamChat } from './history.js'
+export { prepareChatHistory, streamChat } from './history.js'
+export { createBareAdapter, createNodeAdapter, createMockAdapter } from './adapters.js'
+
+export class AIError extends Error {
+  constructor(code, message, cause) {
+    super(message, cause ? { cause } : undefined)
+    this.name = 'AIError'
+    this.code = code
+  }
+}
+
+function normalized(code, error) {
+  return error instanceof AIError ? error : new AIError(code, String(error?.message || error), error)
+}
+
+/** One loaded model, one active request. History belongs to the app. */
+export function createAISession({ adapter, byteBudget = 2048 }) {
+  let modelId = null
+  let state = 'idle'
+  let loading = null
+  let active = null
+  let closing = null
+  let closed = false
+  let lastError = null
+
+  const session = {
+    get state() { return state },
+    get modelId() { return modelId },
+    get mock() { return !!adapter.mock },
+    get lastError() { return lastError },
+    get capabilities() { return { streaming: true, cancellation: 'model', concurrency: 1 } },
+
+    async load(options = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (modelId) return modelId
+      if (loading) return loading
+      state = 'loading'
+      lastError = null
+      loading = (async () => {
+        try {
+          modelId = await adapter.load(options)
+          if (typeof modelId !== 'string' || !modelId) throw new Error('Adapter returned an invalid model ID')
+          state = 'ready'
+          return modelId
+        } catch (err) {
+          modelId = null
+          state = 'error'
+          lastError = normalized('LOAD_FAILED', err)
+          throw lastError
+        } finally { loading = null }
+      })()
+      return loading
+    },
+
+    async *stream(history, { requestId, signal, onTrim } = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (!modelId) throw new AIError('NOT_READY', 'Model not loaded. Load the assistant first.')
+      if (active) throw new AIError('BUSY', 'Another response is already running.')
+      if (lastError?.code === 'CANCEL_FAILED') throw lastError
+      if (requestId === undefined || requestId === null) throw new AIError('INVALID_REQUEST', 'A request ID is required')
+      if (signal?.aborted) throw new AIError('ABORTED', 'Response cancelled')
+      let settle
+      const operation = { requestId, cancelled: false, cancelPromise: null, done: new Promise(resolve => { settle = resolve }) }
+      active = operation
+      state = 'streaming'
+      const abort = () => { void cancelOperation(operation).catch(() => {}) }
+      signal?.addEventListener('abort', abort, { once: true })
+      let finished = false
+      const tokens = streamChat(adapter, modelId, history, byteBudget, onTrim)
+      try {
+        for (;;) {
+          const next = await tokens.next()
+          if (next.done) break
+          if (operation.cancelled) break
+          yield next.value
+        }
+        finished = !operation.cancelled
+      } catch (err) {
+        if (!operation.cancelled) {
+          lastError = normalized('INFERENCE_FAILED', err)
+          throw lastError
+        }
+      } finally {
+        signal?.removeEventListener('abort', abort)
+        try {
+          // A consumer breaking iteration must cancel native work too.
+          if (!finished) await cancelOperation(operation)
+          await tokens.return()
+        } finally {
+          active = null
+          state = lastError?.code === 'CANCEL_FAILED' ? 'error' : 'ready'
+          settle()
+        }
+      }
+    },
+
+    async cancel(requestId) {
+      const operation = active
+      if (!operation || (requestId !== undefined && requestId !== operation.requestId)) return false
+      await cancelOperation(operation)
+      await operation.done
+      return true
+    },
+
+    async close() {
+      if (closed) return
+      if (closing) return closing
+      closing = (async () => {
+        if (loading) { try { await loading } catch {} }
+        await session.cancel()
+        if (modelId) await adapter.unload(modelId)
+        modelId = null
+        closed = true
+        state = 'closed'
+      })()
+      try { await closing } finally { closing = null }
+    },
+  }
+
+  async function cancelOperation(operation) {
+    operation.cancelled = true
+    if (!operation.cancelPromise) {
+      operation.cancelPromise = Promise.resolve().then(() => adapter.cancel(modelId)).catch(err => {
+        lastError = normalized('CANCEL_FAILED', err)
+        throw lastError
+      })
+    }
+    return operation.cancelPromise
+  }
+  return session
+}
+",
+    "path": ".unstoppable/runtime-ai/index.js",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -2994,96 +3680,35 @@ See \`planning/\` for architecture decisions and feature plans.
     "path": "README.md",
   },
   {
-    "content": "/**
- * AI manager using QVAC SDK.
- *
- * Set QVAC_MOCK=1 in the environment to use a stub implementation that
- * echoes input back — useful for E2E tests where loading a real model
- * is impractical.
- */
+    "content": "import { createAISession, createNodeAdapter, createMockAdapter } from '../.unstoppable/runtime-ai/index.js'
 
-// The SDK is imported lazily, inside setupAI(), rather than at module
-// scope. A top-level import runs the SDK's native-module resolution as a
-// side effect of loading this file, so an SDK problem takes down the whole
-// CLI before it can print anything useful. Deferring it keeps the failure
-// local to AI setup and keeps mock mode free of any SDK dependency.
-type QvacSdk = typeof import('@qvac/sdk')
-
-const MOCK_MODE = process.env.QVAC_MOCK === '1'
-const CTX_SIZE = 4096
-
-let modelId: string | null = null
-let sdk: QvacSdk | null = null
+const ai = createAISession({
+  adapter: process.env.QVAC_MOCK === '1' ? createMockAdapter() : createNodeAdapter(),
+  byteBudget: 2048,
+})
+let requestId = 0
 
 export async function setupAI() {
-  if (MOCK_MODE) {
-    console.log('AI mock mode enabled — skipping model load')
-    modelId = 'mock-model'
-    return {
-      async chat(message: string) {
-        return {
-          async *tokenStream() {
-            const reply = \`Mock: \${message}\`
-            for (const ch of reply) {
-              yield ch
-              await new Promise((r) => setTimeout(r, 5))
-            }
-          },
-        }
-      },
-      async cleanup() {
-        modelId = null
-      },
-    }
-  }
-
-  sdk = await import('@qvac/sdk')
-  const { loadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M } = sdk
-
-  console.log('Loading AI model (Qwen 3.5 0.8B, ~532MB on first run)...')
-  modelId = await loadModel({
-    modelSrc: QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+  if (ai.mock) console.log('AI mock mode enabled — skipping model load')
+  await ai.load({
+    modelConstant: 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M',
+          modelChecksum: 'bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517',
     modelType: 'llm',
     modelConfig: {
-      ctx_size: CTX_SIZE,
-      // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
-      // and no stripping reasoning blocks back out of the token stream.
-      reasoning_budget: 0,
-      system_prompt: 'You are a helpful assistant.',
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
     },
-    onProgress: (progress: any) => {
-      if (progress.percentage) {
-        process.stdout.write(
-          \`\\rDownloading model: \${Math.round(progress.percentage)}%\`,
-        )
-      }
-    },
+    onProgress: (p: any) => console.log('Model download:', p.percentage),
   })
-  console.log('\\nModel loaded:', modelId)
-
   return {
     async chat(message: string) {
-      if (!modelId || !sdk) throw new Error('Model not loaded')
-      const result = sdk.completion({
-        modelId,
-        history: [{ role: 'user', content: message }],
-        stream: true,
-      })
-      return result
+      const id = ++requestId
+      return { tokenStream: () => ai.stream([{ role: 'user', content: message }], { requestId: id }) }
     },
-
-    /** Stop an in-flight completion. Safe to call when nothing is running. */
-    async abort() {
-      if (!modelId || !sdk) return
-      await sdk.cancel({ operation: 'inference', modelId })
-    },
-
-    async cleanup() {
-      if (modelId && modelId !== 'mock-model' && sdk) {
-        await sdk.unloadModel({ modelId })
-      }
-      modelId = null
-    },
+    abort: () => ai.cancel(),
+    cleanup: () => ai.close(),
+    session: ai,
   }
 }
 ",
@@ -3212,6 +3837,68 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "node-cli",
+  "features": [
+    "node-host"
+  ],
+  "compatibility": {
+    "id": "node-cli-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "node-host": "experimental"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; native acceptance pending",
+    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+  },
+  "expected": {
+    "dependencies": {
+      "hyperswarm": "^4.17.0",
+      "corestore": "^7.8.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.0.0",
+      "tsx": "^4.0.0"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "{
@@ -3493,6 +4180,68 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "node-cli",
+  "features": [
+    "node-sync"
+  ],
+  "compatibility": {
+    "id": "node-cli-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "node-sync": "deferred-alpha"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; native acceptance pending",
+    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+  },
+  "expected": {
+    "dependencies": {
+      "hyperswarm": "^4.17.0",
+      "corestore": "^7.8.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.0.0",
+      "tsx": "^4.0.0"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -3768,6 +4517,67 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "node-cli",
+  "features": [
+    "wallet"
+  ],
+  "compatibility": {
+    "id": "node-cli-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "experimental",
+  "featureMaturity": {
+    "wallet": "stub"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; native acceptance pending",
+    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+  },
+  "expected": {
+    "dependencies": {
+      "hyperswarm": "^4.17.0",
+      "corestore": "^7.8.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0"
+    },
+    "devDependencies": {
+      "@types/node": "^20.0.0",
+      "typescript": "^5.0.0",
+      "tsx": "^4.0.0"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -3978,6 +4788,65 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "pear-desktop",
+  "features": [],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "preview",
+  "featureMaturity": {},
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "
@@ -4516,6 +5385,374 @@ dist/
     "path": ".gitignore",
   },
   {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "pear-desktop",
+  "features": [
+    "local-ai",
+    "wallet"
+  ],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "preview",
+  "featureMaturity": {
+    "local-ai": "preview-adapter",
+    "wallet": "stub"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": {
+    "version": "0.1.0",
+    "delivery": "vendored",
+    "path": ".unstoppable/runtime-ai"
+  },
+  "model": {
+    "constant": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
+    "label": "Qwen 3.5 0.8B",
+    "sizeMB": 532,
+    "identity": "unsloth/Qwen3.5-0.8B-GGUF at 6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "config": {
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
+    },
+    "registryPath": "unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expectedSize": 532517120,
+    "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+  },
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@qvac/inference": "0.21.0",
+      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/langdetect-text": "^0.1.2",
+      "@qvac/decoder-audio": "^0.7.0",
+      "bare-process": "^4.5.1"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
+    "content": "// Only this adapter knows QVAC API fields. Native imports remain lazy.
+function qvacAdapter(loadEngine) {
+  let engine = null
+  return {
+    mock: false,
+    async load({ modelConstant, modelChecksum, ...options }) {
+      engine = await loadEngine()
+      const modelSrc = options.modelSrc || engine[modelConstant]
+      if (!modelSrc) throw new Error(\`Model constant is unavailable: \${modelConstant}\`)
+      if (!options.modelSrc && modelChecksum && modelSrc.sha256Checksum !== modelChecksum) {
+        throw new Error('Model catalog identity differs from the recorded profile; review the model migration')
+      }
+      return engine.loadModel({ ...options, modelSrc })
+    },
+    stream(modelId, history) {
+      return engine.completion({ modelId, history, stream: true }).tokenStream
+    },
+    async cancel(modelId) { await engine.cancel({ operation: 'inference', modelId }) },
+    async unload(modelId) { await engine.unloadModel({ modelId }) },
+  }
+}
+
+export function createNodeAdapter({ loadEngine = () => import('@qvac/sdk') } = {}) {
+  return qvacAdapter(loadEngine)
+}
+
+let bareEngine = null
+export function createBareAdapter() {
+  return qvacAdapter(async () => {
+    if (!bareEngine) {
+      bareEngine = (async () => {
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
+        const [engine, { llmPlugin }, { registerPlugin }] = await Promise.all([
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
+        ])
+        registerPlugin(llmPlugin)
+        return engine
+      })().catch(err => { bareEngine = null; throw err })
+    }
+    return bareEngine
+  })
+}
+
+export function createMockAdapter({ delay = 5 } = {}) {
+  let cancelled = false
+  return {
+    mock: true,
+    async load() { return 'mock-model' },
+    async *stream(_modelId, history) {
+      cancelled = false
+      for (const token of \`Mock: \${history.at(-1).content}\`) {
+        if (cancelled) return
+        yield token
+        if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    },
+    async cancel() { cancelled = true },
+    async unload() {},
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/adapters.js",
+  },
+  {
+    "content": "// UTF-8 byte bounds are conservative input limits, not token counts.
+function byteLength(text) {
+  let bytes = 0
+  for (const char of text) {
+    const code = char.codePointAt(0)
+    bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4
+  }
+  return bytes
+}
+
+export function prepareChatHistory(history, byteBudget) {
+  if (!Number.isSafeInteger(byteBudget) || byteBudget <= 0) throw new Error('Invalid history byte budget')
+  if (!Array.isArray(history) || !history.length || history.some(m =>
+    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
+    throw new Error('Chat history must contain user and assistant text messages.')
+  }
+  if (history.at(-1).role !== 'user') throw new Error('The latest message must be from the user.')
+  const cost = messages => messages.reduce((n, m) => n + byteLength(m.content) + 32, 0)
+  if (cost(history.slice(-1)) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
+  const selected = history.map(m => ({ role: m.role, content: m.content }))
+  while (cost(selected) > byteBudget && selected.length > 1) {
+    selected.shift()
+    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
+  }
+  return selected
+}
+
+export async function* streamChat(adapter, modelId, history, byteBudget, onTrim = () => {}) {
+  let selected = prepareChatHistory(history, byteBudget)
+  if (selected.length < history.length) onTrim()
+  let emitted = false
+  for (;;) {
+    try {
+      for await (const token of adapter.stream(modelId, selected)) {
+        if (token) emitted = true
+        yield token
+      }
+      return
+    } catch (err) {
+      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
+      selected = selected.slice(-1)
+      onTrim()
+    }
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/history.js",
+  },
+  {
+    "content": "export interface Message { role: 'user' | 'assistant'; content: string }
+export interface Adapter {
+  mock?: boolean
+  load(options: Record<string, unknown>): Promise<string>
+  stream(modelId: string, history: Message[]): AsyncIterable<string>
+  cancel(modelId: string): Promise<void>
+  unload(modelId: string): Promise<void>
+}
+export class AIError extends Error { constructor(code: string, message: string, cause?: unknown); code: string }
+export function createAISession(options: { adapter: Adapter; byteBudget?: number }): {
+  readonly state: string
+  readonly modelId: string | null
+  readonly mock: boolean
+  readonly lastError: AIError | null
+  readonly capabilities: { streaming: true; cancellation: 'model'; concurrency: 1 }
+  load(options?: Record<string, unknown>): Promise<string>
+  stream(history: Message[], options: { requestId: string | number; signal?: AbortSignal; onTrim?: () => void }): AsyncIterable<string>
+  cancel(requestId?: string | number): Promise<boolean>
+  close(): Promise<void>
+}
+export function createBareAdapter(): Adapter
+export function createNodeAdapter(): Adapter
+export function createMockAdapter(options?: { delay?: number }): Adapter
+export function prepareChatHistory(history: Message[], byteBudget: number): Message[]
+export function streamChat(adapter: Adapter, modelId: string, history: Message[], byteBudget: number, onTrim?: () => void): AsyncIterable<string>
+",
+    "path": ".unstoppable/runtime-ai/index.d.ts",
+  },
+  {
+    "content": "import { streamChat } from './history.js'
+export { prepareChatHistory, streamChat } from './history.js'
+export { createBareAdapter, createNodeAdapter, createMockAdapter } from './adapters.js'
+
+export class AIError extends Error {
+  constructor(code, message, cause) {
+    super(message, cause ? { cause } : undefined)
+    this.name = 'AIError'
+    this.code = code
+  }
+}
+
+function normalized(code, error) {
+  return error instanceof AIError ? error : new AIError(code, String(error?.message || error), error)
+}
+
+/** One loaded model, one active request. History belongs to the app. */
+export function createAISession({ adapter, byteBudget = 2048 }) {
+  let modelId = null
+  let state = 'idle'
+  let loading = null
+  let active = null
+  let closing = null
+  let closed = false
+  let lastError = null
+
+  const session = {
+    get state() { return state },
+    get modelId() { return modelId },
+    get mock() { return !!adapter.mock },
+    get lastError() { return lastError },
+    get capabilities() { return { streaming: true, cancellation: 'model', concurrency: 1 } },
+
+    async load(options = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (modelId) return modelId
+      if (loading) return loading
+      state = 'loading'
+      lastError = null
+      loading = (async () => {
+        try {
+          modelId = await adapter.load(options)
+          if (typeof modelId !== 'string' || !modelId) throw new Error('Adapter returned an invalid model ID')
+          state = 'ready'
+          return modelId
+        } catch (err) {
+          modelId = null
+          state = 'error'
+          lastError = normalized('LOAD_FAILED', err)
+          throw lastError
+        } finally { loading = null }
+      })()
+      return loading
+    },
+
+    async *stream(history, { requestId, signal, onTrim } = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (!modelId) throw new AIError('NOT_READY', 'Model not loaded. Load the assistant first.')
+      if (active) throw new AIError('BUSY', 'Another response is already running.')
+      if (lastError?.code === 'CANCEL_FAILED') throw lastError
+      if (requestId === undefined || requestId === null) throw new AIError('INVALID_REQUEST', 'A request ID is required')
+      if (signal?.aborted) throw new AIError('ABORTED', 'Response cancelled')
+      let settle
+      const operation = { requestId, cancelled: false, cancelPromise: null, done: new Promise(resolve => { settle = resolve }) }
+      active = operation
+      state = 'streaming'
+      const abort = () => { void cancelOperation(operation).catch(() => {}) }
+      signal?.addEventListener('abort', abort, { once: true })
+      let finished = false
+      const tokens = streamChat(adapter, modelId, history, byteBudget, onTrim)
+      try {
+        for (;;) {
+          const next = await tokens.next()
+          if (next.done) break
+          if (operation.cancelled) break
+          yield next.value
+        }
+        finished = !operation.cancelled
+      } catch (err) {
+        if (!operation.cancelled) {
+          lastError = normalized('INFERENCE_FAILED', err)
+          throw lastError
+        }
+      } finally {
+        signal?.removeEventListener('abort', abort)
+        try {
+          // A consumer breaking iteration must cancel native work too.
+          if (!finished) await cancelOperation(operation)
+          await tokens.return()
+        } finally {
+          active = null
+          state = lastError?.code === 'CANCEL_FAILED' ? 'error' : 'ready'
+          settle()
+        }
+      }
+    },
+
+    async cancel(requestId) {
+      const operation = active
+      if (!operation || (requestId !== undefined && requestId !== operation.requestId)) return false
+      await cancelOperation(operation)
+      await operation.done
+      return true
+    },
+
+    async close() {
+      if (closed) return
+      if (closing) return closing
+      closing = (async () => {
+        if (loading) { try { await loading } catch {} }
+        await session.cancel()
+        if (modelId) await adapter.unload(modelId)
+        modelId = null
+        closed = true
+        state = 'closed'
+      })()
+      try { await closing } finally { closing = null }
+    },
+  }
+
+  async function cancelOperation(operation) {
+    operation.cancelled = true
+    if (!operation.cancelPromise) {
+      operation.cancelPromise = Promise.resolve().then(() => adapter.cancel(modelId)).catch(err => {
+        lastError = normalized('CANCEL_FAILED', err)
+        throw lastError
+      })
+    }
+    return operation.cancelPromise
+  }
+  return session
+}
+",
+    "path": ".unstoppable/runtime-ai/index.js",
+  },
+  {
     "content": "
 const handlers = new Set()
 let messageBuffer = ''
@@ -4854,49 +6091,6 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
-    "content": "import b4a from 'b4a'
-
-export function prepareChatHistory(history, byteBudget) {
-  if (!Array.isArray(history) || !history.length || history.some(m =>
-    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
-    throw new Error('Chat history must contain user and assistant text messages.')
-  }
-  if (history[history.length - 1].role !== 'user') throw new Error('The latest message must be from the user.')
-  const cost = messages => messages.reduce((n, m) => n + b4a.byteLength(m.content, 'utf8') + 32, 0)
-  const latest = history.slice(-1)
-  if (cost(latest) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
-  let selected = history.slice()
-  while (cost(selected) > byteBudget && selected.length > 1) {
-    selected.shift()
-    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
-  }
-  return selected
-}
-
-export async function* streamChat(sdk, modelId, history, byteBudget, onTrim = () => {}) {
-  let selected = prepareChatHistory(history, byteBudget)
-  if (selected.length < history.length) onTrim()
-  let emitted = false
-  for (;;) {
-    try {
-      const result = sdk.completion({ modelId, history: selected, stream: true })
-      for await (const token of result.tokenStream) {
-        if (token) emitted = true
-        yield token
-      }
-      return
-    } catch (err) {
-      // Retry only before visible output, once with the latest user message.
-      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
-      selected = selected.slice(-1)
-      onTrim()
-    }
-  }
-}
-",
-    "path": "chat-context.js",
-  },
-  {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -5151,7 +6345,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { streamChat } from './chat-context.js'
+import { createAISession, createBareAdapter, createMockAdapter } from './.unstoppable/runtime-ai/index.js'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -5160,16 +6354,10 @@ const storagePath = Bare.argv[2]
 let store = null
 let swarm = null
 let db = null
-let sdk = null
-let modelId = null
-let qvacPluginRegistered = false
+const MOCK_AI = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env?.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env?.QVAC_MOCK === '1')
+const ai = createAISession({ adapter: MOCK_AI ? createMockAdapter() : createBareAdapter(), byteBudget: 2048 })
 let activeChatRequestId = null
-const CTX_SIZE = 4096
-let modelLoading = false
-const MOCK_AI = (
-  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
-  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
-)
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')
@@ -5205,102 +6393,53 @@ async function handleCommand(msg) {
       break
     }
     case 'load-ai': {
-      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
-      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
-      modelLoading = true
-      if (MOCK_AI) {
-        await new Promise((r) => setTimeout(r, 200))
-        modelId = 'mock-model'
-        modelLoading = false
-        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-        break
-      }
+      send({ type: 'status', service: 'ai', status: 'loading', mock: ai.mock })
       try {
-        send({ type: 'status', service: 'ai', status: 'loading' })
-        const { default: process } = await import('bare-process')
-        globalThis.process = process
-        const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/inference'),
-          import('@qvac/inference/llamacpp-completion/plugin'),
-          import('@qvac/inference/plugins'),
-        ])
-        if (!qvacPluginRegistered) {
-          registerPlugin(llmPlugin)
-          qvacPluginRegistered = true
-        }
-        sdk = loadedSdk
-        modelId = await sdk.loadModel({
-          modelSrc: msg.modelSrc || sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+        const modelId = await ai.load({
+          modelSrc: msg.modelSrc,
+          modelConstant: 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M',
+          modelChecksum: 'bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517',
           modelType: 'llm',
           modelConfig: {
-            ctx_size: CTX_SIZE,
-            // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
-            // and no stripping reasoning blocks back out of the token stream.
-            reasoning_budget: 0,
-            system_prompt: 'You are a helpful assistant.',
+            "ctx_size": 4096,
+            "reasoning_budget": 0,
+            "system_prompt": "You are a helpful assistant."
           },
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
-        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: ai.mock })
       } catch (err) {
-        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
-      } finally {
-        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'error', code: err.code, error: err.message })
       }
       break
     }
     case 'chat': {
       const requestId = msg.requestId
-      if (!modelId) { send({ type: 'chat-error', requestId, error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
       activeChatRequestId = requestId
-      if (MOCK_AI) {
-        const last = msg.history[msg.history.length - 1]
-        const reply = \`Mock: \${last?.content ?? '(empty)'}\`
-        for (const ch of reply) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token: ch })
-          await new Promise((r) => setTimeout(r, 5))
-        }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
-        break
-      }
       try {
-        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
-        // tokens arrive as plain content — no reasoning-block filtering needed.
-        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
-          send({ type: 'chat-context', requestId }))
-        for await (const token of tokens) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token })
+        for await (const token of ai.stream(msg.history, {
+          requestId,
+          onTrim: () => send({ type: 'chat-context', requestId }),
+        })) {
+          if (activeChatRequestId === requestId) send({ type: 'chat-token', requestId, token })
         }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-done', requestId })
       } catch (err) {
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-error', requestId, error: String(err && err.message || err) })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-error', requestId, code: err.code, error: err.message })
+      } finally {
+        if (activeChatRequestId === requestId) activeChatRequestId = null
       }
       break
     }
     case 'cancel-chat': {
       const requestId = msg.requestId
-      if (activeChatRequestId !== requestId) {
-        send({ type: 'chat-cancelled', requestId })
-        break
-      }
-      activeChatRequestId = null
+      if (activeChatRequestId === requestId) activeChatRequestId = null
       try {
-        if (!MOCK_AI) await sdk.cancel({ operation: 'inference', modelId })
+        await ai.cancel(requestId)
         send({ type: 'chat-cancelled', requestId })
       } catch (err) {
-        send({ type: 'chat-error', requestId, error: \`Cancellation failed: \${String(err && err.message || err)}\` })
+        send({ type: 'chat-error', requestId, code: err.code, error: 'Cancellation failed: ' + err.message })
       }
       break
     }
@@ -5317,14 +6456,13 @@ async function handleCommand(msg) {
 }
 
 async function cleanup() {
+  activeChatRequestId = null
+  try { await ai.close() } catch (err) {
+    send({ type: 'error', service: 'ai', code: err.code, error: err.message })
+  }
   if (swarm) await swarm.destroy()
   if (db) await db.close()
   if (store) await store.close()
-  if (activeChatRequestId !== null && modelId && modelId !== 'mock-model' && sdk) {
-    activeChatRequestId = null
-    await sdk.cancel({ operation: 'inference', modelId }).catch(() => {})
-  }
-  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Bare.exit()
 }
 
@@ -5344,9 +6482,7 @@ async function init() {
   db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
   await db.ready()
   send({ type: 'status', service: 'storage', status: 'ready' })
-
   send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
-  
 
   // Wallet stub — WDK integration deferred. See 'add-wallet' skill.
   send({ type: 'status', service: 'wallet', status: 'ready', stub: true })
@@ -5372,6 +6508,372 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "pear-desktop",
+  "features": [
+    "local-ai"
+  ],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "preview",
+  "featureMaturity": {
+    "local-ai": "preview-adapter"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": {
+    "version": "0.1.0",
+    "delivery": "vendored",
+    "path": ".unstoppable/runtime-ai"
+  },
+  "model": {
+    "constant": "QWEN3_5_0_8B_MULTIMODAL_Q4_K_M",
+    "label": "Qwen 3.5 0.8B",
+    "sizeMB": 532,
+    "identity": "unsloth/Qwen3.5-0.8B-GGUF at 6ab461498e2023f6e3c1baea90a8f0fe38ab64d0",
+    "config": {
+      "ctx_size": 4096,
+      "reasoning_budget": 0,
+      "system_prompt": "You are a helpful assistant."
+    },
+    "registryPath": "unsloth/Qwen3.5-0.8B-GGUF/resolve/6ab461498e2023f6e3c1baea90a8f0fe38ab64d0/Qwen3.5-0.8B-Q4_K_M.gguf",
+    "expectedSize": 532517120,
+    "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
+  },
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@qvac/inference": "0.21.0",
+      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/langdetect-text": "^0.1.2",
+      "@qvac/decoder-audio": "^0.7.0",
+      "bare-process": "^4.5.1"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
+  },
+  {
+    "content": "// Only this adapter knows QVAC API fields. Native imports remain lazy.
+function qvacAdapter(loadEngine) {
+  let engine = null
+  return {
+    mock: false,
+    async load({ modelConstant, modelChecksum, ...options }) {
+      engine = await loadEngine()
+      const modelSrc = options.modelSrc || engine[modelConstant]
+      if (!modelSrc) throw new Error(\`Model constant is unavailable: \${modelConstant}\`)
+      if (!options.modelSrc && modelChecksum && modelSrc.sha256Checksum !== modelChecksum) {
+        throw new Error('Model catalog identity differs from the recorded profile; review the model migration')
+      }
+      return engine.loadModel({ ...options, modelSrc })
+    },
+    stream(modelId, history) {
+      return engine.completion({ modelId, history, stream: true }).tokenStream
+    },
+    async cancel(modelId) { await engine.cancel({ operation: 'inference', modelId }) },
+    async unload(modelId) { await engine.unloadModel({ modelId }) },
+  }
+}
+
+export function createNodeAdapter({ loadEngine = () => import('@qvac/sdk') } = {}) {
+  return qvacAdapter(loadEngine)
+}
+
+let bareEngine = null
+export function createBareAdapter() {
+  return qvacAdapter(async () => {
+    if (!bareEngine) {
+      bareEngine = (async () => {
+        const { default: process } = await import('bare-process')
+        globalThis.process = process
+        const [engine, { llmPlugin }, { registerPlugin }] = await Promise.all([
+          import('@qvac/inference'),
+          import('@qvac/inference/llamacpp-completion/plugin'),
+          import('@qvac/inference/plugins'),
+        ])
+        registerPlugin(llmPlugin)
+        return engine
+      })().catch(err => { bareEngine = null; throw err })
+    }
+    return bareEngine
+  })
+}
+
+export function createMockAdapter({ delay = 5 } = {}) {
+  let cancelled = false
+  return {
+    mock: true,
+    async load() { return 'mock-model' },
+    async *stream(_modelId, history) {
+      cancelled = false
+      for (const token of \`Mock: \${history.at(-1).content}\`) {
+        if (cancelled) return
+        yield token
+        if (delay) await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    },
+    async cancel() { cancelled = true },
+    async unload() {},
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/adapters.js",
+  },
+  {
+    "content": "// UTF-8 byte bounds are conservative input limits, not token counts.
+function byteLength(text) {
+  let bytes = 0
+  for (const char of text) {
+    const code = char.codePointAt(0)
+    bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4
+  }
+  return bytes
+}
+
+export function prepareChatHistory(history, byteBudget) {
+  if (!Number.isSafeInteger(byteBudget) || byteBudget <= 0) throw new Error('Invalid history byte budget')
+  if (!Array.isArray(history) || !history.length || history.some(m =>
+    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
+    throw new Error('Chat history must contain user and assistant text messages.')
+  }
+  if (history.at(-1).role !== 'user') throw new Error('The latest message must be from the user.')
+  const cost = messages => messages.reduce((n, m) => n + byteLength(m.content) + 32, 0)
+  if (cost(history.slice(-1)) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
+  const selected = history.map(m => ({ role: m.role, content: m.content }))
+  while (cost(selected) > byteBudget && selected.length > 1) {
+    selected.shift()
+    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
+  }
+  return selected
+}
+
+export async function* streamChat(adapter, modelId, history, byteBudget, onTrim = () => {}) {
+  let selected = prepareChatHistory(history, byteBudget)
+  if (selected.length < history.length) onTrim()
+  let emitted = false
+  for (;;) {
+    try {
+      for await (const token of adapter.stream(modelId, selected)) {
+        if (token) emitted = true
+        yield token
+      }
+      return
+    } catch (err) {
+      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
+      selected = selected.slice(-1)
+      onTrim()
+    }
+  }
+}
+",
+    "path": ".unstoppable/runtime-ai/history.js",
+  },
+  {
+    "content": "export interface Message { role: 'user' | 'assistant'; content: string }
+export interface Adapter {
+  mock?: boolean
+  load(options: Record<string, unknown>): Promise<string>
+  stream(modelId: string, history: Message[]): AsyncIterable<string>
+  cancel(modelId: string): Promise<void>
+  unload(modelId: string): Promise<void>
+}
+export class AIError extends Error { constructor(code: string, message: string, cause?: unknown); code: string }
+export function createAISession(options: { adapter: Adapter; byteBudget?: number }): {
+  readonly state: string
+  readonly modelId: string | null
+  readonly mock: boolean
+  readonly lastError: AIError | null
+  readonly capabilities: { streaming: true; cancellation: 'model'; concurrency: 1 }
+  load(options?: Record<string, unknown>): Promise<string>
+  stream(history: Message[], options: { requestId: string | number; signal?: AbortSignal; onTrim?: () => void }): AsyncIterable<string>
+  cancel(requestId?: string | number): Promise<boolean>
+  close(): Promise<void>
+}
+export function createBareAdapter(): Adapter
+export function createNodeAdapter(): Adapter
+export function createMockAdapter(options?: { delay?: number }): Adapter
+export function prepareChatHistory(history: Message[], byteBudget: number): Message[]
+export function streamChat(adapter: Adapter, modelId: string, history: Message[], byteBudget: number, onTrim?: () => void): AsyncIterable<string>
+",
+    "path": ".unstoppable/runtime-ai/index.d.ts",
+  },
+  {
+    "content": "import { streamChat } from './history.js'
+export { prepareChatHistory, streamChat } from './history.js'
+export { createBareAdapter, createNodeAdapter, createMockAdapter } from './adapters.js'
+
+export class AIError extends Error {
+  constructor(code, message, cause) {
+    super(message, cause ? { cause } : undefined)
+    this.name = 'AIError'
+    this.code = code
+  }
+}
+
+function normalized(code, error) {
+  return error instanceof AIError ? error : new AIError(code, String(error?.message || error), error)
+}
+
+/** One loaded model, one active request. History belongs to the app. */
+export function createAISession({ adapter, byteBudget = 2048 }) {
+  let modelId = null
+  let state = 'idle'
+  let loading = null
+  let active = null
+  let closing = null
+  let closed = false
+  let lastError = null
+
+  const session = {
+    get state() { return state },
+    get modelId() { return modelId },
+    get mock() { return !!adapter.mock },
+    get lastError() { return lastError },
+    get capabilities() { return { streaming: true, cancellation: 'model', concurrency: 1 } },
+
+    async load(options = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (modelId) return modelId
+      if (loading) return loading
+      state = 'loading'
+      lastError = null
+      loading = (async () => {
+        try {
+          modelId = await adapter.load(options)
+          if (typeof modelId !== 'string' || !modelId) throw new Error('Adapter returned an invalid model ID')
+          state = 'ready'
+          return modelId
+        } catch (err) {
+          modelId = null
+          state = 'error'
+          lastError = normalized('LOAD_FAILED', err)
+          throw lastError
+        } finally { loading = null }
+      })()
+      return loading
+    },
+
+    async *stream(history, { requestId, signal, onTrim } = {}) {
+      if (closed || closing) throw new AIError('CLOSED', 'AI session is closed')
+      if (!modelId) throw new AIError('NOT_READY', 'Model not loaded. Load the assistant first.')
+      if (active) throw new AIError('BUSY', 'Another response is already running.')
+      if (lastError?.code === 'CANCEL_FAILED') throw lastError
+      if (requestId === undefined || requestId === null) throw new AIError('INVALID_REQUEST', 'A request ID is required')
+      if (signal?.aborted) throw new AIError('ABORTED', 'Response cancelled')
+      let settle
+      const operation = { requestId, cancelled: false, cancelPromise: null, done: new Promise(resolve => { settle = resolve }) }
+      active = operation
+      state = 'streaming'
+      const abort = () => { void cancelOperation(operation).catch(() => {}) }
+      signal?.addEventListener('abort', abort, { once: true })
+      let finished = false
+      const tokens = streamChat(adapter, modelId, history, byteBudget, onTrim)
+      try {
+        for (;;) {
+          const next = await tokens.next()
+          if (next.done) break
+          if (operation.cancelled) break
+          yield next.value
+        }
+        finished = !operation.cancelled
+      } catch (err) {
+        if (!operation.cancelled) {
+          lastError = normalized('INFERENCE_FAILED', err)
+          throw lastError
+        }
+      } finally {
+        signal?.removeEventListener('abort', abort)
+        try {
+          // A consumer breaking iteration must cancel native work too.
+          if (!finished) await cancelOperation(operation)
+          await tokens.return()
+        } finally {
+          active = null
+          state = lastError?.code === 'CANCEL_FAILED' ? 'error' : 'ready'
+          settle()
+        }
+      }
+    },
+
+    async cancel(requestId) {
+      const operation = active
+      if (!operation || (requestId !== undefined && requestId !== operation.requestId)) return false
+      await cancelOperation(operation)
+      await operation.done
+      return true
+    },
+
+    async close() {
+      if (closed) return
+      if (closing) return closing
+      closing = (async () => {
+        if (loading) { try { await loading } catch {} }
+        await session.cancel()
+        if (modelId) await adapter.unload(modelId)
+        modelId = null
+        closed = true
+        state = 'closed'
+      })()
+      try { await closing } finally { closing = null }
+    },
+  }
+
+  async function cancelOperation(operation) {
+    operation.cancelled = true
+    if (!operation.cancelPromise) {
+      operation.cancelPromise = Promise.resolve().then(() => adapter.cancel(modelId)).catch(err => {
+        lastError = normalized('CANCEL_FAILED', err)
+        throw lastError
+      })
+    }
+    return operation.cancelPromise
+  }
+  return session
+}
+",
+    "path": ".unstoppable/runtime-ai/index.js",
   },
   {
     "content": "
@@ -5703,49 +7205,6 @@ function injectStyles() {
     "path": "app/index.js",
   },
   {
-    "content": "import b4a from 'b4a'
-
-export function prepareChatHistory(history, byteBudget) {
-  if (!Array.isArray(history) || !history.length || history.some(m =>
-    !m || !['user', 'assistant'].includes(m.role) || typeof m.content !== 'string')) {
-    throw new Error('Chat history must contain user and assistant text messages.')
-  }
-  if (history[history.length - 1].role !== 'user') throw new Error('The latest message must be from the user.')
-  const cost = messages => messages.reduce((n, m) => n + b4a.byteLength(m.content, 'utf8') + 32, 0)
-  const latest = history.slice(-1)
-  if (cost(latest) > byteBudget) throw new Error('Message too long for this model. Shorten it and try again.')
-  let selected = history.slice()
-  while (cost(selected) > byteBudget && selected.length > 1) {
-    selected.shift()
-    while (selected.length > 1 && selected[0].role !== 'user') selected.shift()
-  }
-  return selected
-}
-
-export async function* streamChat(sdk, modelId, history, byteBudget, onTrim = () => {}) {
-  let selected = prepareChatHistory(history, byteBudget)
-  if (selected.length < history.length) onTrim()
-  let emitted = false
-  for (;;) {
-    try {
-      const result = sdk.completion({ modelId, history: selected, stream: true })
-      for await (const token of result.tokenStream) {
-        if (token) emitted = true
-        yield token
-      }
-      return
-    } catch (err) {
-      // Retry only before visible output, once with the latest user message.
-      if (emitted || selected.length <= 1 || err?.name !== 'ContextOverflowError') throw err
-      selected = selected.slice(-1)
-      onTrim()
-    }
-  }
-}
-",
-    "path": "chat-context.js",
-  },
-  {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
@@ -5999,7 +7458,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { streamChat } from './chat-context.js'
+import { createAISession, createBareAdapter, createMockAdapter } from './.unstoppable/runtime-ai/index.js'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -6008,16 +7467,10 @@ const storagePath = Bare.argv[2]
 let store = null
 let swarm = null
 let db = null
-let sdk = null
-let modelId = null
-let qvacPluginRegistered = false
+const MOCK_AI = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env?.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env?.QVAC_MOCK === '1')
+const ai = createAISession({ adapter: MOCK_AI ? createMockAdapter() : createBareAdapter(), byteBudget: 2048 })
 let activeChatRequestId = null
-const CTX_SIZE = 4096
-let modelLoading = false
-const MOCK_AI = (
-  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||
-  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')
-)
 
 function send(msg) {
   pipe.write(JSON.stringify(msg) + '\\n')
@@ -6053,102 +7506,53 @@ async function handleCommand(msg) {
       break
     }
     case 'load-ai': {
-      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
-      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
-      modelLoading = true
-      if (MOCK_AI) {
-        await new Promise((r) => setTimeout(r, 200))
-        modelId = 'mock-model'
-        modelLoading = false
-        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-        break
-      }
+      send({ type: 'status', service: 'ai', status: 'loading', mock: ai.mock })
       try {
-        send({ type: 'status', service: 'ai', status: 'loading' })
-        const { default: process } = await import('bare-process')
-        globalThis.process = process
-        const [loadedSdk, { llmPlugin }, { registerPlugin }] = await Promise.all([
-          import('@qvac/inference'),
-          import('@qvac/inference/llamacpp-completion/plugin'),
-          import('@qvac/inference/plugins'),
-        ])
-        if (!qvacPluginRegistered) {
-          registerPlugin(llmPlugin)
-          qvacPluginRegistered = true
-        }
-        sdk = loadedSdk
-        modelId = await sdk.loadModel({
-          modelSrc: msg.modelSrc || sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M,
+        const modelId = await ai.load({
+          modelSrc: msg.modelSrc,
+          modelConstant: 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M',
+          modelChecksum: 'bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517',
           modelType: 'llm',
           modelConfig: {
-            ctx_size: CTX_SIZE,
-            // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks
-            // and no stripping reasoning blocks back out of the token stream.
-            reasoning_budget: 0,
-            system_prompt: 'You are a helpful assistant.',
+            "ctx_size": 4096,
+            "reasoning_budget": 0,
+            "system_prompt": "You are a helpful assistant."
           },
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
-        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: ai.mock })
       } catch (err) {
-        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
-      } finally {
-        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'error', code: err.code, error: err.message })
       }
       break
     }
     case 'chat': {
       const requestId = msg.requestId
-      if (!modelId) { send({ type: 'chat-error', requestId, error: 'Model not loaded. Click Load Assistant first.' }); break }
       if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
       activeChatRequestId = requestId
-      if (MOCK_AI) {
-        const last = msg.history[msg.history.length - 1]
-        const reply = \`Mock: \${last?.content ?? '(empty)'}\`
-        for (const ch of reply) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token: ch })
-          await new Promise((r) => setTimeout(r, 5))
-        }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
-        break
-      }
       try {
-        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
-        // tokens arrive as plain content — no reasoning-block filtering needed.
-        const tokens = streamChat(sdk, modelId, msg.history, Math.floor(CTX_SIZE / 2), () =>
-          send({ type: 'chat-context', requestId }))
-        for await (const token of tokens) {
-          if (activeChatRequestId !== requestId) break
-          send({ type: 'chat-token', requestId, token })
+        for await (const token of ai.stream(msg.history, {
+          requestId,
+          onTrim: () => send({ type: 'chat-context', requestId }),
+        })) {
+          if (activeChatRequestId === requestId) send({ type: 'chat-token', requestId, token })
         }
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-done', requestId })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-done', requestId })
       } catch (err) {
-        if (activeChatRequestId === requestId) {
-          activeChatRequestId = null
-          send({ type: 'chat-error', requestId, error: String(err && err.message || err) })
-        }
+        if (activeChatRequestId === requestId) send({ type: 'chat-error', requestId, code: err.code, error: err.message })
+      } finally {
+        if (activeChatRequestId === requestId) activeChatRequestId = null
       }
       break
     }
     case 'cancel-chat': {
       const requestId = msg.requestId
-      if (activeChatRequestId !== requestId) {
-        send({ type: 'chat-cancelled', requestId })
-        break
-      }
-      activeChatRequestId = null
+      if (activeChatRequestId === requestId) activeChatRequestId = null
       try {
-        if (!MOCK_AI) await sdk.cancel({ operation: 'inference', modelId })
+        await ai.cancel(requestId)
         send({ type: 'chat-cancelled', requestId })
       } catch (err) {
-        send({ type: 'chat-error', requestId, error: \`Cancellation failed: \${String(err && err.message || err)}\` })
+        send({ type: 'chat-error', requestId, code: err.code, error: 'Cancellation failed: ' + err.message })
       }
       break
     }
@@ -6161,14 +7565,13 @@ async function handleCommand(msg) {
 }
 
 async function cleanup() {
+  activeChatRequestId = null
+  try { await ai.close() } catch (err) {
+    send({ type: 'error', service: 'ai', code: err.code, error: err.message })
+  }
   if (swarm) await swarm.destroy()
   if (db) await db.close()
   if (store) await store.close()
-  if (activeChatRequestId !== null && modelId && modelId !== 'mock-model' && sdk) {
-    activeChatRequestId = null
-    await sdk.cancel({ operation: 'inference', modelId }).catch(() => {})
-  }
-  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })
   Bare.exit()
 }
 
@@ -6188,9 +7591,7 @@ async function init() {
   db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
   await db.ready()
   send({ type: 'status', service: 'storage', status: 'ready' })
-
   send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
-  
   send({ type: 'init-complete' })
 }
 
@@ -6213,6 +7614,70 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "pear-desktop",
+  "features": [
+    "node-sync"
+  ],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "preview",
+  "featureMaturity": {
+    "node-sync": "deferred-alpha"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "
@@ -6827,6 +8292,69 @@ dist/
 .DS_Store
 ",
     "path": ".gitignore",
+  },
+  {
+    "content": "# App integration
+
+Read project.json in this directory and the app's package.json/lockfile before changing infrastructure. The profile records selected features and maturity.
+
+Desktop native code belongs in worker.js; the renderer uses app/bridge.js and the preload API. Node managers live in src/. Expo has a separate React Native SDK host and Bare networking worklet. Read the generated entrypoints before importing a helper.
+
+Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
+
+Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
+",
+    "path": ".unstoppable/APP.md",
+  },
+  {
+    "content": "{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.1"
+  },
+  "platform": "pear-desktop",
+  "features": [
+    "wallet"
+  ],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 1
+  },
+  "maturity": "preview",
+  "featureMaturity": {
+    "wallet": "stub"
+  },
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.30.3"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1"
+    }
+  }
+}
+",
+    "path": ".unstoppable/project.json",
   },
   {
     "content": "

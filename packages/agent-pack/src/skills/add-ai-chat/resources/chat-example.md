@@ -1,58 +1,16 @@
-# Local Inference — Full Example
+# Extend the generated session
+
+In a desktop worker, use the existing `ai` session. In Node, use `setupAI().session`. Do not create a second model/session for the same chat panel.
 
 ```js
-import { loadModel, LLAMA_3_2_1B_INST_Q4_0, completion, unloadModel } from '@qvac/sdk'
-
-const modelId = await loadModel({
-  modelSrc: LLAMA_3_2_1B_INST_Q4_0,
-  modelType: 'llm',
-  onProgress: (progress) => {
-    console.log(`${progress.percentage.toFixed(1)}% (${progress.downloaded}/${progress.total})`)
-  }
-})
-
-const history = [
-  { role: 'user', content: 'Explain quantum computing in one sentence' }
-]
-const result = completion({ modelId, history, stream: true })
-
-for await (const token of result.tokenStream) {
-  process.stdout.write(token)
+await ai.load({ modelConstant, modelType: 'llm', modelConfig, onProgress })
+for await (const token of ai.stream(history, { requestId, signal, onTrim })) {
+  renderOrSendToken({ requestId, token })
 }
-
-await unloadModel({ modelId })
+// Stop from another task while the stream is actively being consumed:
+await ai.cancel(requestId)
+// On shutdown, after any active stream is being consumed/settled:
+await ai.close()
 ```
 
-## Variations
-
-- Use `downloadAsset()` first to pre-cache models for offline use.
-- SDK delegation was removed in 0.19. Use local inference for the preview.
-- Use `kvCache: true` to avoid resending context in multi-turn conversations.
-- Tune sampling with `generationParams` (new in 0.9):
-
-  ```js
-  const result = completion({
-    modelId,
-    history,
-    stream: true,
-    generationParams: { temp: 0.7, top_p: 0.9, top_k: 40 },
-  })
-  ```
-
-- Attach an image for multimodal models (new in 0.9 — no more base64 data URLs):
-
-  ```js
-  const result = completion({
-    modelId,
-    history: [
-      {
-        role: 'user',
-        content: "What's in this image?",
-        attachments: [{ path: '/absolute/path/to/photo.jpg' }],
-      },
-    ],
-    stream: true,
-  })
-  ```
-
-- Health-check before loading: `await heartbeat()` (replaces `ping()`).
+Use the model/config already present in generated app code and its manifest. These names are app variables, not magic globals. Change prompts in the load options; keep dependency and model changes deliberate. The app owns history and whether a stopped partial answer is stored. A consumer breaking iteration also cancels native work. Keep consuming or return the iterator; do not suspend it and wait for cancellation settlement in the same loop body.

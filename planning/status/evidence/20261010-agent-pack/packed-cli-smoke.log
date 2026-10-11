@@ -1,0 +1,239 @@
+Generated runtime and compatibility assets match
+Agent-pack source and bundle match (105 files)
+TAP version 13
+# Subtest: lazy adapter maps profile options and native cancel without importing a host SDK at construction
+ok 1 - lazy adapter maps profile options and native cancel without importing a host SDK at construction
+  ---
+  duration_ms: 0.936167
+  type: 'test'
+  ...
+# Subtest: load deduplicates, retries failures and unloads once on close
+ok 2 - load deduplicates, retries failures and unloads once on close
+  ---
+  duration_ms: 0.35025
+  type: 'test'
+  ...
+# Subtest: abort wakes native inference, suppresses late tokens, holds busy until settlement and allows reuse
+ok 3 - abort wakes native inference, suppresses late tokens, holds busy until settlement and allows reuse
+  ---
+  duration_ms: 0.326416
+  type: 'test'
+  ...
+# Subtest: a stale cancel does not stop the active request; breaking consumption cancels native work
+ok 4 - a stale cancel does not stop the active request; breaking consumption cancels native work
+  ---
+  duration_ms: 0.095875
+  type: 'test'
+  ...
+# Subtest: close during active inference waits for native cancel before unloading
+ok 5 - close during active inference waits for native cancel before unloading
+  ---
+  duration_ms: 0.138083
+  type: 'test'
+  ...
+# Subtest: close while loading unloads the loaded model; it cannot be revived
+ok 6 - close while loading unloads the loaded model; it cannot be revived
+  ---
+  duration_ms: 0.072959
+  type: 'test'
+  ...
+# Subtest: failed native cancellation is reported instead of claiming successful Stop
+ok 7 - failed native cancellation is reported instead of claiming successful Stop
+  ---
+  duration_ms: 0.151208
+  type: 'test'
+  ...
+# Subtest: history preserves latest Unicode content and drops whole turns without mutating caller data
+ok 8 - history preserves latest Unicode content and drops whole turns without mutating caller data
+  ---
+  duration_ms: 0.213416
+  type: 'test'
+  ...
+# Subtest: overflow recovery retries only before output, with latest message, and announces trimming
+ok 9 - overflow recovery retries only before output, with latest message, and announces trimming
+  ---
+  duration_ms: 0.457208
+  type: 'test'
+  ...
+# Subtest: oversized and pre-aborted requests leave the session usable and mock output identified
+ok 10 - oversized and pre-aborted requests leave the session usable and mock output identified
+  ---
+  duration_ms: 0.429292
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 33.49275
+
+[1m[1] Packing launch packages[0m
+npm notice
+npm notice 📦  @unstoppable-stack/cli@0.4.0-beta.1
+npm notice Tarball Contents
+npm notice 1.1kB LICENSE
+npm notice 19.8kB README.md
+npm notice 2.3kB agent-pack-src/components/data/corestore-manager.ts
+npm notice 2.5kB agent-pack-src/components/data/db-setup.ts
+npm notice 2.8kB agent-pack-src/components/p2p/replication.ts
+npm notice 3.8kB agent-pack-src/components/p2p/swarm-manager.ts
+npm notice 350B agent-pack-src/components/README.md
+npm notice 2.2kB agent-pack-src/components/wallet/wallet-setup.ts
+npm notice 1.7kB agent-pack-src/core/architecture.mdc
+npm notice 1.5kB agent-pack-src/core/cheatsheet.mdc
+npm notice 5.7kB agent-pack-src/core/compatibility-profiles.json
+npm notice 3.0kB agent-pack-src/core/design-guide.mdc
+npm notice 2.3kB agent-pack-src/core/patterns.mdc
+npm notice 1.6kB agent-pack-src/core/principles.mdc
+npm notice 2.7kB agent-pack-src/core/production-readiness.mdc
+npm notice 1.4kB agent-pack-src/core/scenarios.mdc
+npm notice 3.8kB agent-pack-src/core/verified-versions.mdc
+npm notice 372B agent-pack-src/hooks/auto-format.sh
+npm notice 7.5kB agent-pack-src/hooks/skill-rules.json
+npm notice 9.3kB agent-pack-src/modules/autobase.mdc
+npm notice 6.9kB agent-pack-src/modules/autobee.mdc
+npm notice 7.1kB agent-pack-src/modules/bare.mdc
+npm notice 1.4kB agent-pack-src/modules/corestore.mdc
+npm notice 1.3kB agent-pack-src/modules/expo-bare.mdc
+npm notice 1.6kB agent-pack-src/modules/hyperbee.mdc
+npm notice 2.2kB agent-pack-src/modules/hypercore.mdc
+npm notice 3.5kB agent-pack-src/modules/hyperdb.mdc
+npm notice 1.4kB agent-pack-src/modules/hyperdht.mdc
+npm notice 2.1kB agent-pack-src/modules/hyperdrive.mdc
+npm notice 3.7kB agent-pack-src/modules/hyperswarm.mdc
+npm notice 2.6kB agent-pack-src/modules/pear.mdc
+npm notice 2.1kB agent-pack-src/modules/qvac.mdc
+npm notice 3.2kB agent-pack-src/modules/wdk.mdc
+npm notice 1.9kB agent-pack-src/recipes/file-sharing.mdc
+npm notice 476B agent-pack-src/recipes/local-inference.mdc
+npm notice 1.7kB agent-pack-src/recipes/local-p2p-testing.mdc
+npm notice 553B agent-pack-src/recipes/long-context-hygiene.mdc
+npm notice 1.7kB agent-pack-src/recipes/offline-first-app.mdc
+npm notice 7.4kB agent-pack-src/recipes/p2p-conflict-resolution.mdc
+npm notice 1.9kB agent-pack-src/recipes/p2p-data-sync.mdc
+npm notice 7.9kB agent-pack-src/recipes/p2p-hyperdb-autobee-sync.mdc
+npm notice 3.5kB agent-pack-src/recipes/p2p-ndjson-messaging.mdc
+npm notice 5.8kB agent-pack-src/recipes/p2p-rpc.mdc
+npm notice 565B agent-pack-src/recipes/qvac-delegated-inference.mdc
+npm notice 519B agent-pack-src/recipes/qvac-embeddings-rag-sqlite.mdc
+npm notice 531B agent-pack-src/recipes/qvac-kv-cache.mdc
+npm notice 502B agent-pack-src/recipes/qvac-logging.mdc
+npm notice 556B agent-pack-src/recipes/qvac-mobile-expo.mdc
+npm notice 560B agent-pack-src/recipes/qvac-model-sources.mdc
+npm notice 426B agent-pack-src/recipes/qvac-multimodal-vision.mdc
+npm notice 561B agent-pack-src/recipes/qvac-tool-calling.mdc
+npm notice 450B agent-pack-src/recipes/qvac-transcription.mdc
+npm notice 511B agent-pack-src/recipes/qvac-translation.mdc
+npm notice 1.5kB agent-pack-src/recipes/secure-communication.mdc
+npm notice 7.9kB agent-pack-src/recipes/sub-agent-patterns.mdc
+npm notice 574B agent-pack-src/recipes/tool-sets-and-rendering.mdc
+npm notice 1.4kB agent-pack-src/recipes/wallet-integration.mdc
+npm notice 1.0kB agent-pack-src/skills/add-ai-chat/resources/chat-example.md
+npm notice 321B agent-pack-src/skills/add-ai-chat/resources/model-guide.md
+npm notice 302B agent-pack-src/skills/add-ai-chat/resources/schema-guide.md
+npm notice 443B agent-pack-src/skills/add-ai-chat/resources/tool-calling-example.md
+npm notice 1.3kB agent-pack-src/skills/add-ai-chat/resources/troubleshooting.md
+npm notice 1.9kB agent-pack-src/skills/add-ai-chat/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-finetune/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-image-gen/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-plugin/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-rag/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-transcription/SKILL.md
+npm notice 1.1kB agent-pack-src/skills/add-ai-vision/SKILL.md
+npm notice 5.6kB agent-pack-src/skills/add-database/SKILL.md
+npm notice 2.1kB agent-pack-src/skills/add-encrypted-channels/resources/full-example.md
+npm notice 4.7kB agent-pack-src/skills/add-encrypted-channels/SKILL.md
+npm notice 1.3kB agent-pack-src/skills/add-file-storage/resources/full-example.md
+npm notice 701B agent-pack-src/skills/add-file-storage/resources/troubleshooting.md
+npm notice 3.8kB agent-pack-src/skills/add-file-storage/SKILL.md
+npm notice 977B agent-pack-src/skills/add-kv-storage/resources/full-example.md
+npm notice 697B agent-pack-src/skills/add-kv-storage/resources/troubleshooting.md
+npm notice 4.2kB agent-pack-src/skills/add-kv-storage/SKILL.md
+npm notice 5.2kB agent-pack-src/skills/add-multi-writer-sync/resources/full-example.md
+npm notice 3.5kB agent-pack-src/skills/add-multi-writer-sync/resources/hyperdispatch-pattern.md
+npm notice 10.0kB agent-pack-src/skills/add-multi-writer-sync/SKILL.md
+npm notice 2.4kB agent-pack-src/skills/add-node-capability/resources/two-app-example.md
+npm notice 5.9kB agent-pack-src/skills/add-node-capability/SKILL.md
+npm notice 1.2kB agent-pack-src/skills/add-openai-server/SKILL.md
+npm notice 6.2kB agent-pack-src/skills/add-p2p-networking/SKILL.md
+npm notice 12.8kB agent-pack-src/skills/add-p2p-rpc/resources/full-example.md
+npm notice 3.0kB agent-pack-src/skills/add-p2p-rpc/resources/troubleshooting.md
+npm notice 9.9kB agent-pack-src/skills/add-p2p-rpc/SKILL.md
+npm notice 1.3kB agent-pack-src/skills/add-p2p-sync/resources/full-example.md
+npm notice 951B agent-pack-src/skills/add-p2p-sync/resources/troubleshooting.md
+npm notice 1.3kB agent-pack-src/skills/add-p2p-sync/SKILL.md
+npm notice 851B agent-pack-src/skills/add-wallet/resources/full-example.md
+npm notice 3.5kB agent-pack-src/skills/add-wallet/SKILL.md
+npm notice 1.2kB agent-pack-src/skills/diagnose-stack-runtime/SKILL.md
+npm notice 1.6kB agent-pack-src/skills/scaffold-project/SKILL.md
+npm notice 784B agent-pack-src/skills/setup-local-testing/resources/full-setup.md
+npm notice 1.6kB agent-pack-src/skills/setup-local-testing/SKILL.md
+npm notice 1.4kB agent-pack-src/skills/setup-mobile-app/SKILL.md
+npm notice 755B agent-pack-src/skills/setup-node-cli/SKILL.md
+npm notice 1.0kB agent-pack-src/skills/setup-pear-desktop/resources/build-setup.md
+npm notice 537B agent-pack-src/skills/setup-pear-desktop/resources/full-example.md
+npm notice 1.8kB agent-pack-src/skills/setup-pear-desktop/resources/troubleshooting.md
+npm notice 11.8kB agent-pack-src/skills/setup-pear-desktop/resources/ui-kit.md
+npm notice 1.8kB agent-pack-src/skills/setup-pear-desktop/resources/worker-pattern.md
+npm notice 5.5kB agent-pack-src/skills/setup-pear-desktop/SKILL.md
+npm notice 787B agent-pack-src/skills/setup-pear-terminal/SKILL.md
+npm notice 1.3kB agent-pack-src/skills/upgrade-stack/SKILL.md
+npm notice 19.0kB dist/chunk-OFXGIA4Y.js
+npm notice 1.8kB dist/chunk-WWXUPROM.js
+npm notice 6.2kB dist/compatibility-AXR7KY5D.js
+npm notice 8.1kB dist/doctor-UKDA7SFL.js
+npm notice 18.6kB dist/init-UQ4JUSWF.js
+npm notice 108.1kB dist/scaffold-E7KFCYPH.js
+npm notice 20B dist/us.d.ts
+npm notice 1.6kB dist/us.js
+npm notice 4.0kB package.json
+npm notice 345B templates/blank/package.json
+npm notice 1.4kB templates/blank/planning/README.md
+npm notice Tarball Details
+npm notice name: @unstoppable-stack/cli
+npm notice version: 0.4.0-beta.1
+npm notice filename: unstoppable-stack-cli-0.4.0-beta.1.tgz
+npm notice package size: 147.6 kB
+npm notice unpacked size: 468.8 kB
+npm notice shasum: 802539e6ba57f68575150b207d4709f46550b720
+npm notice integrity: sha512-Bns8t0ZkoORXo[...]FBHQOI2cXzhzw==
+npm notice total files: 118
+npm notice
+  [32m✓[0m packed cli
+Recorded 1 artifact checksum(s); source tree dirty
+
+[1m[2] Installing globally (isolated prefix, dependency order)[0m
+
+added 67 packages in 3s
+  [32m✓[0m installed core CLI (15644 KiB isolated prefix)
+
+[1m[3] us --version[0m
+  → 0.4.0-beta.1 (minimal)
+  [32m✓[0m reports 0.4.0-beta.1 (minimal)
+
+[1m[4] Command surface[0m
+  [32m✓[0m init, scaffold, doctor, compatibility present
+  [32m✓[0m deferred command surfaces correctly excluded
+
+[1m[5] Public scaffold catalog[0m
+  [32m✓[0m only Pear Desktop and local-ai are exposed by the minimal build
+
+[1m[6] us doctor[0m
+  [32m✓[0m doctor reports only Pear Desktop readiness in the minimal build
+  [32m✓[0m doctor ran clean
+
+[1m[7] us init (non-interactive)[0m
+- Configuring your assistant workspace...
+✔ Assistant workspace configured!
+  [32m✓[0m scaffolded smoke-init with AGENTS.md
+
+[1m[8] us scaffold app (Pear Desktop + local AI)[0m
+  [32m✓[0m scaffolded Pear Desktop local-ai app
+  [32m✓[0m generated app JavaScript passes syntax checks
+
+[32m[1mRELEASE SMOKE PASSED[0m in 6s
+This validates CLI installation and command generation. Set INSTALL_GENERATED_APP=1 for the large app install; no real model or signed desktop application ran.
