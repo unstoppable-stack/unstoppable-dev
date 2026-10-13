@@ -1,0 +1,21 @@
+# Common integration patterns
+
+Start from the actual generated files and `.unstoppable/APP.md`. Use `us scaffold list-platforms` and `us scaffold list-features` to select a supported template. Keep app structure and dependency versions in the CLI profile; do not rebuild the scaffold from a copied file tree or dependency table.
+
+## Desktop worker boundary
+
+The Electron renderer owns screens and presentation. Its generated bridge carries request IDs and events to `worker.js`. P2P, storage and native AI stay in the Bare worker. Extend existing bridge commands and handlers together, reject malformed input, and return errors to the originating request. Reuse the generated lifecycle and shutdown path.
+
+## Local AI
+
+Desktop and Node apps vendor the maintained session contract in `.unstoppable/runtime-ai/`. Keep prompts, displayed conversation and tool policy in app code. Use the session for model load, bounded input history, streaming, native cancellation and shutdown. Read its contract before extending it; advanced SDK capabilities belong behind the native adapter boundary. Expo uses a separate experimental implementation.
+
+## Peer messages and replicated data
+
+Follow the framing already used by the app. Streams deliver arbitrary chunks: buffer and decode complete messages before parsing, bound message size, and validate payloads before acting. Correlate replies with request IDs; settle pending requests when peers disconnect. For replicated data, establish replication before reads and retain deterministic application merge rules.
+
+Use the generated storage and swarm resources before introducing another owner. Close listeners, peer streams, swarm and storage on shutdown. Keep domain records and access policy in app code. Consult only the relevant module/recipe when changing an integration.
+
+## Verify a change
+
+Exercise the app behavior affected by the edit: offline startup, peer disconnect/reconnect, persisted data after restart, or AI Stop followed by reuse. Mock contract checks and native/platform acceptance are separate. Use `us compatibility check -o <app>` before changing dependencies; preserve edited files and migrate explicitly.

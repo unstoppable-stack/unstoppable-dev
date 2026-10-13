@@ -1,0 +1,5 @@
+# Cache ownership
+
+The default local session does not opt into named caches. Any advanced adapter extension using named caches must manage prefix changes, trimming, cancellation and deletion explicitly according to installed SDK types. Cache support is not automatic sliding-window context eviction.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

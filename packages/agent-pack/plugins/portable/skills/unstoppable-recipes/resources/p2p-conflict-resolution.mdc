@@ -1,0 +1,188 @@
+# Recipe: Cross-Device Conflict Resolution
+
+## Problem
+
+Two devices write the same record while partitioned. On reconnect, both writes
+arrive. Which one wins?
+
+The obvious answer — "the one with the newer `updatedAt`" — is wrong, and it
+fails silently. `updatedAt` values are stamped by *different machines' clocks*.
+A device whose clock runs 9 seconds fast makes every one of its writes look
+newer than writes that genuinely happened afterwards on another device. Real
+results get discarded and stale ones get promoted, with no error anywhere.
+
+Autobee linearizes the oplog, but **that order does not reach your conflict
+code**: `apply` sees ops keyed by record id, and the linearized view index is
+not stable (the view is truncated and re-applied during ordinary merges). So
+you need an ordering source you carry yourself.
+
+## When to Use
+
+- Any replicated record that two devices can modify
+- Choosing "latest" among approvals, claims, or state transitions
+- Any comparison of the form "is this incoming row newer than mine?"
+
+Not needed for append-only records that are never updated.
+
+## The three-layer decision
+
+Conflict resolution is not one rule. Apply these in order:
+
+1. **Semantic guards** — some transitions are always invalid regardless of
+   timing. A finished record must never go back to running. Encode this as a
+   state-machine rank check and reject the op outright.
+2. **Monotonic ordering** — for two writes of the *same* rank, the causally
+   later one wins. This is what the HLC provides.
+3. **Deterministic tiebreak** — for genuinely concurrent writes, every device
+   must independently pick the same winner. Break ties on device id.
+
+Skipping layer 1 and relying on timestamps alone is a common mistake: a stale
+write with a later stamp will happily resurrect a completed record.
+
+## Hybrid Logical Clock
+
+An HLC packs physical milliseconds, a logical counter, and the device id into
+one fixed-width, lexicographically sortable string. It tracks wall-clock time
+closely enough to stay human-meaningful, while the counter guarantees
+monotonicity when the physical clock is frozen, skewed, or steps backwards.
+
+```js
+const WALL_DIGITS = 15
+const COUNTER_DIGITS = 5
+const MAX_COUNTER = 10 ** COUNTER_DIGITS - 1
+
+export function createClock (deviceId, now = () => Date.now()) {
+  let wall = 0
+  let counter = 0
+
+  const encode = () =>
+    String(wall).padStart(WALL_DIGITS, '0') + '-' +
+    String(counter).padStart(COUNTER_DIGITS, '0') + '-' +
+    deviceId
+
+  return {
+    // Stamp a local write.
+    tick () {
+      const physical = now()
+      const prev = wall
+      wall = Math.max(prev, physical)
+      counter = wall === prev ? counter + 1 : 0
+      if (counter > MAX_COUNTER) throw new Error('HLC counter overflow')
+      return encode()
+    },
+
+    // Advance past an incoming stamp BEFORE deciding staleness.
+    receive (remoteStamp) {
+      const remote = parse(remoteStamp)
+      if (!remote) return encode()
+      const physical = now()
+      const prevWall = wall
+      const prevCounter = counter
+      wall = Math.max(prevWall, remote.wall, physical)
+      if (wall === prevWall && wall === remote.wall) {
+        counter = Math.max(prevCounter, remote.counter) + 1
+      } else if (wall === prevWall) {
+        counter = prevCounter + 1
+      } else if (wall === remote.wall) {
+        counter = remote.counter + 1
+      } else {
+        counter = 0
+      }
+      if (counter > MAX_COUNTER) throw new Error('HLC counter overflow')
+      return encode()
+    },
+  }
+}
+
+export function parse (stamp) {
+  if (typeof stamp !== 'string' || stamp.length === 0) return null
+  const first = stamp.indexOf('-')
+  const second = stamp.indexOf('-', first + 1)
+  if (first === -1 || second === -1) return null
+  const wall = Number(stamp.slice(0, first))
+  const counter = Number(stamp.slice(first + 1, second))
+  if (!Number.isFinite(wall) || !Number.isFinite(counter)) return null
+  return { wall, counter, deviceId: stamp.slice(second + 1) }
+}
+
+// Fixed width + zero padding means plain string compare IS the total order.
+export function compare (a, b) {
+  if (!a && !b) return 0
+  if (!a) return -1
+  if (!b) return 1
+  return a < b ? -1 : a > b ? 1 : 0
+}
+```
+
+Fixed-width padding is what makes `compare` a plain string comparison — so the
+stamp can be a sortable index key, not just an in-memory value.
+
+## Wiring it up
+
+```js
+// 1. Stamp every local write to a conflict-prone collection.
+doc.hlc = clock.tick()
+
+// 2. In apply, advance the clock past the incoming stamp BEFORE comparing.
+//    Skipping this is the classic HLC bug: the local clock never learns about
+//    remote time, so later local writes can be ordered behind remote ones.
+async function apply (nodes, view, host) {
+  for (const node of nodes) {
+    const op = decode(node.value)
+    clock.receive(op.doc.hlc)
+
+    const existing = await view.db.get(op.collection, { id: op.doc.id })
+
+    // Layer 1 — semantic guard.
+    if (existing && isTerminal(existing) && !isTerminal(op.doc)) continue
+
+    // Layers 2 + 3 — HLC decides, device id breaks ties (both inside compare).
+    if (existing && compare(op.doc.hlc, existing.hlc) <= 0) continue
+
+    await view.db.insert(op.collection, op.doc)
+  }
+}
+```
+
+## Persist the clock
+
+Store `wall` and `counter` in device-local state (`@local/*`), not in
+replicated state. On restart, reload them — otherwise the clock resets to 0 and
+the device's writes sort below everything until physical time catches up.
+
+## Gotchas
+
+- **Advance on receive, always.** Even when you reject the incoming op.
+- **Persist across restarts.** See above.
+- **One clock per database.** Two engines in one process need independent
+  clocks; sharing one produces stamps that do not correspond to either log.
+- **Legacy/missing stamps sort lowest.** Empty string compares below every real
+  stamp, so mixed-version peers degrade to "any stamped write beats an
+  unstamped one." If you need a gentler migration, keep a wall-clock fallback
+  for the both-unstamped case only.
+- **Counter overflow is real.** 5 digits allows 100k stamps inside one
+  millisecond. Throw rather than wrap — wrapping silently corrupts the order.
+- **Do not use it for user-visible ordering.** Chat message display order is a
+  product decision; the HLC wall component is close to real time but is not
+  real time.
+
+## Status in the reference app
+
+`reference-apps/qvac-app` adopted an HLC for its SQLite-era replication layer
+(ADR `2026-06-09-hybrid-logical-clock`), then removed that whole layer in the
+HyperDB migration — `hlc.ts` and `stale.ts` are gone from the current tree.
+
+Their migration report lists cross-device ordering as **still open**, with the
+shared root cause "optimistic cross-device coordination with no monotonic/causal
+ordering source," and recommends picking an ordering source (an HLC, or
+per-record owner assignment) as the fix for all three open items.
+
+So treat this recipe as the technique they validated and intend to return to,
+not as code you can read out of their tree today.
+
+## Related
+
+- Recipe: `recipes/p2p-hyperdb-autobee-sync.mdc`
+- Module: `modules/autobee.mdc`
+- Reference: `reference-apps/qvac-app/docs/decisions/2026-06-09-hybrid-logical-clock.md`,
+  `docs/hyperdb-migration-report.md` §11–12
