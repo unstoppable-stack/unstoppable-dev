@@ -1,0 +1,13 @@
+# Development principles
+
+Discover the target app through `.unstoppable/project.json`, its package.json and entrypoints. Use the generated infrastructure rather than rebuilding it. Follow existing product decisions; clarify only missing decisions that affect the requested change.
+
+- App code owns screens, domain data, prompts, and business rules.
+- The local AI runtime owns model/session lifecycle and cancellation; adapters own QVAC imports and schema differences.
+- The CLI owns project assembly and compatibility profiles. Installed types and version-matched upstream documentation own detailed SDK APIs.
+- Desktop native networking, storage and inference live in the Bare worker; browser UI talks through preload/IPC. Expo has a distinct native configuration and remains experimental.
+- Write locally first. Peer availability must not block reading local data or starting the UI.
+- Keep secrets and device-private state outside replicated stores. Discovery topics are not access control. Grant expensive/destructive capabilities explicitly.
+- Upgrade native dependencies as a validated profile migration, preserving application edits. Mock checks do not establish native support.
+
+For a new app, use the installed CLI's platform/feature catalog and scaffold the chosen target. For an existing app, extend its managers/session API. Architecture notes should explain decisions rather than require a fixed questionnaire or repeat previously authorized choices.

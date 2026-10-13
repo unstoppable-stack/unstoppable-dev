@@ -1,0 +1,5 @@
+# Mobile runtime boundary
+
+Read the recorded Expo profile. QVAC belongs in the React Native host; the separate app Bare worklet owns networking/storage. Upgrade Expo, React Native, BareKit, bundler and native addons as a coupled graph. Physical-device checks are required; desktop adapter tests do not validate Expo.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

@@ -1,0 +1,38 @@
+{
+  "sourceRef": "e34f61dce6d9b1d3f823ae38d58b1856f8c2c896",
+  "scope": "Pinned source, packed minimal CLI consumer install and command inspection; no native app acceptance",
+  "checks": {
+    "source-install": {
+      "passed": true,
+      "output": "npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation\n\nadded 392 packages, and audited 393 packages in 4s\n\n95 packages are looking for funding\n  run `npm fund` for details\n\n8 vulnerabilities (4 moderate, 4 high)\n\nTo address all issues, run:\n  npm audit fix\n\nRun `npm audit` for details.\n"
+    },
+    "source-build": {
+      "passed": true,
+      "output": "ist/init-ZPOHE2UZ.js          18.19 KB\nESM dist/chunk-WWXUPROM.js         1.77 KB\nESM dist/chunk-LGSGJZMZ.js         18.76 KB\nESM dist/doctor-UKDA7SFL.js        7.88 KB\nESM dist/us.js                     1.54 KB\nESM dist/scaffold-7SV5XF5I.js      105.37 KB\nESM dist/compatibility-PTAUZVMV.js 6.05 KB\nESM \u26a1\ufe0f Build success in 12ms\nDTS Build start\nDTS \u26a1\ufe0f Build success in 773ms\nDTS dist/us.d.ts 20.00 B\n"
+    },
+    "source-pack": {
+      "passed": true,
+      "output": " notice name: @unstoppable-stack/cli\nnpm notice version: 0.4.0-beta.1\nnpm notice filename: unstoppable-stack-cli-0.4.0-beta.1.tgz\nnpm notice package size: 148.9 kB\nnpm notice unpacked size: 473.9 kB\nnpm notice shasum: 12bb3f3b992b852a9e3fba61b55f0cbdebcabe26\nnpm notice integrity: sha512-4UDLMdm6qf23s[...]LGxQkA9NDbTiw==\nnpm notice total files: 119\nnpm notice\nunstoppable-stack-cli-0.4.0-beta.1.tgz\n"
+    },
+    "consumer-install": {
+      "passed": true,
+      "output": "\nadded 67 packages in 2s\n"
+    },
+    "version": {
+      "passed": true,
+      "output": "0.4.0-beta.1 (minimal)\n"
+    },
+    "compatibility": {
+      "passed": true,
+      "output": "Usage: us compatibility [options] [command]\n\nInspect app profiles and plan upgrades without modifying files\n\nOptions:\n  -h, --help       display help for command\n\nCommands:\n  list [options]\n  check [options]\n  help [command]   display help for command\n"
+    },
+    "platforms": {
+      "passed": true,
+      "output": "[\n  {\n    \"id\": \"pear-desktop\",\n    \"name\": \"Pear Desktop\",\n    \"description\": \"P2P desktop app with worker bridge + HTML UI\"\n  }\n]\n"
+    },
+    "features": {
+      "passed": true,
+      "output": "[\n  {\n    \"id\": \"local-ai\",\n    \"name\": \"Local AI\",\n    \"description\": \"QVAC SDK for local inference after the initial model download\",\n    \"platforms\": [\n      \"pear-desktop\"\n    ]\n  }\n]\n"
+    }
+  }
+}

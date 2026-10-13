@@ -1,0 +1,63 @@
+# Hyperdrive
+
+## Overview
+Hyperdrive is a secure, real-time distributed filesystem built on Hyperbee + Hypercore. It stores file metadata in a Hyperbee and file contents in a Hyperblobs-backed Hypercore, making it ideal for P2P file sharing and app distribution.
+
+## Version Notes
+- Verified in local sources: `hyperdrive` ^13.0.2 and `corestore` ^7.6.0 (qvac-health-dev).
+- Latest on npm: `hyperdrive` 13.2.1 (checked 2026-02-05).
+
+## Installation
+```bash
+npm install hyperdrive
+```
+
+## Quick Start
+```js
+import Hyperdrive from "hyperdrive"
+import Corestore from "corestore"
+
+const store = new Corestore("./storage")
+const drive = new Hyperdrive(store)
+
+await drive.put("/hello.txt", Buffer.from("hi"))
+const buf = await drive.get("/hello.txt")
+console.log(buf.toString())
+```
+
+## Core Concepts
+- Two cores: metadata (Hyperbee) and blobs (Hyperblobs/Hypercore).
+- Discovery key: `drive.discoveryKey` is used to find peers on the swarm.
+- Sparse replication: file blobs are downloaded on demand.
+
+## API Reference
+- `new Hyperdrive(corestore, [key])`
+- `drive.put(path, buffer)` / `drive.get(path)` / `drive.del(path)`
+- `drive.createReadStream(path)` / `drive.createWriteStream(path)`
+- `drive.list(prefix)` / `drive.watch(prefix)`
+- `drive.replicate(stream)`
+
+## Integration with Other Modules
+- Use Hyperswarm to replicate the Corestore backing the drive.
+- Mirror to local filesystem using `localdrive` + `mirror-drive`.
+
+## Common Patterns
+```js
+// Replicate drive over Hyperswarm
+swarm.on("connection", (conn) => store.replicate(conn))
+swarm.join(drive.discoveryKey)
+```
+
+```js
+// Mirror a local folder into Hyperdrive
+const local = new Localdrive("./folder")
+await local.mirror(drive).done()
+```
+
+## Pitfalls & Gotchas
+- Large files are sparsely replicated; avoid assuming full download.
+- Wait for `drive.ready()` before reading `drive.key` or `drive.discoveryKey`.
+
+## Resources
+- https://github.com/holepunchto/hyperdrive
+- https://docs.holepunch.to/howto/create-a-full-peer-to-peer-filesystem-with-hyperdrive

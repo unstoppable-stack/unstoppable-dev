@@ -1,0 +1,40 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "unstoppable-stack",
+  "version": "0.1.1",
+  "description": "Build and extend local-first P2P apps with maintained Unstoppable Stack workflows.",
+  "repository": "https://github.com/unstoppable-stack/unstoppable-dev",
+  "keywords": [
+    "p2p",
+    "local-first",
+    "pear",
+    "bare",
+    "qvac",
+    "unstoppable-stack"
+  ],
+  "author": {
+    "name": "Unstoppable Stack",
+    "url": "https://unstoppable.dev"
+  },
+  "homepage": "https://unstoppable.dev",
+  "license": "MIT",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Unstoppable Stack",
+        "shortDescription": "Build local-first P2P apps",
+        "longDescription": "Build and extend local-first P2P apps with maintained Unstoppable Stack workflows. Requires the separate matching CLI; experimental profiles remain experimental.",
+        "developerName": "Unstoppable Stack",
+        "category": "Developer tools",
+        "websiteURL": "https://unstoppable.dev",
+        "supportURL": "https://github.com/unstoppable-stack/unstoppable-dev/issues",
+        "composerIcon": "./assets/icon.svg",
+        "logo": "./assets/icon.svg",
+        "defaultPrompt": [
+          "Build a desktop coffee assistant with local AI and P2P order sharing."
+        ],
+        "brandColor": "#00d4aa"
+      }
+    }
+  }
+}

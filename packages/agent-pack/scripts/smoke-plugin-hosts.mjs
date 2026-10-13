@@ -7,11 +7,14 @@ import { createInterface } from 'node:readline'
 import { fileURLToPath } from 'node:url'
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url))
-const args = process.argv.slice(2)
+const rawArgs = process.argv.slice(2)
+const publicMode = rawArgs.includes('--public')
+const marketplaceName = publicMode ? 'unstoppable-stack' : 'unstoppable-stack-dev'
+const args = rawArgs.filter(arg => arg !== '--public')
 const reportIndex = args.indexOf('--report')
 const reportPath = reportIndex === -1 ? null : args[reportIndex + 1]
 if (args.length && (reportIndex !== 0 || args.length !== 2 || !reportPath)) {
-  throw new Error('Usage: node scripts/smoke-plugin-hosts.mjs [--report <file>]')
+  throw new Error('Usage: node scripts/smoke-plugin-hosts.mjs [--public] [--report <file>]')
 }
 const temporary = mkdtempSync(join(tmpdir(), 'us-plugin-hosts-'))
 let child
@@ -25,9 +28,15 @@ function run(command, params, cwd = temporary) {
 
 try {
   const catalog = join(temporary, 'catalog')
-  cpSync(join(packageRoot, 'dist'), catalog, { recursive: true })
+  if (publicMode) {
+    const repo = fileURLToPath(new URL('../../../', import.meta.url))
+    cpSync(join(packageRoot, 'plugins'), join(catalog, 'packages/agent-pack/plugins'), { recursive: true })
+    for (const path of ['.agents', '.claude-plugin']) cpSync(join(repo, path), join(catalog, path), { recursive: true })
+  } else cpSync(join(packageRoot, 'dist'), catalog, { recursive: true })
+  const claudeRoot = publicMode ? join(catalog, 'packages/agent-pack/plugins/claude') : join(catalog, 'claude')
+  const portableRoot = publicMode ? join(catalog, 'packages/agent-pack/plugins/portable') : join(catalog, 'portable')
   const claudeVersion = run('claude', ['--version'])
-  const pluginValidation = run('claude', ['plugin', 'validate', join(catalog, 'claude')])
+  const pluginValidation = run('claude', ['plugin', 'validate', claudeRoot])
   const catalogValidation = run('claude', ['plugin', 'validate', join(catalog, '.claude-plugin/marketplace.json')])
   assert(pluginValidation.includes('Validation passed'))
   assert(catalogValidation.includes('Validation passed'))
@@ -35,10 +44,10 @@ try {
   report.hosts.claude = { version: claudeVersion, pluginValidation, catalogValidation, sessionSkillDiscovery: 'not evaluated' }
 
   const codexVersion = run('codex', ['--version'])
-  const list = JSON.parse(run('codex', ['plugin', 'list', '--available', '--json', '-m', 'unstoppable-stack-dev',
-    '-c', 'marketplaces.unstoppable-stack-dev.source_type="local"',
-    '-c', `marketplaces.unstoppable-stack-dev.source=${JSON.stringify(catalog)}`]))
-  const version = JSON.parse(readFileSync(join(catalog, 'portable/plugin.json'))).version
+  const list = JSON.parse(run('codex', ['plugin', 'list', '--available', '--json', '-m', marketplaceName,
+    '-c', `marketplaces.${marketplaceName}.source_type="local"`,
+    '-c', `marketplaces.${marketplaceName}.source=${JSON.stringify(catalog)}`]))
+  const version = JSON.parse(readFileSync(join(portableRoot, 'plugin.json'))).version
   assert.equal(list.available.find(plugin => plugin.name === 'unstoppable-stack')?.version, version)
 
   child = spawn('codex', ['app-server', '-c', `sqlite_home=${JSON.stringify(join(temporary, 'state'))}`,
@@ -80,7 +89,7 @@ try {
   assert.equal(names.length, 19)
   assert.deepEqual(plugin.hooks, [])
   assert.deepEqual(plugin.mcpServers, [])
-  report.hosts.codex = { version: codexVersion, packageVersion: version, catalogDiscovery: 'passed',
+  report.hosts.codex = { version: codexVersion, packageVersion: version, marketplaceName, catalogDiscovery: 'passed',
     packageSkillParsing: 'passed', skillNames: names, sessionActivation: 'not evaluated' }
   console.log(JSON.stringify(report, null, 2))
   if (reportPath) {

@@ -7,6 +7,8 @@ on:
       - 'packages/cli/**'
       - 'packages/runtime-ai/**'
       - 'packages/agent-pack/**'
+      - '.agents/plugins/marketplace.json'
+      - '.claude-plugin/marketplace.json'
       - 'scripts/sync-stack-assets.mjs'
       - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
@@ -16,6 +18,8 @@ on:
       - 'packages/cli/**'
       - 'packages/runtime-ai/**'
       - 'packages/agent-pack/**'
+      - '.agents/plugins/marketplace.json'
+      - '.claude-plugin/marketplace.json'
       - 'scripts/sync-stack-assets.mjs'
       - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
@@ -59,7 +63,9 @@ jobs:
         run: |
           node ../agent-pack/scripts/build-plugin.mjs
           node ../agent-pack/scripts/build-plugin.mjs --check
+          node ../agent-pack/scripts/build-plugin.mjs --public --check
           node --test ../agent-pack/scripts/build-plugin.test.mjs
+          node ../agent-pack/scripts/archive-plugin.mjs
       - name: Build CLI
         run: pnpm build
       - name: Upload dist

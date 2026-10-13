@@ -1,0 +1,5 @@
+# Local AI session
+
+Use the app’s recorded runtime session. Keep history/prompts in the app, stream with request identity, cancel through the native adapter and close on shutdown. See the local QVAC integration note and add-ai-chat workflow.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

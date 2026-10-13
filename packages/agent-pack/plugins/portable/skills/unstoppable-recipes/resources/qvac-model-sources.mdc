@@ -1,0 +1,5 @@
+# Model identity and offline behavior
+
+Use the app manifest’s model identity/config and installed catalog exports. Record a concrete source/revision if selecting your own artifact. Validate interrupted-download retry and cached startup with networking disabled; the first model download needs connectivity.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

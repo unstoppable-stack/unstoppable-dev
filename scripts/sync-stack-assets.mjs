@@ -1,3 +1,4 @@
+import { installGuide } from '../packages/agent-pack/scripts/release-config.mjs'
 import { readFileSync, readdirSync, mkdirSync, writeFileSync, cpSync, rmSync, existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { join } from 'node:path'
@@ -39,6 +40,8 @@ for (const [platform, profile] of Object.entries(manifest.profiles)) {
 lines.push('For upgrades, run `us compatibility check -o <app>` and review the plan. It reads metadata and files without changing them. Do not regenerate edited apps with `--force`. Compare the installed SDK types and version-matched upstream release notes; keep the coupled Expo/native graph together.', '')
 output('packages/agent-pack/src/core/verified-versions.mdc', lines.join('\n'))
 output('packages/agent-pack/src/core/compatibility-profiles.json', JSON.stringify(manifest, null, 2) + '\n')
+
+output('packages/agent-pack/src/skills/build-with-unstoppable/resources/install-cli.md', installGuide())
 
 if (!check) {
   const bundled = join(root, 'packages/cli/agent-pack-src')
