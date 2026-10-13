@@ -1,0 +1,20 @@
+# App contract quick reference
+
+| Task | Entry point |
+| --- | --- |
+| Find apps in a workspace | `us compatibility list -o .` |
+| Read selected features/runtime | `<app>/.unstoppable/project.json` |
+| Review dependency/runtime differences | `us compatibility check -o <app>` |
+| Desktop networking/storage/IPC commands | `worker.js` |
+| Desktop browser UI | `app/index.js` and `app/bridge.js` |
+| Node networking/storage | `src/swarm-manager.ts` and `src/storage-manager.ts` |
+| Node local AI | `src/ai-manager.ts` |
+| Maintained local AI contract | `.unstoppable/runtime-ai/index.js` |
+| Experimental Expo UI/worklet | `app/index.tsx`, `bare/index.js` |
+| Installed dependency versions | lockfile and package metadata |
+
+Do not assume legacy `src/p2p/` component classes exist. Read the generated files before importing helpers. The compatibility table is generated from the same manifest as package declarations; use the installed app's recorded profile instead of a universal latest-version table.
+
+AI session: `load(options)`, `stream(history, { requestId, signal, onTrim })`, `cancel(requestId)`, `close()`. The app owns history. A session has one active inference; Stop cancels native work and waits for settlement before reuse. Mock tokens stay labeled.
+
+Detailed SDK APIs: https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.holepunch.to/. Use installed types and release notes matching the app's version.

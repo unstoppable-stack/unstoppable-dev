@@ -1,0 +1,3 @@
+# Tool policy and rendering
+
+Domain tools belong to the app. Define authorization, validation, error handling and stable result rendering there. An advanced AI adapter maps SDK tool schemas/events to those domain functions using installed types. Keep tool output structured and presentation-specific rendering browser-safe. The basic session contract only streams text; extending it for tools requires separate history/cancellation/native acceptance checks.

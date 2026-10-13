@@ -1,6 +1,30 @@
-# Local harness plugin prototype
+# Unstoppable Stack harness plugin
 
-The Unstoppable Stack now builds self-contained skills-only packages for Codex and Claude Code. This is a development prototype, not a published marketplace release. It includes 16 selected workflows and three reference routers; the existing project-pack flow remains available.
+The Unstoppable Stack now builds self-contained skills-only packages for Codex and Claude Code. Version 0.1.1 is being prepared as a public preview. Repository installation becomes available when the public catalog changes are merged; official-directory publication is a separate step. It includes 16 selected workflows and three reference routers; the existing project-pack flow remains available.
+
+## Public installation
+
+After the public catalogs and packages are merged into the GitHub repository:
+
+```sh
+claude plugin marketplace add unstoppable-stack/unstoppable-dev
+claude plugin install unstoppable-stack@unstoppable-stack --scope user
+```
+
+For Claude Desktop, fully quit/reopen the app, choose Code → Local and start a new target-folder session. Type `/` and select `unstoppable-stack:build-with-unstoppable`. Cowork reads a separate account-synced customization store. The successful local Code-tab loading reported during development is not evidence of Cowork support.
+
+Codex repository installation:
+
+```sh
+codex plugin marketplace add unstoppable-stack/unstoppable-dev
+codex plugin add unstoppable-stack@unstoppable-stack
+```
+
+Use the supported desktop plugin directory for installation if the installed CLI does not expose `plugin add`. Start a new target-workspace chat after enabling the plugin. Repository catalogs and official public directories are different distribution channels.
+
+Read [CLI installation](src/skills/build-with-unstoppable/resources/install-cli.md) before building an app. npm currently serves CLI 0.3.0; the matching 0.4.0-beta.1 candidate is not published, so this guide supplies an immutable source install. Never substitute `latest` for that candidate. The same guide is bundled in both packages and generated from release metadata.
+
+For public preview updates, use `claude plugin marketplace update unstoppable-stack` then `claude plugin update unstoppable-stack@unstoppable-stack`, or `codex plugin marketplace upgrade unstoppable-stack` followed by your supported plugin update/reinstall flow. Restart the session. If transitioning from the development catalog, remove only the old `unstoppable-stack@unstoppable-stack-dev` plugin after the public one is working; retain unrelated catalogs/plugins and app instructions.
 
 ## Build and check
 
@@ -10,13 +34,14 @@ From the repository root, using Node 22+ for these build scripts:
 node scripts/sync-stack-assets.mjs
 node packages/agent-pack/scripts/build-plugin.mjs
 node packages/agent-pack/scripts/build-plugin.mjs --check
+node packages/agent-pack/scripts/build-plugin.mjs --public --check
 node --test packages/agent-pack/scripts/build-plugin.test.mjs
 node packages/agent-pack/scripts/smoke-plugin-hosts.mjs
 ```
 
 The host smoke requires installed `codex` and `claude` executables. It copies the artifacts outside the repository, validates Claude manifests, checks Codex catalog discovery, and reads the package through Codex app-server. State/log files use temporary directories. It makes no model calls and does not install or enable a plugin globally. App-server startup may require an ordinary terminal outside a restricted process sandbox.
 
-Generated files live under `dist/` and are gitignored. Build before using a catalog; retain the whole distribution directory if copying it elsewhere:
+Local development output lives under `dist/` and is gitignored. Public packages live under tracked `plugins/`, with repository-root catalogs; regenerate them with `build-plugin.mjs --public` after source changes. Build before using a catalog; retain the whole distribution directory if copying it elsewhere:
 
 | Path | Purpose |
 | --- | --- |
@@ -85,3 +110,5 @@ Native parsing was checked with Codex CLI 0.160.1 and Claude Code 2.0.76. Codex 
 Full chat activation/automatic selection, empty/existing/multi-app model-driven workflows, native app acceptance and desktop installation/reload remain unverified. Cursor/OpenCode adapters, shared CLI/plugin assembly extraction, CLI coexistence mode, release publication and pilot work remain planned. These parser checks do not complete every P0 exit gate.
 
 See the [plugin plan](../../planning/features/harness-plugin.md) and [implementation evidence](../../planning/status/evidence/20261011-harness-plugin/README.md).
+
+See [publication runbook](PUBLICATION.md) for archives, review gates and the matching CLI release dependency.

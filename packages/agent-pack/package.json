@@ -1,16 +1,18 @@
 {
   "name": "@unstoppable/agent-pack",
-  "version": "0.1.0",
-  "description": "Portable stack workflows and local Codex/Claude plugin packages",
+  "version": "0.1.1",
+  "description": "Unstoppable Stack skills for Codex and Claude Code",
   "type": "module",
   "scripts": {
-    "sync": "node scripts/sync-research.js",
-    "sync:dry": "node scripts/sync-research.js --dry-run",
-    "convert-plugin": "node scripts/convert-to-plugin.mjs",
+    "sync": "node ../../scripts/sync-stack-assets.mjs",
     "build:plugin": "node ../../scripts/sync-stack-assets.mjs && node scripts/build-plugin.mjs",
     "check:plugin": "node ../../scripts/sync-stack-assets.mjs --check && node scripts/build-plugin.mjs --check",
     "test:plugin": "node --test scripts/build-plugin.test.mjs",
-    "test:plugin:hosts": "node scripts/smoke-plugin-hosts.mjs"
+    "test:plugin:hosts": "node scripts/smoke-plugin-hosts.mjs",
+    "prepare:public": "node ../../scripts/sync-stack-assets.mjs && node scripts/build-plugin.mjs --public",
+    "check:public": "node ../../scripts/sync-stack-assets.mjs --check && node scripts/build-plugin.mjs --public --check",
+    "release:archives": "node scripts/archive-plugin.mjs",
+    "sync:check": "node ../../scripts/sync-stack-assets.mjs --check"
   },
   "keywords": [
     "unstoppable-stack",

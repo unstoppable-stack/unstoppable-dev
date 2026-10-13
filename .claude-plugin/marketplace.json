@@ -1,0 +1,15 @@
+{
+  "name": "unstoppable-stack",
+  "owner": {
+    "name": "Unstoppable Stack"
+  },
+  "metadata": {
+    "description": "Local development packages for Unstoppable Stack workflows"
+  },
+  "plugins": [
+    {
+      "name": "unstoppable-stack",
+      "source": "./packages/agent-pack/plugins/claude"
+    }
+  ]
+}

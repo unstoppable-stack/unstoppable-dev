@@ -1,0 +1,189 @@
+# Autobee
+
+## Overview
+
+Autobee is a **multi-writer Hyperbee**. Each peer writes to its own local
+Hypercore; an `apply` function you supply merges those writes into a shared
+Hyperbee view deterministically. Once peers replicate, every peer's view is
+identical.
+
+This is the recommended multi-writer layer for Unstoppable apps, and what
+`reference-apps/qvac-app` uses for all replicated state.
+
+> **Autobee is not a wrapper around Autobase.** It does not depend on it — it
+> is a separate implementation built on `hyperbee2` + `hypercore@11`. Do not
+> mix the two APIs. See [autobase](autobase.mdc) for the older primitive.
+
+## Version Notes
+
+- `autobee@1.0.10` (verified 2026-07-29). Upstream marks it **experimental and
+  under heavy development — expect breaking changes.** Pin an exact version.
+- Deps: `hyperbee2`, `hypercore@^11`, `autobee-encryption`, `autobee-wakeup`.
+- Compatible with `corestore@^7.9` (which resolves `hypercore@^11.32`).
+
+## Installation
+
+```bash
+npm i autobee corestore b4a
+```
+
+## Quick Start
+
+```js
+import Autobee from 'autobee'
+import Corestore from 'corestore'
+import b4a from 'b4a'
+
+async function apply (nodes, view, host) {
+  for (const node of nodes) {
+    const op = JSON.parse(b4a.toString(node.value))
+
+    // Writer management is an operation like any other.
+    if (op.type === 'addWriter') {
+      await host.addWriter(b4a.from(op.key, 'hex'))
+      continue
+    }
+
+    if (op.type === 'put') {
+      // hyperbee2 batch API — NOT hyperbee's view.put()
+      const w = view.write()
+      w.tryPut(b4a.from(op.key), b4a.from(JSON.stringify(op.value)))
+      await w.flush()
+    }
+  }
+}
+
+const store = new Corestore('./data')
+const db = new Autobee(store, null, { apply })   // null key = create new
+await db.ready()
+
+await db.append(b4a.from(JSON.stringify({ type: 'put', key: 'a', value: 1 })))
+
+const node = await db.view.get(b4a.from('a'))    // keys are Buffers
+console.log(JSON.parse(b4a.toString(node.value)))
+```
+
+## Adding a Second Writer
+
+A new peer opens the *same* Autobee by key. It starts **read-only**
+(`writable === false`) until an existing writer promotes it.
+
+```js
+const db2 = new Autobee(store2, db1.key, { apply })
+await db2.ready()
+console.log(db2.writable)            // false
+
+// Replicate (Autobee has its own replicate — you do not replicate the store)
+const s1 = db1.replicate(true)       // initiator
+const s2 = db2.replicate(false)
+s1.pipe(s2).pipe(s1)
+
+// An existing writer appends an addWriter op naming db2's LOCAL key
+await db1.append(b4a.from(JSON.stringify({
+  type: 'addWriter',
+  key: db2.local.key.toString('hex'),
+})))
+
+// db2 becomes writable once it applies that op
+while (!db2.writable) {
+  await db2.update()
+  await new Promise(r => setTimeout(r, 100))
+}
+```
+
+> `db.local.key` is the **writer** key (what you pass to `addWriter`).
+> `db.key` is the **database** key (what peers use to join). Confusing them is
+> the most common Autobee mistake — promoting `db.key` silently does nothing.
+
+## API Reference
+
+### Constructor
+
+`new Autobee(store, [key], [options])` — `store` is a Corestore; `key` is an
+existing Autobee's key to join, or `null`/omitted to create a new one.
+
+| Option | Purpose |
+|---|---|
+| `apply(nodes, view, host)` | Merge batches of new nodes into the view |
+| `open(bee, db)` | Build a custom view over the raw bee; return it |
+| `close(view)` | Called on close |
+| `update(view, changes)` | Called after apply when the view advanced |
+| `encryptionKey` | 32-byte key; encrypts writer cores and view at rest |
+| `encrypted` | Set `true` when using `encryptionKey` |
+| `keyPair` | Custom signing key pair for the local writer |
+| `optimistic` | Allow writes before being a confirmed writer |
+
+### Properties
+
+| Property | Meaning |
+|---|---|
+| `db.key` | Database public key — share so peers can join |
+| `db.discoveryKey` | Use for Hyperswarm topic discovery |
+| `db.local` | The local writer Hypercore (`db.local.key` for `addWriter`) |
+| `db.view` / `db.bee` | Read-only Hyperbee snapshot of the merged view |
+| `db.writable` | `true` once promoted to writer |
+| `db.isIndexer` | `true` if this writer is an indexer |
+
+### Methods
+
+| Method | Purpose |
+|---|---|
+| `await db.append(value \| values, [opts])` | Append to the local writer; triggers apply |
+| `await db.update()` | Trigger an apply cycle (call after replication) |
+| `await db.updated()` | Wait for the current apply cycle to finish |
+| `await db.flush()` | Wait until all known writers are fully indexed |
+| `db.replicate(isInitiator)` | Create a replication stream |
+| `db.wakeup({ key, length })` | Hint that a writer core is available |
+| `await db.setLocal(key, [opts])` | Rotate the local writer |
+| `Autobee.isAutobee(val)` | Type check |
+
+### The `host` object (inside `apply`)
+
+| Call | Purpose |
+|---|---|
+| `host.addWriter(key, [{ isIndexer }])` | Promote a writer (default `isIndexer: true`) |
+| `host.removeWriter(key)` | Remove a writer |
+| `host.ackWriter(key)` | Acknowledge without changing permissions |
+| `host.interrupt(reason)` | Abort this apply cycle; emits `'interrupt'` |
+| `await host.createAnchor()` | Verifiable checkpoint `{ key, length }` |
+| `host.genesis` | `true` before any node is processed — use to bootstrap |
+
+Each `node` in `nodes` has `node.key` (writer public key), `node.value`
+(the appended Buffer), and `node.length` (position in that writer's core).
+
+## Composing with HyperDB
+
+For schema'd collections and indexes instead of raw key-value, build a HyperDB
+over the Autobee view inside `open`:
+
+```js
+import HyperDB from 'hyperdb'
+import Spec from './spec/index.js'
+
+const db = new Autobee(store, key, {
+  // MUST be synchronous — Autobee assigns `view = open(bee)` without awaiting
+  // and passes the same value into apply.
+  open (bee) {
+    return { db: HyperDB.bee2(bee, Spec, { autoUpdate: true }) }
+  },
+  apply,
+})
+```
+
+`HyperDB.bee2()` is the hyperbee2 variant — required for an Autobee view.
+`HyperDB.bee()` targets a plain Hypercore and `HyperDB.rocks()` targets local
+RocksDB. See [hyperdb](hyperdb.mdc) and the
+`p2p-hyperdb-autobee-sync` recipe.
+
+## Gotchas
+
+- **`open` must be synchronous.** Autobee does not await it.
+- **Buffer keys.** `view.get()` / `tryPut()` take Buffers, not strings.
+- **`view.write()` batches.** Use `const w = view.write(); w.tryPut(...); await
+  w.flush()`. There is no `view.put()` — that is the hyperbee (v1) API.
+- **`writable` is false at first.** A joining peer cannot write until promoted.
+  Gate writes on `db.writable` rather than assuming.
+- **`db.local.key` vs `db.key`.** See the warning above.
+- **`update()` after replication.** Replication delivering data does not by
+  itself advance the view; pump with `db.update()`.
+- **Experimental.** Pin the version and re-read the README on upgrade.

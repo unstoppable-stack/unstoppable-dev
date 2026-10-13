@@ -1,0 +1,20 @@
+{
+  "name": "unstoppable-stack",
+  "version": "0.1.1",
+  "description": "Build and extend local-first P2P apps with maintained Unstoppable Stack workflows.",
+  "repository": "https://github.com/unstoppable-stack/unstoppable-dev",
+  "keywords": [
+    "p2p",
+    "local-first",
+    "pear",
+    "bare",
+    "qvac",
+    "unstoppable-stack"
+  ],
+  "author": {
+    "name": "Unstoppable Stack",
+    "url": "https://unstoppable.dev"
+  },
+  "homepage": "https://unstoppable.dev",
+  "license": "MIT"
+}

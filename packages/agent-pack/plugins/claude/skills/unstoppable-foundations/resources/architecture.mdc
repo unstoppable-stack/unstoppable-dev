@@ -1,0 +1,13 @@
+# Architecture
+
+`App UI/domain code -> generated manager or IPC bridge -> maintained runtime contract -> upstream SDK`
+
+Desktop: Electron main embeds Pear Runtime; sandboxed renderer uses preload/IPC; Bare worker owns P2P, storage and the AI session. Node: app manager owns a session with the Node adapter; QVAC manages its own worker. Expo: React Native hosts its pinned QVAC SDK, while the separate Bare worklet hosts networking/storage. Do not move QVAC into the app's mobile networking worklet.
+
+The runtime is shipped at `.unstoppable/runtime-ai/` with a recorded version. Generated apps own their copy until migrated; edit prompts/UI in app code. Avoid copying new engine setup into each feature. Use direct advanced SDK access inside a runtime boundary only after checking installed types and native support.
+
+Storage: Corestore manages Hypercores; Hyperbee supplies the default KV view. Multi-writer apps use Autobee with HyperDB and deterministic domain merge policy. Schemas and domain policy belong to the app. Keep the local namespace outside replication.
+
+Use node-core for identity, pairing, grants and capability transport when those features are installed. Simple core/database replication does not require a Personal Node. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
+
+The app manifest and local compatibility profiles distinguish preview, experimental and deferred combinations. A scaffold does not certify support. Select guidance for the installed profile before reading upstream docs.

@@ -1,0 +1,5 @@
+# Persistent retrieval integration
+
+Read add-ai-rag for upstream routing. Storage choice is app-specific; SQLite is not a universal requirement. Keep embeddings/index versioning and private versus replicated data explicit. Validate rebuilt indexes after changing models.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

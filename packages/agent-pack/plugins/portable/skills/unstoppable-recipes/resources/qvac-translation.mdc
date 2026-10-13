@@ -1,0 +1,5 @@
+# Translation integration
+
+Use installed translation types and version-matched upstream documentation. Register the required addon within the runtime boundary and validate model lifecycle, result shape and interruption. The basic chat session does not expose translation.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

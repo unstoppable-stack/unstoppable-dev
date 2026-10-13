@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, cpSync, sy
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import { assemblePlugin, assembleDistribution, writeDistribution, inventory, validateFiles } from './build-plugin.mjs'
+import { assemblePlugin, assembleDistribution, writeDistribution, inventory, validateFiles, writePublicDistribution } from './build-plugin.mjs'
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url))
 function temporary(t) {
@@ -98,4 +98,27 @@ test('catalogs point to real generated host artifacts with matching identities',
   const hashes = JSON.parse(output.get('portable/content-inventory.json')).files
   assert(hashes['plugin.json'])
   assert(hashes['skills/build-with-unstoppable/SKILL.md'])
+})
+
+test('public catalogs resolve tracked packages and CLI instructions match the candidate', () => {
+  writePublicDistribution({ check: true })
+  const repo = fileURLToPath(new URL('../../../', import.meta.url))
+  for (const path of ['.agents/plugins/marketplace.json', '.claude-plugin/marketplace.json']) {
+    const catalog = JSON.parse(readFileSync(join(repo, path)))
+    assert.equal(catalog.name, 'unstoppable-stack')
+    const source = catalog.plugins[0].source
+    const directory = join(repo, typeof source === 'string' ? source : source.path)
+    const manifest = path.startsWith('.agents') ? 'plugin.json' : '.claude-plugin/plugin.json'
+    assert.equal(JSON.parse(readFileSync(join(directory, manifest))).name, catalog.plugins[0].name)
+  }
+  const { portable } = assemblePlugin()
+  const guide = portable.get('skills/build-with-unstoppable/resources/install-cli.md').toString()
+  assert(guide.includes('0.4.0-beta.1'))
+  assert(guide.includes('not published'))
+  assert(guide.includes('git checkout e34f61dce6d9b1d3f823ae38d58b1856f8c2c896'))
+  assert(portable.has('LICENSE'))
+  const metadata = JSON.parse(portable.get('plugin.json'))
+  for (const key of ['logo', 'composerIcon']) {
+    assert(portable.has(metadata.extensions['com.openai'].interface[key].replace(/^\.\//, '')))
+  }
 })
