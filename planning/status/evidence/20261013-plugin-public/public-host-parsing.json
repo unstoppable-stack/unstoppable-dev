@@ -1,0 +1,41 @@
+{
+  "timestamp": "2026-10-13T10:41:17.685Z",
+  "scope": "Native package/catalog parsing only; no model turn, global installation or app acceptance",
+  "hosts": {
+    "claude": {
+      "version": "2.0.76 (Claude Code)",
+      "pluginValidation": "Validating plugin manifest: /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-plugin-hosts-f9yUan/catalog/packages/agent-pack/plugins/claude/.claude-plugin/plugin.json\n\n✔ Validation passed",
+      "catalogValidation": "Validating marketplace manifest: /var/folders/h3/r38jphpj3l90s2c0r39b4zzh0000gn/T/us-plugin-hosts-f9yUan/catalog/.claude-plugin/marketplace.json\n\n✔ Validation passed",
+      "sessionSkillDiscovery": "not evaluated"
+    },
+    "codex": {
+      "version": "codex-cli 0.162.0-alpha.17.2",
+      "packageVersion": "0.1.1",
+      "marketplaceName": "unstoppable-stack",
+      "catalogDiscovery": "passed",
+      "packageSkillParsing": "passed",
+      "skillNames": [
+        "unstoppable-stack:add-ai-chat",
+        "unstoppable-stack:add-database",
+        "unstoppable-stack:add-encrypted-channels",
+        "unstoppable-stack:add-file-storage",
+        "unstoppable-stack:add-kv-storage",
+        "unstoppable-stack:add-multi-writer-sync",
+        "unstoppable-stack:add-p2p-networking",
+        "unstoppable-stack:add-p2p-rpc",
+        "unstoppable-stack:add-p2p-sync",
+        "unstoppable-stack:build-with-unstoppable",
+        "unstoppable-stack:diagnose-stack-runtime",
+        "unstoppable-stack:scaffold-project",
+        "unstoppable-stack:setup-local-testing",
+        "unstoppable-stack:setup-node-cli",
+        "unstoppable-stack:setup-pear-desktop",
+        "unstoppable-stack:unstoppable-foundations",
+        "unstoppable-stack:unstoppable-modules",
+        "unstoppable-stack:unstoppable-recipes",
+        "unstoppable-stack:upgrade-stack"
+      ],
+      "sessionActivation": "not evaluated"
+    }
+  }
+}

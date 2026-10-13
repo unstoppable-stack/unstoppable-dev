@@ -1,0 +1,5 @@
+# Transcription integration
+
+Read add-ai-transcription. Test the chosen audio decoder/addon on the target host, including capture lifecycle, cancellation and reuse; do not inherit text-session support claims.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

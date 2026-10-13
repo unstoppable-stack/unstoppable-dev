@@ -4,6 +4,7 @@ import { dirname, join, relative, resolve, isAbsolute, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url))
+const repositoryRoot = fileURLToPath(new URL('../../../', import.meta.url))
 export const publicSkills = [
   'build-with-unstoppable', 'scaffold-project', 'setup-pear-desktop', 'setup-node-cli',
   'add-p2p-networking', 'add-p2p-sync', 'add-p2p-rpc', 'add-multi-writer-sync',
@@ -97,9 +98,51 @@ export function assemblePlugin({ sourceRoot = join(packageRoot, 'src'), version 
   const manifest = {
     name: 'unstoppable-stack', version,
     description: 'Build and extend local-first P2P apps with maintained Unstoppable Stack workflows.',
-    author: { name: 'Unstoppable Stack' }, homepage: 'https://unstoppable.dev', license: 'MIT',
+    repository: 'https://github.com/unstoppable-stack/unstoppable-dev',
+    keywords: ['p2p', 'local-first', 'pear', 'bare', 'qvac', 'unstoppable-stack'],
+    author: { name: 'Unstoppable Stack', url: 'https://unstoppable.dev' }, homepage: 'https://unstoppable.dev', license: 'MIT',
   }
-  files.set('README.md', Buffer.from(`# Unstoppable Stack plugin\n\nVersion ${version}. Skills-only local development package; not a published release.\n\nStart with build-with-unstoppable. Bundled references are self-contained and do not require a CLI-generated project pack. App creation requires the separate @unstoppable-stack/cli prerequisite. Use the installed CLI catalog and app profile; installing or updating this plugin does not install native dependencies or migrate apps.\n\nIn Claude Code, load this folder with --plugin-dir and invoke /unstoppable-stack:build-with-unstoppable. In Codex, add this package through the generated local marketplace and invoke the discovered build-with-unstoppable skill. See the source package PLUGIN.md for the full local setup and validation status.\n`))
+  files.set('LICENSE', readFileSync(join(repositoryRoot, 'LICENSE')))
+  files.set('assets/icon.svg', readFileSync(join(repositoryRoot, 'packages/website/src/app/icon.svg')))
+  files.set('README.md', Buffer.from(`# Unstoppable Stack plugin
+
+Version ${version}, public preview. Build local-first P2P apps using maintained workflow skills, the Unstoppable CLI and per-app runtime contracts.
+
+## CLI prerequisite
+
+Read [the bundled CLI installation guide](skills/build-with-unstoppable/resources/install-cli.md) first. It records the candidate version, registry availability, Node requirements and pinned source install. Never assume npm latest contains this plugin's maintained-contract CLI. Plugin installation does not install app dependencies, native runtimes or model weights.
+
+## Claude Code and Claude Desktop
+
+After the public catalog is merged into the repository, register it:
+
+\`\`\`sh
+claude plugin marketplace add unstoppable-stack/unstoppable-dev
+claude plugin install unstoppable-stack@unstoppable-stack --scope user
+\`\`\`
+
+For Claude Desktop use Code → Local, then start a new session in an empty test folder. User-scope Code plugins are separate from Cowork customization. Type / and select unstoppable-stack:build-with-unstoppable. For a downloaded package, load the claude folder with claude --plugin-dir /absolute/path/to/claude instead.
+
+## Codex
+
+\`\`\`sh
+codex plugin marketplace add unstoppable-stack/unstoppable-dev
+codex plugin add unstoppable-stack@unstoppable-stack
+\`\`\`
+
+Confirm commands with codex plugin --help. On supported desktop clients install from the configured marketplace through the plugin directory, then start a new target-workspace chat and select the discovered entry skill.
+
+## First app and updates
+
+Ask: Build a desktop coffee assistant with local AI and P2P order sharing. Check CLI discovery, target metadata and maintained worker/session use. Then test diagnosis and a read-only upgrade review for an existing app. Generic guidance never overrides the installed app's contract/types.
+
+Use your harness's marketplace refresh and plugin update commands to receive a new version, then start a new session. A plugin update does not migrate app files or vendored runtime. If replacing the development install, uninstall only unstoppable-stack@unstoppable-stack-dev once the public install is enabled; retain other plugins and project instructions.
+
+This skills-only plugin has no MCP server, automatic hooks or telemetry of its own. The selected harness handles model requests and its own telemetry. Bundled guidance is locally readable; cold app/model installation requires network access. Native inference, Stop/reuse and cached-offline acceptance are separate from build/mock checks. Experimental profiles and wallet stubs remain as recorded by the CLI.
+
+Source and support: https://github.com/unstoppable-stack/unstoppable-dev
+Official host instructions: https://code.claude.com/docs/en/desktop and https://developers.openai.com/plugins/build/plugins
+`))
   validateFiles(files)
   const inventoryData = {
     version, sourceDigest: hash(json(Object.fromEntries([...inputs].sort(([a], [b]) => a.localeCompare(b))))),
@@ -111,7 +154,14 @@ export function assemblePlugin({ sourceRoot = join(packageRoot, 'src'), version 
     })))
   }
   const portable = new Map(files)
-  portable.set('plugin.json', Buffer.from(json({ $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', ...manifest })))
+  portable.set('plugin.json', Buffer.from(json({ $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json', ...manifest, extensions: { 'com.openai': { interface: {
+    displayName: 'Unstoppable Stack', shortDescription: 'Build local-first P2P apps',
+    longDescription: manifest.description + ' Requires the separate matching CLI; experimental profiles remain experimental.',
+    developerName: 'Unstoppable Stack', category: 'Developer tools',
+    websiteURL: manifest.homepage, supportURL: 'https://github.com/unstoppable-stack/unstoppable-dev/issues',
+    composerIcon: './assets/icon.svg', logo: './assets/icon.svg',
+    defaultPrompt: ['Build a desktop coffee assistant with local AI and P2P order sharing.'], brandColor: '#00d4aa',
+  } } } })))
   addInventory(portable)
   const claude = new Map(files)
   claude.set('.claude-plugin/plugin.json', Buffer.from(json(manifest)))
@@ -140,7 +190,7 @@ export function assembleDistribution(options) {
 
 export function writeDistribution(outputRoot, files, { check = false } = {}) {
   if (check) {
-    const actual = inventory(outputRoot)
+    const actual = ['portable', 'claude', '.agents', '.claude-plugin'].flatMap(name => inventory(join(outputRoot, name)).map(path => `${name}/${path}`)).sort()
     if (JSON.stringify(actual) !== JSON.stringify([...files.keys()].sort())) throw new Error('Plugin inventory drift; rebuild plugins')
     for (const [path, bytes] of files) {
       if (!readFileSync(join(outputRoot, path)).equals(bytes)) throw new Error(`Plugin content drift: ${path}`)
@@ -155,10 +205,37 @@ export function writeDistribution(outputRoot, files, { check = false } = {}) {
   }
 }
 
+export function writePublicDistribution({ check = false } = {}) {
+  const output = assembleDistribution()
+  const published = new Map(output)
+  for (const path of ['.agents/plugins/marketplace.json', '.claude-plugin/marketplace.json']) {
+    const catalog = JSON.parse(output.get(path))
+    catalog.name = 'unstoppable-stack'
+    if (catalog.interface) catalog.interface.displayName = 'Unstoppable Stack'
+    for (const entry of catalog.plugins) {
+      if (typeof entry.source === 'string') entry.source = './packages/agent-pack/plugins/claude'
+      else entry.source.path = './packages/agent-pack/plugins/portable'
+    }
+    const bytes = Buffer.from(json(catalog))
+    const full = join(repositoryRoot, path)
+    if (check) {
+      if (!readFileSync(full).equals(bytes)) throw new Error(`Public catalog drift: ${path}`)
+    } else {
+      mkdirSync(dirname(full), { recursive: true })
+      writeFileSync(full, bytes)
+    }
+    // Keep standalone catalogs too, relative to their own distribution root.
+    const standalone = JSON.parse(output.get(path)); standalone.name = 'unstoppable-stack'
+    published.set(path, Buffer.from(json(standalone)))
+  }
+  writeDistribution(join(packageRoot, 'plugins'), published, { check })
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2)
-  if (args.some(arg => arg !== '--check')) throw new Error('Usage: node scripts/build-plugin.mjs [--check]')
+  if (args.some(arg => arg !== '--check' && arg !== '--public')) throw new Error('Usage: node scripts/build-plugin.mjs [--public] [--check]')
   const output = assembleDistribution()
-  writeDistribution(join(packageRoot, 'dist'), output, { check: args.includes('--check') })
+  if (args.includes('--public')) writePublicDistribution({ check: args.includes('--check') })
+  else writeDistribution(join(packageRoot, 'dist'), output, { check: args.includes('--check') })
   console.log(`${args.includes('--check') ? 'Verified' : 'Built'} Codex/Claude local plugin packages (${output.size} files)`)
 }

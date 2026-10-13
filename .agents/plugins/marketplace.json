@@ -1,0 +1,20 @@
+{
+  "name": "unstoppable-stack",
+  "interface": {
+    "displayName": "Unstoppable Stack"
+  },
+  "plugins": [
+    {
+      "name": "unstoppable-stack",
+      "source": {
+        "source": "local",
+        "path": "./packages/agent-pack/plugins/portable"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer tools"
+    }
+  ]
+}

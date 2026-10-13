@@ -187,3 +187,7 @@ The active priority is the [public developer preview plan](./planning/technical-
 
 [MIT](./LICENSE). See [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a
 change and [SECURITY.md](./SECURITY.md) for private vulnerability reporting.
+
+## Coding harness plugin
+
+Installable Codex and Claude Code/Claude Desktop Code-tab workflows are being prepared for public preview. See [plugin installation](packages/agent-pack/PLUGIN.md) and the [matching CLI setup](packages/agent-pack/src/skills/build-with-unstoppable/resources/install-cli.md). The npm latest CLI is not yet the maintained-contract candidate; use the pinned source instructions until that candidate is published.
