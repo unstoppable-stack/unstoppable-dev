@@ -244,8 +244,8 @@ export default function Home() {
         
         <View style={styles.section} testID="docs-section">
           <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
-            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable-stack.dev')}>
+            <Text style={styles.link}>Docs — unstoppable-stack.dev</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
             <Text style={styles.link}>Holepunch on GitHub</Text>
@@ -1293,8 +1293,8 @@ export default function Home() {
         
         <View style={styles.section} testID="docs-section">
           <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
-            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable-stack.dev')}>
+            <Text style={styles.link}>Docs — unstoppable-stack.dev</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
             <Text style={styles.link}>Holepunch on GitHub</Text>
@@ -2132,8 +2132,8 @@ export default function Home() {
         
         <View style={styles.section} testID="docs-section">
           <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
-            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable-stack.dev')}>
+            <Text style={styles.link}>Docs — unstoppable-stack.dev</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
             <Text style={styles.link}>Holepunch on GitHub</Text>
@@ -4931,7 +4931,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>
@@ -5864,7 +5864,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>
@@ -6982,7 +6982,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>
@@ -7767,7 +7767,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>
@@ -8444,7 +8444,7 @@ document.getElementById('app').innerHTML = \`
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>

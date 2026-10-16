@@ -7,7 +7,7 @@
     "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "type": "module",
   "bin": {
     "us": "./dist/us.js"

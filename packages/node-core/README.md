@@ -1,6 +1,6 @@
 # @unstoppable-stack/node-core
 
-> Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable.dev) —
+> Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable-stack.dev) —
 > identity, pairing, and a capability bus for apps that act as nodes.
 
 One runtime, two verbs. `listen()` accepts pair requests, `connect()` dials a

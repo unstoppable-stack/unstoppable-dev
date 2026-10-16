@@ -7,7 +7,7 @@
 > registry releases may describe the older architecture; do not use `latest`
 > as evidence that this candidate journey works.
 
-- **Website:** [unstoppable.dev](https://unstoppable.dev)
+- **Website:** [unstoppable-stack.dev](https://unstoppable-stack.dev)
 - **Repo:** [unstoppable-stack/unstoppable-dev](https://github.com/unstoppable-stack/unstoppable-dev)
 - **License:** MIT
 
