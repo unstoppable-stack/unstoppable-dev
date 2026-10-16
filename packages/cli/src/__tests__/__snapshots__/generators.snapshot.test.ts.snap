@@ -50,7 +50,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-09",
     "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
-    "evidence": "planning/status/public-launch-mobile-20261009.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -852,7 +852,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-09",
     "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
-    "evidence": "planning/status/public-launch-mobile-20261009.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -1900,7 +1900,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-09",
     "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
-    "evidence": "planning/status/public-launch-mobile-20261009.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -3037,7 +3037,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; native acceptance pending",
-    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -3304,7 +3304,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; native acceptance pending",
-    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -3879,7 +3879,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; native acceptance pending",
-    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -4220,7 +4220,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; native acceptance pending",
-    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -4557,7 +4557,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; native acceptance pending",
-    "evidence": "planning/status/public-launch-dependency-upgrade-20261006.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -4826,7 +4826,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -5444,7 +5444,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -6567,7 +6567,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -7656,7 +7656,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
@@ -8334,7 +8334,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {

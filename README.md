@@ -39,7 +39,7 @@ Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the
 
 P2P runtimes, native modules, model loading, and renderer/worker boundaries are easy to combine incorrectly. This project turns fixes found while building real apps into starters, reusable components, and assistant-readable guidance.
 
-An earlier Coffee Assistant experiment went from more than 50 prompts to 2 prompts after its integration lessons were captured. That is a historical internal case study, not a general speed or success-rate claim. The public preview will use fresh clean-session and pilot evidence instead.
+The [Coffee Assistant example](./examples/coffee-assistant/README.md) demonstrates the desktop integration. Its README records the example’s scope and validation limits.
 
 ## The Stack
 
@@ -90,7 +90,7 @@ We don't write docs from docs. We **build real apps**, hit real bugs, fix them, 
 Build app → Find bugs → Document fixes → Extract into agent pack → Validate by rebuilding from scratch
 ```
 
-Recipes have different validation levels. The launch path must carry its tested version, date, and evidence; documentation-only coverage is not treated as a running example. See [planning/roadmap/](./planning/roadmap/) for the broader coverage matrix.
+Recipes have different validation levels. Documentation-only coverage is not treated as a running example. See [validation and release checks](./docs/validation.md) for the checks available in this repository.
 
 ### Multi-tool support
 
@@ -101,29 +101,26 @@ The same knowledge base generates configs for:
 | **Claude Code** | `.claude/` directory with rules, skills, and hooks |
 | **Cursor** | `.cursor/rules/*.mdc` with description-triggered and glob-scoped rules |
 | **OpenCode** | `opencode.json` with skills and specialized agents |
-| **Codex** | `AGENTS.md` + `.codex/` with skills and config |
+| **Codex** | `AGENTS.md` + `.agents/skills/` |
 
 ## Repository Structure
 
 ```
 unstoppable-stack/
+├── AGENTS.md             # Shared contributor instructions for coding agents
 ├── packages/
-│   ├── cli/              # `us` CLI — init, scaffold, doctor, research
-│   ├── agent-pack/       # AI knowledge base (source of truth)
-│   ├── website/          # unstoppable-stack.dev — Next.js site
-│   └── templates/        # Project scaffolds (starter)
-├── reference-apps/       # Upstream apps as git submodules (ground truth)
-│   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench
-│   ├── qvac-workbench-mobile/   # Expo Bare AI workbench
-│   └── qvac-health/             # Mobile health app with local AI
-├── research/             # Deep dives and SDK docs (pear-desktop, p2p-data-sync, qvac)
-├── sandbox/              # CLI test builds with feedback (gitignored)
-└── planning/             # Roadmap, status, features, presentations
-    ├── vision/           # Strategy and product direction
-    ├── roadmap/          # Coverage tracking (54 items)
-    ├── features/         # Deep planning per feature
-    ├── status/           # Sprint-level tracking
-    └── presentations/    # Pitch decks grouped by date+name
+│   ├── cli/              # Assistant setup, scaffolding, diagnostics
+│   ├── agent-pack/       # Canonical assistant guidance and plugin builders
+│   ├── website/          # Next.js site
+│   ├── runtime-ai/       # Maintained desktop/Node AI lifecycle
+│   ├── node-core/        # Experimental P2P runtime
+│   ├── node-caps-*/      # Experimental sync and AI capability packs
+│   ├── node/             # Personal Node app (alpha)
+│   ├── node-desktop/     # Personal Node desktop shell (alpha)
+│   └── memory*/          # Deferred Memory experiments
+├── examples/             # First-party examples and smoke fixtures
+├── docs/                 # Public engineering documentation
+└── scripts/              # Asset synchronization and release checks
 ```
 
 ## Development
@@ -152,8 +149,8 @@ dev workflow (test scripts, E2E levels, generator layout).
 All agent pack content lives in `packages/agent-pack/src/`. After making changes:
 
 ```bash
-# Sync to CLI bundle
-rsync -av --delete packages/agent-pack/src/ packages/cli/agent-pack-src/
+# Sync runtime assets, compatibility guidance, and the CLI bundle
+node scripts/sync-stack-assets.mjs
 
 # Rebuild CLI from its package directory
 cd packages/cli && pnpm build
@@ -170,11 +167,11 @@ These patterns have implementation evidence in the repository. Release support s
 - **Bare Runtime** — API compatibility (no TextEncoder/Buffer/crypto), bare-* as npm deps
 - **Worker Bridge** — `Pear.worker.pipe()` for renderer↔worker communication
 
-See [planning/roadmap/overview.md](./planning/roadmap/overview.md) for the full coverage matrix.
+See [validation and release checks](./docs/validation.md) for test scope and remaining acceptance gates.
 
 ## Release plan
 
-The active priority is the [public developer preview plan](./planning/technical-improvements/20260918-public-launch-plan.md). The [candidate checklist](./planning/status/public-launch-checklist.md) records the current scope, evidence gaps, and release blockers. Longer-term coverage remains in [planning/roadmap/](./planning/roadmap/).
+The core preview focuses on assistant workspace setup and app scaffolding. See [SUPPORT.md](./SUPPORT.md) for scope and [validation and release checks](./docs/validation.md) for release gates. Internal planning, research downloads, local test builds, and upstream reference checkouts remain local maintainer material.
 
 ## Built With
 

@@ -49,8 +49,9 @@ Edit `packages/agent-pack/src/`, then synchronize it to
 `packages/cli/agent-pack-src/`. Before submitting, verify the trees match:
 
 ```bash
-rsync -av --delete packages/agent-pack/src/ packages/cli/agent-pack-src/
-diff -qr packages/agent-pack/src packages/cli/agent-pack-src
+node scripts/sync-stack-assets.mjs
+node scripts/sync-stack-assets.mjs --check
+node scripts/check-agent-pack.mjs
 ```
 
 ## Change expectations
@@ -60,7 +61,7 @@ diff -qr packages/agent-pack/src packages/cli/agent-pack-src
 - Keep local-first and peer-disconnection behavior explicit.
 - Label mocks, stubs, and documentation-only patterns as such.
 - Do not commit model files, credentials, seed phrases, private user data, or
-  ignored research/sandbox contents.
+  ignored planning/research/sandbox/reference contents or local assistant settings.
 - Use conventional commit messages when committing.
 
 Opening a pull request confirms that you have the right to contribute the

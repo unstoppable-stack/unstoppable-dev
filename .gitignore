@@ -11,12 +11,47 @@ benchmark/
 packages/agent/
 packages/remote-app/
 packages/search/
-# Sandbox test apps (agent-accessible but not committed)
-sandbox/*
-!sandbox/README.md
-!sandbox/node-demo/
-sandbox/node-demo/*
-!sandbox/node-demo/demo.js
-!sandbox/node-demo/package.json
-!sandbox/node-demo/FINDINGS.md
+# Maintainer-only material; keep local copies out of public commits.
+/planning/
+/research/
+/sandbox/
+/.local/
+
+# Local assistant/editor configuration. Public contributor instructions: AGENTS.md.
+/.cursor/
+/.cursorignore
+/.opencode/
+/opencode.json
+/CLAUDE.md
+/.claude/
+/.codex/
+
+# Machine-local state, credentials, and generated artifacts.
+.DS_Store
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.log
+*.tgz
+coverage/
+playwright-report/
+test-results/
+**/.vercel/
+
 inspiration/**/*
+
+# Local-only upstream reference checkouts and their submodule configuration.
+/reference-apps/
+/.gitmodules
+
+# Plugin previews are assembled into the static website at build time.
+packages/website/public/downloads/
+
+# Historical names of private maintainer directories.
+/project-planning/
+/project-status/
+/Roadmap/
+/presentation/

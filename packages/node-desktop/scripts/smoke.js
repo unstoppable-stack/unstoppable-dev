@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Headless smoke test. Spawns `bin/headless.js` under Bare (no Pear UI),
 // then opens a NodeClient against it from this Node.js process and runs the
-// sandbox demo fixture. Used by .github/workflows/node-smoke.yml and runnable
+// example demo fixture. Used by .github/workflows/node-smoke.yml and runnable
 // locally with `npm run test:smoke`.
 //
 // All this needs in CI is: Node 20+, bare-runtime, npm install in the package
@@ -18,7 +18,7 @@ import { fileURLToPath } from 'url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '../../..')
 const nodeDesktopRoot = path.resolve(__dirname, '..')
-const demoRoot = path.join(repoRoot, 'sandbox/node-demo')
+const demoRoot = path.join(repoRoot, 'examples/node-demo')
 const runtime = process.env.BARE_BIN || 'bare'
 const readyTimeoutMs = Number(process.env.NODE_SMOKE_READY_TIMEOUT_MS || 30_000)
 const demoTimeoutMs = Number(process.env.NODE_SMOKE_DEMO_TIMEOUT_MS || 45_000)

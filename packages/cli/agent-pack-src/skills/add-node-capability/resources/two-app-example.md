@@ -1,7 +1,7 @@
 # Two Apps, No Personal Node
 
-A complete working pair. The runnable version lives in
-`sandbox/app-to-app-demo/`.
+A host/joiner pattern for the experimental P2P runtime. Save each snippet
+as a separate script in a project with `@unstoppable-stack/node-core` installed.
 
 This development-only demo deliberately accepts peers. Use scoped invitations or an approval callback for an unattended host.
 

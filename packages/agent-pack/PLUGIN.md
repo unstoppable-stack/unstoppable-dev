@@ -109,6 +109,6 @@ Native parsing was checked with Codex CLI 0.160.1 and Claude Code 2.0.76. Codex 
 
 Full chat activation/automatic selection, empty/existing/multi-app model-driven workflows, native app acceptance and desktop installation/reload remain unverified. Cursor/OpenCode adapters, shared CLI/plugin assembly extraction, CLI coexistence mode, release publication and pilot work remain planned. These parser checks do not complete every P0 exit gate.
 
-See the [plugin plan](../../planning/features/harness-plugin.md) and [implementation evidence](../../planning/status/evidence/20261011-harness-plugin/README.md).
+See [validation and release checks](../../docs/validation.md) for public checks and acceptance boundaries.
 
 See [publication runbook](PUBLICATION.md) for archives, review gates and the matching CLI release dependency.

@@ -14,8 +14,8 @@ there is no response-time or production-availability commitment.
 
 ## Supported scope
 
-The exact public scope is recorded in the
-[launch candidate checklist](./planning/status/public-launch-checklist.md).
+The core preview covers assistant workspace setup and app scaffolding.
+See [validation and release checks](./docs/validation.md) for acceptance gates.
 Source availability is not a support claim. Personal Node, Expo Mobile,
 wallets/payments, Search, Memory, Remote Coder, Flow, and the standalone Agent
 are outside the core preview unless a later release record says otherwise.

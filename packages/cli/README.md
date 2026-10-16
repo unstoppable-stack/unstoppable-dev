@@ -526,8 +526,8 @@ Key directories:
 - `e2e/test-scaffold.ts` — the full end-to-end runner
 - `templates/` — the starter tree copied by `us init`
 
-See the repo's [planning/features/scaffold-e2e-testing.md](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/planning/features/scaffold-e2e-testing.md)
-for the testing strategy.
+See [validation and release checks](../../docs/validation.md) for the testing
+strategy and acceptance boundaries.
 
 ---
 

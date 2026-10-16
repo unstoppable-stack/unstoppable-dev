@@ -17,7 +17,7 @@ As of 0.6 this is a **composition, not an implementation**: it is
 [`@unstoppable-stack/node-core`](../node-core) with the
 [sync](../node-caps-sync) and [ai](../node-caps-ai) capability packs installed,
 plus the CLI, config, and backup surface. Any app can build the same thing —
-that is the point. See [Node as a Library](../../planning/features/node-as-library.md).
+that is the point. See the [shared P2P runtime](../node-core/README.md) for its API.
 
 You don't usually run `unstoppable-node` directly — the
 [`us` CLI](https://www.npmjs.com/package/@unstoppable-stack/cli) ships a

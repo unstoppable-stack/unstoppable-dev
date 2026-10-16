@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const out = process.env.COFFEE_DEMO_DIR || join(root, 'planning/status/evidence/20261007/demo')
+const out = process.env.COFFEE_DEMO_DIR || join(root, '.local/coffee-demo')
 const require = createRequire(join(root, 'packages/cli/package.json'))
 const { chromium } = require('playwright')
 const app = join(root, 'examples/coffee-assistant')

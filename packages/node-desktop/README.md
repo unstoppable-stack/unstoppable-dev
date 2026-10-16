@@ -93,8 +93,8 @@ Also protect the `qvac-validation` environment with required reviewers. The
 manual **Node Real QVAC** workflow uses it to test the pinned SDK and one
 approved model source across macOS, Windows, and Linux before stable promotion.
 
-The candidate checklist and stable promotion gates are tracked in
-[`planning/status/node/release-readiness-0.5-beta.md`](../../planning/status/node/release-readiness-0.5-beta.md).
+See [validation and release checks](../../docs/validation.md) for public test
+commands and mock, native, and packaged acceptance boundaries.
 
 ## Smoke Testing
 

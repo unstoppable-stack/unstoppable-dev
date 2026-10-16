@@ -2,8 +2,8 @@
 
 Notable package changes are documented here. Some entries describe source
 candidates or earlier package lines rather than artifacts that are currently
-approved for the next public preview. The active scope and evidence gates live
-in [`planning/status/public-launch-checklist.md`](./planning/status/public-launch-checklist.md).
+approved for the next public preview. See [SUPPORT.md](./SUPPORT.md) for scope
+and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
@@ -161,6 +161,5 @@ Unstoppable Node for data replication and sync, with typed error handling.
 
 - **Unstoppable Memory** (`@unstoppable/memory*` packages and `us memory`) is
   excluded from this release pending end-to-end validation and a security pass.
-  It is planned as a separate v0.1 preview. See
-  `planning/status/release-plan-2026-06-12.md`.
+  It is planned as a separate v0.1 preview.
 - WDK/payments remain out of scope.
