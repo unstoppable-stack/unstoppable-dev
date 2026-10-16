@@ -32,7 +32,7 @@ export async function createTestEnv () {
   }
 
   async function makeNode (opts = {}) {
-    const storage = opts.storage || await tmpDir('node-core-')
+    const storage = opts.storage || await tmpDir('p2p-')
     const node = createNode({ pairing: { autoApprove: true },
       storage,
       swarm: { bootstrap },
