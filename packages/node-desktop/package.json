@@ -4,7 +4,7 @@
   "productName": "Unstoppable Personal Node",
   "description": "Desktop Personal Node for private P2P data sync and local or remote AI inference",
   "author": "Unstoppable Stack",
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "repository": {
     "type": "git",
     "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",

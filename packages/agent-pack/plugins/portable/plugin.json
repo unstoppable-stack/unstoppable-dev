@@ -14,9 +14,9 @@
   ],
   "author": {
     "name": "Unstoppable Stack",
-    "url": "https://unstoppable.dev"
+    "url": "https://unstoppable-stack.dev"
   },
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "license": "MIT",
   "extensions": {
     "com.openai": {
@@ -26,7 +26,7 @@
         "longDescription": "Build and extend local-first P2P apps with maintained Unstoppable Stack workflows. Requires the separate matching CLI; experimental profiles remain experimental.",
         "developerName": "Unstoppable Stack",
         "category": "Developer tools",
-        "websiteURL": "https://unstoppable.dev",
+        "websiteURL": "https://unstoppable-stack.dev",
         "supportURL": "https://github.com/unstoppable-stack/unstoppable-dev/issues",
         "composerIcon": "./assets/icon.svg",
         "logo": "./assets/icon.svg",

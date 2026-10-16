@@ -70,7 +70,7 @@ PR #7 is merged. The scoped desktop candidate passes local and hosted real/offli
 | 1 | [Agent Pack Content](./agent-pack-content/) | Knowledge by category | 52% battle-tested, 26% docs-only, 22% not covered |
 | 2 | [Agent Pack Architecture](./agent-pack-architecture/) | Skill system, builders | Skills exist, no auto-activation yet |
 | 3 | [Unstoppable Node](./node/) | Pear desktop sync app | **Usable for apps — data + files + AI, dashboard shipped** |
-| 4 | [Website](./website/) | unstoppable.dev | **All major pages complete** |
+| 4 | [Website](./website/) | unstoppable-stack.dev | **All major pages complete** |
 | 5 | [**Unstoppable Agent**](./agent/) | Local AI coding agent | **Phase 2 architecture — DA/OC parity** |
 | 6 | [**Remote Coder**](./remote-coder/) | P2P mobile remote for AI assistants | **Phase 1 — CLI done, mobile scaffolded** |
 

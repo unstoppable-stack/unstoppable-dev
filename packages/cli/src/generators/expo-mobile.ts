@@ -831,8 +831,8 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   const docsSection = `
         <View style={styles.section} testID="docs-section">
           <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
-            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable-stack.dev')}>
+            <Text style={styles.link}>Docs — unstoppable-stack.dev</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
             <Text style={styles.link}>Holepunch on GitHub</Text>

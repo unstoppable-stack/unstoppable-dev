@@ -1,4 +1,4 @@
-# Website (unstoppable.dev)
+# Website (unstoppable-stack.dev)
 
 **Goal:** Developer-facing site with polished landing, getting started, docs, roadmap, showcase.
 

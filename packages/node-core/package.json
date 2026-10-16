@@ -27,7 +27,7 @@
     "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/node-core"
   },
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "engines": {
     "node": ">=20"
   },

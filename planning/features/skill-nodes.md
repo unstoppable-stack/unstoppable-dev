@@ -96,7 +96,7 @@ my-skill-node/
   "node": {
     "name": "Unstoppable Official",
     "description": "Curated skills for the Unstoppable Stack",
-    "homepage": "https://unstoppable.dev/skills"
+    "homepage": "https://unstoppable-stack.dev/skills"
   },
   "repos": [
     {

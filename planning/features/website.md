@@ -1,4 +1,4 @@
-# Website Planning — unstoppable.dev
+# Website Planning — unstoppable-stack.dev
 
 ## Design Direction
 

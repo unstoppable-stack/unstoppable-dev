@@ -17,7 +17,7 @@ unstoppable-stack/
 ├── CLAUDE.md                    # Project context (Claude Code)
 ├── .cursor/rules/               # Project context (Cursor)
 ├── packages/
-│   ├── website/                 # unstoppable.dev - Next.js site
+│   ├── website/                 # unstoppable-stack.dev - Next.js site
 │   ├── cli/                     # `us` CLI (init, scaffold, doctor, research)
 │   └── agent-pack/              # AI assistant configurations
 │       ├── claude/              # Claude Code/API instructions

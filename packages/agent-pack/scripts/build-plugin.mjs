@@ -100,7 +100,7 @@ export function assemblePlugin({ sourceRoot = join(packageRoot, 'src'), version 
     description: 'Build and extend local-first P2P apps with maintained Unstoppable Stack workflows.',
     repository: 'https://github.com/unstoppable-stack/unstoppable-dev',
     keywords: ['p2p', 'local-first', 'pear', 'bare', 'qvac', 'unstoppable-stack'],
-    author: { name: 'Unstoppable Stack', url: 'https://unstoppable.dev' }, homepage: 'https://unstoppable.dev', license: 'MIT',
+    author: { name: 'Unstoppable Stack', url: 'https://unstoppable-stack.dev' }, homepage: 'https://unstoppable-stack.dev', license: 'MIT',
   }
   files.set('LICENSE', readFileSync(join(repositoryRoot, 'LICENSE')))
   files.set('assets/icon.svg', readFileSync(join(repositoryRoot, 'packages/website/src/app/icon.svg')))

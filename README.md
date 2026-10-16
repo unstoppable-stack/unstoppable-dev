@@ -5,7 +5,7 @@
   <em>Build private apps with local AI and peer-to-peer communication</em>
   <br />
   <br />
-  <a href="https://unstoppable.dev">Website</a> ·
+  <a href="https://unstoppable-stack.dev">Website</a> ·
   <a href="#quick-start">Quick Start</a> ·
   <a href="#agent-pack">Agent Pack</a> ·
   <a href="https://github.com/unstoppable-stack/unstoppable-dev/issues">Issues</a> ·
@@ -110,7 +110,7 @@ unstoppable-stack/
 ├── packages/
 │   ├── cli/              # `us` CLI — init, scaffold, doctor, research
 │   ├── agent-pack/       # AI knowledge base (source of truth)
-│   ├── website/          # unstoppable.dev — Next.js site
+│   ├── website/          # unstoppable-stack.dev — Next.js site
 │   └── templates/        # Project scaffolds (starter)
 ├── reference-apps/       # Upstream apps as git submodules (ground truth)
 │   ├── qvac-workbench-desktop/  # Pear Desktop AI workbench

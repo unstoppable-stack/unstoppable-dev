@@ -433,4 +433,4 @@ npx @unstoppable/agent-pack generate --tool claude --modules hyperdb,qvac
 ```
 
 ### Via Website (Future)
-Download pre-built packs from unstoppable.dev/agent-pack
+Download pre-built packs from unstoppable-stack.dev/agent-pack

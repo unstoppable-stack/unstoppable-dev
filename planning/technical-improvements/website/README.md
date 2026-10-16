@@ -1,6 +1,6 @@
 # Technical improvements — Website (`packages/website`)
 
-Improvement proposals for unstoppable.dev (Next.js site).
+Improvement proposals for unstoppable-stack.dev (Next.js site).
 
 ## Active documents
 

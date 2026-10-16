@@ -177,7 +177,7 @@ function createWindow () {
     try { external = new URL(url) } catch {}
     if (
       external?.protocol === 'https:' &&
-      (external.hostname === 'unstoppable.dev' || external.hostname === 'github.com')
+      (external.hostname === 'unstoppable-stack.dev' || external.hostname === 'github.com')
     ) shell.openExternal(external.href)
     return { action: 'deny' }
   })

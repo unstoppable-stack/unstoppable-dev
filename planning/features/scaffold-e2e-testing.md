@@ -333,7 +333,7 @@ appId: com.unstoppable.<appname>
     visible: "<appname>"
     timeout: 30000
 - assertVisible: "Unstoppable Stack · Expo Mobile"
-- assertVisible: "Docs — unstoppable.dev"
+- assertVisible: "Docs — unstoppable-stack.dev"
 
 # P2P section (if p2p / always in new base)
 - assertVisible: "P2P Network"

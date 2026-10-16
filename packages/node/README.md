@@ -2,7 +2,7 @@
 
 **Development alpha:** Personal Node remains outside the public desktop preview. The 0.6 packages below are unpublished; use the source or the tested tarball workflow until a release is approved.
 
-> Personal sync node for [Unstoppable Stack](https://unstoppable.dev) apps —
+> Personal sync node for [Unstoppable Stack](https://unstoppable-stack.dev) apps —
 > replicates, backs up, and seeds your P2P data.
 
 A long-running Node.js / Bare process that:

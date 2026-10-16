@@ -65,7 +65,7 @@ export function generateMaestroFlow(
     `    timeout: 10000`,
     '',
     '# --- Docs section (always present) ---',
-    `- assertVisible: "Docs — unstoppable.dev"`,
+    `- assertVisible: "Docs — unstoppable-stack.dev"`,
     '',
     '# --- P2P section (always present — base infrastructure) ---',
     `- assertVisible: "P2P Network"`,
