@@ -112,8 +112,9 @@ The artifact checker records checksums and verifies shipped files. The consumer
 smoke installs both tarballs outside the repository and exercises pairing,
 replication calls, permission revocation and mock AI streaming.
 
-The manual Node release workflow publishes only these two validated tarballs,
-P2P first, through its existing approval-protected environment. It does not
-publish the CLI, plugins, Memory, Search or desktop applications. This changes
+The manual Node workflow validates both tarballs, requires the identical P2P
+version to have been published through the canonical workflow, and publishes
+only the optional Personal Node app. It does not republish P2P or publish the
+CLI, plugins, Memory, Search or desktop applications. This changes
 package assembly; it does not complete native inference, platform, independent
 pilot, marketplace publication or desktop signing acceptance.

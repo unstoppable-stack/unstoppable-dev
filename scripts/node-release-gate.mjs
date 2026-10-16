@@ -115,7 +115,8 @@ check(!nodeRelease.includes('NODE_AUTH_TOKEN'), 'Node publishing must not use a 
 check(!nodeRelease.includes('--provenance'), 'Private-repository Node publishing must not request unsupported npm provenance')
 check(nodeRelease.includes('node scripts/pack-node-release.mjs'), 'Node release must use the staged P2P/Node packer')
 check(nodeRelease.includes('node scripts/release-artifacts.mjs'), 'Node release must verify packed manifests and record checksums')
-check(nodeRelease.includes('unstoppable-stack-p2p-*.tgz'), 'Node release does not publish the P2P artifact')
+check(nodeRelease.includes('Canonical P2P must already be published'), 'Node release must reuse the canonical P2P release')
+check(!nodeRelease.includes('npm publish ./release-artifacts/unstoppable-stack-p2p'), 'Optional Node release must not republish the canonical P2P package')
 
 const desktopRelease = await readFile(resolve(root, '.github/workflows/node-desktop-release.yml'), 'utf8')
 check(desktopRelease.includes('environment: desktop-release'), 'Desktop release is missing its protected environment')
