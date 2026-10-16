@@ -60,11 +60,11 @@ document.getElementById('app').innerHTML = `
       </section>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">Share with a trusted peer</h2>
-        <p class="card-hint">Sharing exposes this entire store database, including the cart and all orders, to anyone who knows the key. Recipients can keep copies. Use demo data only.</p>
-        <button id="share-orders" class="btn">Share store data</button>
+        <p class="card-hint">Invite one trusted device to look up demo receipts by reference. Invitations expire in 15 minutes; the paired device keeps read access. Your cart stays on this device. Recipients can keep receipts.</p>
+        <button id="share-orders" class="btn">Create read invitation</button>
         <p id="sharing-key" class="mono" style="overflow-wrap:anywhere"></p>
-        <label for="peer-key">Peer sharing key</label>
-        <input id="peer-key" class="inp" placeholder="Trusted peer's sharing key" />
+        <label for="peer-key">Peer invitation</label>
+        <input id="peer-key" class="inp" placeholder="Trusted peer's invitation code" />
         <label for="peer-order-name">Peer order reference</label>
         <input id="peer-order-name" class="inp" placeholder="For example order-001" />
         <button id="fetch-peer-order" class="btn btn-outline">Fetch peer order</button>
@@ -197,8 +197,8 @@ document.getElementById('fetch-peer-order').addEventListener('click', () => {
 // ---------------------------------------------------------------------------
 
 onWorkerMessage((msg) => {
-    if (msg.type === 'orders-shared') { setText('sharing-key', msg.key); setText('p2p-status', 'Announcing sharing key…') }
-    if (msg.type === 'sharing-ready') { document.getElementById('sharing-key').dataset.ready = 'true'; setText('p2p-status', 'Sharing announced — awaiting a peer') }
+    if (msg.type === 'orders-shared') { setText('sharing-key', msg.key); setText('p2p-status', 'Invitation created') }
+    if (msg.type === 'sharing-ready') { document.getElementById('sharing-key').dataset.ready = 'true'; setText('p2p-status', 'Invitation ready — awaiting a peer') }
     if (msg.type === 'peer-count') setText('p2p-status', msg.count + ' connected peer(s)')
     if (msg.type === 'peer-error' || msg.type === 'peer-order') {
       document.getElementById('fetch-peer-order').disabled = false

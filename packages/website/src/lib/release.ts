@@ -1,7 +1,7 @@
 import pluginDownload from "./plugin-download.json";
 import pluginRelease from "../../../agent-pack/release.json";
 
-const candidateVersion = "0.4.0-beta.1";
+const candidateVersion = pluginRelease.cliInstallVersion;
 const setupInstallCommand = pluginRelease.cliRegistryPublished
   ? `npm install -g @unstoppable-stack/cli@${candidateVersion}`
   : `git clone https://github.com/unstoppable-stack/unstoppable-dev.git unstoppable-cli-source

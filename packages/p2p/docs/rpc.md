@@ -2,8 +2,12 @@
 
 `@unstoppable-stack/p2p/rpc` adds runtime validation and inferred TypeScript
 clients to the existing P2P capability bus. It is an experimental API inside
-the unpublished P2P alpha. Plain capability packs, `peer.call()`,
+the `0.6.0-alpha.2` source candidate; it is absent from published alpha.1. Plain capability packs, `peer.call()`,
 `peer.stream()` and `peer.api` remain supported.
+
+Run the [notes example](../../../examples/p2p-notes/README.md) for calls and
+streams, or [Local Goods](../../../examples/ecommerce-assistant/README.md) for
+a desktop worker with scoped receipt queries and private local storage.
 
 ## Define a capability
 

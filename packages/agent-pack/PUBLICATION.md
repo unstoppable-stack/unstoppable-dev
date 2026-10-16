@@ -28,7 +28,7 @@ Commit the generated public packages and both root catalogs. `plugins/` is the r
 
 The bundled setup currently defaults to the pinned source commit in `release.json`. Verify that commit's package version and maintained-runtime contracts before changing it. The pinned source install builds the minimal CLI and installs a tarball; it does not perform native app acceptance.
 
-Before replacing it with the npm route, follow the repository's public-launch release runbook, consumer tarball smoke and native acceptance gates. Confirm public availability using `npm view @unstoppable-stack/cli@0.4.0-beta.1 version`. Only then change `cliRegistryPublished` to true, refresh the registry check date, bump the plugin version and regenerate all output. Publish with an approved prerelease dist-tag; do not silently redirect latest as part of this plugin change. No npm publish occurs in this preparation workflow.
+Before replacing it with the npm route, follow the repository's public-launch release runbook, consumer tarball smoke and native acceptance gates. Confirm public availability using `npm view @unstoppable-stack/cli@0.4.0-beta.1 version`. Only then update `cliInstallVersion` and its matching immutable `cliSourceRef`, change `cliRegistryPublished` to true, refresh the registry check date, bump the plugin version and regenerate all output. Publish with an approved prerelease dist-tag; do not silently redirect latest as part of this plugin change. No npm publish occurs in this preparation workflow.
 
 ## Official directories
 

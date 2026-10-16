@@ -114,10 +114,10 @@ test('public catalogs resolve tracked packages and CLI instructions match the ca
   }
   const { portable } = assemblePlugin()
   const guide = portable.get('skills/build-with-unstoppable/resources/install-cli.md').toString()
-  assert(guide.includes('0.4.0-beta.1'))
+  assert(guide.includes(`Match this plugin with CLI ${release.cliInstallVersion}`))
   if (release.cliRegistryPublished) {
     assert(guide.includes('candidate is published'))
-    assert(guide.includes('npm install --global @unstoppable-stack/cli@0.4.0-beta.1'))
+    assert(guide.includes(`npm install --global @unstoppable-stack/cli@${release.cliInstallVersion}`))
   } else {
     assert(guide.includes('not published'))
   }

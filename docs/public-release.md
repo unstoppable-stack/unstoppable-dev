@@ -40,6 +40,25 @@ that up for future versions requires separate authorization for the repository,
 workflow and environment described below. The acceptance job can skip versions
 already published with identical bytes and run its registry tests.
 
+## Next source candidate
+
+This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
+published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
+optional `/db` Autobase prototype. Beta.2 carries the safe scaffold fixes and
+updates generated P2P dependencies to alpha.2. Keep the published setup commands
+above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
+The plugin installer uses explicit `cliInstallVersion` release metadata so a
+source version bump cannot claim that an unpublished candidate is on npm.
+
+The [notes example](../examples/p2p-notes/README.md) now uses typed calls and
+streams; [Local Goods](../examples/ecommerce-assistant/README.md) uses scoped
+receipt RPC instead of sharing its database. The separate
+[database example](../examples/p2p-database/README.md) exercises offline edits,
+restart, conflict convergence and writer removal. The standalone
+`node scripts/p2p-artifact-smoke.mjs` also runs the database example against an
+installed tarball after explicitly installing Autobase, and checks that ordinary
+P2P consumers do not acquire that engine.
+
 ## Prepare and test
 
 Install dependencies from the repository root with Node 22.17 or later:
@@ -48,16 +67,19 @@ Install dependencies from the repository root with Node 22.17 or later:
 pnpm --dir packages/cli install --frozen-lockfile
 npm ci --prefix packages/p2p
 npm ci --prefix examples/p2p-notes
+npm ci --prefix examples/p2p-database
 node scripts/prepare-public-release.mjs release-artifacts/candidate
 ```
 
 Use a new candidate directory each time. Preparation runs source regressions,
-the real [notes example](../examples/p2p-notes/README.md), plugin tests, and release
+the real notes and database examples, P2P type inference, plugin tests, and release
 validator tests. It builds the CLI's minimal profile, packs exactly the two
 allowlisted packages, validates their exports and dependencies, then installs
 the tarballs in a temporary consumer outside the checkout. That consumer runs
 the notes tests, invokes the installed CLI, generates a workspace and desktop
-app, loads all six P2P entry points, and checks the generated JavaScript.
+app, loads all eight P2P entry points, and checks the generated JavaScript. It checks
+engine isolation before explicitly installing Autobase and running the collaborative
+database example against the installed P2P package.
 Preparation checks production dependency advisories, performs npm
 publication dry runs, checks registry version availability, and copies the
 website plugin download into `plugins/`.
@@ -91,7 +113,8 @@ as clean. The generated directory is ignored by Git.
 ### First publication of the P2P package
 
 npm requires a package to exist before trusted publishing can be configured.
-P2P is new, so its first version needs an authenticated maintainer. Run the
+This historical first-publication procedure was used for alpha.1; subsequent
+releases still need an authenticated maintainer until trusted publishing is configured. Run the
 canonical workflow with `publish: false`, download its validated artifact and
 use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 

@@ -559,3 +559,6 @@ Maintainers edit `packages/runtime-ai/src/` and
 `packages/cli/src/compatibility/profiles.json`, then run
 `node scripts/sync-stack-assets.mjs` from the repository root. Builds generate
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
+
+The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
+Published setup commands above remain pinned to beta.1 until registry acceptance.

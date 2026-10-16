@@ -64,6 +64,9 @@ try {
   const dbTests = readdirSync(join(installed, 'test/db')).filter(name => name.endsWith('.test.js'))
   assert(dbTests.length > 0, 'Database prototype acceptance tests are missing')
   run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=120000', ...dbTests.map(name => join(installed, 'test/db', name))])
+  const databaseExample = join(consumer, 'database-example')
+  cpSync(join(root, 'examples/p2p-database'), databaseExample, { recursive: true, filter: path => !path.split(/[\\/]/).includes('node_modules') && !path.endsWith('package-lock.json') })
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', join(databaseExample, 'test/database.test.js')])
   if (process.argv.includes('--bare')) run(process.execPath, [join(installed, 'scripts/run-bare-smoke.mjs')])
 
   const metadata = JSON.parse(readFileSync(join(installed, 'package.json'), 'utf8'))

@@ -1,8 +1,9 @@
 # @unstoppable-stack/p2p
 
-> **Release status:** published `0.6.0-alpha.1` alpha for the canonical
-> public package release. The package is experimental; preparation and tests
-> are separate from publication and production acceptance.
+> **Release status:** `0.6.0-alpha.1` is published. This source prepares
+> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes.
+> Those additions are not in alpha.1. Preparation and tests are separate from
+> publication and production acceptance; all P2P APIs remain experimental.
 
 > Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable-stack.dev) —
 > identity, pairing, and a capability bus for apps that act as nodes.
@@ -39,7 +40,7 @@ and does not remove the collaborative-database backup acceptance gates.
 
 ## Install
 
-After publication, install the explicit preview version:
+For the existing published API, install the explicit preview version:
 
 ```bash
 npm install @unstoppable-stack/p2p@0.6.0-alpha.1
@@ -293,3 +294,16 @@ The integration suite spins up a local DHT bootstrapper and takes ~90s.
 ## License
 
 MIT
+
+## Runnable examples
+
+| App | Demonstrates |
+| --- | --- |
+| [Notes](../../examples/p2p-notes/README.md) | Typed unary calls, streams, scoped grants, single-owner sync and offline replicas |
+| [Collaborative notes](../../examples/p2p-database/README.md) | Optional Autobase, writer admission/removal, offline edits, restart and convergence |
+| [Local Goods](../../examples/ecommerce-assistant/README.md) | Desktop worker RPC, private local cart, validated receipt output and persistent pairing |
+
+These source examples target the `0.6.0-alpha.2` candidate. Use the checkout or
+an installed candidate tarball until it is published. The database adapter's
+acceptance is currently Node-only; the desktop example uses RPC and local
+Hyperbee storage, not `/db`.

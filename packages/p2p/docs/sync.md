@@ -1,6 +1,7 @@
 # @unstoppable-stack/p2p/sync
 
-> **Release status:** part of the published P2P `0.6.0-alpha.1` alpha.
+> **Release status:** `/sync` is available in published P2P `0.6.0-alpha.1`;
+> this source reference includes the `0.6.0-alpha.2` correctness fixes.
 > Replication is not a complete or independently verified backup.
 
 > Data and file replication as a capability pack for
@@ -13,7 +14,7 @@ this module, although npm installs its storage dependencies.
 
 ## Install
 
-After publication:
+For the existing published API:
 
 ```bash
 npm install @unstoppable-stack/p2p@0.6.0-alpha.1

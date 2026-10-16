@@ -83,9 +83,9 @@ try {
   await b.page.locator('#kv-fetch').click()
   await b.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('not found'))
   await a.page.locator('#share-orders').click()
-  await a.page.waitForFunction(() => /^[a-f0-9]{64}$/.test(document.querySelector('#sharing-key')?.textContent || ''), undefined, { timeout: 30000 })
+  await a.page.waitForFunction(() => /^[ybndrfg8ejkmcpqxot1uwisza345h769]{79}$/.test(document.querySelector('#sharing-key')?.textContent || ''), undefined, { timeout: 30000 })
   await a.page.waitForFunction(() => document.querySelector('#sharing-key')?.dataset.ready === 'true', undefined, { timeout: 90000 })
-  console.log('Sharing announced on DHT')
+  console.log('Scoped RPC invitation announced on DHT')
   const key = await a.page.locator('#sharing-key').textContent()
   await b.page.locator('#peer-key').fill(key)
   await b.page.locator('#peer-order-name').fill(order)
@@ -96,10 +96,14 @@ try {
     throw new Error(`Peer retrieval failed: ${await b.page.locator('#peer-order-result').textContent()}; ${err.message}`)
   }
   await b.page.waitForFunction(() => document.querySelector('#peer-order-result')?.textContent?.includes('8000'))
+  await b.page.locator('#peer-order-name').fill('_cart')
+  await b.page.locator('#fetch-peer-order').click()
+  await b.page.waitForFunction(() => document.querySelector('#peer-order-result')?.textContent?.includes('1–80'))
+  console.log('PASS: private cart key is rejected by the receipt API')
   if (process.env.ECOMMERCE_SCREENSHOT) {
     await a.page.setViewportSize({ width: 1100, height: 1600 })
     await a.page.evaluate(() => { document.activeElement?.blur(); for (const el of document.querySelectorAll('.content, .layout, #app')) el.scrollTop = 0; window.scrollTo(0, 0) })
-    await a.page.screenshot({ path: process.env.ECOMMERCE_SCREENSHOT })
+    await a.page.screenshot({ path: process.env.ECOMMERCE_SCREENSHOT, mask: [a.page.locator('#sharing-key')], maskColor: '#161d23' })
   }
   console.log('PASS: second app fetched the first app’s unique order over a real peer connection')
   await stop(a.session)
@@ -125,7 +129,11 @@ try {
   await restarted.page.waitForFunction(() => document.querySelector('#sharing-key')?.dataset.ready === 'true', undefined, { timeout: 90000 })
   await b.page.locator('#peer-order-name').fill(revised)
   await b.page.locator('#fetch-peer-order').click()
-  await b.page.waitForFunction(value => document.querySelector('#peer-order-result')?.textContent?.includes(value), revised, { timeout: 45000 })
+  try {
+    await b.page.waitForFunction(value => document.querySelector('#peer-order-result')?.textContent?.includes(value), revised, { timeout: 45000 })
+  } catch (err) {
+    throw new Error(`Reconnect retrieval failed: ${await b.page.locator('#peer-order-result').textContent()}; ${err.message}`)
+  }
   console.log('PASS: reconnected peer fetches the new order after restart')
 } finally {
   for (const session of sessions) await stop(session)

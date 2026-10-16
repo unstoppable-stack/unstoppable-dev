@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createEnvironment, until } from './helpers.js'
+import { notesContract } from '../src/contract.js'
 
 test('invited apps read and stream real notes; uninvited and ungranted calls fail', async () => {
   const env = await createEnvironment()
@@ -15,9 +16,11 @@ test('invited apps read and stream real notes; uninvited and ungranted calls fai
     const invite = await alice.node.createInvite({ grants: { notes: ['get', 'list'] }, uses: 1 })
     const peer = await bob.node.pair(invite.code)
     assert.notEqual(alice.node.publicKey, bob.node.publicKey)
-    assert.deepEqual(await peer.call('notes', 'get', { name: 'morning' }), { coffee: 'oat latte' })
+    const api = peer.client(notesContract)
+    assert.deepEqual(await api.get({ name: 'morning' }), { coffee: 'oat latte' })
+    await assert.rejects(() => api.get({ name: '' }), { code: 'INVALID_INPUT' })
     const entries = []
-    for await (const item of peer.stream('notes', 'list', {})) entries.push(item)
+    for await (const item of api.list()) entries.push(item)
     assert.deepEqual(entries.map(entry => entry.name), ['afternoon', 'morning'])
     await assert.rejects(() => peer.call('sync', 'usage'), { code: 'NOT_GRANTED' })
     await assert.rejects(() => peer.call('notes', 'delete', { name: 'morning' }), { code: 'NOT_GRANTED' })

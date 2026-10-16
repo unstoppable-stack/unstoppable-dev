@@ -18,7 +18,7 @@ const capabilities = [
   { icon: ShoppingCart, label: "Catalog and cart", detail: "Search six everyday products, adjust quantities and keep your cart across app restarts." },
   { icon: BrainCircuit, label: "Local shopping assistant", detail: "A real QVAC run recommended the catalog’s daypack for carrying a laptop. Retry, Stop, and wider native acceptance remain separate checks." },
   { icon: Database, label: "Saved orders", detail: "Worker-calculated prices, persistent cart, and local demo order receipts." },
-  { icon: Network, label: "Peer order sharing", detail: "Retrieve a saved order from a reachable trusted peer using Hyperbee replication." },
+  { icon: Network, label: "Peer order sharing", detail: "Retrieve a saved order from a reachable trusted peer through a scoped, validated RPC invitation." },
 ];
 
 export default function ShowcasePage() {
@@ -36,7 +36,7 @@ export default function ShowcasePage() {
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         <figure className="mx-auto max-w-2xl">
           <Image unoptimized src="/examples/ecommerce-assistant.png" alt="Actual Local Goods desktop window showing products, cart, and a saved demo order" width={1100} height={1600} className="h-auto w-full rounded-xl border border-border" />
-          <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual Local Goods capture from a real local-model shopping run and demo checkout on 16 October 2026. See the README for validation scope and remaining acceptance checks.</figcaption>
+          <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual Local Goods capture from the scoped-RPC desktop regression on 16 October 2026. This run did not load an AI model. See the README for validation scope and remaining acceptance checks.</figcaption>
         </figure>
         <section className="section" aria-labelledby="outcome-title">
           <h2 id="outcome-title" className="section-title">Example capabilities</h2>
@@ -45,13 +45,13 @@ export default function ShowcasePage() {
         </section>
         <section className="section" aria-labelledby="built-title">
           <h2 id="built-title" className="section-title">A narrow bridge keeps runtime work outside the UI.</h2>
-          <p className="mt-5 leading-7 text-text-secondary">Electron displays the interface. A Bare worker owns Hyperbee storage, Hyperswarm networking, and QVAC inference. The bridge sends commands and streamed responses between them. The current example uses ordinary JavaScript and the same runtime integration as the desktop scaffold.</p>
-          <p className="mt-5 leading-7 text-text-secondary">The AI gives product advice; cart controls and demo checkout write records. Checkout has no payment, tax, shipping, or fulfillment integration. Sharing a database key exposes the entire database, including cart and orders, to whoever knows it; recipients can retain downloaded copies. Use demo data only.</p>
+          <p className="mt-5 leading-7 text-text-secondary">Electron displays the interface. A Bare worker owns private Hyperbee storage, the P2P runtime, and QVAC inference. The bridge sends commands and streamed responses between them. The current example uses ordinary JavaScript and the same runtime integration as the desktop scaffold.</p>
+          <p className="mt-5 leading-7 text-text-secondary">The AI gives product advice; cart controls and demo checkout write records. Checkout has no payment, tax, shipping, or fulfillment integration. A single-use invitation grants one trusted device receipt lookups by reference. The cart remains local; receipt fields are validated before transmission. Pairings retain access after invitation expiry, and recipients can keep returned receipts. Use demo data only.</p>
         </section>
         <section className="section" aria-labelledby="reproduce-title">
           <h2 id="reproduce-title" className="section-title">Reproduce the example</h2>
           <p className="mt-5 leading-7 text-text-secondary">From a checkout of the repository containing <code>examples/ecommerce-assistant</code>, run the commands below. Use Node.js 22.17 or newer and npm. macOS Apple Silicon is the maintainer validation platform; other platforms remain unverified.</p>
-          <div className="mt-6"><CodeBlock code={"cd examples/ecommerce-assistant\nnpm install\nnpm run dev"} /></div>
+          <div className="mt-6"><CodeBlock code={"npm ci --prefix packages/p2p\ncd examples/ecommerce-assistant\nnpm ci\nnpm run dev"} /></div>
           <p className="mt-5 leading-7 text-text-secondary">Browse and check out without loading the model. The shopping assistant needs an approximately 532 MB download on first use. This is a source example; a packaged desktop download is not available.</p>
           <div className="mt-5 flex flex-wrap gap-4"><a href={exampleReadme} className="text-accent hover:underline">Setup, peer sharing and validation</a><a href={exampleSource} className="text-accent hover:underline">Browse the source</a></div>
           <ol className="mt-6 list-decimal space-y-3 pl-6 text-text-secondary"><li>Install dependencies and open the app using the example README.</li><li>Add products to the cart and save a demo order.</li><li>Restart and look up the saved order by reference.</li><li>Load the shopping assistant; after the model is cached, test another question with external networking disconnected.</li><li>Use your coding assistant to change a button label and verify the change.</li></ol>

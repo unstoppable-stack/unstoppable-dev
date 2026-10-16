@@ -35,6 +35,9 @@ The P2P correctness/API work has a standalone installed-consumer gate:
 npm test --prefix packages/p2p
 npm run test:types --prefix packages/p2p
 node scripts/p2p-artifact-smoke.mjs
+npm ci --prefix examples/p2p-database
+npm test --prefix examples/p2p-database
+npm run demo --prefix examples/p2p-database
 BARE_BIN=/absolute/path/to/supported/bare node scripts/p2p-artifact-smoke.mjs --bare
 ```
 
@@ -103,10 +106,15 @@ the intended published history separately before changing repository visibility.
 
 ## Ecommerce desktop example
 
+The database example uses paired peers over a local DHT, destroys both
+transports before offline edits, restarts from disk, compares derived views and
+observes writer removal. It does not establish public discovery, full backup,
+Bare or desktop database acceptance.
+
 The [Local Goods example](../examples/ecommerce-assistant/README.md) replaces
 Coffee Assistant with a catalog, persistent cart, local demo checkout, and
 catalog-aware assistant. Checkout has no payment or fulfillment integration.
-After installing the example and CLI development dependencies:
+After installing the example, P2P and CLI development dependencies:
 
 ```bash
 node --test examples/ecommerce-assistant/test/*.test.js
@@ -120,3 +128,9 @@ checkout totals, duplicate-reference rejection, receipt persistence, peer
 retrieval, visible disconnect and a new order after reconnect. It does not
 load a model or prove public Internet discovery. Native shopping responses,
 offline inference and packaged-artifact acceptance remain separate checks.
+
+The Local Goods RPC flow uses a single-use, 15-minute invitation and persistent
+peer grants. Its desktop regression checks private `_cart` reference rejection
+and retrieval after full host restart. It does not replicate the private store.
+Receipt field allowlisting and malformed stored-record rejection are covered by
+its application tests. These checks do not establish customer identity or payments.

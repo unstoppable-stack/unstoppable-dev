@@ -5,13 +5,43 @@ const verifiedOn = "16 October 2026";
 
 export const packageDocs: DocPage[] = [
   {
+    slug: "p2p/examples",
+    title: "Choose a P2P example",
+    description: "Working apps for scoped RPC, single-owner replication and collaborative offline databases.",
+    category: "Packages",
+    verifiedOn,
+    blocks: [
+      { type: "callout", title: "Version-matched source examples", body: "These examples use the 0.6.0-alpha.2 candidate through local source links. Published alpha.1 does not contain /rpc or /db. Run from a checkout until alpha.2 is published. All APIs remain experimental." },
+      { type: "cards", items: [
+        { title: "Notes: RPC and sync", body: "Start here for schema-validated calls, streams and invitation grants. Then replicate a single-owner Hyperbee and read it after the writer disconnects and the replica restarts.", href: `${source}/examples/p2p-notes/README.md` },
+        { title: "Collaborative notes: Autobase", body: "Approve a writer, edit while both transports are closed, restart and converge conflicting notes, then remove the writer. Node-only prototype with an explicitly installed engine.", href: `${source}/examples/p2p-database/README.md` },
+        { title: "Local Goods: desktop RPC", body: "A Bare worker owns a private cart and order database. A single-use invitation grants one device receipt queries; validated RPC returns selected fields without replicating the database.", href: `${source}/examples/ecommerce-assistant/README.md` },
+      ] },
+      { type: "heading", text: "Run the small examples" },
+      { type: "code", language: "sh", code: `# From the repository root, Node 22.17+
+npm ci --prefix packages/p2p
+npm ci --prefix examples/p2p-notes
+npm run demo --prefix examples/p2p-notes
+npm ci --prefix examples/p2p-database
+npm run demo --prefix examples/p2p-database` },
+      { type: "paragraph", text: "Both small demos use an isolated real loopback DHT and temporary storage. They need no public discovery, Personal Node, account, model or wallet. Their tests establish the demonstrated local flows, not Internet reachability, full backup or production database acceptance." },
+      { type: "heading", text: "Pick the data boundary" },
+      { type: "list", items: [
+        "RPC: the host owns data and decides which validated results to return. Both devices must be online for a fresh call. Use this for private app data and scoped business actions.",
+        "Sync: devices retain single-owner datasets for offline reads. Giving the necessary dataset material can expose its contents independently of RPC method grants.",
+        "Database prototype: admitted devices append offline operations and derive a deterministic view after reconnecting. Apps own conflict semantics, schemas and secret distribution; the founder currently owns administration and indexing.",
+      ] },
+      { type: "actions", items: [{ label: "Typed RPC", href: "/docs/p2p/rpc" }, { label: "Replication", href: "/docs/p2p/sync" }, { label: "Database prototype", href: "/docs/p2p/database" }] },
+    ],
+  },
+  {
     slug: "p2p/rpc",
     title: "Typed RPC",
     description: "Schema-backed procedures and inferred clients over the existing P2P connection.",
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Experimental alpha API", body: "The optional /rpc entry is implemented in unpublished source. Existing plain packs, peer.call, peer.stream and peer.api remain available. No tRPC or validator package is required." },
+      { type: "callout", title: "Experimental alpha API", body: "The optional /rpc entry targets the 0.6.0-alpha.2 source candidate; it is absent from published alpha.1. Existing plain packs, peer.call, peer.stream and peer.api remain available. No tRPC or validator package is required." },
       { type: "lead", text: "Define a capability once and share its runtime contract with clients. Query and mutation methods return ordinary promises; stream methods return async iterables. TypeScript infers inputs and results while runtime schemas check peer data." },
       { type: "code", language: "ts", code: `import { defineCapability, procedure } from '@unstoppable-stack/p2p/rpc'
 
@@ -48,7 +78,7 @@ const note = await api.get({ id: 'n1' })` },
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Prototype with explicit engine opt-in", body: "Install autobase@7.28.2 to use /db. The root P2P import does not load it, and ordinary consumers do not install this optional peer automatically. This prototype is separate from the existing experimental Autobee scaffold." },
+      { type: "callout", title: "Prototype with explicit engine opt-in", body: "The /db prototype targets the alpha.2 source candidate. Install autobase@7.28.2 explicitly to use it. The root P2P import does not load it, and ordinary consumers do not install this optional peer automatically. This prototype is separate from the existing experimental Autobee scaffold." },
       { type: "lead", text: "Applications supply a deterministic reducer and local view. Autobase orders writer logs so devices can converge after offline edits; application rules still decide what conflicting edits or deletes mean." },
       { type: "list", items: [
         "autobaseAdapter({ openView, apply, validate, closeView }) defines application-owned view behavior. openDatabase({ node, store, adapter, key, encryptionKey }) opens a local database and attaches replication to the P2P swarm.",
@@ -60,7 +90,7 @@ const note = await api.get({ id: 'n1' })` },
       { type: "heading", text: "Distributed data boundaries" },
       { type: "paragraph", text: "Local writes can proceed offline, while stable progress depends on available indexers. Reducers must be replayable and deterministic. Writer removal takes effect as history synchronizes; it does not erase downloaded data or rotate encryption keys. Pairing at the RPC layer does not grant database write authority." },
       { type: "paragraph", text: "Real tests cover offline conflict convergence, writer admission/removal, encrypted reconstruction from a retained reader and coexistence with RPC on a paired P2P connection. They do not establish complete backup, lost-admin recovery, automatic schema migration or multi-writer plus Personal Node sync support." },
-      { type: "actions", items: [{ label: "Database API and runnable example", href: `${source}/packages/p2p/docs/db.md` }] },
+      { type: "actions", items: [{ label: "Database API guide", href: `${source}/packages/p2p/docs/db.md` }, { label: "Runnable collaborative notes", href: `${source}/examples/p2p-database/README.md` }] },
     ],
   },
   {
@@ -70,7 +100,7 @@ const note = await api.get({ id: 'n1' })` },
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Unpublished alpha", body: "This reference describes @unstoppable-stack/p2p 0.6.0-alpha.1 source. Use a locally packed tarball until publication. Published Personal Node 0.4.0 uses a different API." },
+      { type: "callout", title: "Alpha.2 source candidate", body: "This reference describes @unstoppable-stack/p2p 0.6.0-alpha.2 source. Alpha.1 is published; the new /rpc and /db APIs need source or an alpha.2 candidate tarball until publication. Published Personal Node 0.4.0 uses a different API." },
       { type: "lead", text: "Every app can be a node and a client at the same time. createNode owns stable identity, discovery, pairing, grants, capability calls, streaming and shutdown. A Personal Node is optional; two apps can pair and call each other directly." },
       { type: "heading", text: "Connect and serve" },
       { type: "list", items: [
@@ -124,7 +154,7 @@ try {
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "lead", text: "syncPack replicates Hypercores, Hyperbees and Hyperdrives and keeps seeding registered resources after the owner disconnects. It shares the P2P package's unpublished alpha version and connection lifecycle." },
+      { type: "lead", text: "syncPack replicates Hypercores, Hyperbees and Hyperdrives and keeps seeding registered resources after the owner disconnects. It shares the P2P package's connection lifecycle. These reference pages describe the alpha.2 candidate; alpha.1 is already published." },
       { type: "code", language: "js", code: `import { syncPack } from '@unstoppable-stack/p2p/sync'
 
 // Add this pack to createNode({ capabilities: [...] }).

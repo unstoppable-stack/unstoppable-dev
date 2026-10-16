@@ -31,7 +31,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "expo-mobile",
   "features": [],
@@ -816,7 +816,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "expo-mobile",
   "features": [
@@ -1877,7 +1877,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "expo-mobile",
   "features": [
@@ -1924,7 +1924,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperswarm": "^4.17.0",
       "b4a": "^1.8.0",
       "events": "^3.3.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
     },
     "devDependencies": {
       "@types/react": "~19.1.10",
@@ -2465,7 +2465,7 @@ module.exports = config
     "hyperswarm": "^4.17.0",
     "b4a": "^1.8.0",
     "events": "^3.3.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
@@ -3018,7 +3018,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "node-cli",
   "features": [],
@@ -3264,7 +3264,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "node-cli",
   "features": [
@@ -3856,7 +3856,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "node-cli",
   "features": [
@@ -3888,7 +3888,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -3920,7 +3920,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4197,7 +4197,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "node-cli",
   "features": [
@@ -4229,7 +4229,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -4261,7 +4261,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4534,7 +4534,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "node-cli",
   "features": [
@@ -4807,7 +4807,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "pear-desktop",
   "features": [],
@@ -5402,7 +5402,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "pear-desktop",
   "features": [
@@ -6527,7 +6527,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "pear-desktop",
   "features": [
@@ -7633,7 +7633,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "pear-desktop",
   "features": [
@@ -7669,7 +7669,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -8085,7 +8085,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -8311,7 +8311,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.1"
+    "version": "0.4.0-beta.2"
   },
   "platform": "pear-desktop",
   "features": [

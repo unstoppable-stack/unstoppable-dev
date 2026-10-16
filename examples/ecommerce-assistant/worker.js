@@ -1,9 +1,10 @@
 import { createAISession, createBareAdapter, createMockAdapter } from './.unstoppable/runtime-ai/index.js'
 /* global Bare */
 import Corestore from 'corestore'
-import Hyperswarm from 'hyperswarm'
+import { createNode, decodeInvite } from '@unstoppable-stack/p2p'
+import { join } from 'bare-path'
+import { createOrdersCapability, ordersContract, orderReference } from './orders.js'
 import Hyperbee from 'hyperbee'
-import crypto from 'hypercore-crypto'
 import { cartSummary, shoppingPrompt } from './catalog.js'
 
 const pipe = Bare.IPC
@@ -11,6 +12,7 @@ const storagePath = Bare.argv[2]
 
 // Module-scope state (populated during init, used by handleCommand + cleanup)
 let store = null
+let node = null
 let swarm = null
 let db = null
 let peerCount = 0
@@ -49,58 +51,22 @@ async function handleCommand(msg) {
       break
     }
     case 'share-orders': {
-      if (!db) throw new Error('Storage is not ready')
-      const discovery = swarm.join(crypto.discoveryKey(db.key), { server: true, client: false })
-      discovery.flushed().then(() => send({ type: 'sharing-ready' }), err => send({ type: 'peer-error', error: String(err.message || err) }))
-      send({ type: 'orders-shared', key: db.key.toString('hex') })
+      if (!db || !node) throw new Error('Storage is not ready')
+      const invite = await node.createInvite({ grants: { orders: ['get'] }, uses: 1, expiresIn: 15 * 60_000 })
+      send({ type: 'orders-shared', key: invite.code })
+      send({ type: 'sharing-ready' })
       break
     }
     case 'fetch-peer-order': {
-      if (!/^[a-f0-9]{64}$/i.test(msg.peerKey || '')) throw new Error('Enter a valid 64-character order-sharing key')
-      if (!msg.orderName || msg.orderName.length > 200) throw new Error('Enter an order name of at most 200 characters')
-      const key = Buffer.from(msg.peerKey, 'hex')
-      const discovery = swarm.join(crypto.discoveryKey(key), { server: false, client: true })
-      const remote = new Hyperbee(store.get({ key }), { keyEncoding: 'utf-8', valueEncoding: 'json' })
-      const doneFinding = remote.core.findingPeers()
-      discovery.flushed().then(doneFinding, doneFinding)
-      let timer
-      let cancelled = false
-      try {
-        const entry = await Promise.race([
-          (async () => {
-            await remote.ready()
-            // Finish discovery and connection attempts before accepting a read.
-            // A prior downloaded copy must not be mistaken for a fresh peer fetch.
-            await discovery.flushed()
-            await swarm.flush()
-            while (!cancelled && !remote.core.peers.length) {
-              await new Promise(resolve => setTimeout(resolve, 100))
-            }
-            if (cancelled) throw new Error('Peer request cancelled')
-            await remote.core.update({ wait: true })
-            if (cancelled) throw new Error('Peer request cancelled')
-            return remote.get(msg.orderName)
-          })(),
-          new Promise((_, reject) => {
-            timer = setTimeout(() => {
-              cancelled = true
-              reject(new Error('Peer unavailable after 30 seconds; confirm both apps are online and sharing'))
-            }, 30000)
-          }),
-        ])
-        send({ type: 'peer-order', key: msg.orderName, value: entry?.value ?? null })
-      } finally {
-        cancelled = true
-        clearTimeout(timer)
-        await remote.close()
-        await discovery.destroy()
-      }
-      break
-    }
-    case 'join-topic': {
-      const topic = crypto.discoveryKey(Buffer.from(msg.topic))
-      swarm.join(topic, { server: true, client: true })
-      send({ type: 'joined', topic: msg.topic })
+      const input = orderReference({ id: msg.orderName })
+      const { publicKey } = decodeInvite(msg.peerKey)
+      // The first use approves one device. Later calls reconnect by its saved
+      // identity and grants; expiry does not revoke that existing pairing.
+      const peer = node.peer(publicKey) || (node.peerRegistry.has(publicKey)
+        ? await node.connect(publicKey, { requested: { orders: ['get'] }, timeout: 30000, reconnect: false })
+        : await node.pair(msg.peerKey, { timeout: 30000, reconnect: false }))
+      const order = await peer.client(ordersContract).get(input, { timeout: 30000 })
+      send({ type: 'peer-order', key: input.id, value: order })
       break
     }
     case 'cart-get': {
@@ -197,7 +163,7 @@ async function handleCommand(msg) {
 async function cleanup() {
   activeChatRequestId = null
   try { await ai.close() } catch (err) { send({ type: 'peer-error', error: err.message }) }
-  if (swarm) await swarm.destroy()
+  if (node) await node.close()
   if (db) await db.close()
   if (store) await store.close()
   Bare.exit()
@@ -208,19 +174,25 @@ send({ type: 'workerReady' })
 async function init() {
   store = new Corestore(storagePath)
 
-  swarm = new Hyperswarm(Bare.argv[3] ? { bootstrap: JSON.parse(Bare.argv[3]) } : {})
-  swarm.on('connection', (conn) => {
-    store.replicate(conn)
-    peerCount++
-    send({ type: 'peer-count', count: peerCount })
-    conn.once('close', () => { peerCount--; send({ type: 'peer-count', count: peerCount }) })
-    conn.on('error', () => {})
-  })
-  send({ type: 'status', service: 'p2p', status: 'ready' })
-
+  // Preserve the existing main-db; RPC never attaches this private store to
+  // network replication. Identity/grants use a separate persistent directory.
   const core = store.get({ name: 'main-db' })
   db = new Hyperbee(core, { keyEncoding: 'utf-8', valueEncoding: 'json' })
   await db.ready()
+  node = createNode({
+    storage: join(storagePath, 'p2p-identity'),
+    profile: { appId: 'local-goods', appName: 'Local Goods' },
+    swarm: Bare.argv[3] ? { bootstrap: JSON.parse(Bare.argv[3]) } : {},
+    pairing: { approve: async () => 'deny' },
+    reconnect: false,
+    capabilities: [createOrdersCapability(async id => (await db.get(id))?.value ?? null)],
+  })
+  node.on('peer', () => { peerCount = node.peers.length; send({ type: 'peer-count', count: peerCount }) })
+  node.on('peerDisconnected', () => { peerCount = node.peers.length; send({ type: 'peer-count', count: peerCount }) })
+  await node.listen()
+  swarm = node.swarm
+  send({ type: 'status', service: 'p2p', status: 'ready' })
+
   send({ type: 'status', service: 'storage', status: 'ready' })
 
   send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
@@ -228,4 +200,9 @@ async function init() {
   send({ type: 'init-complete' })
 }
 
-init().catch((err) => send({ type: 'fatal', error: err.message }))
+init().catch(async err => {
+  send({ type: 'fatal', error: err.message })
+  await node?.close().catch(() => {})
+  await db?.close().catch(() => {})
+  await store?.close().catch(() => {})
+})

@@ -1,13 +1,14 @@
 # Local Goods — ecommerce example
 
-A first-party desktop developer-preview example with a searchable product catalog, persistent cart, local demo checkout, order lookup, a QVAC shopping assistant, and trusted peer order retrieval. Electron renders the UI; a Bare worker owns Hyperbee storage, Hyperswarm networking, and inference. The app derives from the former Coffee Assistant example and uses the maintained desktop AI runtime.
+A first-party desktop developer-preview example with a searchable product catalog, persistent cart, local demo checkout, order lookup, a QVAC shopping assistant, and scoped peer order retrieval. Electron renders the UI; a Bare worker owns Hyperbee storage, the P2P runtime, and inference. The app derives from the former Coffee Assistant example and uses the maintained desktop AI runtime.
 
 ## Run
 
 macOS Apple Silicon with Node.js 22.17+ and npm is the maintainer validation platform. Other platforms remain unverified. From this directory:
 
 ```sh
-npm install
+npm ci --prefix ../../packages/p2p
+npm ci
 npm run dev
 ```
 
@@ -32,9 +33,30 @@ Run a second instance with separate storage:
 npm run dev -- --storage /tmp/ecommerce-peer-demo
 ```
 
-On the first app choose **Share store data** and copy the key. On the second app enter it and the saved order reference, then choose **Fetch peer order**. Both peers must be reachable and online. The app replicates the remote core before reading and waits for a live connection, so a cached receipt is not presented as a fresh fetch.
+On the first app choose **Create read invitation** and copy the code. On the
+second app enter it and the saved order reference, then choose **Fetch peer
+order**. Both devices must be reachable and online. The code can pair one device
+within 15 minutes. After pairing, that device retains receipt-read access and
+reconnects by its saved identity; invitation expiry does not revoke the pairing.
+Create a new invitation for another device. Treat codes as secrets and send them
+to the intended recipient through a trusted channel.
 
-Sharing exposes the **entire database, including the cart and all orders**, to anyone who knows the key. There is no recipient identity approval. Recipients can retain downloaded copies. Use demo data only. This is a single-writer retrieval example, not multi-writer commerce or a secure customer order service.
+The app uses `@unstoppable-stack/p2p/rpc`, not raw database-key sharing.
+[orders.js](./orders.js) defines the shared `orders.get` contract, validates order
+references and allowlists receipt fields. `_cart` and arbitrary database keys
+are rejected. The private Corestore is never attached to replication. The worker
+binds `peer.client(ordersContract)` and sends JSON results over the existing IPC
+bridge; the renderer never imports native networking or database code. A fetch
+requires a live RPC response and is never served from a cached remote replica.
+
+A paired device can request any demo receipt by reference and retain its results.
+There is no customer identity, order ownership policy or revoke-device UI in
+this example; the runtime provides `node.unpair(publicKey)` for apps implementing
+that control. This remains a trusted-device demo, not a customer order service,
+payment system or collaborative commerce database. The local source link uses
+the `0.6.0-alpha.2` candidate; `/rpc` is absent from published `0.6.0-alpha.1`.
+See the [RPC/sync notes example](../p2p-notes/README.md) and separate
+[collaborative database prototype](../p2p-database/README.md).
 
 Local data lives in Electron userData under `pear`; `--storage` selects a separate directory. The app name changed from `coffee-assistant` to `ecommerce-assistant`, so the default data directory also changes. Old data is left in place. No migration or deletion is performed.
 
@@ -50,7 +72,7 @@ ECOMMERCE_TEST_PUBLIC_DHT=1 node scripts/ecommerce-example-e2e.mjs
 
 The desktop test uses real Electron/Bare instances, temporary storage, and an isolated real local DHT by default. It exercises catalog checkout, totals, order retrieval, restart persistence, disconnect, and retrieval of a new order after reconnect. The public-DHT variant is a separate Internet-reachability check. Neither test loads a model. Use `node scripts/ecommerce-demo.mjs` for a real-model screenshot run; do not set `QVAC_MOCK=1` as native inference evidence.
 
-The predecessor's runtime passed historical maintainer checks for native inference, cancellation/reuse, retry, and cached offline inference. On 16 October 2026, the ecommerce example passed the isolated local-DHT desktop test (including cart and order restart persistence, duplicate-reference rejection, and reconnect retrieval). A real QVAC run recommended the catalog’s Everyday Daypack for carrying a laptop and completed demo checkout; that run also announced a sharing key on the public DHT. This is not public peer retrieval acceptance. Fresh installation, broader shopping-response evaluation, offline inference restart, public peer retrieval, independent reproduction, other operating systems, and packaged distribution remain separate gates. See [validation and release checks](../../docs/validation.md).
+The predecessor's runtime passed historical maintainer checks for native inference, cancellation/reuse, retry, and cached offline inference. On 16 October 2026, the ecommerce example passed the isolated local-DHT desktop test (including cart and order restart persistence, duplicate-reference rejection, and reconnect retrieval). A real QVAC run recommended the catalog’s Everyday Daypack for carrying a laptop and completed demo checkout; that run also announced a sharing key on the public DHT. This is not public peer retrieval acceptance. After the RPC migration, the local-DHT desktop test passed scoped invitations, rejection of private cart lookups and reconnect grants. The earlier raw-key demo run does not establish acceptance of these new paths. Fresh installation, broader shopping-response evaluation, offline inference restart, public peer retrieval, independent reproduction, other operating systems, and packaged distribution remain separate gates. See [validation and release checks](../../docs/validation.md).
 
 The AI session is vendored in `.unstoppable/runtime-ai/`; app prompts, catalog, checkout, and peer retrieval remain app-owned. `us compatibility check -o examples/ecommerce-assistant` proposes differences without editing the app. Never use forced regeneration to upgrade an edited app.
 
@@ -60,7 +82,7 @@ The AI session is vendored in `.unstoppable/runtime-ai/`; app prompts, catalog, 
 - Worker fails: inspect the launching terminal and attach the environment summary from `us doctor --json`.
 - Model fails: check disk space and initial-download connectivity, then use Retry. Cached inference needs a previously successful download.
 - Missing cart or order: confirm the application name and storage directory match the previous run.
-- Peer unavailable: confirm both apps are online, sharing is announced, and the key/reference are correct.
+- Peer unavailable: confirm both apps are online, the invitation is valid, and the order reference is correct. A consumed invitation works only for the already paired device.
 
 The [selected GGUF](https://huggingface.co/unsloth/Qwen3.5-0.8B-GGUF) is labeled Apache-2.0 by its publisher; see the [upstream model license](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/LICENSE). Model weights are downloaded on first use, not bundled. `scripts/qvac-download-e2e.mjs` remains the separate cold/interrupted-download and isolated-cache acceptance check.
 
