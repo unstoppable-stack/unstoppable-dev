@@ -57,7 +57,8 @@ test('installed P2P and Personal Node pair, authorize and stream without source 
     await host.start()
     client = createNode({ storage: join(storage, 'client'), swarm })
     await client.ready()
-    const peer = await client.connect(host.publicKey)
+    const invite = await host.createInvite({ grants: { sync: ['usage', 'status'], ai: ['completion.stream'] }, uses: 1 })
+    const peer = await client.pair(invite.code)
     assert.equal((await peer.call('sync', 'usage')).scope, 'self')
     assert.deepEqual((await peer.call('sync', 'status')).cores, [])
     let output = ''
