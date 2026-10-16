@@ -1,4 +1,4 @@
-import { createServer } from 'node:net'
+import { createSocket } from 'node:dgram'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -6,10 +6,10 @@ import DHT from 'hyperdht'
 import { createNotesPeer } from '../src/notes.js'
 
 export async function createEnvironment() {
-  const server = createServer()
+  const server = createSocket('udp4')
   await new Promise((resolve, reject) => {
     server.once('error', reject)
-    server.listen(0, '127.0.0.1', resolve)
+    server.bind(0, '127.0.0.1', resolve)
   })
   const port = server.address().port
   await new Promise(resolve => server.close(resolve))

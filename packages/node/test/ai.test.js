@@ -3,15 +3,15 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { createServer } from 'net'
+import { createSocket } from 'dgram'
 import DHT from 'hyperdht'
 import { createNode } from '@unstoppable-stack/p2p'
 import { aiPack } from '../src/ai/index.js'
 
 function getFreePort () {
   return new Promise((resolve, reject) => {
-    const srv = createServer()
-    srv.listen(0, '127.0.0.1', () => {
+    const srv = createSocket('udp4')
+    srv.bind(0, '127.0.0.1', () => {
       const port = srv.address().port
       srv.close(() => resolve(port))
     })

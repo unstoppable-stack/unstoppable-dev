@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { createServer } from 'net'
+import { createSocket } from 'dgram'
 import DHT from 'hyperdht'
 import { createNode } from '@unstoppable-stack/p2p'
 import { aiPack } from '../src/ai/index.js'
@@ -15,8 +15,8 @@ const QVAC_TEST_TIMEOUT = Number(process.env.QVAC_TEST_TIMEOUT || 3_000_000)
 
 function getFreePort () {
   return new Promise((resolve, reject) => {
-    const server = createServer()
-    server.listen(0, '127.0.0.1', () => {
+    const server = createSocket('udp4')
+    server.bind(0, '127.0.0.1', () => {
       const port = server.address().port
       server.close(() => resolve(port))
     })

@@ -28,7 +28,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createServer } from 'node:net'
+import { createSocket } from 'node:dgram'
 import DHT from 'hyperdht'
 import { createNode, PROTOCOL_VERSION } from '@unstoppable-stack/p2p'
 import { syncPack, validateResourceManifest } from '@unstoppable-stack/p2p/sync'
@@ -37,10 +37,10 @@ import { PersonalNode } from 'unstoppable-node/personal-node'
 
 test('installed P2P and Personal Node pair, authorize and stream without source links', { timeout: 60000 }, async () => {
   const storage = await mkdtemp(join(tmpdir(), 'installed-node-'))
-  const server = createServer()
+  const server = createSocket('udp4')
   await new Promise((resolve, reject) => {
     server.once('error', reject)
-    server.listen(0, '127.0.0.1', resolve)
+    server.bind(0, '127.0.0.1', resolve)
   })
   const port = server.address().port
   await new Promise(resolve => server.close(resolve))
