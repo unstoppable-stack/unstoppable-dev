@@ -9,7 +9,7 @@ come from upstream SDKs, not separately published Unstoppable wrapper packages.
 | `@unstoppable-stack/cli` | Workspace setup, app scaffolding, diagnostics and compatibility checks | `0.4.0-beta.1` published under `beta`; `latest` remains `0.3.0` |
 | `@unstoppable-stack/p2p` | Identity, discovery, pairing, permissions, RPC, streaming and optional replication | `0.6.0-alpha.1` published under `alpha` |
 | Claude and Codex `unstoppable-stack` plugins | Shared workflows and integration guidance | Public repository catalogs and downloadable previews; no official host directory listing |
-| `unstoppable-node` | Personal Node daemon, local administration, replication and optional delegated QVAC inference | `0.4.0` published; reorganized `0.6.0-alpha.1` source unpublished and deferred |
+| `unstoppable-node` | Personal Node daemon, local administration, replication and optional delegated QVAC inference | `0.4.0` published; reorganized `0.6.0-alpha.2` source unpublished and deferred |
 | `runtime-ai` | Tested lifecycle helpers copied into generated desktop/Node apps | Private implementation, not a public dependency |
 | Website, agent-pack source, desktop applications | Documentation, shared guidance/builds and app shells | Private npm packages |
 | Memory and Search | Retained experimental implementations | Excluded from this release |

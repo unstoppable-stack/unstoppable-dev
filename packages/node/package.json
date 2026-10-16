@@ -1,6 +1,6 @@
 {
   "name": "unstoppable-node",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "description": "Personal Node for Unstoppable Stack apps — replicates and seeds declared P2P data",
   "type": "module",
   "main": "src/index.js",

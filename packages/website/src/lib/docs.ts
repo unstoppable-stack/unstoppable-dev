@@ -50,7 +50,7 @@ export const docsPages: DocPage[] = [
         "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.1 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
         "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.1 is published under alpha; install that exact version.",
         "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Local prototypes exist; public marketplace listings remain pending. Local-install preview downloads are available in the Claude and Codex guides.",
-        "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.1 source. It is outside the core preview.",
+        "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.2 source. It is outside the core preview.",
       ] },
       { type: "code", language: "bash", code: "npm install @unstoppable-stack/p2p@0.6.0-alpha.1" },
       { type: "code", language: "js", code: "// Published alpha imports.\nimport { createNode } from '@unstoppable-stack/p2p'\nimport { syncPack } from '@unstoppable-stack/p2p/sync'" },
@@ -233,7 +233,7 @@ export const docsPages: DocPage[] = [
     category: "Connect",
     verifiedOn: "16 October 2026",
     blocks: [
-      { type: "lead", text: "Personal Node is an optional application composed from the P2P runtime, its sync pack and an internal QVAC adapter. The reorganized 0.6.0-alpha.1 source is unpublished and deferred from the core preview; published 0.4.0 has a different API." },
+      { type: "lead", text: "Personal Node is an optional application composed from the P2P runtime, its sync pack and an internal QVAC adapter. The reorganized 0.6.0-alpha.2 source is unpublished and deferred from the core preview; published 0.4.0 has a different API." },
       { type: "heading", text: "Local operator API" },
       { type: "list", items: [
         "PersonalNode.start()/close() manage the host. getStatus() reports all peers, resources, quotas, invitations and AI readiness to the owner.",
