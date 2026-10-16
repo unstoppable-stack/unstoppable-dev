@@ -111,7 +111,7 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Unstoppable Stack',
-          homepage: 'https://unstoppable.dev'
+          homepage: 'https://unstoppable-stack.dev'
         }
       },
       platforms: ['linux']

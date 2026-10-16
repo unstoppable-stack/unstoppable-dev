@@ -58,17 +58,20 @@ for (const name of [...nodeLine, 'cli', 'desktop']) {
   check(pkg.repository?.url === 'https://github.com/unstoppable-stack/unstoppable-dev.git', `${name} repository URL is not the public repository`)
 }
 
-const generatorFiles = [
-  'packages/cli/src/generators/node-cli.ts',
-  'packages/cli/src/generators/pear-desktop.ts',
-  'packages/cli/src/generators/expo-mobile.ts'
-]
-for (const file of generatorFiles) {
+// Generators now obtain their dependencies from the compatibility manifest.
+// Verify the active source instead of requiring obsolete inline literals.
+const compatibility = JSON.parse(await readFile(resolve(root, 'packages/cli/src/compatibility/profiles.json'), 'utf8'))
+for (const platform of ['node-cli', 'pear-desktop', 'expo-mobile']) {
+  const file = `packages/cli/src/generators/${platform}.ts`
   const source = await readFile(resolve(root, file), 'utf8')
-  check(
-    source.includes(`'@unstoppable-stack/node-core': '^${packages.core.version}'`),
-    `${file} does not generate the release node-core version`
-  )
+  check(source.includes('dependenciesFor(opts)'), `${file} must use the compatibility dependency resolver`)
+  const features = compatibility.profiles[platform]?.featureDependencies
+  for (const feature of platform === 'node-cli' ? ['node-sync', 'node-host'] : ['node-sync']) {
+    check(
+      features?.[feature]?.['@unstoppable-stack/node-core'] === `^${packages.core.version}`,
+      `${platform} ${feature} compatibility profile does not generate the release node-core version`
+    )
+  }
 }
 
 const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
