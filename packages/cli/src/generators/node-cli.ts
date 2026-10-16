@@ -99,8 +99,6 @@ function entryPoint(opts: GeneratorOptions): GeneratedFile {
 
   const initCalls: string[] = [
     `const store = new Corestore('./storage')`,
-    `const swarm = createSwarm(store)`,
-    `console.log('P2P swarm started')`,
   ]
 
   const cleanupCalls: string[] = [`await swarm.destroy()`]
@@ -109,7 +107,10 @@ function entryPoint(opts: GeneratorOptions): GeneratedFile {
     // BOOTSTRAP_KEY empty => create a new database. Set it to another
     // device's key to join that device's mesh instead.
     initCalls.push(
-      `const db = await createStore(store, './storage', process.env.BOOTSTRAP_KEY || null)`,
+      `const db = await createStore(store, './storage', process.env.BOOTSTRAP_KEY || null).catch(async (error: unknown) => {`,
+      `  await store.close()`,
+      `  throw error`,
+      `})`,
       `console.log('Multi-writer store ready')`,
       `console.log('  database key:', db.key)`,
       `console.log('  this writer :', db.writerKey)`,
@@ -123,6 +124,13 @@ function entryPoint(opts: GeneratorOptions): GeneratedFile {
       `console.log('Storage ready')`,
     )
   }
+
+  // Every connection must use Autobee's wakeup protocol from the start.
+  // Do not expose a swarm while its database is still initializing.
+  initCalls.push(
+    `const swarm = createSwarm(store${multiWriter ? ', (conn: any) => db.autobee.replicate(conn)' : ''})`,
+    `console.log('P2P swarm started')`,
+  )
 
   if (has(opts, 'local-ai')) {
     imports.push(`import { setupAI } from './ai-manager.js'`)
@@ -177,12 +185,12 @@ function swarmManager(): GeneratedFile {
     content: `import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })

@@ -2,12 +2,15 @@ import { EventEmitter } from 'bare-events'
 import { AbortControllerImpl } from './abort.js'
 import { jsonBytes, resourceError } from './limits.js'
 import { MESSAGE } from './protocol.js'
+import { createClient, procedureMetadata } from './rpc.js'
 import {
+  NodeError,
   CancelledError,
   ClosedError,
   NotGrantedError,
   RequestTimeoutError,
-  errorFromRemote
+  errorFromRemote,
+  normalizeError
 } from './errors.js'
 
 // A paired remote. Symmetric by construction: the same object exposes the
@@ -40,7 +43,8 @@ export class Peer extends EventEmitter {
     this._api = null
     this._nextId = 0
     this._outbound = new Map()   // requestId -> pending unary or stream queue
-    this._inbound = new Map()    // requestId -> AbortController
+    this._inbound = new Map()    // live requestId -> AbortController
+    this._runningInbound = new Map() // physical work, including cancelled handlers
     this.helloed = deferred()
     this.pairing = deferred()
   }
@@ -66,6 +70,10 @@ export class Peer extends EventEmitter {
   // far side actually declared. Unary vs streaming is decided at call time by
   // how the result is used: it is a promise that is also an async iterable,
   // which avoids making the caller know which kind a method is.
+  client (contract) {
+    return createClient(this, contract)
+  }
+
   get api () {
     if (this._api) return this._api
     const capabilities = this.capabilities || {}
@@ -84,11 +92,13 @@ export class Peer extends EventEmitter {
   _invoke (capability, method, params = {}, opts = {}) {
     const peer = this
     let stream = null
+    let unary = null
 
     // Lazily start whichever mode the caller asks for. Awaiting runs a unary
     // call; iterating opens a stream. Doing both on one handle is a mistake,
     // and it throws rather than quietly issuing two requests.
     const startStream = () => {
+      if (unary) throw new ClosedError(`${capability}.${method} is already being consumed as a promise`)
       if (stream) return stream
       stream = peer.stream(capability, method, params, opts)
       return stream
@@ -101,7 +111,8 @@ export class Peer extends EventEmitter {
             new ClosedError(`${capability}.${method} is already being consumed as a stream`)
           ).then(resolve, reject)
         }
-        return peer.call(capability, method, params, opts).then(resolve, reject)
+        unary ||= peer.call(capability, method, params, opts)
+        return unary.then(resolve, reject)
       },
       catch (fn) { return this.then(undefined, fn) },
       finally (fn) { return this.then().finally(fn) },
@@ -118,8 +129,9 @@ export class Peer extends EventEmitter {
     return this._message.send(msg)
   }
 
-  async call (capability, method, params = {}, { timeout = 30_000, signal } = {}) {
+  async call (capability, method, params, { timeout = 30_000, signal, version } = {}) {
     this._assertOpen()
+    this._assertMethodKind(capability, method, 'unary')
     if (this._outbound.size >= this.node.limits.maxRequestsPerPeer) throw resourceError('Too many outgoing requests')
     const requestId = this._newRequestId()
     const pending = deferred()
@@ -152,13 +164,14 @@ export class Peer extends EventEmitter {
     }
 
     this._outbound.set(requestId, { resolve, reject, capability, method })
-    try { this.send({ type: MESSAGE.CALL, requestId, capability, method, params }) }
+    try { this.send({ type: MESSAGE.CALL, requestId, capability, method, params, kind: 'unary', version }) }
     catch (error) { reject(error) }
     return pending.promise
   }
 
-  async * stream (capability, method, params = {}, { signal } = {}) {
+  async * stream (capability, method, params, { signal, timeout = 30_000, version } = {}) {
     this._assertOpen()
+    this._assertMethodKind(capability, method, 'stream')
     if (this._outbound.size >= this.node.limits.maxRequestsPerPeer) throw resourceError('Too many outgoing requests')
     const requestId = this._newRequestId()
     const queue = new AsyncQueue(this.node.limits)
@@ -175,8 +188,12 @@ export class Peer extends EventEmitter {
 
     this._outbound.set(requestId, { queue, capability, method })
     let exhausted = false
+    const timer = timeout > 0 ? setTimeout(() => {
+      this.send({ type: MESSAGE.CANCEL, requestId })
+      queue.fail(new RequestTimeoutError(capability, method, timeout))
+    }, timeout) : null
     try {
-      this.send({ type: MESSAGE.CALL, requestId, capability, method, params })
+      this.send({ type: MESSAGE.CALL, requestId, capability, method, params, kind: 'stream', version })
       for await (const value of queue) yield value
       exhausted = true
     } finally {
@@ -185,6 +202,7 @@ export class Peer extends EventEmitter {
       // Closing the local iterator marks its queue finished too. Track
       // natural exhaustion separately so an early return reaches the host.
       if (!exhausted && !queue.error) this.send({ type: MESSAGE.CANCEL, requestId })
+      if (timer) clearTimeout(timer)
       if (signal) signal.removeEventListener('abort', onAbort)
       this._outbound.delete(requestId)
     }
@@ -208,33 +226,57 @@ export class Peer extends EventEmitter {
     if (typeof requestId !== 'string' || requestId.length > 64 ||
         typeof capability !== 'string' || capability.length > 128 ||
         typeof method !== 'string' || method.length > 128) { await this.close(); return }
-    const fail = (error) => this.send({ type: MESSAGE.ERROR, requestId,
-      code: error.code || 'REQUEST_FAILED', message: error.message,
-      capability, method })
+    let terminal = false
+    const fail = (value) => {
+      if (terminal || this.closed) return
+      terminal = true
+      const error = normalizeError(value)
+      const frame = { type: MESSAGE.ERROR, requestId, code: error.code,
+        message: error.message.slice(0, 512), capability, method }
+      try { this.send(frame) } catch {
+        try { this.send({ type: MESSAGE.ERROR, requestId, code: 'REQUEST_FAILED', message: 'Request failed' }) }
+        catch { this.close() }
+      }
+    }
     // Reusing an active id must not replace its abort controller.
-    if (this._inbound.has(requestId)) { await this.close(); return }
+    if (this._runningInbound.has(requestId)) { await this.close(); return }
     if (!this.paired || !this.node.capabilities.isGranted(this.grantsGiven, capability, method)) {
       fail(new NotGrantedError(capability, method)); return
     }
     const limits = this.node.limits
-    if (this._inbound.size >= limits.maxRequestsPerPeer || this.node._activeRequests >= limits.maxRequests) {
+    if (this._runningInbound.size >= limits.maxRequestsPerPeer || this.node._activeRequests >= limits.maxRequests) {
       fail(resourceError('Node request capacity reached')); return
     }
     const controller = new AbortControllerImpl()
     controller.capability = capability
     controller.method = method
     this._inbound.set(requestId, controller)
+    this._runningInbound.set(requestId, controller)
     this.node._activeRequests++
+    const cleanup = () => {
+      clearTimeout(timer)
+      this._inbound.delete(requestId)
+    }
     const timer = setTimeout(() => {
-      controller.abort()
       fail(new RequestTimeoutError(capability, method, limits.requestTimeoutMs))
+      controller.abort()
     }, limits.requestTimeoutMs)
+    controller.signal.addEventListener('abort', cleanup, { once: true })
     let bytes = 0
     try {
-      const { handler, streaming } = this.node.capabilities.resolve(capability, method)
+      const { pack, handler, streaming } = this.node.capabilities.resolve(capability, method)
+      if (msg.version != null && msg.version !== (pack.version ?? 1)) {
+        throw new NodeError('INCOMPATIBLE_CAPABILITY', `Unsupported ${capability} version`)
+      }
+      if (msg.kind != null && msg.kind !== (streaming ? 'stream' : 'unary')) {
+        throw new NodeError('METHOD_KIND_MISMATCH', `Wrong invocation kind for ${capability}.${method}`)
+      }
       const ctx = { peer: this, appId: this.appId, grants: this.grantsGiven, signal: controller.signal }
+      // Typed parsers own optional/default/nullable input semantics. Preserve
+      // their exact wire input while keeping the legacy empty-object default.
+      const input = procedureMetadata(handler) ? params : params ?? {}
       if (streaming) {
-        for await (const value of handler(params ?? {}, ctx)) {
+        for await (const value of handler(input, ctx)) {
           if (controller.signal.aborted || this.closed) break
           bytes += jsonBytes(value)
           if (bytes > limits.maxStreamBytes) throw resourceError('Stream output exceeds byte limit')
@@ -242,17 +284,24 @@ export class Peer extends EventEmitter {
             await this._waitForDrain(controller.signal)
           }
         }
-        if (!controller.signal.aborted) this.send({ type: MESSAGE.END, requestId })
+        if (!controller.signal.aborted) {
+          this.send({ type: MESSAGE.END, requestId })
+          terminal = true
+        }
       } else {
-        const value = await handler(params ?? {}, ctx)
-        if (!controller.signal.aborted) this.send({ type: MESSAGE.RESULT, requestId, value: value === undefined ? null : value })
+        const value = await handler(input, ctx)
+        if (!controller.signal.aborted) {
+          this.send({ type: MESSAGE.RESULT, requestId, value: value === undefined ? null : value })
+          terminal = true
+        }
       }
     } catch (err) {
       if (!controller.signal.aborted && !this.closed) fail(err)
-      this.node.emit('requestError', { peer: this, capability, method, error: err.message })
+      this.node.emit('requestError', { peer: this, capability, method, error: normalizeError(err).message })
     } finally {
-      clearTimeout(timer)
-      this._inbound.delete(requestId)
+      cleanup()
+      controller.signal.removeEventListener('abort', cleanup)
+      this._runningInbound.delete(requestId)
       this.node._activeRequests--
     }
   }
@@ -280,12 +329,17 @@ export class Peer extends EventEmitter {
 
   _onResult (msg) {
     const pending = this._outbound.get(msg.requestId)
-    if (pending?.resolve) pending.resolve(msg.value)
+    if (pending?.queue) {
+      pending.queue.fail(new NodeError('METHOD_KIND_MISMATCH', 'Expected a stream, received a unary result'))
+    } else if (pending?.resolve) pending.resolve(msg.value)
   }
 
   _onChunk (msg) {
     const pending = this._outbound.get(msg.requestId)
-    if (pending?.queue && !pending.queue.push(msg.value)) {
+    if (pending?.reject) {
+      pending.reject(new NodeError('METHOD_KIND_MISMATCH', 'Expected a unary result, received a stream'))
+      this.send({ type: MESSAGE.CANCEL, requestId: msg.requestId })
+    } else if (pending?.queue && !pending.queue.push(msg.value)) {
       this.send({ type: MESSAGE.CANCEL, requestId: msg.requestId })
     }
   }
@@ -293,6 +347,7 @@ export class Peer extends EventEmitter {
   _onEnd (msg) {
     const pending = this._outbound.get(msg.requestId)
     if (pending?.queue) pending.queue.end()
+    else if (pending?.reject) pending.reject(new NodeError('METHOD_KIND_MISMATCH', 'Expected a unary result, received a stream'))
   }
 
   _onError (msg) {
@@ -305,6 +360,15 @@ export class Peer extends EventEmitter {
 
   _newRequestId () {
     return String(++this._nextId)
+  }
+
+  _assertMethodKind (capability, method, kind) {
+    // Leave permission failures to the host, preserving NOT_GRANTED precedence.
+    if (this.grantsReceived && !this.node.capabilities.isGranted(this.grantsReceived, capability, method)) return
+    const advertised = this.capabilities?.[capability]?.methodKinds?.[method]
+    if (advertised && advertised !== kind) {
+      throw new NodeError('METHOD_KIND_MISMATCH', `Wrong invocation kind for ${capability}.${method}`)
+    }
   }
 
   _assertOpen () {
@@ -323,7 +387,7 @@ export class Peer extends EventEmitter {
     }
     this._outbound.clear()
 
-    for (const controller of this._inbound.values()) controller.abort()
+    for (const controller of this._runningInbound.values()) controller.abort()
     this._inbound.clear()
 
     this.helloed.reject(err)

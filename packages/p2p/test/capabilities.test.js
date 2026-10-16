@@ -20,7 +20,7 @@ describe('capability registry', () => {
 
   it('describes packs for the handshake', () => {
     const registry = new CapabilityRegistry([pack])
-    assert.deepEqual(registry.describe(), { notes: { version: 2, methods: ['search', 'watch'] } })
+    assert.deepEqual(registry.describe(), { notes: { version: 2, methods: ['search', 'watch'], methodKinds: { search: 'unary', watch: 'stream' } } })
   })
 
   it('resolves methods and flags streaming', () => {

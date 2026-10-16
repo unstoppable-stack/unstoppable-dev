@@ -110,7 +110,7 @@ describe('personal node', () => {
     assert.equal(status.cores.length, 0, 'the peer\'s resources stopped replicating')
   })
 
-  it('pauses and resumes a peer on request', async () => {
+  it('persists operator pause across restart and resumes a peer on request', async () => {
     env = await createTestEnv()
     const node = await env.makeNode({ topic: null })
     await node.start()
@@ -125,8 +125,12 @@ describe('personal node', () => {
     assert.equal(await node.pausePeer(client.publicKey) > 0, true)
     assert.equal((await node.getStatus()).cores.every((c) => c.paused), true)
 
-    assert.equal(await node.resumePeer(client.publicKey) > 0, true)
-    assert.equal((await node.getStatus()).cores.every((c) => c.paused), false)
+    await node.close()
+    const restarted = await env.makeNode({ topic: null, storage: node.storagePath })
+    await restarted.start()
+    assert.equal((await restarted.getStatus()).cores.every((c) => c.paused), true)
+    assert.equal(await restarted.resumePeer(client.publicKey) > 0, true)
+    assert.equal((await restarted.getStatus()).cores.every((c) => c.paused), false)
   })
 
   it('toggles AI through config and reports it in status', async () => {

@@ -50,6 +50,9 @@ Published CLI `0.3.0` and Node `0.4.0` retain their existing APIs. See
 [package architecture and migration](docs/package-architecture.md) for status,
 imports, local development and release assembly. See
 [plugin setup](packages/agent-pack/PLUGIN.md) for local Claude/Codex previews.
+The [P2P documentation index](packages/p2p/docs/README.md) covers the shared API;
+the [capability inventory](packages/p2p/docs/roadmap.md) maps the broader Node
+service plans to implemented features, missing contracts and package owners.
 The [P2P notes example](examples/p2p-notes/README.md) consumes the consolidated
 library directly. [Canonical release preparation](docs/public-release.md)
 tests both public npm artifacts and builds the plugin download.
@@ -154,9 +157,6 @@ unstoppable-stack/
 │   ├── node/             # Optional Personal Node app; internal QVAC adapter
 │   ├── runtime-ai/       # Private lifecycle helpers copied into generated apps
 │   ├── website/          # unstoppable-stack.dev — Next.js site
-│   ├── runtime-ai/       # Maintained desktop/Node AI lifecycle
-│   ├── p2p/              # P2P library (alpha)
-│   ├── node/             # Personal Node composition (alpha)
 │   ├── node-desktop/     # Personal Node desktop shell (alpha)
 │   └── memory*/          # Deferred Memory experiments
 ├── examples/             # First-party examples and smoke fixtures

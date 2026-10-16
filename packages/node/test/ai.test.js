@@ -109,7 +109,7 @@ describe('ai capability pack', () => {
     const client = await makeNode({})
     const peer = await client.connect(host.publicKey)
 
-    assert.deepEqual(peer.capabilities.ai, { version: 1, methods: ['completion.stream'] })
+    assert.deepEqual(peer.capabilities.ai, { version: 1, methods: ['completion.stream'], methodKinds: { 'completion.stream': 'stream' } })
   })
 
   it('keeps the node usable when the model fails to load', async () => {

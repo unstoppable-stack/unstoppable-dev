@@ -29,6 +29,31 @@ loading, native cancellation/reuse, or offline inference.
 
 ## Release artifacts and native acceptance
 
+The P2P correctness/API work has a standalone installed-consumer gate:
+
+```bash
+npm test --prefix packages/p2p
+npm run test:types --prefix packages/p2p
+node scripts/p2p-artifact-smoke.mjs
+BARE_BIN=/absolute/path/to/supported/bare node scripts/p2p-artifact-smoke.mjs --bare
+```
+
+It packs the library into a temporary directory, installs it outside the checkout,
+checks that ordinary consumers do not install the optional Autobase engine, tests
+notes replication/offline restart and typed RPC, explicitly installs Autobase
+7.28.2, then runs the experimental database acceptance tests. The optional Bare
+step verifies native storage, advisory locks, ownership and sync attach/reopen.
+Fresh dependency resolution requires Bare >=1.32.0; the maintained desktop
+sidecar's Bare 1.34.1 was exercised. A global Bare 1.28.6 passes the older locked
+source tree but fails current registry resolution, so it is not a fresh-install
+acceptance runtime. These checks do not publish artifacts or validate native AI.
+
+The database prototype tests cover actual Autobase offline convergence,
+authenticated membership, adversarial log entries, writer removal, encrypted
+fresh-reader reconstruction and coexistence with RPC on a paired connection.
+They do not establish complete database backup, administrator recovery, schema
+migration or support for the `multi-writer` + `node-sync` combination.
+
 The [canonical package preparation](public-release.md) tests the CLI beta and
 P2P alpha as installed tarballs outside the repository. The P2P notes example
 covers granted RPC/streaming, denied access, real replication, and offline

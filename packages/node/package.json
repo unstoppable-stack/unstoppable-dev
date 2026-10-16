@@ -1,7 +1,7 @@
 {
   "name": "unstoppable-node",
   "version": "0.6.0-alpha.1",
-  "description": "Personal Node for Unstoppable Stack apps \u2014 replicates and seeds declared P2P data",
+  "description": "Personal Node for Unstoppable Stack apps — replicates and seeds declared P2P data",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -53,12 +53,12 @@
     "test:qvac": "node --test --test-force-exit --test-timeout 3000000 test/ai-provider-real.test.js"
   },
   "dependencies": {
+    "@unstoppable-stack/p2p": "file:../p2p",
     "b4a": "^1.8.0",
-    "bare-events": "^2.8.3",
+    "bare-events": "^2.9.2",
     "bare-fs": "^4.8.2",
     "bare-path": "^3.0.0",
-    "chalk": "^5.3.0",
-    "@unstoppable-stack/p2p": "file:../p2p"
+    "chalk": "^5.3.0"
   },
   "optionalDependencies": {
     "bare-env": "^3.0.0",
@@ -66,9 +66,9 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "hyperdht": "^6.34.1",
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
+    "hyperdht": "^6.34.1",
     "hyperdrive": "^12.3.0",
     "hyperswarm": "^4.17.2"
   }

@@ -3135,10 +3135,10 @@ async function main() {
   console.log('Starting snap-test...')
 
   const store = new Corestore('./storage')
-  const swarm = createSwarm(store)
-  console.log('P2P swarm started')
   const db = await createStorage(store)
   console.log('Storage ready')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
 
   console.log('snap-test is running. Press Ctrl+C to exit.')
 
@@ -3175,12 +3175,12 @@ export async function createStorage(store: any) {
     "content": "import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })
@@ -3724,10 +3724,10 @@ async function main() {
   console.log('Starting snap-test...')
 
   const store = new Corestore('./storage')
-  const swarm = createSwarm(store)
-  console.log('P2P swarm started')
   const db = await createStorage(store)
   console.log('Storage ready')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
   const ai = await setupAI()
   console.log('AI ready')
 
@@ -3767,12 +3767,12 @@ export async function createStorage(store: any) {
     "content": "import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })
@@ -3980,10 +3980,10 @@ async function main() {
   console.log('Starting snap-test...')
 
   const store = new Corestore('./storage')
-  const swarm = createSwarm(store)
-  console.log('P2P swarm started')
   const db = await createStorage(store)
   console.log('Storage ready')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
 
   console.log('snap-test is running. Press Ctrl+C to exit.')
 
@@ -4107,12 +4107,12 @@ export async function createStorage(store: any) {
     "content": "import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })
@@ -4329,10 +4329,10 @@ async function main() {
   console.log('Starting snap-test...')
 
   const store = new Corestore('./storage')
-  const swarm = createSwarm(store)
-  console.log('P2P swarm started')
   const db = await createStorage(store)
   console.log('Storage ready')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
   const nodeSync = setupNodeSync({ db })
 
   console.log('snap-test is running. Press Ctrl+C to exit.')
@@ -4444,12 +4444,12 @@ export async function createStorage(store: any) {
     "content": "import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })
@@ -4657,10 +4657,10 @@ async function main() {
   console.log('Starting snap-test...')
 
   const store = new Corestore('./storage')
-  const swarm = createSwarm(store)
-  console.log('P2P swarm started')
   const db = await createStorage(store)
   console.log('Storage ready')
+  const swarm = createSwarm(store)
+  console.log('P2P swarm started')
   const wallet = await setupWallet()
   console.log('Wallet ready (stub)')
 
@@ -4699,12 +4699,12 @@ export async function createStorage(store: any) {
     "content": "import Hyperswarm from 'hyperswarm'
 import crypto from 'hypercore-crypto'
 
-export function createSwarm(store: any) {
+export function createSwarm(store: any, replicate: (conn: any) => void = (conn) => store.replicate(conn)) {
   const swarm = new Hyperswarm()
 
   swarm.on('connection', (conn: any, info: any) => {
     console.log('Peer connected:', info.publicKey.toString('hex').slice(0, 8))
-    store.replicate(conn)
+    replicate(conn)
     conn.on('error', (err: Error) => console.error('Connection error:', err.message))
     conn.on('close', () => console.log('Peer disconnected'))
   })

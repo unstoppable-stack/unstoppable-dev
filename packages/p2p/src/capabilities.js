@@ -1,3 +1,4 @@
+import { procedureMetadata } from './rpc.js'
 import { InvalidOptionError, UnknownCapabilityError, UnknownMethodError } from './errors.js'
 
 // A capability pack is a plain object:
@@ -80,7 +81,10 @@ export class CapabilityRegistry {
     for (const [name, pack] of this.packs) {
       out[name] = {
         version: pack.version ?? 1,
-        methods: Object.keys(pack.methods)
+        methods: Object.keys(pack.methods),
+        methodKinds: Object.fromEntries(Object.entries(pack.methods).map(([name, handler]) => [
+          name, procedureMetadata(handler)?.kind || (isAsyncGeneratorFunction(handler) ? 'stream' : 'unary')
+        ]))
       }
     }
     return out
@@ -91,7 +95,7 @@ export class CapabilityRegistry {
     if (!pack) throw new UnknownCapabilityError(capability)
     const handler = Object.hasOwn(pack.methods, method) ? pack.methods[method] : undefined
     if (typeof handler !== 'function') throw new UnknownMethodError(capability, method)
-    return { pack, handler, streaming: isAsyncGeneratorFunction(handler) }
+    return { pack, handler, streaming: procedureMetadata(handler)?.kind === 'stream' || isAsyncGeneratorFunction(handler) }
   }
 
   defaultGrants () {

@@ -12,7 +12,7 @@ it('headless defaults refuse public-key pairing but accept scoped invitations', 
   await assert.rejects(() => client.connect(node.publicKey), { code: 'PAIR_DENIED' })
   const invite = await node.createInvite({ grants: { sync: ['status'] } })
   const peer = await client.pair(invite.code)
-  assert.deepEqual(await peer.call('sync', 'status'), { cores: [], drives: [] })
+  assert.deepEqual(await peer.call('sync', 'status'), { pauseScope: 'discovery-and-mirroring', cores: [], drives: [] })
   await assert.rejects(() => peer.call('ai', 'completion.stream', { messages: [{ role: 'user', content: 'hello' }] }), { code: 'NOT_GRANTED' })
 })
 

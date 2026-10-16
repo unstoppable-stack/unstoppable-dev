@@ -20,6 +20,11 @@ native runtimes or models. See [local plugin setup](../packages/agent-pack/PLUGI
 
 ## One P2P library
 
+See the [P2P documentation index](../packages/p2p/docs/README.md) for the
+runtime API, replication contract and reconciled capability roadmap. The
+[Personal Node management API](../packages/node/docs/api.md) stays with its app.
+These references distinguish currently callable methods from planned services.
+
 ```js
 import { createNode } from '@unstoppable-stack/p2p'
 import { syncPack } from '@unstoppable-stack/p2p/sync'

@@ -4,6 +4,7 @@ import Protomux from 'protomux'
 import { normalizeLimits, boundedJson } from './limits.js'
 import b4a from 'b4a'
 
+import { acquireStorageLock, runtimePath } from './runtime-files.js'
 import { loadIdentity } from './identity.js'
 import { CapabilityRegistry } from './capabilities.js'
 import { PeerRegistry } from './registry.js'
@@ -21,7 +22,7 @@ import {
   toPublicKeyBuffer,
   toPublicKeyHex
 } from './protocol.js'
-import { ClosedError, InvalidOptionError, PairDeniedError, PeerNotFoundError } from './errors.js'
+import { CancelledError, ClosedError, InvalidOptionError, PairDeniedError, PeerNotFoundError } from './errors.js'
 
 // How often an outstanding discover()/pair() re-queries the DHT.
 const DISCOVERY_RETRY_MS = 2_000
@@ -32,6 +33,9 @@ const DISCOVERY_RETRY_MS = 2_000
 export class UnstoppableNode extends EventEmitter {
   constructor (opts = {}) {
     super()
+    // Diagnostics remain observable without making malformed remote traffic
+    // crash an application that has not installed its own error listener.
+    this.on('error', () => {})
     if (!opts.storage || typeof opts.storage !== 'string') {
       throw new InvalidOptionError('createNode() needs a `storage` directory for identity and peers')
     }
@@ -76,6 +80,13 @@ export class UnstoppableNode extends EventEmitter {
     this._sticky = new Map()         // public key (hex) -> { attempts, timer, opts }
     this._reconnect = normalizeReconnect(opts.reconnect)
     this._readyPromise = null
+    this._closePromise = null
+    this._releaseStorage = null
+    this._attachedPacks = []
+    this._handshakeTimeout = opts.handshakeTimeoutMs ?? 30_000
+    if (!Number.isSafeInteger(this._handshakeTimeout) || this._handshakeTimeout < 1) {
+      throw new InvalidOptionError('handshakeTimeoutMs must be a positive safe integer')
+    }
   }
 
   get publicKey () {
@@ -91,21 +102,62 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   async ready () {
+    if (this.closed) throw new ClosedError()
     if (this._readyPromise) return this._readyPromise
     this._readyPromise = this._open()
     return this._readyPromise
   }
 
   async _open () {
-    this.identity = await loadIdentity(this.storage)
-    await this.peerRegistry.ready()
-    await this.invites.ready()
+    try {
+      this._releaseStorage = await acquireStorageLock(runtimePath.join(this.storage, 'runtime.lock'), { timeout: 0 })
+      if (this.closed) throw new ClosedError()
+      this.identity = await loadIdentity(this.storage)
+      await this.peerRegistry.ready()
+      await this.invites.ready()
+      if (this.closed) throw new ClosedError()
+      this.swarm = new Hyperswarm({ ...this._swarmOpts, keyPair: this.identity.keyPair })
+      this.swarm.on('connection', (socket, info) => this._onConnection(socket, info))
+      for (const pack of this.capabilities.packs.values()) {
+        this._attachedPacks.push(pack)
+        if (typeof pack.onAttach === 'function') await pack.onAttach(this)
+        if (this.closed) throw new ClosedError()
+      }
+      this.emit('ready', { publicKey: this.identity.publicKey })
+    } catch (error) {
+      try { await this._disposeResources() } catch (cleanupError) {
+        this.emit('error', { type: 'cleanup', error: cleanupError.message })
+      }
+      throw error
+    }
+  }
 
-    this.swarm = new Hyperswarm({ ...this._swarmOpts, keyPair: this.identity.keyPair })
-    this.swarm.on('connection', (socket, info) => this._onConnection(socket, info))
+  async _detachPacks () {
+    let failure = null
+    for (const pack of this._attachedPacks.splice(0).reverse()) {
+      try { await pack.onDetach?.() } catch (error) { failure ||= error }
+    }
+    if (failure) throw failure
+  }
 
-    await this.capabilities.attach(this)
-    this.emit('ready', { publicKey: this.identity.publicKey })
+  async _disposeResources () {
+    // Attempt every cleanup phase, even if transport or a hook rejects. The
+    // caller still receives the first cleanup error after ownership is released.
+    let failure = null
+    for (const cleanup of [
+      () => this.swarm?.destroy(),
+      () => this.peerRegistry.flushed(),
+      () => this.invites.flushed(),
+      () => this._detachPacks()
+    ]) {
+      try { await cleanup() } catch (error) { failure ||= error }
+    }
+    if (this._releaseStorage) {
+      const release = this._releaseStorage
+      this._releaseStorage = null
+      try { await release() } catch (error) { failure ||= error }
+    }
+    if (failure) throw failure
   }
 
   // Reachable by public key always; a topic is joined only when one is given.
@@ -117,14 +169,17 @@ export class UnstoppableNode extends EventEmitter {
     if (this.closed) throw new ClosedError()
 
     await this.swarm.listen()
+    if (this.closed) throw new ClosedError()
 
     const joinTopic = topic ?? this._topic
     if (joinTopic) {
       this.swarm.join(joinTopic, { server: true, client: false })
       await this.swarm.flush()
+      if (this.closed) throw new ClosedError()
     }
 
     await this._serveOutstandingInvites()
+    if (this.closed) throw new ClosedError()
     this._watchInvites()
 
     this.listening = true
@@ -138,10 +193,11 @@ export class UnstoppableNode extends EventEmitter {
   // Dial a known peer directly by public key. First contact for peers whose
   // key you do not have yet is an invite (Phase 3), which resolves to exactly
   // this call once the key is known.
-  async connect (publicKey, { requested = null, timeout = 15_000, reconnect } = {}) {
+  async connect (publicKey, { requested = null, timeout = 15_000, reconnect, signal } = {}) {
     await this.ready()
     if (this.closed) throw new ClosedError()
 
+    if (signal?.aborted) throw new CancelledError()
     const keyBuffer = toPublicKeyBuffer(publicKey)
     if (!keyBuffer || keyBuffer.length !== 32) {
       throw new InvalidOptionError('connect() needs a 32-byte public key (hex string or buffer)')
@@ -159,11 +215,24 @@ export class UnstoppableNode extends EventEmitter {
     const timer = timeout > 0
       ? setTimeout(() => {
           this._dialing.delete(hex)
+          signal?.removeEventListener('abort', onAbort)
+          if (!this._sticky.has(hex)) this.swarm.leavePeer(keyBuffer)
           pending.reject(new PeerNotFoundError(hex))
         }, timeout)
       : null
 
-    this._dialing.set(hex, { pending, requested, timer })
+    const onAbort = () => {
+      if (this._dialing.get(hex)?.pending !== pending) return
+      this._dialing.delete(hex)
+      clearTimeout(timer)
+      this._sticky.delete(hex)
+      this.swarm.leavePeer(keyBuffer)
+      const peer = this._peers.get(hex)
+      if (peer && !peer.paired) peer.close()
+      pending.reject(new CancelledError())
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+    this._dialing.set(hex, { pending, requested, timer, cleanup: () => signal?.removeEventListener('abort', onAbort) })
     // Only register; never overwrite. A retry dial goes through connect() too,
     // and resetting `attempts` here would make maxAttempts unreachable and
     // hide the fact that a successful dial was a *re*connection.
@@ -179,21 +248,27 @@ export class UnstoppableNode extends EventEmitter {
   // topic without knowing their key up front. This is how an app finds the
   // Personal Node on its own machine; after pairing, the key is stored and
   // every reconnect goes direct.
-  async discover ({ topic, timeout = 15_000, requested = null, reconnect } = {}) {
+  async discover ({ topic, timeout = 15_000, requested = null, reconnect, signal } = {}) {
     await this.ready()
     if (this.closed) throw new ClosedError()
 
+    if (this._discovering || this._redeeming) throw new InvalidOptionError('Another discovery or pairing operation is already active')
+    if (signal?.aborted) throw new CancelledError()
     const joinTopic = topic || localDiscoveryTopic()
     const pending = deferred()
     const timer = timeout > 0
       ? setTimeout(() => {
+          this._discovering?.cleanup(true)
           this._discovering = null
           pending.reject(new PeerNotFoundError('topic:' + b4a.toString(joinTopic, 'hex').slice(0, 12)))
         }, timeout)
       : null
 
-    this._discovering = { pending, requested, timer, reconnect: reconnect ?? this._reconnect.enabled }
-    this._keepLookingOn(joinTopic, () => this._discovering)
+    this._discovering = { topic: joinTopic, pending, requested, timer, reconnect: reconnect ?? this._reconnect.enabled }
+    const operation = this._discovering
+    this._setupDiscovery(operation, joinTopic, signal, () => {
+      if (this._discovering === operation) this._discovering = null
+    })
 
     return pending.promise
   }
@@ -216,13 +291,18 @@ export class UnstoppableNode extends EventEmitter {
       expiresIn,
       label
     })
+    if (this.closed) throw new ClosedError()
     await this.invites.reload()
+    if (this.closed) throw new ClosedError()
 
     // Serving the invite topic is what lets a peer that has never seen this
     // node find it. Reconnects afterwards go direct by key.
     await this.swarm.listen()
+    if (this.closed) throw new ClosedError()
     await this._serveOutstandingInvites()
+    if (this.closed) throw new ClosedError()
     await this.swarm.flush().catch(() => {})
+    if (this.closed) throw new ClosedError()
 
     this.emit('inviteCreated', { id: issued.id, expiresAt: issued.expiresAt, uses })
     return issued
@@ -243,6 +323,7 @@ export class UnstoppableNode extends EventEmitter {
   async _serveOutstandingInvites ({ reload = false } = {}) {
     if (this.closed) return
     if (reload) await this.invites.reload()
+    if (this.closed) return
 
     const live = new Set()
     let joined = 0
@@ -275,7 +356,7 @@ export class UnstoppableNode extends EventEmitter {
     if (this._inviteWatcher || this._inviteWatchMs <= 0) return
     this._inviteWatcher = setInterval(() => {
       this._serveOutstandingInvites({ reload: true }).catch((err) => {
-        this.emit('error', { type: 'invites', error: err.message })
+        if (!this.closed) this.emit('error', { type: 'invites', error: err.message })
       })
     }, this._inviteWatchMs)
     if (this._inviteWatcher.unref) this._inviteWatcher.unref()
@@ -293,11 +374,13 @@ export class UnstoppableNode extends EventEmitter {
     if (this.closed) throw new ClosedError()
 
     const topic = networkTopic(id)
-    this._networks.set(id, { id, topic, grants, requested, approve })
 
     await this.swarm.listen()
+    if (this.closed) throw new ClosedError()
+    this._networks.set(id, { id, topic, grants, requested, approve })
     this.swarm.join(topic, { server: true, client: true })
     await this.swarm.flush().catch(() => {})
+    if (this.closed) throw new ClosedError()
 
     this.emit('networkJoined', { id, topic: b4a.toString(topic, 'hex') })
     return { id, topic: b4a.toString(topic, 'hex') }
@@ -318,14 +401,17 @@ export class UnstoppableNode extends EventEmitter {
 
   // Redeem an invite code: derive its topic, find the issuer, and pair with
   // proof that we hold the secret.
-  async pair (code, { timeout = 20_000, requested = null, reconnect } = {}) {
+  async pair (code, { timeout = 20_000, requested = null, reconnect, signal } = {}) {
     await this.ready()
     if (this.closed) throw new ClosedError()
 
+    if (this._discovering || this._redeeming) throw new InvalidOptionError('Another discovery or pairing operation is already active')
+    if (signal?.aborted) throw new CancelledError()
     const invite = decodeInvite(code)
     const pending = deferred()
     const timer = timeout > 0
       ? setTimeout(() => {
+          this._redeeming?.cleanup(true)
           this._redeeming = null
           pending.reject(new PeerNotFoundError(invite.publicKey))
         }, timeout)
@@ -339,31 +425,53 @@ export class UnstoppableNode extends EventEmitter {
       reconnect: reconnect ?? this._reconnect.enabled
     }
 
-    this._keepLookingOn(invite.topic, () => this._redeeming)
+    const operation = this._redeeming
+    this._setupDiscovery(operation, invite.topic, signal, () => {
+      if (this._redeeming === operation) this._redeeming = null
+    })
 
     return pending.promise
   }
 
-  // Join a topic and keep re-querying while we are still waiting. One flush
-  // only finds peers already announced: a host that starts serving the topic a
-  // moment later — the normal case when an invite was just created — would
-  // otherwise go unnoticed until the caller's timeout.
-  _keepLookingOn (topic, stillWaiting) {
-    const discovery = this.swarm.join(topic, { server: false, client: true })
-
-    const poll = async () => {
-      if (this.closed || !stillWaiting()) return
-      try {
-        // `refresh()` re-queries the DHT for this topic. `swarm.flush()` only
-        // waits on queries already in flight, so polling it would never see a
-        // host that started announcing after the first lookup.
-        await discovery.refresh()
-      } catch {}
-      if (this.closed || !stillWaiting()) return
-      const timer = setTimeout(poll, DISCOVERY_RETRY_MS)
-      if (timer.unref) timer.unref()
+  _setupDiscovery (operation, topic, signal, remove) {
+    // Each join returns its own lease; destroying it preserves other joins.
+    let discovery
+    try {
+      discovery = this.swarm.join(topic, { server: false, client: true })
+    } catch (error) {
+      clearTimeout(operation.timer)
+      remove()
+      throw error
     }
-
+    let stopped = false
+    let pollTimer = null
+    const onAbort = () => {
+      operation.cleanup(true)
+      remove()
+      operation.pending.reject(new CancelledError())
+    }
+    operation.cleanup = (closePeers = false) => {
+      if (stopped) return
+      stopped = true
+      clearTimeout(operation.timer)
+      clearTimeout(pollTimer)
+      signal?.removeEventListener('abort', onAbort)
+      if (closePeers) {
+        for (const peer of this._peers.values()) {
+          if (!peer.paired && (peer._discovery === operation || operation.invite?.publicKey === peer.remotePublicKey)) peer.close()
+        }
+      }
+      discovery.destroy().catch(() => {})
+    }
+    signal?.addEventListener('abort', onAbort, { once: true })
+    if (signal?.aborted) onAbort()
+    const poll = async () => {
+      if (stopped || this.closed) return
+      try { await discovery.refresh() } catch {}
+      if (stopped || this.closed) return
+      pollTimer = setTimeout(poll, DISCOVERY_RETRY_MS)
+      if (pollTimer.unref) pollTimer.unref()
+    }
     poll()
   }
 
@@ -398,6 +506,11 @@ export class UnstoppableNode extends EventEmitter {
       // merely discovered.
       initiator: !!info?.client
     })
+
+    peer._discovery = this._discovering && info?.topics?.some(topic => b4a.equals(topic, this._discovering.topic))
+      ? this._discovering : null
+    peer._handshakeTimer = setTimeout(() => { peer.close() }, this._handshakeTimeout)
+    if (peer._handshakeTimer.unref) peer._handshakeTimer.unref()
 
     const message = channel.addMessage({
       encoding: boundedJson(this.limits.maxFrameBytes),
@@ -473,7 +586,7 @@ export class UnstoppableNode extends EventEmitter {
       // networks we are on and let them intersect. `info.topics` would answer
       // this directly but upstream has it marked for removal, and naming the
       // networks leaks nothing: those topics are already announced on the DHT.
-      const onNetwork = !dialing && !redeeming && !this._discovering && this._networks.size > 0
+      const onNetwork = !dialing && !redeeming && !peer._discovery && this._networks.size > 0
       const networkRequested = onNetwork
         ? [...this._networks.values()].find((n) => n.requested)?.requested ?? null
         : null
@@ -483,7 +596,7 @@ export class UnstoppableNode extends EventEmitter {
       peer.send({
         type: MESSAGE.PAIR_REQUEST,
         ...(onNetwork ? { networks: [...this._networks.keys()] } : {}),
-        requested: dialing?.requested ?? redeeming?.requested ?? this._discovering?.requested ?? networkRequested ?? null,
+        requested: dialing?.requested ?? redeeming?.requested ?? peer._discovery?.requested ?? networkRequested ?? null,
         ...(redeeming
           ? {
               invite: {
@@ -553,7 +666,7 @@ export class UnstoppableNode extends EventEmitter {
       })
       let decision
       try {
-        decision = await this._pairing.approve({
+        decision = await this._requestApproval(peer, this._pairing.approve, {
           publicKey: peer.remotePublicKey,
           profile: peer.profile,
           nodeType: peer.nodeType,
@@ -597,6 +710,16 @@ export class UnstoppableNode extends EventEmitter {
     return null
   }
 
+  async _requestApproval (peer, approve, request) {
+    if (peer.closed || this.closed) return 'deny'
+    let onClose
+    const closed = new Promise(resolve => { onClose = () => resolve('deny') })
+    peer.once('close', onClose)
+    try {
+      return await Promise.race([Promise.resolve().then(() => approve(request)), closed])
+    } finally { peer.removeListener('close', onClose) }
+  }
+
   async _askApproval (peer, msg, approve, extra = {}) {
     this.emit('pairRequest', {
       publicKey: peer.remotePublicKey,
@@ -607,7 +730,7 @@ export class UnstoppableNode extends EventEmitter {
     })
     let decision
     try {
-      decision = await approve({
+      decision = await this._requestApproval(peer, approve, {
         publicKey: peer.remotePublicKey,
         profile: peer.profile,
         nodeType: peer.nodeType,
@@ -651,6 +774,7 @@ export class UnstoppableNode extends EventEmitter {
       return false
     }
 
+    if (peer.closed || this.closed) return false
     const consumed = await this.invites.consume(id)
     if (!consumed) {
       peer.send({ type: MESSAGE.PAIR_DENIED, reason: 'invite has no uses left' })
@@ -693,11 +817,13 @@ export class UnstoppableNode extends EventEmitter {
     peer.pairing.reject(err)
     const dialing = this._dialing.get(peer.remotePublicKey)
     if (dialing) {
+      dialing.cleanup?.()
       if (dialing.timer) clearTimeout(dialing.timer)
       this._dialing.delete(peer.remotePublicKey)
       dialing.pending.reject(err)
     }
     if (this._redeeming && this._redeeming.invite.publicKey === peer.remotePublicKey) {
+      this._redeeming.cleanup?.()
       if (this._redeeming.timer) clearTimeout(this._redeeming.timer)
       this._redeeming.pending.reject(err)
       this._redeeming = null
@@ -709,6 +835,7 @@ export class UnstoppableNode extends EventEmitter {
   async _finishPairing (peer) {
     if (this.closed || peer.paired || peer.closed || this.peerRegistry.isDenied(peer.remotePublicKey)) return
     peer.paired = true
+    clearTimeout(peer._handshakeTimer)
 
     await this.peerRegistry.put({
       publicKey: peer.remotePublicKey,
@@ -726,9 +853,11 @@ export class UnstoppableNode extends EventEmitter {
     if (this.closed || peer.closed) return
     peer.pairing.resolve(peer)
     await this.capabilities.onPeer(peer)
+    if (this.closed || peer.closed) return
 
     const dialing = this._dialing.get(peer.remotePublicKey)
     if (dialing) {
+      dialing.cleanup?.()
       if (dialing.timer) clearTimeout(dialing.timer)
       this._dialing.delete(peer.remotePublicKey)
       dialing.pending.resolve(peer)
@@ -737,6 +866,7 @@ export class UnstoppableNode extends EventEmitter {
     if (this._redeeming && this._redeeming.invite.publicKey === peer.remotePublicKey) {
       const redeeming = this._redeeming
       this._redeeming = null
+      redeeming.cleanup?.()
       if (redeeming.timer) clearTimeout(redeeming.timer)
       if (redeeming.reconnect) {
         this._sticky.set(peer.remotePublicKey, { attempts: 0, timer: null, requested: redeeming.requested })
@@ -744,9 +874,10 @@ export class UnstoppableNode extends EventEmitter {
       redeeming.pending.resolve(peer)
     }
 
-    if (this._discovering) {
+    if (this._discovering && peer._discovery === this._discovering) {
       const discovering = this._discovering
       this._discovering = null
+      discovering.cleanup?.()
       if (discovering.timer) clearTimeout(discovering.timer)
       if (discovering.reconnect) {
         this._sticky.set(peer.remotePublicKey, { attempts: 0, timer: null, requested: discovering.requested })
@@ -810,6 +941,10 @@ export class UnstoppableNode extends EventEmitter {
     const hex = toPublicKeyHex(publicKey)
     const removed = this.peerRegistry.has(hex)
     await this.peerRegistry.deny(hex)
+    const sticky = this._sticky.get(hex)
+    if (sticky?.timer) clearTimeout(sticky.timer)
+    this._sticky.delete(hex)
+    this.swarm?.leavePeer(toPublicKeyBuffer(hex))
 
     const peer = this._peers.get(hex)
     if (peer) await peer.close()
@@ -822,6 +957,7 @@ export class UnstoppableNode extends EventEmitter {
     const peer = this._peers.get(remotePublicKey)
     if (!peer) return
     this._peers.delete(remotePublicKey)
+    clearTimeout(peer._handshakeTimer)
     peer._destroy('Peer disconnected')
     this.emit('peerDisconnected', { publicKey: remotePublicKey })
     this._scheduleReconnect(remotePublicKey)
@@ -854,23 +990,32 @@ export class UnstoppableNode extends EventEmitter {
     if (sticky.timer.unref) sticky.timer.unref()
   }
 
-  async close () {
-    if (this.closed) return
+  close () {
+    if (this._closePromise) return this._closePromise
     this.closed = true
+    this._closePromise = this._close()
+    return this._closePromise
+  }
+
+  async _close () {
+    if (this._readyPromise) await this._readyPromise.catch(() => {})
 
     for (const [, dialing] of this._dialing) {
+      dialing.cleanup?.()
       if (dialing.timer) clearTimeout(dialing.timer)
       dialing.pending.reject(new ClosedError('Node closed while dialing'))
     }
     this._dialing.clear()
 
     if (this._discovering) {
+      this._discovering.cleanup?.()
       if (this._discovering.timer) clearTimeout(this._discovering.timer)
       this._discovering.pending.reject(new ClosedError('Node closed while discovering'))
       this._discovering = null
     }
 
     if (this._redeeming) {
+      this._redeeming.cleanup?.()
       if (this._redeeming.timer) clearTimeout(this._redeeming.timer)
       this._redeeming.pending.reject(new ClosedError('Node closed while redeeming an invite'))
       this._redeeming = null
@@ -884,17 +1029,13 @@ export class UnstoppableNode extends EventEmitter {
     for (const [, sticky] of this._sticky) if (sticky.timer) clearTimeout(sticky.timer)
     this._sticky.clear()
 
-    for (const peer of this._peers.values()) peer._destroy('Node closed')
+    for (const peer of this._peers.values()) { clearTimeout(peer._handshakeTimer); peer._destroy('Node closed') }
     this._peers.clear()
 
     // Order matters: stop accepting connections before tearing down the packs.
     // The reverse lets a connection land mid-teardown and hand a closed
     // resource (a Corestore, say) to a pack that has already shut down.
-    if (this.swarm) await this.swarm.destroy()
-    // Pairing can still be committing its peer record when transport closes.
-    // A caller may remove/reopen storage as soon as close() resolves.
-    await this.peerRegistry.flushed()
-    await this.capabilities.detach()
+    await this._disposeResources()
     this.emit('close')
   }
 }
@@ -912,9 +1053,22 @@ function normalizeReconnect (value) {
     maxAttempts: null,
     dialTimeoutMs: 15_000
   }
+  if (value === undefined || value === null || value === false) return defaults
   if (value === true) return { ...defaults, enabled: true }
-  if (!value || typeof value !== 'object') return defaults
-  return { ...defaults, ...value, enabled: value.enabled ?? true }
+  if (typeof value !== 'object' || Array.isArray(value)) throw new InvalidOptionError('reconnect must be a boolean or options object')
+  const options = { ...defaults, ...value, enabled: value.enabled === undefined ? true : value.enabled }
+  if (typeof options.enabled !== 'boolean') throw new InvalidOptionError('reconnect.enabled must be a boolean')
+  for (const name of ['initialDelayMs', 'maxDelayMs', 'dialTimeoutMs']) {
+    if (!Number.isSafeInteger(options[name]) || options[name] < 1) {
+      throw new InvalidOptionError(`reconnect.${name} must be a positive safe integer`)
+    }
+  }
+  if (options.maxDelayMs < options.initialDelayMs) throw new InvalidOptionError('reconnect.maxDelayMs must be at least initialDelayMs')
+  if (!Number.isFinite(options.factor) || options.factor < 1) throw new InvalidOptionError('reconnect.factor must be finite and at least one')
+  if (options.maxAttempts !== null && (!Number.isSafeInteger(options.maxAttempts) || options.maxAttempts < 0)) {
+    throw new InvalidOptionError('reconnect.maxAttempts must be null or a non-negative safe integer')
+  }
+  return options
 }
 
 export function createNode (opts) {
