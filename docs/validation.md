@@ -123,6 +123,9 @@ ECOMMERCE_TEST_PUBLIC_DHT=1 node scripts/ecommerce-example-e2e.mjs
 ```
 
 The default desktop check uses real app instances and an isolated local DHT.
+A separate device starts and checks out with an unreachable loopback bootstrap,
+confirming local startup does not wait for DHT announcement. This is not full
+operating-system offline or offline-inference acceptance.
 It checks catalog filtering, quantity changes, cart restart persistence,
 checkout totals, duplicate-reference rejection, receipt persistence, peer
 retrieval, visible disconnect and a new order after reconnect. It does not

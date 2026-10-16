@@ -14,9 +14,9 @@ const work = mkdtempSync(join(tmpdir(), 'ecommerce-peer-e2e-'))
 const sessions = []
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
-async function launch(storage, port) {
+async function launch(storage, port, bootstrap = testnet?.bootstrap) {
   const proc = spawn(join(app, 'node_modules/.bin/electron'), ['.', `--user-data-dir=${join(work, 'browser-' + port)}`, '--storage', storage, `--remote-debugging-port=${port}`], {
-    cwd: app, env: { ...process.env, ECOMMERCE_P2P_BOOTSTRAP: testnet ? JSON.stringify(testnet.bootstrap) : '' }, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: app, env: { ...process.env, ECOMMERCE_P2P_BOOTSTRAP: bootstrap ? JSON.stringify(bootstrap) : '' }, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
   })
   const session = { proc, browser: null }
   sessions.push(session)
@@ -57,6 +57,14 @@ async function stop(session) {
 try {
   const port = 20000 + Math.floor(Math.random() * 20000)
   console.log(testnet ? 'Using a real local DHT test network (public Internet discovery not tested)' : 'Using public DHT discovery')
+  const offline = await launch(join(work, 'offline'), port + 4, [{ host: '127.0.0.1', port: 9 }])
+  await offline.page.locator('[data-add="daypack"]').click()
+  await offline.page.waitForFunction(() => document.querySelector('#cart-total')?.textContent?.includes('68.00'))
+  await offline.page.locator('#kv-key').fill('offline-order')
+  await offline.page.locator('#kv-save').click()
+  await offline.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('Saved demo order'))
+  await stop(offline.session)
+  console.log('PASS: startup and local checkout without a reachable DHT bootstrap')
   let a = await launch(join(work, 'a'), port)
   const b = await launch(join(work, 'b'), port + 1)
   const order = `order-${Date.now()}`

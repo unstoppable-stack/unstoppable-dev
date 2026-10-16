@@ -189,8 +189,12 @@ async function init() {
   })
   node.on('peer', () => { peerCount = node.peers.length; send({ type: 'peer-count', count: peerCount }) })
   node.on('peerDisconnected', () => { peerCount = node.peers.length; send({ type: 'peer-count', count: peerCount }) })
-  await node.listen()
+  await node.ready()
   swarm = node.swarm
+  // Local checkout must not wait for DHT announcement while offline.
+  node.listen().catch(err => {
+    if (!node.closed) send({ type: 'peer-error', error: 'Networking unavailable: ' + err.message })
+  })
   send({ type: 'status', service: 'p2p', status: 'ready' })
 
   send({ type: 'status', service: 'storage', status: 'ready' })
