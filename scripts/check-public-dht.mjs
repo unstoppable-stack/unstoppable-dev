@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 
-const require = createRequire(fileURLToPath(new URL('../examples/coffee-assistant/package.json', import.meta.url)))
+const require = createRequire(fileURLToPath(new URL('../examples/ecommerce-assistant/package.json', import.meta.url)))
 const DHT = require('hyperdht')
 const dht = new DHT()
 const timeout = promise => Promise.race([

@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const require = createRequire(join(root, 'packages/cli/package.json'))
 const { chromium } = require('playwright')
-const app = join(root, 'examples/coffee-assistant')
+const app = join(root, 'examples/ecommerce-assistant')
 const work = mkdtempSync(join(tmpdir(), 'qvac-download-e2e-'))
 const cache = join(work, 'models')
 mkdirSync(cache)
@@ -76,7 +76,7 @@ async function waitReady(page) {
 }
 
 async function completion(page) {
-  await page.locator('#chat-input').fill('Suggest one mild coffee in a short sentence.')
+  await page.locator('#chat-input').fill('Suggest one catalog product in a short sentence.')
   await page.locator('#chat-send').click()
   await page.waitForFunction(() => {
     const input = document.querySelector('#chat-input')

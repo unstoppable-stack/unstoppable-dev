@@ -75,3 +75,23 @@ in the public repository.
 
 Removing a file from the current tree does not remove older Git objects. Review
 the intended published history separately before changing repository visibility.
+
+## Ecommerce desktop example
+
+The [Local Goods example](../examples/ecommerce-assistant/README.md) replaces
+Coffee Assistant with a catalog, persistent cart, local demo checkout, and
+catalog-aware assistant. Checkout has no payment or fulfillment integration.
+After installing the example and CLI development dependencies:
+
+```bash
+node --test examples/ecommerce-assistant/test/*.test.js
+node scripts/ecommerce-example-e2e.mjs
+ECOMMERCE_TEST_PUBLIC_DHT=1 node scripts/ecommerce-example-e2e.mjs
+```
+
+The default desktop check uses real app instances and an isolated local DHT.
+It checks catalog filtering, quantity changes, cart restart persistence,
+checkout totals, duplicate-reference rejection, receipt persistence, peer
+retrieval, visible disconnect and a new order after reconnect. It does not
+load a model or prove public Internet discovery. Native shopping responses,
+offline inference and packaged-artifact acceptance remain separate checks.

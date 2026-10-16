@@ -64,7 +64,7 @@ Guide users through the tiered skill system:
 When you need validated patterns or accurate API usage:
 
 1. **Installed dependency types and version-matched upstream documentation** — verify APIs against the app's compatibility profile before changing integrations.
-2. **`examples/`** — First-party examples in the stack repository. The Coffee Assistant demonstrates the maintained desktop/local-AI path; the Node demo is an experimental smoke fixture.
+2. **`examples/`** — First-party examples in the stack repository. The Local Goods ecommerce example demonstrates the maintained desktop/local-AI path; the Node demo is an experimental smoke fixture.
 
 Generated consumer projects may not contain the stack repository's examples. Use the installed assistant resources and dependency types there.
 

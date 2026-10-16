@@ -30,7 +30,7 @@ const groups = [
       ["Personal Node alpha", "Packaging, explicit trust defaults, and truthful replication status before it can become an optional public path."],
       ["Expo Mobile", "Generated app and Bare worklet integration across the selected support matrix."],
       ["Multi-writer and Node sync", "Both work independently; their combination is rejected until full writer-set registration is implemented."],
-      ["Coffee Assistant release package", "Public source, matching screenshot, transcript, and reproducible version pin."],
+      ["Ecommerce example release package", "Public source, matching screenshot, transcript, and reproducible version pin."],
     ],
   },
   {
