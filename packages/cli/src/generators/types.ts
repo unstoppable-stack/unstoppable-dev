@@ -13,7 +13,7 @@ export type Platform = 'pear-desktop' | 'expo-mobile' | 'node-cli'
 export type Feature =
   | 'local-ai'      // QVAC SDK + streaming chat UI
   | 'wallet'        // WDK wallet (stub — WDK not yet validated)
-  | 'node-sync'     // Register cores/drives with the Unstoppable Node for replication + backup
+  | 'node-sync'     // Register cores/drives with the Personal Node alpha for replication
   | 'node-host'     // Act as a node: expose an app capability other apps can pair with and call
   | 'multi-writer'  // Autobee + HyperDB: every device reads AND writes, converging
 
@@ -43,7 +43,7 @@ export const FEATURES: { id: Feature; name: string; description: string; platfor
   {
     id: 'local-ai',
     name: 'Local AI',
-    description: 'QVAC SDK for offline inference with streaming chat UI',
+    description: 'QVAC SDK for local inference after the initial model download',
     platforms: ['pear-desktop', 'expo-mobile', 'node-cli'],
   },
   {
@@ -55,7 +55,7 @@ export const FEATURES: { id: Feature; name: string; description: string; platfor
   {
     id: 'node-sync',
     name: 'Node Sync',
-    description: 'Register data with the Unstoppable Node for P2P replication + backup',
+    description: 'Register data with the Personal Node alpha for P2P replication',
     platforms: ['node-cli', 'pear-desktop', 'expo-mobile'],
   },
   {

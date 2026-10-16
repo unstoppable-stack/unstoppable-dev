@@ -44,17 +44,17 @@ document.getElementById('app').innerHTML = `
 
       <section class="tab-panel" id="tab-overview">
         <section class="card" id="summary-card">
-          <h2 class="card-title">Protection status</h2>
+          <h2 class="card-title">Replication status</h2>
           <div class="grid" id="summary-grid">
-            <div class="metric"><span class="metric-label">Protected apps</span><span class="metric-value" id="m-apps">–</span></div>
+            <div class="metric"><span class="metric-label">Paired apps</span><span class="metric-value" id="m-apps">–</span></div>
             <div class="metric"><span class="metric-label">Data sources</span><span class="metric-value" id="m-cores">–</span></div>
             <div class="metric"><span class="metric-label">File libraries</span><span class="metric-value" id="m-drives">–</span></div>
             <div class="metric"><span class="metric-label">Connections</span><span class="metric-value" id="m-peers">–</span></div>
-            <div class="metric"><span class="metric-label">Protected data</span><span class="metric-value" id="m-storage" title="Data currently held by this Personal Node.">–</span></div>
+            <div class="metric"><span class="metric-label">Stored replicated data</span><span class="metric-value" id="m-storage" title="Data currently held by this Personal Node.">–</span></div>
           </div>
         </section>
         <section class="card">
-          <h2 class="card-title">Protected apps</h2>
+          <h2 class="card-title">Paired apps</h2>
           <div id="apps-list" class="apps"></div>
         </section>
       </section>
@@ -541,7 +541,7 @@ function renderStorage (status) {
 
   const rows = storageRows(status)
   if (rows.length === 0) {
-    el.innerHTML = '<p class="dim">No protected apps yet.</p>'
+    el.innerHTML = '<p class="dim">No app data stored yet.</p>'
     return
   }
   el.innerHTML = rows.map((row) => {
@@ -611,7 +611,7 @@ function renderApps (status) {
   const rows = peerRows(status)
 
   if (rows.length === 0) {
-    el.innerHTML = '<p class="dim">No protected apps yet. An app will appear here after you allow its first connection.</p>'
+    el.innerHTML = '<p class="dim">No paired apps yet. An app will appear here after you allow its first connection.</p>'
     return
   }
 
@@ -634,11 +634,15 @@ function renderApps (status) {
       : ''
     const deviceLine = row.deviceName ? `<span title="Device">${escape(row.deviceName)}</span>` : ''
     const grantsMeta = row.grantSummary ? `<span>${escape(row.grantSummary)}</span>` : ''
-    const stateBadge = row.state === 'connected'
-      ? '<span class="badge badge-neutral">connected</span>'
-      : (row.state === 'paused'
-          ? '<span class="badge badge-warn">paused</span>'
-          : '<span class="badge badge-ok">protected</span>')
+    const stateBadges = {
+      connected: '<span class="badge badge-neutral">connected</span>',
+      paused: '<span class="badge badge-warn">paused</span>',
+      pending: '<span class="badge badge-warn">pending copy</span>',
+      copying: '<span class="badge badge-neutral">copying</span>',
+      error: '<span class="badge badge-warn">copy failed</span>',
+      protected: '<span class="badge badge-ok">verified copy</span>'
+    }
+    const stateBadge = stateBadges[row.state] || stateBadges.pending
 
     return `
       <div class="app-row" data-peer-key="${escape(row.publicKey)}">
@@ -679,7 +683,7 @@ function renderApps (status) {
       const publicKey = btn.getAttribute('data-unpair')
       const appName = btn.getAttribute('data-appname') || short(publicKey)
       if (!publicKey) return
-      if (!confirm(`Remove ${appName}? Protection will stop and future connections from this installation will be blocked. Existing replicated bytes remain on this computer until data cleanup is available.`)) return
+      if (!confirm(`Remove ${appName}? Replication will stop and future connections from this installation will be blocked. Existing replicated bytes remain on this computer; this alpha has no per-app data cleanup yet.`)) return
       sendToWorker(commands.unpair(publicKey, appName))
     })
   })

@@ -6,7 +6,7 @@ import DHT from 'hyperdht'
 import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import Hyperswarm from 'hyperswarm'
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 import { PersonalNode } from '../src/personal-node.js'
 
 function getFreePort () {

@@ -1,111 +1,25 @@
 ---
-description: Quick reference for common imports, APIs, and patterns in the Unstoppable Stack
-alwaysApply: true
+description: Locate generated app contracts, compatibility checks and runtime entrypoints.
+alwaysApply: false
 ---
 
-# Unstoppable Stack Cheatsheet
+# App contract quick reference
 
-## Common Imports
+| Task | Entry point |
+| --- | --- |
+| Find apps in a workspace | `us compatibility list -o .` |
+| Read selected features/runtime | `<app>/.unstoppable/project.json` |
+| Review dependency/runtime differences | `us compatibility check -o <app>` |
+| Desktop networking/storage/IPC commands | `worker.js` |
+| Desktop browser UI | `app/index.js` and `app/bridge.js` |
+| Node networking/storage | `src/swarm-manager.ts` and `src/storage-manager.ts` |
+| Node local AI | `src/ai-manager.ts` |
+| Maintained local AI contract | `.unstoppable/runtime-ai/index.js` |
+| Experimental Expo UI/worklet | `app/index.tsx`, `bare/index.js` |
+| Installed dependency versions | lockfile and package metadata |
 
-```js
-import Hyperswarm from "hyperswarm";
-import Hypercore from "hypercore";
-import Hyperbee from "hyperbee";
-import Hyperdrive from "hyperdrive";
-import Corestore from "corestore";
-import DHT from "hyperdht";
+Do not assume legacy `src/p2p/` component classes exist. Read the generated files before importing helpers. The compatibility table is generated from the same manifest as package declarations; use the installed app's recorded profile instead of a universal latest-version table.
 
-import { loadModel, completion, unloadModel } from "@qvac/sdk";
-import WDK from "@tetherto/wdk";
-```
+AI session: `load(options)`, `stream(history, { requestId, signal, onTrim })`, `cancel(requestId)`, `close()`. The app owns history. A session has one active inference; Stop cancels native work and waits for settlement before reuse. Mock tokens stay labeled.
 
-## Verified Versions (Local Sources)
-
-- `hyperswarm` ^4.14.2 (qvac-health-dev)
-- `hyperdrive` ^13.0.2 (qvac-health-dev)
-- `corestore` ^7.8.0
-- `@qvac/sdk` 0.15.0 (npm latest stable, verified 2026-07-23)
-- `@qvac/cli` ^0.8.1 (optional — OpenAI-compatible server + SDK bundler + auto-runs `qvac verify bundle` during Expo prebuild; no longer a peer of the SDK, installs cleanly)
-- `zod` ^4.3.0 (required by @qvac/sdk@0.10+)
-- `react-native-bare-kit` 0.15.0 exact (Expo only; matches @qvac/sdk@0.15 generation, declared as optional `*` peer)
-- `bare-pack` ^2.2.1 (2.x — uses `--host`, not `--target`; matches @qvac/sdk@0.15's internal `bare-pack@^2.0.1`)
-- Hypercore/Hyperbee/HyperDB versions not found in local sources; verify per
-  app.
-- WDK versions not found in local sources; verify per app.
-
-## Latest npm Versions (Checked 2026-02-05)
-
-- `hypercore` 11.24.0
-- `hyperbee` 2.27.3
-- `hyperdb` 5.0.1
-- `hyperdht` 6.29.0
-- `hyperswarm` 4.16.0
-- `hyperdrive` 13.2.1
-- `corestore` 7.7.0
-
-## Key Function Signatures
-
-- `new Hyperswarm(opts)`
-- `new DHT(opts)`
-- `swarm.join(topic, { server, client })`
-- `core = new Hypercore(storage, [key])`
-- `await core.append(blocks)` / `await core.get(index)`
-- `drive = new Hyperdrive(corestore, [key])`
-- `await drive.put(path, buffer)` / `await drive.get(path)`
-- `modelId = await loadModel({ modelSrc, modelType })`  ← decorated promise; read `op.requestId` synchronously (0.11+)
-- `run = completion({ modelId, history, stream: true })`  ← `run.requestId`, `run.events`, `await run.final`
-- `await unloadModel({ modelId })`  ← on Bare, no longer auto-closes worker; pass `{ autoClose: true }` to terminate
-- `await cancel({ requestId })`  ← primary cancel path in 0.11; broad escape hatch: `cancel({ modelId, kind? })`
-- `wdk = new WDK(seedPhrase).registerWallet(chain, Manager, config)`
-
-## Common Patterns
-
-```js
-// Hyperswarm + Hypercore replication
-swarm.on("connection", (conn) => core.replicate(conn));
-swarm.join(core.discoveryKey);
-```
-
-```js
-// Corestore replication
-swarm.on("connection", (conn) => store.replicate(conn));
-```
-
-```js
-// Hyperdrive file CRUD
-await drive.put("/note.txt", Buffer.from("hi"));
-const buf = await drive.get("/note.txt");
-```
-
-```js
-// QVAC streaming completion (0.11 typed event stream + requestId cancel)
-const run = completion({ modelId, history, stream: true, kvCache: sessionId });
-stopBtn.onclick = () => cancel({ requestId: run.requestId });
-for await (const event of run.events) {
-  if (event.type === "contentDelta") process.stdout.write(event.text);
-  if (event.type === "toolCall") console.log("tool:", event.call.name);
-}
-const final = await run.final; // { contentText, thinkingText, toolCalls, stats }
-```
-
-```js
-// bare-rpc over P2P (use wrapper — raw API is low-level)
-import { createRPCServer, createRPCClient } from './lib/p2p-rpc.js'
-swarm.on('connection', (socket, info) => {
-  if (info.client) {
-    const client = createRPCClient(socket)
-    const res = await client.request('ping', {})
-  } else {
-    createRPCServer(socket, {
-      handlers: { ping: async () => ({ ok: true }) },
-    })
-  }
-})
-// NOTE: raw bare-rpc has NO register(), NO request(string), NO destroy()
-```
-
-```js
-// WDK account and balance
-const account = await wdk.getAccount("ethereum", 0);
-const balance = await account.getBalance();
-```
+Detailed SDK APIs: https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.holepunch.to/. Use installed types and release notes matching the app's version.

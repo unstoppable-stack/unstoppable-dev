@@ -1,123 +1,52 @@
-# Unstoppable Stack Plugin
+# Unstoppable agent pack
 
-Build truly unstoppable apps with P2P protocols, local AI inference, and crypto payments.
+The pack helps assistants discover, extend, diagnose and upgrade generated apps.
+It ships to Claude, Cursor, OpenCode and Codex through thin tool wrappers and
+on-demand skills. Detailed SDK APIs belong to upstream documentation and the
+installed dependency types.
 
-This is both the canonical **agent pack** source (serving Claude, Cursor, and OpenCode) and a **Cursor plugin** distributable via the [Cursor Marketplace](https://cursor.com/marketplace).
+Self-contained local Codex and Claude Code plugin packages are also available.
+See [plugin setup and validation status](PLUGIN.md); build them with
+`node packages/agent-pack/scripts/build-plugin.mjs` from the repository root
+after syncing maintained assets.
 
-## What's Included
+## Ownership
 
-| Component | Count | Description |
-|-----------|-------|-------------|
-| **Rules** | 38 | Core principles, module docs, and recipe patterns (.mdc files) |
-| **Skills** | 17 | Guided implementation workflows organized by tier |
-| **Agents** | 1 | Specialized `unstoppable-dev` agent for P2P app development |
-| **Commands** | 3 | `scaffold-p2p-app`, `add-qvac`, `add-p2p-sync` |
-| **Hooks** | 1 | Auto-format TypeScript/JS files after edits |
+- `src/core/`: local-first policy, runtime boundaries and composition decisions.
+- `src/modules/`: integration notes; QVAC’s session contract is generated from the runtime README.
+- `src/skills/`: short workflows with task-specific resources. Advanced QVAC skills route to version-matched upstream docs.
+- `src/recipes/`: composition patterns and operational invariants.
+- `packages/runtime-ai/src/`: maintained desktop/Node AI lifecycle and native adapters.
+- `packages/cli/src/compatibility/profiles.json`: dependency, model identity, maturity and validation profiles.
 
-## Skill Organization
+`us init` configures a workspace. `us scaffold app` creates executable targets
+and records each one in `.unstoppable/project.json`. Generated desktop/Node AI
+apps receive a versioned copy of the runtime; no unpublished package installation
+is required. Apps own their UI, prompts, domain logic and schemas.
 
-Skills are organized into tiers that match a natural development flow: pick a platform, then add capabilities.
+## Editing and validation
 
-### Platform Setup (`setup-*`)
-
-Start here. Each scaffolds a complete project for a specific runtime.
-
-| Skill | Runtime | Status |
-|-------|---------|--------|
-| `/setup-pear-desktop` | Pear Desktop (React + SWC + worker) | Battle-tested |
-| `/setup-pear-terminal` | Pear Terminal (headless P2P service) | Docs only |
-| `/setup-node-cli` | Node.js CLI (simplest path) | Battle-tested |
-| `/setup-mobile-app` | Expo + Bare (React Native mobile) | Docs only |
-
-### P2P & Networking (`add-p2p-*`)
-
-Add peer-to-peer capabilities. Start with `add-p2p-networking`, then layer on features.
-
-| Skill | What it adds | Status |
-|-------|-------------|--------|
-| `/add-p2p-networking` | Hyperswarm peer discovery + connections | Battle-tested |
-| `/add-p2p-rpc` | Request/response RPC via bare-rpc | Battle-tested |
-| `/add-p2p-sync` | Hypercore data replication | Battle-tested |
-| `/add-encrypted-channels` | SecretStream + Protomux encryption | Docs only |
-
-### Data & Storage
-
-Add data persistence. Choose based on your data model.
-
-| Skill | What it adds | Status |
-|-------|-------------|--------|
-| `/add-kv-storage` | Hyperbee KV store (offline-first) | Partial |
-| `/add-database` | HyperDB structured DB (multi-writer) | Docs only |
-| `/add-file-storage` | Hyperdrive P2P file storage | Docs only |
-
-### AI Capabilities (`add-ai-*`)
-
-Add local AI inference. Independent from P2P — works without networking.
-
-| Skill | What it adds | Status |
-|-------|-------------|--------|
-| `/add-ai-chat` | QVAC chat + streaming + tool calling | Battle-tested |
-| `/add-ai-vision` | QVAC multimodal image analysis | Docs only |
-| `/add-ai-transcription` | QVAC Whisper speech-to-text | Docs only |
-| `/add-ai-rag` | QVAC embeddings + RAG search | Docs only |
-
-### Payments
-
-| Skill | What it adds | Status |
-|-------|-------------|--------|
-| `/add-wallet` | WDK crypto wallet + payments | Unvalidated |
-
-### DevEx
-
-| Skill | What it adds | Status |
-|-------|-------------|--------|
-| `/setup-local-testing` | Same-machine P2P testing + local DHT | Battle-tested |
-
-## Dependency Flow
-
-```
-setup-pear-desktop ──┐
-setup-pear-terminal ─┤
-setup-node-cli ──────┤
-setup-mobile-app ────┘
-         │
-         ├──→ add-p2p-networking ──→ add-p2p-rpc
-         │                      ├──→ add-p2p-sync
-         │                      ├──→ add-encrypted-channels
-         │                      └──→ add-kv-storage / add-database / add-file-storage
-         │
-         ├──→ add-ai-chat ──→ add-ai-vision
-         │               ├──→ add-ai-transcription
-         │               └──→ add-ai-rag
-         │
-         ├──→ add-wallet
-         │
-         └──→ setup-local-testing
-```
-
-## Plugin Structure
-
-```
-.cursor-plugin/plugin.json    # Plugin manifest
-src/
-├── core/          # Always-on rules: architecture, principles, versions
-├── modules/       # Per-module documentation (Hyperswarm, QVAC, Pear, etc.)
-├── recipes/       # Task-oriented patterns (P2P RPC, tool calling, RAG, etc.)
-├── skills/        # Tiered skills with SKILL.md + resources/
-├── hooks/         # Legacy hook definitions
-└── components/    # Reusable TypeScript components for scaffolding
-agents/            # Custom agent configurations
-commands/          # Agent-executable commands
-hooks/hooks.json   # Cursor plugin hook definitions
-```
-
-## Development
+Edit maintained source, then run from the repository root:
 
 ```bash
-pnpm convert-plugin   # Convert frontmatter to Cursor plugin format
-pnpm sync             # Sync from research repos
+node scripts/sync-stack-assets.mjs
+node scripts/sync-stack-assets.mjs --check
+node scripts/check-agent-pack.mjs
+node --test packages/runtime-ai/test/*.test.js
 ```
 
-## License
+The sync step generates runtime assets/compatibility guidance and the CLI’s
+bundled pack from their canonical sources. CLI builds/prepack invoke it. CLI
+tests check parity and emitted assistant resources. Do not edit generated copies
+or maintain dependency tables by hand.
 
-MIT
+## Existing apps
+
+Use `us compatibility list -o <workspace>` and `us compatibility check -o <app>`.
+Checks are read-only and report runtime edits, dependency/profile differences
+and exact lockfile pin mismatches. Apply explicit migrations that preserve app
+edits; `--force` scaffolding is not an upgrade workflow.
+
+Native runtime, cancellation/reuse and offline acceptance remain separate from
+unit/mock checks. Expo remains a separate experimental implementation, wallets
+are stubs, and Personal Node integration remains deferred.

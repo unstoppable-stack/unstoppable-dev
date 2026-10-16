@@ -26,5 +26,6 @@
   "dependencies": {
     "@unstoppable/memory": "file:../memory"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "private": true
 }

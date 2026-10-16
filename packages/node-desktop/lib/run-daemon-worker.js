@@ -1,6 +1,6 @@
 import { createDaemonHost } from './daemon-host.js'
 
-export function runDaemonWorker ({ pipe, storagePath, args = [], exit } = {}) {
+export function runDaemonWorker ({ pipe, storagePath, args = [], exit, nodeOptions } = {}) {
   if (!pipe || typeof pipe.on !== 'function' || typeof pipe.write !== 'function') {
     throw new Error('runDaemonWorker requires a duplex pipe')
   }
@@ -9,7 +9,7 @@ export function runDaemonWorker ({ pipe, storagePath, args = [], exit } = {}) {
     pipe.write(JSON.stringify(msg) + '\n')
   }
 
-  const host = createDaemonHost({ storagePath, args, send, exit })
+  const host = createDaemonHost({ storagePath, args, send, exit, nodeOptions })
   let buffer = ''
 
   pipe.on('data', async (data) => {

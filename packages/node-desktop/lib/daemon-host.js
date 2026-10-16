@@ -12,7 +12,7 @@ function parseArgs (args = []) {
   return { aiEnabled, aiMock, aiModelSrc }
 }
 
-export function createDaemonHost ({ storagePath, args = [], send, approvalMode = 'prompt', exit } = {}) {
+export function createDaemonHost ({ storagePath, args = [], send, approvalMode = 'prompt', exit, nodeOptions = {} } = {}) {
   if (!storagePath) throw new Error('createDaemonHost requires storagePath')
   if (typeof send !== 'function') throw new Error('createDaemonHost requires send(msg)')
 
@@ -41,6 +41,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
     : undefined
 
   const node = new PersonalNode(storagePath, {
+    ...nodeOptions,
     ai,
     approvePairing: async (req) => {
       const config = await node.getConfig()

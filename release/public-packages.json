@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "npm": [
+    { "name": "@unstoppable-stack/p2p", "directory": "packages/p2p", "tag": "alpha" },
+    { "name": "@unstoppable-stack/cli", "directory": "packages/cli", "tag": "beta" }
+  ],
+  "plugins": {
+    "name": "unstoppable-stack",
+    "directory": "packages/agent-pack",
+    "distribution": "website-local-preview",
+    "hosts": ["claude", "codex"]
+  },
+  "excluded": ["unstoppable-node", "unstoppable-node-desktop", "@unstoppable/agent-pack", "@unstoppable-stack/runtime-ai", "@unstoppable/memory", "@unstoppable/memory-client", "@unstoppable/memory-mcp", "@unstoppable-stack/search", "@unstoppable/agent"]
+}

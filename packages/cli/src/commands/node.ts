@@ -272,17 +272,17 @@ export function registerNodeCommand(program: Command) {
         grants[capability] = [...(grants[capability] || []), method]
       }
 
-      // Resolved dynamically, like the daemon binary: node-core is an optional
+      // Resolved dynamically, like the daemon binary: P2P runtime is an optional
       // peer, not a hard dependency of the CLI. A non-literal specifier also
       // keeps TypeScript from trying to resolve it at build time.
-      const nodeCoreSpecifier = '@unstoppable-stack/node-core'
+      const nodeCoreSpecifier = '@unstoppable-stack/p2p'
       let issueInvite: (opts: Record<string, unknown>) => Promise<InviteResult>
       try {
         ;({ issueInvite } = (await import(nodeCoreSpecifier)) as {
           issueInvite: (opts: Record<string, unknown>) => Promise<InviteResult>
         })
       } catch {
-        console.error(chalk.red('@unstoppable-stack/node-core is not installed.'))
+        console.error(chalk.red('@unstoppable-stack/p2p is not installed.'))
         console.error(
           'Install it next to this CLI, or run inside the unstoppable-stack monorepo.'
         )

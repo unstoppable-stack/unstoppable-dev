@@ -28,6 +28,8 @@ Keep P2P, storage, and QVAC dependencies in the desktop package's dependencies.
 The worker is Bare, so do not import Node-only built-ins. Test the installed
 workspace layout as well as a standalone scaffold.
 
+If QVAC reports missing plugins, inspect the app's recorded adapter/profile. The maintained Bare adapter registers llama.cpp before loading the model. Native engine imports and registration belong there; avoid adding a second registration path to the renderer or worker command handler.
+
 ## Window is blank
 
 Verify the preload path, `contextIsolation: true`, the exposed API name, and

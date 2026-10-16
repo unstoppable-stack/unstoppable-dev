@@ -1,0 +1,19 @@
+{
+  "name": "node-demo",
+  "version": "0.1.0",
+  "description": "Tiny demo app that proves an Unstoppable Stack app can pair with the Node, replicate a Hyperbee, and stream remote inference",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "demo": "node demo.js",
+    "store": "node demo.js --store-only",
+    "infer": "node demo.js --infer-only"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hyperswarm": "^4.17.0",
+    "@unstoppable-stack/p2p": "file:../../packages/p2p"
+  }
+}

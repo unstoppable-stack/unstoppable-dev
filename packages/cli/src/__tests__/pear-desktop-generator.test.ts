@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import { spawnSync } from 'node:child_process'
 import { generatePearDesktop } from '../generators/pear-desktop.js'
 import type { GeneratorOptions, Feature } from '../generators/types.js'
 
@@ -87,7 +88,26 @@ describe('pear-desktop generator', () => {
     }
   })
 
+  describe('generated documentation', () => {
+    it('qualifies offline AI with the required initial model download', () => {
+      const readme = fileMap(make(['local-ai']))['README.md']
+      expect(readme).toContain('local inference after the initial model download')
+      expect(readme).toContain('~532 MB')
+      expect(readme).not.toContain('offline inference')
+    })
+  })
+
   describe('Electron main process embeds pear-runtime', () => {
+    it('initializes the generated Node loader without Bare-only module metadata', () => {
+      const main = fileMap(make(['local-ai']))['electron/main.js']
+      const declaration = main.match(/^const require = .*$/m)?.[0]
+      expect(declaration).toBeDefined()
+      const result = spawnSync(process.execPath, ['--input-type=module', '--eval',
+        `import { createRequire } from 'node:module';\n${declaration}\nrequire('node:assert').ok(typeof require === 'function')`,
+      ], { encoding: 'utf8' })
+      expect(result.stderr).toBe('')
+      expect(result.status).toBe(0)
+    })
     it('imports pear-runtime and launches the Bare worker', () => {
       const files = fileMap(make())
       const main = files['electron/main.js']
@@ -126,23 +146,38 @@ describe('pear-desktop generator', () => {
     }
 
     it('local-ai: lazy-imports @qvac/sdk (ESM) and supports QVAC_MOCK', () => {
-      const worker = fileMap(make(['local-ai']))['worker.js']
+      const files = fileMap(make(['local-ai']))
+      const worker = files['worker.js']
+      const adapter = files['.unstoppable/runtime-ai/adapters.js']
       // The SDK must NOT be imported at module scope: a static import runs
       // native-module resolution when worker.js loads, so an SDK failure
       // kills the worker before it can report anything on its pipe — taking
       // P2P and KV storage down with it. It is imported inside 'load-ai'.
-      expect(worker).toContain("await import('@qvac/sdk')")
+      expect(adapter).toContain("import('@qvac/inference')")
+      expect(adapter).toContain("import('@qvac/inference/llamacpp-completion/plugin')")
+      expect(adapter).toContain("import('@qvac/inference/plugins')")
+      expect(adapter).toContain('registerPlugin(llmPlugin)')
+      expect(worker).toContain('modelSrc: msg.modelSrc')
+      expect(adapter).toContain("engine.cancel({ operation: 'inference', modelId })")
+      expect(worker).toContain("case 'cancel-chat'")
       expect(worker).not.toContain("require('@qvac/sdk')")
       expect(worker).not.toMatch(/^import .* from '@qvac\/sdk'$/m)
       expect(worker).toContain('QVAC_MOCK')
       expect(worker).toContain('MOCK_AI')
-      expect(worker).toContain("'mock-model'")
+      expect(adapter).toContain("'mock-model'")
+      const app = fileMap(make(['local-ai']))['app/index.js']
+      expect(app).toContain('~532 MB download on first run')
+      expect(app).toContain('~1.4–1.5 GiB')
+      expect(app).toContain('data-testid="chat-stop-btn"')
+      expect(app).toContain("type: 'cancel-chat'")
+      expect(app).toContain('msg.requestId === activeChatRequestId')
     })
 
     it('local-ai: disables reasoning via reasoning_budget, not prompt hacks', () => {
       const worker = fileMap(make(['local-ai']))['worker.js']
-      expect(worker).toContain('reasoning_budget: 0')
-      expect(worker).toContain('n_discarded')
+      expect(worker).toContain('"reasoning_budget": 0')
+      expect(worker).not.toContain('n_discarded')
+      expect(worker).toContain('ai.stream')
       // The old approach — '/no_think' in the system prompt plus a manual
       // <think> stripping state machine over the token stream.
       expect(worker).not.toContain('/no_think')
@@ -246,7 +281,8 @@ describe('pear-desktop generator', () => {
     it('local-ai: includes @qvac/sdk and AI section', () => {
       const files = fileMap(make(['local-ai']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@qvac/sdk']).toBeDefined()
+      expect(pkg.dependencies['@qvac/inference']).toBe('0.21.0')
+      expect(pkg.dependencies['@qvac/llm-llamacpp']).toBe('0.55.0')
       expect(files['app/index.js']).toContain('data-testid="ai-section"')
       expect(files['app/index.js']).toContain('data-testid="load-ai-btn"')
       expect(files['app/index.js']).toContain('data-testid="chat-input"')
@@ -284,15 +320,15 @@ describe('pear-desktop generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('adds @unstoppable-stack/node-core dependency', () => {
+    it('adds @unstoppable-stack/p2p dependency', () => {
       const files = fileMap(make(['node-sync']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeDefined()
     })
 
     it('wires node discovery into the worker after db.ready()', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain("from '@unstoppable-stack/node-core'")
+      expect(worker).toContain("from '@unstoppable-stack/p2p'")
       expect(worker).toContain('createNode(')
       expect(worker).toContain('discover(')
       expect(worker).toContain("service: 'node-sync'")
@@ -306,6 +342,8 @@ describe('pear-desktop generator', () => {
       expect(app).toContain('data-testid="node-sync-section"')
       expect(app).toContain('node-sync-status')
       expect(app).toContain("msg.service === 'node-sync'")
+      expect(app).toContain('copy verification pending')
+      expect(app).not.toContain('Protected — background replication is active')
     })
 
     it('closes the app node on shutdown', () => {
@@ -313,11 +351,11 @@ describe('pear-desktop generator', () => {
       expect(worker).toContain('appNode.close()')
     })
 
-    it('bare variant does not include node-core', () => {
+    it('bare variant does not include P2P runtime', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeUndefined()
-      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-core')
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable-stack/p2p')
     })
   })
 

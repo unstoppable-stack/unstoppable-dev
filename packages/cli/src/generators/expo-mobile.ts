@@ -1,3 +1,4 @@
+import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
@@ -10,6 +11,7 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     gitignore(),
     readme(opts),
     planningReadme(),
+    ...projectFiles(opts),
     packageJson(opts),
     appJson(opts),
     metroConfig(opts),
@@ -28,73 +30,9 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  // ====================================================================
-  // MOBILE COUPLED VERSION SET — do NOT bump anything below in isolation.
-  // ====================================================================
-  // The Expo SDK, react-native, react-native-bare-kit, and bare-pack
-  // versions below have been validated as one combination. Bumping any
-  // single entry risks breaking the worklet bundling pipeline that the
-  // scaffolded app depends on at build time.
-  //
-  // BUNDLER: `bare-pack@^2.2.1` (the 2.x line). `@qvac/sdk@0.15` depends on
-  // `bare-pack@^2.0.1` internally, so the app and the SDK now share the 2.x
-  // toolchain. The 2.x CLI replaced the `--target <triple>` flag (removed in
-  // `bare-pack@2.0.0`, Jan 2026) with `--host <triple>`; the `build:bare`
-  // script below has been reworked accordingly. The host triples themselves
-  // are unchanged (`ios-arm64`, `ios-arm64-simulator`, etc. — the values of
-  // `Bare.Addon.host`).
-  //
-  // Coupling rules:
-  //   - Expo SDK MAJOR pins react-native MAJOR (SDK 54 → RN 0.81;
-  //     SDK 55 → RN 0.83; SDK 56 → RN 0.85). Never mix. We stay on Expo
-  //     SDK 54 / RN 0.81 — the QVAC SDK bump does NOT require moving off it,
-  //     and Expo 55/56 are a separate, larger migration.
-  //   - `react-native-bare-kit` is still EXACT-pinned (no caret) because it
-  //     ships a specific Bare runtime that must match `@qvac/sdk`'s worker
-  //     bundle; caret ranges silently install pre-1.0 minors and break QVAC's
-  //     mobile worker bundle with cryptic native errors. `@qvac/sdk@0.15` no
-  //     longer *declares* it as an exact peer (it's now an optional `*` peer),
-  //     so we track it to `0.15.0` — the release contemporaneous with the SDK.
-  //   - When bumping ANY of these, bump ALL of them and re-run the full
-  //     mobile e2e: `pnpm test:e2e:mobile` (level 4 simulator) +
-  //     manual level 6 on a physical device.
-  //
-  // ⚠️ NOT YET RE-VALIDATED END-TO-END: this set was migrated from the
-  //    `bare-pack@1.5.1` anchor to 2.x alongside the `@qvac/sdk` 0.11 → 0.15
-  //    bump without a full native e2e pass. Run `pnpm test:e2e:mobile` on an
-  //    iOS Simulator and a physical device before relying on it in anger.
-  //
-  // Authoritative table: `packages/agent-pack/src/core/verified-versions.mdc`
-  // → "Mobile (Expo + Bare) — coupled set" section.
-  // ====================================================================
-  //
-  // Bare worklet is always required (P2P is base infrastructure)
-  const deps: Record<string, string> = {
-    expo: '~54.0.33',
-    'expo-build-properties': '~1.0.9',
-    'expo-file-system': '^19.0.15',
-    // Required transitively by `expo-router/build/views/Unmatched.js` — not
-    // installed automatically by expo-router in bare (non-managed) apps.
-    'expo-linking': '~8.0.11',
-    'expo-router': '~6.0.23',
-    'expo-splash-screen': '~31.0.10',
-    'expo-status-bar': '~3.0.8',
-    react: '19.1.0',
-    'react-native': '0.81.5',
-    'react-native-safe-area-context': '~5.6.0',
-    'react-native-screens': '~4.16.0',
-    'react-native-bare-kit': '0.15.0', // EXACT — see coupling rules above
-    'bare-pack': '^2.2.1', // 2.x — matches @qvac/sdk@0.15's bundler. See notes above.
-    'bare-rpc': '^1.1.0',
-    // Base P2P + KV infra — always required by bare/index.js worklet
-    corestore: '^7.8.0',
-    hyperbee: '^2.27.3',
-  }
-
-  const devDeps: Record<string, string> = {
-    '@types/react': '~19.1.10',
-    typescript: '~5.9.2',
-  }
+  const profile = profileFor(opts.platform)
+  const deps = dependenciesFor(opts)
+  const devDeps = profile.devDependencies
 
   const scripts: Record<string, string> = {
     start: 'expo start',
@@ -128,66 +66,6 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
     preandroid: 'npm run build:bare',
   }
 
-  // No `overrides` needed on the 2.x bundler. The previous `bare-fs@4.5.1`
-  // exact override existed only because newer `bare-fs` (Bare 4.7.x) had not
-  // been validated against the old `bare-pack@1.5.1` pipeline. Now that we're
-  // on `bare-pack@2.x` and `@qvac/sdk@0.15` depends on `bare-fs@^4.5.1`, we let
-  // the resolver pick a compatible `bare-fs` transitively rather than forcing
-  // a stale exact pin that could conflict with the 2.x toolchain.
-  const overrides: Record<string, string> = {}
-
-  if (has(opts, 'node-sync')) {
-    // node-core + its transitive runtime deps. `hyperswarm` already enters
-    // the graph via `local-ai` too, so guard so we don't double-declare.
-    Object.assign(deps, {
-      '@unstoppable-stack/node-core': '^0.6.0-alpha.1',
-      hyperswarm: '^4.17.0',
-      b4a: '^1.8.0',
-      events: '^3.3.0',
-    })
-  }
-
-  if (has(opts, 'local-ai')) {
-    // Mirrors the official QVAC Expo tutorial dep surface
-    // (https://docs.qvac.tether.io/sdk/tutorials/expo/) and the QVAC
-    // reference mobile app (qvac-workbench-mobile). We deliberately do
-    // NOT enumerate @qvac/sdk's 25+ peer deps (bare-buffer, bare-crypto,
-    // hyperswarm, tar-stream, etc.) — modern npm resolves them
-    // transitively. Listing them with our own version pins is what
-    // forced previous scaffolds to require `npm install --legacy-peer-deps`,
-    // because any pin range that didn't perfectly overlap with @qvac/sdk's
-    // peer-dep range produced a hard ERESOLVE error.
-    Object.assign(deps, {
-      '@qvac/sdk': '^0.15.0',
-      // Zod v4.3+ — @qvac/sdk@0.10 bumped its zod floor from ^4.0.17 to
-      // ^4.3.0 because finetune schemas use z.union/z.nan combinations
-      // only available in 4.3+. Pinning lower causes runtime
-      // `z.xor is not a function` crashes when finetune schemas load.
-      // 0.15 keeps the same `zod@^4.3.0` floor.
-      zod: '^4.3.0',
-      // expo-file-system: where @qvac/sdk caches model files. Optional
-      // peer of @qvac/sdk but always required in practice.
-      'expo-file-system': '^19.0.15',
-      // expo-device: used by our scaffold to detect simulator vs physical
-      // device and refuse fast with a clear error (per QVAC docs:
-      // "QVAC currently does not run on emulators").
-      'expo-device': '~8.0.10',
-    })
-    // NOTE: @qvac/cli is intentionally NOT listed here. It's an optional
-    // tool used for two scenarios: (1) running an OpenAI-compatible HTTP
-    // server (`qvac serve openai`), (2) bundling a tree-shaken SDK worker
-    // (`qvac bundle sdk`). The default scaffold doesn't need either — the
-    // @qvac/sdk Expo plugin handles bundling automatically during
-    // `expo prebuild`.
-    //
-    // When you DO want it, install the latest line:
-    //   npm i -D '@qvac/cli@^0.8.1'
-    // Unlike the 0.11 era, `@qvac/sdk@0.15` no longer declares `@qvac/cli`
-    // as a peer dependency at all, so no `--legacy-peer-deps` workaround is
-    // needed — it installs cleanly. See the add-openai-server skill for the
-    // opt-in flow.
-  }
-
   return {
     path: 'package.json',
     content: JSON.stringify(
@@ -199,9 +77,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         scripts,
         dependencies: deps,
         devDependencies: devDeps,
-        // Only emit `overrides` when non-empty (keeps generated package.json
-        // clean now that the bare-fs override is gone).
-        ...(Object.keys(overrides).length > 0 ? { overrides } : {}),
+
       },
       null,
       2,
@@ -545,7 +421,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
 
   if (hasNodeSync) {
     hooks.push(
-      `const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'connected' | 'disconnected' | 'unavailable'>('idle')`,
+      `const [nodeStatus, setNodeStatus] = useState<'idle' | 'searching' | 'registered' | 'disconnected' | 'unavailable'>('idle')`,
     )
   }
 
@@ -819,12 +695,12 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   if (hasNodeSync) {
     sections.push(`
         <View style={styles.section} testID="node-sync-section">
-          <Text style={styles.sectionTitle}>Data Protection</Text>
+          <Text style={styles.sectionTitle}>Node Replication</Text>
           <Text style={styles.mono} testID="node-sync-status">
-            {nodeStatus === 'idle' && '⏳ Preparing data protection…'}
+            {nodeStatus === 'idle' && '⏳ Preparing node replication…'}
             {nodeStatus === 'searching' && '⏳ Looking for your Personal Node…'}
-            {nodeStatus === 'connected' && '✅ Protected — background replication is active'}
-            {nodeStatus === 'disconnected' && '⚠️ Protection paused — reconnecting…'}
+            {nodeStatus === 'registered' && 'Registered for replication — copy verification pending'}
+            {nodeStatus === 'disconnected' && '⚠️ Replication paused — reconnecting…'}
             {nodeStatus === 'unavailable' && 'Device only — Personal Node not found'}
           </Text>
           {(nodeStatus === 'unavailable' || nodeStatus === 'idle') && (
@@ -1079,12 +955,12 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (hasNodeSync) {
-    // @unstoppable-stack/node-core is ESM-only; wrap the dynamic import lazily
+    // @unstoppable-stack/p2p is ESM-only; wrap the dynamic import lazily
     // so bare-pack still traces it but we control timing (createNode builds a
     // Hyperswarm — we want to defer until init() has given us a Hyperbee to
     // register).
     imports.push(
-      `// node-core is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/node-core' is installed.`,
+      `// P2P runtime is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/p2p' is installed.`,
     )
   }
 
@@ -1161,7 +1037,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable-stack/node-core')
+          const mod = await import('@unstoppable-stack/p2p')
           appNode = mod.createNode({
             storage: storagePath + '/app-node',
             profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },
@@ -1171,7 +1047,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
           await appNode.ready()
           appNode.on('peerDisconnected', () => { nodeStatus = 'disconnected' })
           appNode.on('reconnecting', () => { nodeStatus = 'disconnected' })
-          appNode.on('reconnected', () => { nodeStatus = 'connected' })
+          appNode.on('reconnected', () => { nodeStatus = 'registered' })
           appNode.on('reconnectFailed', () => { nodeStatus = 'unavailable' })
 
           // Find the Personal Node on this machine; the key is remembered
@@ -1191,7 +1067,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
               }]
             }
           })
-          nodeStatus = 'connected'
+          nodeStatus = 'registered'
           response = { ok: true, status: nodeStatus }
         } catch (err) {
           nodeStatus = 'unavailable'

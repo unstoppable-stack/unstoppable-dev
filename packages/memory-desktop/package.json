@@ -32,6 +32,6 @@
     "pear-electron": "^1.7.0",
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
-    "@unstoppable-stack/node-core": "file:../node-core"
+    "@unstoppable-stack/p2p": "file:../p2p"
   }
 }

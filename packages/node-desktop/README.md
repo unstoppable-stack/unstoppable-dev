@@ -1,10 +1,10 @@
 # Unstoppable Node Desktop
 
 Electron-first desktop home for a user's **Personal Node**. It runs the same daemon as
-`unstoppable-node`, with a control panel intended to make protection and local
+`unstoppable-node`, with a control panel intended to make replication and local
 AI understandable without requiring protocol knowledge:
 
-- See which apps are protected and whether protection is active or paused
+- See which apps are paired and whether each declared resource has a verified copy
 - Review each app's storage use and choose a human-readable storage limit
 - Allow or block AI access per app and turn local AI on or off globally
 - Inspect technical details only when needed
@@ -93,8 +93,8 @@ Also protect the `qvac-validation` environment with required reviewers. The
 manual **Node Real QVAC** workflow uses it to test the pinned SDK and one
 approved model source across macOS, Windows, and Linux before stable promotion.
 
-The candidate checklist and stable promotion gates are tracked in
-[`planning/status/node/release-readiness-0.5-beta.md`](../../planning/status/node/release-readiness-0.5-beta.md).
+See [validation and release checks](../../docs/validation.md) for public test
+commands and the distinction between mock, native, and packaged acceptance.
 
 ## Smoke Testing
 
@@ -143,7 +143,7 @@ daemon and demo client use the real machine-local discovery topic.
 The Bare worker embeds `NodeDaemon` directly and forwards its events (plus a
 periodic status snapshot) to the renderer over a newline-delimited JSON
 pipe. UI commands (`unpair`, `refresh-status`, `shutdown`, config updates,
-quota changes, backup/import, and trust decisions) travel back
+quota changes, settings export/import, and trust decisions) travel back
 the same way.
 
 The Electron renderer has no Node.js access. `contextIsolation` and renderer
@@ -159,7 +159,7 @@ tray, IPC, and worker lifecycle.
 ## Status
 
 - Phase 1 (the basics) ✓
-  - Protected-app list with plain-language state and expandable technical details
+  - Paired-app list with plain-language replication state and expandable technical details
   - Permission modal with least-privilege capability summaries
   - Advanced settings, AI controls, storage limits, settings export/import, tray menu
 - Electron installer milestone ✓

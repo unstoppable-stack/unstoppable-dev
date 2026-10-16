@@ -75,9 +75,7 @@
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
     "unstoppable-node": "file:../node",
-    "@unstoppable-stack/node-core": "file:../node-core",
-    "@unstoppable-stack/node-caps-sync": "file:../node-caps-sync",
-    "@unstoppable-stack/node-caps-ai": "file:../node-caps-ai"
+    "@unstoppable-stack/p2p": "file:../p2p"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",

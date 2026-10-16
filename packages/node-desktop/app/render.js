@@ -115,13 +115,26 @@ export function peerRows (status, now = Date.now()) {
       grants: peer.grantsGiven || null,
       grantSummary: formatCapabilitySummary(peer.grantsGiven),
       aiGranted: (peer.grantsGiven?.ai || []).includes('completion.stream'),
-      state: units.length === 0 ? 'connected' : (units.every((u) => u.paused) ? 'paused' : 'protected'),
+      state: peerReplicationState(units),
       peekTargets: [
         ...cores.map((c) => ({ kind: 'core', key: c.key, name: c.name, type: c.type })),
         ...drives.map((d) => ({ kind: 'drive', key: d.key, name: d.name }))
       ]
     }
   })
+}
+
+function peerReplicationState (units) {
+  if (units.length === 0) return 'connected'
+  if (units.every((unit) => unit.paused)) return 'paused'
+
+  const active = units.filter((unit) => !unit.paused)
+  if (active.some((unit) => unit.protection?.state === 'error')) return 'error'
+  if (active.every((unit) =>
+    unit.protection?.mode === 'mirror' && unit.protection?.state === 'protected'
+  )) return 'protected'
+  if (active.some((unit) => unit.protection?.state === 'syncing')) return 'copying'
+  return 'pending'
 }
 
 function quotaLabelFor (peer, quota) {

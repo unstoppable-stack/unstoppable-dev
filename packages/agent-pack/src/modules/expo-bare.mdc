@@ -1,107 +1,14 @@
 ---
-description: Expo Bare: React Native with Bare runtime for mobile P2P apps
+description: Experimental mobile host/worklet boundaries and coupled native compatibility.
 alwaysApply: false
 ---
 
-# Expo Bare (Bare on Mobile)
+# Expo and Bare integration
 
-## Overview
-Expo Bare refers to running Bare runtime inside a React Native/Expo app using `react-native-bare-kit` and `bare-pack` bundles. This lets mobile apps run P2P backends (Hypercore, Hyperswarm, QVAC) in a Bare worklet while the UI stays in React Native.
+Read the target app’s manifest, app.json, Metro config and generated scripts. Expo uses a distinct experimental profile; inspect the generated compatibility table instead of copying version pins.
 
-## Version Notes (read before bumping anything)
+React Native hosts QVAC’s client/native worker. The app’s Bare worklet owns P2P/storage and is bundled separately. Native dependencies are unavailable in Expo Go; use native builds. Keep Metro’s native-module mocks scoped to the renderer graph so worklet bundling still resolves actual dependencies.
 
-The Expo + Bare mobile stack is a **coupled set** — Expo SDK, React Native,
-`react-native-bare-kit`, and `bare-pack` only have one validated combination
-at a time. Bumping any single one of them risks breaking the worklet bundle
-pipeline. See `core/verified-versions.mdc` → "Mobile (Expo + Bare)" for the
-authoritative table.
+Expo, React Native, BareKit, Bare runtime, bundler and native addons form a coupled compatibility graph. The current experimental bundling scripts use bare-pack’s --host spelling. Preserve generated NDK/architecture plugins and memory settings until deliberately revalidated. Do not apply old bare-fs overrides or downgrade a bundler from an unrelated upstream example.
 
-Today's pinned set (last verified 2026-07-23):
-
-| Package | Pinned | Anchor / why |
-|---------|--------|--------------|
-| `bare-pack` | `^2.2.1` | Bundler (2.x). `@qvac/sdk@0.15` depends on `bare-pack@^2.0.1` internally, so app + SDK share one `bare-pack`. 2.x uses `--host <triple>` (the `--target` flag was removed in `2.0.0`); the `build:bare` script uses `--host`. |
-| `react-native-bare-kit` | `0.15.0` (exact) | Hosts the Bare runtime in RN; must match `@qvac/sdk`'s worker bundle. `@qvac/sdk@0.15` declares it only as an optional `*` peer, so we exact-pin it ourselves to the release contemporaneous with the SDK. |
-| `expo` | `~54.0.33` | Pairs with `react-native@0.81.x`. Kept on SDK 54 — the QVAC 0.15 bump does not require Expo 55/56 (RN 0.83/0.85), a separate migration. |
-| `react-native` | `0.81.5` (exact) | Bound to Expo SDK 54. |
-| Expo ecosystem (`expo-router`, `expo-build-properties`, `expo-file-system`, `expo-device`, `expo-linking`, `expo-splash-screen`, `expo-status-bar`, `react-native-safe-area-context`, `react-native-screens`) | matching `~5x.x.x` | All bound to Expo SDK 54. |
-
-> ⚠️ The move off the old `bare-pack@1.5.1` anchor to 2.x (alongside `@qvac/sdk`
-> 0.11 → 0.15) has passed dependency resolution (`bare-fs` resolves to `4.7.4`,
-> `react-native-bare-kit` to `0.15.0`, no ERESOLVE) but **not** a full native
-> e2e build. Run a level-4 simulator + level-6 device pass before relying on it.
-
-## Installation
-```bash
-# Use the scaffold — never hand-install these. The scaffold pins every
-# version against a validated combination. See `setup-mobile-app` skill.
-us scaffold app -p expo-mobile -n <name> -f local-ai
-```
-
-## Quick Start
-```bash
-git clone https://github.com/holepunchto/bare-expo.git my-bare-app
-cd my-bare-app
-npm i
-```
-
-```bash
-# Bundle Bare backend for iOS + Android. bare-pack 2.x uses `--host <triple>`
-# (the `--target` flag was removed in 2.0.0). Repeat `--host` per platform.
-npx bare-pack --host ios --host android --linked --out app/app.bundle.mjs backend/backend.mjs
-```
-
-## Core Concepts
-- Worklet: `react-native-bare-kit` runs a Bare thread inside RN.
-- Bundling: `bare-pack` produces a single bundle with native addon references.
-- RPC bridge: `bare-rpc` over the Worklet IPC stream connects UI and backend.
-
-## API Reference
-- `Worklet.start(path, bundle, args)` to launch Bare.
-- `bare-pack --host ios --host android --linked` for mobile bundles (2.x CLI).
-- `bare-rpc` request/response over IPC.
-
-## Integration with Other Modules
-- Hyperswarm/Hypercore run inside the Bare worklet for P2P networking.
-- QVAC uses Bare for inference on mobile via Expo (physical device required).
-- WDK uses `react-native-bare-kit` for crypto/network modules.
-
-## Common Patterns
-```js
-// UI side
-import { Worklet } from "react-native-bare-kit"
-import RPC from "bare-rpc"
-
-const worklet = new Worklet()
-worklet.start("/app.bundle", bundle, [documentDirectory])
-const rpc = new RPC(worklet.IPC, onRequest)
-```
-
-```js
-// Bare backend side
-import RPC from "bare-rpc"
-const { IPC } = BareKit
-const rpc = new RPC(IPC, onRequest)
-```
-
-## Pitfalls & Gotchas
-- Android requires minSdkVersion 29+ and NDK alignment (Expo build props).
-- Bundle with `--linked` to use prelinked native addons on mobile.
-- QVAC LLM inference does not run on emulators; use physical devices.
-- **`bare-pack` is 2.x** — the build script must use `--host <triple>`, not the
-  removed `--target` flag. A `bare-pack@1.x` invocation with `--host` (or a 2.x
-  invocation with `--target`) fails with `Unknown option` during
-  `prestart` / `preios` / `preandroid`.
-- **Keep `react-native-bare-kit` exact-pinned** (currently `0.15.0`, matching
-  the `@qvac/sdk@0.15` generation). 0.15 declares it only as an optional `*`
-  peer, so nothing forces the version for you — a caret range would silently
-  install a newer pre-1.0 minor and break the SDK's mobile worker bundle with
-  cryptic native errors.
-- **Bump Expo SDK only as a coordinated set.** The Expo monorepo pins each
-  SDK to one specific `react-native` major. Mixing SDK 54 with RN 0.85
-  (SDK 56's RN) is not a supported configuration.
-
-## Resources
-- https://docs.pear.holepunch.to/guide/making-a-bare-mobile-app
-- https://github.com/holepunchto/bare-expo
-- https://docs.pear.holepunch.to/reference/bare-overview
+Install, build and run the exact profile on each claimed physical device/architecture. Dependency resolution and mocks do not prove native inference. Use installed SDK/types and https://docs.qvac.tether.io/sdk/js-ts-sdk/ for details matching the target version.

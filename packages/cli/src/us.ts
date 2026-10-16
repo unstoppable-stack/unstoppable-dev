@@ -27,11 +27,16 @@ async function main() {
   }
   if (US_FEAT_SCAFFOLD) {
     const { registerScaffoldCommand } = await import('./commands/scaffold.js')
-    registerScaffoldCommand(program)
+    registerScaffoldCommand(program, { publicPreview: __US_BUILD_PROFILE__.startsWith('minimal') })
+    const { registerCompatibilityCommand } = await import('./commands/compatibility.js')
+    registerCompatibilityCommand(program)
   }
   if (US_FEAT_DOCTOR) {
     const { registerDoctorCommand } = await import('./commands/doctor.js')
-    registerDoctorCommand(program)
+    registerDoctorCommand(program, {
+      includeNode: US_FEAT_NODE,
+      publicPreview: __US_BUILD_PROFILE__.startsWith('minimal'),
+    })
   }
   if (US_FEAT_REMOTE) {
     const { registerRemoteCommand } = await import('./commands/remote.js')

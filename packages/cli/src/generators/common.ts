@@ -1,26 +1,15 @@
+import { manifest } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions, Feature } from './types.js'
 
 export function has(opts: GeneratorOptions, feature: Feature): boolean {
   return opts.features.includes(feature)
 }
 
-/**
- * Default LLM for scaffolded apps.
- *
- * `QWEN3_5_0_8B_MULTIMODAL_Q4_K_M` is the smallest LLM in `@qvac/sdk@0.15`'s
- * model registry (532MB, engine `llamacpp-completion`, addon `llm`). It
- * resolves to the same pinned Hugging Face revision that `tetherto/qvac-app`
- * hardcodes in its own `llm-catalog.ts` — so we get their validated model
- * without maintaining a parallel `registry://` catalog.
- *
- * Supersedes `QWEN3_600M_INST_Q4` (Qwen 3 0.6B, 382MB). That constant still
- * exists in the SDK, but Qwen 3 emits `<think>` blocks that had to be stripped
- * from the token stream by hand; Qwen 3.5 supports `reasoning_budget` instead.
- */
-export const DEFAULT_LLM_CONST = 'QWEN3_5_0_8B_MULTIMODAL_Q4_K_M'
-export const DEFAULT_LLM_LABEL = 'Qwen 3.5 0.8B'
-export const DEFAULT_LLM_SIZE_MB = 532
-export const DEFAULT_CTX_SIZE = 4096
+// Model identity and configuration come from the compatibility manifest.
+export const DEFAULT_LLM_CONST = manifest.model.constant
+export const DEFAULT_LLM_LABEL = manifest.model.label
+export const DEFAULT_LLM_SIZE_MB = manifest.model.sizeMB
+export const DEFAULT_CTX_SIZE = manifest.model.config.ctx_size
 
 /**
  * `modelConfig` passed to `loadModel`, as JS source (generators inline this
@@ -36,35 +25,15 @@ export const DEFAULT_CTX_SIZE = 4096
  *   thinking. Valid in `modelConfig` (load) and in `generationParams`
  *   (per-completion) — verified against the SDK's `load-model` and
  *   `completion-stream` schemas.
- * - `n_discarded` enables the engine's sliding context window: on overflow it
- *   evicts the oldest ~10% instead of throwing `ContextOverflowError`. With
- *   this set, never hand-trim history — the SDK reuses its KV cache by message
- *   count, so dropping old messages forces a full re-prefill that overflows.
- *   (qvac-app ADR-2026-06-23-append-only-history.)
+ * QVAC 0.21 rejects n_discarded. Desktop requests use bounded recent history
+ * and a latest-message-only retry on ContextOverflowError before any output.
  */
 export function llmModelConfig(indent = '    '): string {
-  const i = indent
-  return [
-    '{',
-    `${i}  ctx_size: CTX_SIZE,`,
-    `${i}  // Sliding window — evict oldest ~10% on overflow instead of throwing.`,
-    `${i}  n_discarded: Math.floor(CTX_SIZE / 10),`,
-    `${i}  // 0 = no reasoning, -1 = unlimited. Engine-level, so no prompt hacks`,
-    `${i}  // and no stripping reasoning blocks back out of the token stream.`,
-    `${i}  reasoning_budget: 0,`,
-    `${i}  system_prompt: 'You are a helpful assistant.',`,
-    `${i}}`,
-  ].join('\n')
+  return JSON.stringify(manifest.model.config, null, 2).replaceAll('\n', '\n' + indent)
 }
 
 /** Dependencies added by the `multi-writer` feature, shared by all platforms. */
-export const MULTI_WRITER_DEPS: Record<string, string> = {
-  // Pinned exact: upstream marks Autobee experimental and expects breaking
-  // changes. Verified working at 1.0.10 (Node + Bare, two-writer convergence).
-  autobee: '1.0.10',
-  hyperdb: '^6.7.0',
-  hyperschema: '^1.21.0',
-}
+export const MULTI_WRITER_DEPS: Record<string, string> = manifest.profiles['pear-desktop'].featureDependencies['multi-writer']
 
 /**
  * `schema/build.js` — declares the replicated (`@app`) and device-private
@@ -360,11 +329,11 @@ export function readme(opts: GeneratorOptions): GeneratedFile {
   const optionalFeatures = opts.features.flatMap((f) => {
     switch (f) {
       case 'local-ai':
-        return ['- **Local AI** — QVAC SDK for offline inference with streaming chat']
+        return [`- **Local AI** — QVAC SDK for local inference after the initial model download (~${DEFAULT_LLM_SIZE_MB} MB)`]
       case 'wallet':
         return ['- **Wallet** — WDK wallet integration (stub — coming soon)']
       case 'node-sync':
-        return ['- **Node Sync** — Replicate data to the Unstoppable Node for backup + seeding']
+        return ['- **Node Sync** — Register data with the Personal Node alpha for P2P replication']
       case 'node-host':
         return ['- **Node Host** — Expose a capability other apps can pair with and call']
       // multi-writer is reflected in baseFeatures above (it replaces the
@@ -428,18 +397,12 @@ npm run build:schema
   const nodeSyncSection = opts.features.includes('node-sync')
     ? `
 
-## Connecting to the Unstoppable Node
+## Connecting to the Personal Node alpha
 
-This app registers its data with a local Unstoppable Node for P2P
-replication and backup. To enable sync, run the node in a separate
-terminal:
-
-\`\`\`bash
-npx unstoppable-node
-\`\`\`
-
-The app will attempt to pair automatically on startup and keep working
-regardless of whether the Node is running.`
+This app can register its data with a compatible Personal Node alpha for P2P
+replication. Registration is not a verified copy or a complete backup. The
+Personal Node is deferred from the core preview, and the app keeps working
+locally when it is unavailable.`
     : ''
 
   const gettingStarted = gettingStartedFor(opts)

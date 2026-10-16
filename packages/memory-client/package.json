@@ -21,7 +21,8 @@
   },
   "dependencies": {
     "hyperswarm": "^4.17.0",
-    "@unstoppable-stack/node-core": "file:../node-core"
+    "@unstoppable-stack/p2p": "file:../p2p"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "private": true
 }

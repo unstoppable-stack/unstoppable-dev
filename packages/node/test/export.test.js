@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm, readFile, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { PeerRegistry, loadIdentity } from '@unstoppable-stack/node-core'
+import { PeerRegistry, loadIdentity } from '@unstoppable-stack/p2p'
 import { loadConfig, saveConfig, mergeConfigPatch } from '../src/config.js'
 import { exportNodeState, importNodeState, previewNodeStateImport } from '../src/export.js'
 

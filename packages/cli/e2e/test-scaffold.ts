@@ -27,7 +27,9 @@
  *                           react-native-bare-kit linkage and broken
  *                           QVAC SDK worker bundles),
  *                       (c) with QVAC_MOCK=1, mocked chat round-trip works.
- *         pear-desktop: (deferred — Playwright CDP spike)
+ *         pear-desktop: launch Electron through CDP, verify the visible KV UI,
+ *                       and optionally stream a real QVAC reply with
+ *                       QVAC_REAL_E2E=1
  *   6  device runtime (expo-mobile only, opt-in via --device <udid>):
  *         expo-mobile:  drives Maestro against an already-installed dev
  *                       build on a connected iPhone. Toggles GPU on,
@@ -58,6 +60,11 @@
  *
  * Env vars:
  *   QVAC_MOCK=1          — skip model loading, echo input as "Mock: <input>"
+ *   QVAC_REAL_E2E=1      — at Pear Desktop level 5, load the real default
+ *                          model and require a non-empty streamed UI reply
+ *   QVAC_OFFLINE_E2E=1   — on macOS, deny all non-localhost network access
+ *                          while running the real cached-model UI flow
+ *   QVAC_REAL_LOAD_TIMEOUT_MS — real desktop model-load timeout (default 600000)
  *   US_SIMULATOR=<name>  — override iOS simulator (default: iPhone 16)
  *
  * Prerequisites:
@@ -83,6 +90,16 @@ const CLI_ROOT = resolve(__dirname, '..')
 const TMP_BASE = '/tmp/us-e2e-scaffold'
 const SIMULATOR_NAME = process.env.US_SIMULATOR || 'iPhone 16'
 const QVAC_MOCK = process.env.QVAC_MOCK === '1'
+const QVAC_REAL_E2E = process.env.QVAC_REAL_E2E === '1'
+const QVAC_OFFLINE_E2E = process.env.QVAC_OFFLINE_E2E === '1'
+const QVAC_REAL_LOAD_TIMEOUT_MS = Number(process.env.QVAC_REAL_LOAD_TIMEOUT_MS || 600_000)
+
+if (QVAC_MOCK && QVAC_REAL_E2E) {
+  throw new Error('QVAC_MOCK=1 and QVAC_REAL_E2E=1 are mutually exclusive')
+}
+if (QVAC_OFFLINE_E2E && (!QVAC_REAL_E2E || process.platform !== 'darwin')) {
+  throw new Error('QVAC_OFFLINE_E2E=1 requires QVAC_REAL_E2E=1 on macOS')
+}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -169,6 +186,32 @@ function exec(cmd: string, opts?: { cwd?: string; timeout?: number; env?: NodeJS
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
+}
+
+function processTreeRssMiB(rootPid: number | undefined): number | null {
+  if (!rootPid || !['darwin', 'linux'].includes(process.platform)) return null
+  try {
+    const rows = execSync('ps -axo pid=,ppid=,rss=', { encoding: 'utf8' })
+      .trim()
+      .split('\n')
+      .map((line) => line.trim().split(/\s+/).map(Number))
+      .filter(([pid, ppid, rss]) => Number.isFinite(pid) && Number.isFinite(ppid) && Number.isFinite(rss))
+    const included = new Set([rootPid])
+    let changed = true
+    while (changed) {
+      changed = false
+      for (const [pid, ppid] of rows) {
+        if (included.has(ppid) && !included.has(pid)) {
+          included.add(pid)
+          changed = true
+        }
+      }
+    }
+    const rssKiB = rows.reduce((sum, [pid, , rss]) => sum + (included.has(pid) ? rss : 0), 0)
+    return Math.round((rssKiB / 1024) * 10) / 10
+  } catch {
+    return null
+  }
 }
 
 async function runStep(name: string, fn: () => Promise<void>): Promise<StepResult> {
@@ -328,7 +371,7 @@ function checkDesktopFiles(projectDir: string, features: string[]) {
 
   // Optional features
   if (features.includes('local-ai')) {
-    if (!worker.includes('@qvac/sdk')) throw new Error('worker.js missing @qvac/sdk for local-ai')
+    if (!worker.includes('createAISession') || !existsSync(join(projectDir, '.unstoppable/runtime-ai/adapters.js'))) throw new Error('worker.js missing local AI session runtime')
     if (!worker.includes('QVAC_MOCK')) throw new Error('worker.js missing QVAC_MOCK support')
     if (!ui.includes('data-testid="ai-section"')) throw new Error('app/index.js missing AI section')
   }
@@ -474,7 +517,7 @@ async function runWorkerSpawnTest(projectDir: string, features: string[]): Promi
         'AI service ready (mock)',
       )
 
-      send({ type: 'chat', history: [{ role: 'user', content: 'ping' }] })
+      send({ type: 'chat', requestId: 'worker-smoke', history: [{ role: 'user', content: 'ping' }] })
 
       await waitFor((m) => m.some((x) => x.type === 'chat-token'), 5_000, 'chat-token')
       await waitFor((m) => m.some((x) => x.type === 'chat-done'), 5_000, 'chat-done')
@@ -543,13 +586,14 @@ async function runPearPlaywrightTest(
 
   // `--no-sandbox` is required when running CI in rootless containers.
   const electron = join(projectDir, 'node_modules', '.bin', 'electron')
+  const electronArgs = ['.', `--remote-debugging-port=${port}`, '--no-sandbox']
+  const offlineProfile =
+    '(version 1)(allow default)(deny network*)' +
+    '(allow network-outbound (remote ip "localhost:*"))' +
+    '(allow network-inbound (local ip "localhost:*"))'
   const proc = spawn(
-    electron,
-    [
-      '.',
-      `--remote-debugging-port=${port}`,
-      '--no-sandbox',
-    ],
+    QVAC_OFFLINE_E2E ? '/usr/bin/sandbox-exec' : electron,
+    QVAC_OFFLINE_E2E ? ['-p', offlineProfile, electron, ...electronArgs] : electronArgs,
     {
       cwd: projectDir,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -583,7 +627,7 @@ async function runPearPlaywrightTest(
     while (Date.now() < deadline) {
       await sleep(1000)
       try {
-        return await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
+        return await chromium.connectOverCDP(`http://localhost:${port}`)
       } catch (err) {
         lastErr = err
       }
@@ -680,12 +724,26 @@ async function runPearPlaywrightTest(
       )
     }
 
+    // The offline second launch must retrieve the online run's unique value
+    // before writing anything, so a fresh empty store cannot pass this check.
+    const persistenceValue = process.env.US_DESKTOP_PERSISTENCE_VALUE || 'hello from e2e'
+    if (QVAC_OFFLINE_E2E && process.env.US_DESKTOP_PERSISTENCE_VALUE) {
+      await page.locator('[data-testid="kv-key-input"]').fill('e2e-key')
+      await page.locator('[data-testid="kv-fetch-btn"]').click()
+      await page.waitForFunction(
+        value => document.querySelector('[data-testid="kv-result"]')?.textContent?.includes(value),
+        persistenceValue,
+        { timeout: 10_000 },
+      )
+      log('  ℹ saved value survived process restart before the offline run wrote data')
+    }
+
     // --- KV round-trip: full save → assert feedback → fetch → assert value.
     // Unlike the mobile variant, desktop's bare-rpc path works reliably so
     // we drive the full happy path here. This exercises the worker bridge
     // end to end (click handler → postMessage → worker → Hyperbee → reply).
     await page.locator('[data-testid="kv-key-input"]').fill('e2e-key')
-    await page.locator('[data-testid="kv-value-input"]').fill('hello from e2e')
+    await page.locator('[data-testid="kv-value-input"]').fill(persistenceValue)
     await page.locator('[data-testid="kv-save-btn"]').click()
 
     const result = page.locator('[data-testid="kv-result"]')
@@ -701,10 +759,10 @@ async function runPearPlaywrightTest(
     let fetched = ''
     while (Date.now() < fetchDeadline) {
       fetched = (await result.textContent()) ?? ''
-      if (fetched.includes('hello from e2e')) break
+      if (fetched.includes(persistenceValue)) break
       await sleep(200)
     }
-    if (!fetched.includes('hello from e2e')) {
+    if (!fetched.includes(persistenceValue)) {
       throw new Error(`Fetch feedback mismatch. Got: "${fetched}"`)
     }
 
@@ -712,14 +770,151 @@ async function runPearPlaywrightTest(
     if (features.includes('local-ai')) {
       const aiSection = page.locator('[data-testid="ai-section"]')
       await aiSection.waitFor({ state: 'visible', timeout: 5_000 })
-      await page.locator('[data-testid="load-ai-btn"]').waitFor({
+      const loadButton = page.locator('[data-testid="load-ai-btn"]')
+      await loadButton.waitFor({
         state: 'visible',
         timeout: 5_000,
       })
+
+      if (QVAC_REAL_E2E) {
+        const chatInput = page.locator('[data-testid="chat-input"]')
+        const aiError = page.locator('#ai-error')
+
+        // Exercise the real SDK error path first, then recover through the
+        // same Retry control a user sees. The worker's optional modelSrc is a
+        // trusted renderer-bridge input; normal generated UI omits it and uses
+        // the pinned default.
+        await page.evaluate(() => {
+          ;(window as any).unstoppable.sendToWorker({
+            type: 'load-ai',
+            modelSrc: 'file:///tmp/unstoppable-e2e-model-does-not-exist.gguf',
+          })
+        })
+        await aiError.waitFor({ state: 'visible', timeout: 30_000 })
+        const forcedError = (await page.locator('#ai-error-msg').textContent())?.trim() || ''
+        if (!forcedError) throw new Error('Forced QVAC model failure did not expose an error message')
+        const warmLoadStartedAt = Date.now()
+        await page.locator('#ai-retry').click()
+
+        const loadDeadline = Date.now() + QVAC_REAL_LOAD_TIMEOUT_MS
+        while (Date.now() < loadDeadline) {
+          if (await chatInput.isVisible().catch(() => false)) break
+          if (await aiError.isVisible().catch(() => false)) {
+            const message = (await page.locator('#ai-error-msg').textContent())?.trim() || 'unknown error'
+            throw new Error(
+              `Real QVAC model load failed: ${message}\n` +
+                `app stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
+                `app stderr (last 4KB):\n${stderrTail || '(empty)'}`,
+            )
+          }
+          await sleep(500)
+        }
+        if (!(await chatInput.isVisible().catch(() => false))) {
+          const label = (await page.locator('#ai-loading-label').textContent())?.trim() || 'unknown phase'
+          throw new Error(
+            `Real QVAC model load did not finish within ${QVAC_REAL_LOAD_TIMEOUT_MS}ms. Last UI state: "${label}"\n` +
+              `app stdout (last 4KB):\n${stdoutTail || '(empty)'}\n` +
+              `app stderr (last 4KB):\n${stderrTail || '(empty)'}`,
+          )
+        }
+        const warmLoadMs = Date.now() - warmLoadStartedAt
+        const processRssMiB = processTreeRssMiB(proc.pid)
+        log(
+          `  ℹ real QVAC ${process.env.QVAC_COLD_E2E === '1' ? 'cold' : 'warm'} model ready in ${warmLoadMs}ms` +
+            (processRssMiB === null ? '' : `; app process-tree RSS ${processRssMiB} MiB`),
+        )
+        await chatInput.fill('Reply with one short sentence about local-first software.')
+        await page.locator('[data-testid="chat-send-btn"]').click()
+
+        await page.waitForFunction(
+          () => {
+            const input = document.querySelector('[data-testid="chat-input"]') as HTMLInputElement | null
+            const replies = document.querySelectorAll('.bubble-assistant')
+            const reply = replies.item(replies.length - 1)?.textContent?.trim() || ''
+            return Boolean(input && !input.disabled && reply.length > 0)
+          },
+          undefined,
+          { timeout: 300_000 },
+        )
+
+        const reply = (await page.locator('.bubble-assistant').last().textContent())?.trim() || ''
+        if (!reply || reply.startsWith('❌')) {
+          throw new Error(`Real QVAC UI completion failed. Got: "${reply}"`)
+        }
+
+        // Prove that cancellation reaches the SDK (rather than only hiding
+        // output) and that the same loaded model can serve a later request.
+        await chatInput.fill('Write a detailed explanation of local-first software in at least 500 words.')
+        await page.locator('[data-testid="chat-send-btn"]').click()
+        await page.waitForFunction(
+          () => {
+            const input = document.querySelector('[data-testid="chat-input"]') as HTMLInputElement | null
+            const replies = document.querySelectorAll('.bubble-assistant')
+            const reply = replies.item(replies.length - 1)?.textContent?.trim() || ''
+            return Boolean(input?.disabled && reply.length > 0)
+          },
+          undefined,
+          { timeout: 60_000 },
+        )
+        await page.locator('[data-testid="chat-stop-btn"]').click()
+        await page.waitForFunction(
+          () => {
+            const input = document.querySelector('[data-testid="chat-input"]') as HTMLInputElement | null
+            const replies = document.querySelectorAll('.bubble-assistant')
+            const reply = replies.item(replies.length - 1)?.textContent?.trim() || ''
+            return Boolean(input && !input.disabled && (reply.endsWith('[stopped]') || reply === 'Stopped.'))
+          },
+          undefined,
+          { timeout: 30_000 },
+        )
+
+        await chatInput.fill('Reply with exactly: recovered')
+        await page.locator('[data-testid="chat-send-btn"]').click()
+        await page.waitForFunction(
+          () => {
+            const input = document.querySelector('[data-testid="chat-input"]') as HTMLInputElement | null
+            const replies = document.querySelectorAll('.bubble-assistant')
+            const reply = replies.item(replies.length - 1)?.textContent?.trim() || ''
+            return Boolean(input && !input.disabled && reply.length > 0 && !reply.endsWith('[stopped]'))
+          },
+          undefined,
+          { timeout: 300_000 },
+        )
+        // Modern scaffolds bound Unicode input and recent history. An error
+        // must not poison the next request or replay a partial response.
+        if (existsSync(join(projectDir, '.unstoppable/runtime-ai/history.js')) || existsSync(join(projectDir, 'chat-context.js'))) {
+          await chatInput.fill('☕'.repeat(800))
+          await page.locator('[data-testid="chat-send-btn"]').click()
+          await page.waitForFunction(() => {
+            const reply = document.querySelectorAll('.bubble-assistant')
+            return reply.item(reply.length - 1)?.textContent?.includes('Shorten it') &&
+              !(document.querySelector('[data-testid="chat-input"]') as HTMLInputElement)?.disabled
+          }, undefined, { timeout: 15_000 })
+          for (let turn = 0; turn < 3; turn++) {
+            await chatInput.fill('Reply only OK. Background: ' + 'x '.repeat(340))
+            await page.locator('[data-testid="chat-send-btn"]').click()
+            await page.waitForFunction(() => {
+              const reply = document.querySelectorAll('.bubble-assistant')
+              const text = reply.item(reply.length - 1)?.textContent?.trim() || ''
+              return text.length > 0 && !text.startsWith('❌') &&
+                !(document.querySelector('[data-testid="chat-input"]') as HTMLInputElement)?.disabled
+            }, undefined, { timeout: 120_000 })
+          }
+          if (!(await page.locator('.bubble-system').allTextContents()).some(text => text.includes('omitted'))) {
+            throw new Error('Long conversation did not report omitted model context')
+          }
+        }
+
+      }
     }
     if (features.includes('wallet')) {
       const walletSection = page.locator('[data-testid="wallet-section"]')
       await walletSection.waitFor({ state: 'visible', timeout: 5_000 })
+    }
+    if (process.env.US_DESKTOP_SCREENSHOT_PATH) {
+      await page.setViewportSize({ width: 1100, height: 1600 })
+      await page.evaluate(() => { const content = document.querySelector('.content'); if (content) content.scrollTop = 0 })
+      await page.screenshot({ path: resolve(process.env.US_DESKTOP_SCREENSHOT_PATH), fullPage: true })
     }
   } finally {
     await browser.close().catch(() => {})
@@ -1044,8 +1239,12 @@ async function testDesktopVariant(
   // "local-ai+wallet") into a Pear-safe slug before feeding it to
   // `us scaffold -n`. The variant.name stays `+`-separated for human-facing
   // report output; we only sanitize the generated package name.
-  const projectName = `e2e-desktop-${variant.name}`.replace(/\+/g, '-')
-  const projectDir = join(TMP_BASE, 'desktop', variant.name)
+  const artifactProject = process.env.US_DESKTOP_PROJECT_DIR
+  if (artifactProject && !opts.skipBuild) throw new Error('US_DESKTOP_PROJECT_DIR requires --skip-build')
+  const projectName = artifactProject
+    ? JSON.parse(readFileSync(join(resolve(artifactProject), 'package.json'), 'utf8')).name
+    : `e2e-desktop-${variant.name}`.replace(/\+/g, '-')
+  const projectDir = artifactProject ? resolve(artifactProject) : join(TMP_BASE, 'desktop', variant.name)
   const featuresFlag = variant.features.length ? `-f ${variant.features.join(',')}` : ''
 
   log(`\n━━━ pear-desktop / ${variant.name} ━━━`)

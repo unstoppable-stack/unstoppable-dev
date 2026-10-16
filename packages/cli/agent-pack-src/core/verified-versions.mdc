@@ -1,237 +1,92 @@
 ---
-description: Battle-tested package versions for all Unstoppable Stack dependencies
-alwaysApply: true
+description: Generated compatibility profiles for scaffolded apps; use the installed app profile before changing dependencies.
+alwaysApply: false
 ---
 
-# Verified Package Versions
+# Compatibility profiles
 
-Battle-tested package versions from the Coffee Assistant UI project, the
-QVAC Workbench reference app, and the Slack P2P desktop app. **Always use
-these versions** when generating `package.json` files — do not guess or use
-`latest`. If a package isn't listed here, run `npm view <package> versions --json | tail -5`
-to get the actual latest version before writing `package.json`.
+Generated from `packages/cli/src/compatibility/profiles.json`. Do not edit this table by hand.
 
-Last verified: 2026-08-07
+Read each app’s `.unstoppable/project.json`, package.json and lockfile first. These ranges describe a generator profile; they are not a guarantee for every resolved graph. Expo is a separate deferred native target. A profile with the new AI adapter still needs real runtime acceptance.
 
----
+| Platform | Profile | Maturity | AI runtime | Validation |
+| --- | --- | --- | --- | --- |
+| pear-desktop | pear-desktop-qvac-0.21 / revision 2 | preview | 0.1.0 | contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending |
+| node-cli | node-cli-qvac-0.21 / revision 2 | experimental | 0.1.0 | contract-tested; native acceptance pending |
+| expo-mobile | expo-mobile-qvac-0.15 / revision 2 | experimental | separate Expo implementation | separate experimental implementation; physical-device acceptance pending |
 
-## Pear Desktop (Core)
+## pear-desktop
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `pear-runtime` | `^1.3.1` | Pear OTA, application storage, and embedded Bare workers |
-| `electron` | `^40.2.1` | Standard desktop application host (dev dependency) |
+| Package | Range | Group |
+| --- | --- | --- |
+| pear-runtime | ^1.3.1 | base |
+| bare-rpc | ^1.3.8 | base |
+| hyperswarm | ^4.17.2 | base |
+| hyperdht | ^6.34.1 | base |
+| hypercore | ^11.37.2 | base |
+| corestore | ^7.13.0 | base |
+| hyperbee | ^2.27.3 | base |
+| b4a | ^1.8.0 | base |
+| hypercore-crypto | ^3.7.0 | base |
+| electron | ^44.5.1 | development |
+| @qvac/inference | 0.21.0 | local-ai |
+| @qvac/llm-llamacpp | 0.55.0 | local-ai |
+| @qvac/langdetect-text | ^0.1.2 | local-ai |
+| @qvac/decoder-audio | ^0.7.0 | local-ai |
+| bare-process | ^4.5.1 | local-ai |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| autobee | 1.0.10 | multi-writer |
+| hyperdb | ^6.7.0 | multi-writer |
+| hyperschema | ^1.21.0 | multi-writer |
 
-Do not use `pear-electron`, `pear-bridge`, `pear-run`, or the ambient `Pear`
-global in new apps. They belong to the removed `pear run` runtime.
+## node-cli
 
-## P2P & Data
+| Package | Range | Group |
+| --- | --- | --- |
+| hyperswarm | ^4.17.0 | base |
+| corestore | ^7.8.0 | base |
+| hyperbee | ^2.27.3 | base |
+| b4a | ^1.8.0 | base |
+| hypercore-crypto | ^3.7.0 | base |
+| @types/node | ^20.0.0 | development |
+| typescript | ^5.0.0 | development |
+| tsx | ^4.0.0 | development |
+| @qvac/sdk | 0.21.0 | local-ai |
+| zod | ^4.3.0 | local-ai |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-host |
+| autobee | 1.0.10 | multi-writer |
+| hyperdb | ^6.7.0 | multi-writer |
+| hyperschema | ^1.21.0 | multi-writer |
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `hyperswarm` | `^4.17.0` | Peer discovery via DHT topics |
-| `hypercore` | `^11.27.0` | Append-only log (foundation) |
-| `hyperbee` | `^2.27.3` | Key-value store on Hypercore |
-| `corestore` | `^7.8.0` | Multi-Hypercore storage manager |
-| `protomux` | `^3.10.1` | Protocol multiplexing over streams |
-| `compact-encoding` | `^2.19.0` | Binary encoding for Protomux messages |
-| `@hyperswarm/secret-stream` | `^6.9.1` | Encrypted stream wrapper |
-| `b4a` | `^1.8.0` | Buffer/Uint8Array compatibility |
-| `hyperdht` | `^6.29.1` | DHT node (transitive via hyperswarm; needed directly for local bootstrap in dev) |
-| `bare-rpc` | `^1.1.0` | RPC over duplex streams |
+## expo-mobile
 
-## Bare Runtime Modules
+| Package | Range | Group |
+| --- | --- | --- |
+| expo | ~54.0.33 | base |
+| expo-build-properties | ~1.0.9 | base |
+| expo-file-system | ^19.0.15 | base |
+| expo-linking | ~8.0.11 | base |
+| expo-router | ~6.0.23 | base |
+| expo-splash-screen | ~31.0.10 | base |
+| expo-status-bar | ~3.0.8 | base |
+| react | 19.1.0 | base |
+| react-native | 0.81.5 | base |
+| react-native-safe-area-context | ~5.6.0 | base |
+| react-native-screens | ~4.16.0 | base |
+| react-native-bare-kit | 0.15.0 | base |
+| bare-pack | ^2.2.1 | base |
+| bare-rpc | ^1.1.0 | base |
+| corestore | ^7.8.0 | base |
+| hyperbee | ^2.27.3 | base |
+| @types/react | ~19.1.10 | development |
+| typescript | ~5.9.2 | development |
+| @qvac/sdk | ^0.15.0 | local-ai |
+| zod | ^4.3.0 | local-ai |
+| expo-device | ~8.0.10 | local-ai |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| hyperswarm | ^4.17.0 | node-sync |
+| b4a | ^1.8.0 | node-sync |
+| events | ^3.3.0 | node-sync |
 
-These are **npm packages** — they must be installed explicitly. Unlike Node.js,
-Bare has no built-in standard library. If you `import` a `bare-*` module without
-installing it, you'll get `MODULE_NOT_FOUND`.
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `bare-process` | `^4.3.0` | `process` equivalent (pid, argv, env, exit) |
-| `bare-fs` | `^4.5.5` | File system operations |
-| `bare-path` | `^3.0.0` | Path manipulation |
-| `bare-crypto` | `^1.13.4` | Cryptographic primitives |
-| `bare-encoding` | `^1.0.3` | TextEncoder / TextDecoder for Bare |
-| `bare-buffer` | `^3.5.0` | Buffer implementation for Bare |
-| `bare-subprocess` | `^5.2.2` | Child process spawning |
-| `bare-env` | `^3.0.0` | Environment variable access |
-| `bare-net` | `^2.2.0` | TCP / IPC sockets |
-| `bare-console` | `^6.1.0` | Console API |
-| `bare-os` | `^3.7.1` | OS info (platform, arch, homedir) |
-
-## Mobile (Expo + Bare) — coupled set, **do not bump individually**
-
-These versions must move **together**. Bumping any single one risks breaking
-the Bare worklet bundling pipeline that the scaffolded mobile app relies on.
-
-The bundler is now **`bare-pack@^2.2.1`** (the 2.x line). `@qvac/sdk@0.15`
-depends on `bare-pack@^2.0.1` internally, so the app and the SDK share the 2.x
-toolchain (they dedupe to a single `bare-pack` in the lockfile). The 2.x CLI
-replaced `--target <triple>` (removed in `bare-pack@2.0.0`, Jan 2026) with
-`--host <triple>`; the `build:bare` script in
-`packages/cli/src/generators/expo-mobile.ts` uses `--host` accordingly. The
-host triples themselves are unchanged.
-
-> ⚠️ **Not yet re-validated end-to-end.** This set was migrated off the old
-> `bare-pack@1.5.1` anchor to 2.x alongside the `@qvac/sdk` 0.11 → 0.15 bump.
-> Dependency **resolution** is verified clean (no ERESOLVE; `bare-fs` resolves
-> to `4.7.4`, `react-native-bare-kit` to `0.15.0`), but a full native build
-> (`expo prebuild` → `bare-pack --host` → iOS/Android compile on a device) has
-> not been run. Do a level-4 simulator + level-6 device pass before shipping.
-
-| Package | Version | Why |
-|---------|---------|-----|
-| `bare-pack` | `^2.2.1` | Bundler. Matches `@qvac/sdk@0.15`'s internal `bare-pack@^2.0.1`; 2.x uses `--host` (not `--target`). |
-| `expo` | `~54.0.33` | Pairs cleanly with `react-native@0.81.x`. **Kept on SDK 54** — the QVAC bump does not require Expo 55/56 (RN 0.83/0.85), which are a separate migration. |
-| `expo-build-properties` | `~1.0.9` | Matches Expo SDK 54. Must be in `dependencies`, not just `app.json` plugins. |
-| `expo-router` | `~6.0.23` | Matches Expo SDK 54. |
-| `expo-file-system` | `^19.0.15` | Matches Expo SDK 54 (also the optional peer of `@qvac/sdk` for model caching). |
-| `expo-device` | `~8.0.10` | Matches Expo SDK 54. Used to detect simulator vs physical device for QVAC. |
-| `expo-linking` | `~8.0.11` | Required transitively by `expo-router/build/views/Unmatched.js`. |
-| `expo-splash-screen` | `~31.0.10` | Matches Expo SDK 54. |
-| `expo-status-bar` | `~3.0.8` | Matches Expo SDK 54. |
-| `react-native` | `0.81.5` (exact) | Exact pin — Expo SDK 54 ships this. |
-| `react` | `19.1.0` (exact) | Exact pin — Expo SDK 54 ships this. |
-| `react-native-bare-kit` | `0.15.0` (exact) | Hosts the Bare runtime inside RN; ships a specific runtime that must match `@qvac/sdk`'s worker bundle. `@qvac/sdk@0.15` declares it as an **optional `*` peer** (no longer an exact requirement), so we track it to the release contemporaneous with the SDK and keep the exact pin ourselves. |
-| `react-native-safe-area-context` | `~5.6.0` | Matches Expo SDK 54. |
-| `react-native-screens` | `~4.16.0` | Matches Expo SDK 54. |
-| `bare-rpc` | `^1.1.0` | `1.3.2+` works (covered by caret). |
-| `bare-fs` | resolved transitively | **No override.** The old `bare-fs@4.5.1` exact override existed only for the `bare-pack@1.5.1` pipeline. On 2.x we let it resolve to satisfy `@qvac/sdk@0.15`'s `bare-fs@^4.5.1` (currently `4.7.4`). |
-| `corestore` | `^7.8.0` | Lower-bound floor — caret covers latest. |
-| `hyperbee` | `^2.27.3` | Lower-bound floor — caret covers latest. |
-| Node.js (build host) | `≥ 20 LTS` | Expo SDK 54 + `bare-pack` 2.x toolchain. |
-
-**Rule**: when bumping Expo, you bump every entry in this table **and**
-re-run `pnpm test:e2e:mobile` end-to-end on both an iOS Simulator (level 4)
-and a physical device (level 6). When bumping any single package without
-re-validating the whole pipeline, **don't** — pin back to this table.
-
-## AI (QVAC)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `@qvac/sdk` | `^0.15.0` | Local AI inference SDK |
-| `@qvac/cli` | `^0.8.1` | Optional: OpenAI-compatible HTTP server + Bare worker bundler. **No longer a declared peer of `@qvac/sdk@0.15`** — installs cleanly (no `--legacy-peer-deps`). |
-| `zod` | `^4.3.0` | Schema validation for tool definitions (v4.3+ required by @qvac/sdk@0.10+; 0.15 keeps this floor) |
-| `react-native-bare-kit` | `0.15.0` | (Expo only) Native module that hosts the Bare runtime — exact-pinned by us to match the SDK generation (0.15 declares it as an optional `*` peer) |
-
-## UI (React + styled-components)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `react` | `^19.1.0` | UI framework |
-| `react-dom` | `^19.1.0` | DOM renderer |
-| `styled-components` | `^6.1.0` | CSS-in-JS styling |
-| `zustand` | `^5.0.8` | State management (optional) |
-
-## Build Tooling (devDependencies)
-
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `@swc/cli` | `^0.7.0` | SWC command-line compiler |
-| `@swc/core` | `^1.3.0` | SWC core (TypeScript/JSX → JS) |
-| `chokidar` | `^4.0.3` | File watcher — **required** for SWC `--watch` |
-| `concurrently` | `^9.0.0` | Run multiple scripts in parallel |
-| `react-refresh` | `^0.17.0` | React Fast Refresh for HMR |
-| `typescript` | `^5.0.0` | Type checking (not used for compilation) |
-| `@types/react` | `^19.1.0` | React type definitions |
-| `@types/react-dom` | `^19.1.0` | React DOM type definitions |
-
----
-
-## Reference: Complete package.json for a Pear Desktop App with Worker
-
-This is the minimal `package.json` for a Pear desktop app that uses a Bare
-worker for P2P and/or AI operations:
-
-```json
-{
-  "name": "my-app",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "electron/main.js",
-  "upgrade": "pear://<VALID_DEVELOPMENT_LINK>",
-  "scripts": {
-    "dev": "electron .",
-    "start": "electron ."
-  },
-  "dependencies": {
-    "pear-runtime": "^1.3.1",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "styled-components": "^6.1.0"
-  },
-  "devDependencies": {
-    "electron": "^40.2.1",
-    "@swc/cli": "^0.7.0",
-    "@swc/core": "^1.3.0",
-    "@types/react": "^19.1.0",
-    "@types/react-dom": "^19.1.0",
-    "chokidar": "^4.0.3",
-    "concurrently": "^9.0.0",
-    "react-refresh": "^0.17.0",
-    "typescript": "^5.0.0"
-  }
-}
-```
-
-### Adding P2P (Hyperswarm + Protomux messaging):
-
-```json
-"dependencies": {
-    "hyperswarm": "^4.17.0",
-  "protomux": "^3.10.1",
-    "compact-encoding": "^2.19.0",
-    "b4a": "^1.8.0",
-    "bare-process": "^4.3.0"
-}
-```
-
-### Adding Storage (Corestore + Hyperbee):
-
-```json
-"dependencies": {
-  "corestore": "^7.8.0",
-    "hypercore": "^11.27.0",
-  "hyperbee": "^2.27.3"
-}
-```
-
-### Adding Dev Testing (local DHT bootstrap):
-
-```json
-"devDependencies": {
-  "hyperdht": "^6.29.1"
-}
-```
-
-### Adding AI (QVAC):
-
-```json
-"dependencies": {
-  "@qvac/sdk": "^0.15.0",
-  "zod": "^4.3.0"
-},
-"devDependencies": {
-  "@qvac/cli": "^0.8.1"
-}
-```
-
-`@qvac/sdk@0.15` no longer declares `@qvac/cli` as a peer dependency at all, so
-the CLI installs cleanly — no `--legacy-peer-deps` workaround needed:
-
-```bash
-npm install -D '@qvac/cli@^0.8.1'
-```
-
-For Expo (mobile) apps additionally pin `react-native-bare-kit` to the exact
-version that matches the SDK generation (`@qvac/sdk@0.15` declares it as an
-optional `*` peer; we pin exact to keep the Bare runtime aligned with the
-worker bundle):
-
-```json
-"dependencies": {
-  "react-native-bare-kit": "0.15.0"
-}
-```
+For upgrades, run `us compatibility check -o <app>` and review the plan. It reads metadata and files without changing them. Do not regenerate edited apps with `--force`. Compare the installed SDK types and version-matched upstream release notes; keep the coupled Expo/native graph together.

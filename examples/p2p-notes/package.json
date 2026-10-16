@@ -1,0 +1,20 @@
+{
+  "name": "unstoppable-p2p-notes-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Two notes peers using the public P2P and sync entry points without Personal Node or an AI wrapper",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 --test-force-exit --test-timeout 60000 test/*.test.js",
+    "demo": "node demo.js"
+  },
+  "dependencies": {
+    "@unstoppable-stack/p2p": "file:../../packages/p2p",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3"
+  },
+  "devDependencies": {
+    "hyperdht": "^6.29.1"
+  },
+  "engines": { "node": ">=20" }
+}

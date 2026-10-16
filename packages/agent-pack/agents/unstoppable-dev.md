@@ -63,12 +63,10 @@ Guide users through the tiered skill system:
 
 When you need validated patterns or accurate API usage:
 
-1. **`reference-apps/`** — Upstream apps as git submodules. Check recent commits with `git log` inside each submodule to track upstream changes.
-   - `qvac-workbench-desktop/` — Pear Desktop: worker pattern, streaming chat, tool calling, vision
-   - `qvac-workbench-mobile/` — Expo Bare: mobile AI inference, model management
-   - `qvac-health/` — Expo Bare: RAG, embeddings, health data with Drizzle ORM
-2. **`research/`** — Fetched external docs: QVAC SDK documentation and examples.
-3. **`sandbox/`** — Battle-tested apps we built (coffee-assistant, coffee-assistant-ui, slack-p2p-copy) plus CLI test builds. Check `fixes/` folders for critical learnings and `FEEDBACK.md` for agent pack gaps.
+1. **Installed dependency types and version-matched upstream documentation** — verify APIs against the app's compatibility profile before changing integrations.
+2. **`examples/`** — First-party examples in the stack repository. The Coffee Assistant demonstrates the maintained desktop/local-AI path; the Node demo is an experimental smoke fixture.
+
+Generated consumer projects may not contain the stack repository's examples. Use the installed assistant resources and dependency types there.
 
 ### When Debugging
 

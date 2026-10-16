@@ -4,9 +4,7 @@ on:
   pull_request:
     paths:
       - packages/node/**
-      - packages/node-core/**
-      - packages/node-caps-sync/**
-      - packages/node-caps-ai/**
+      - packages/p2p/**
       - packages/node-desktop/**
       - scripts/node-release-gate.mjs
       - .github/workflows/node-desktop-*.yml
@@ -14,9 +12,7 @@ on:
     branches: [main]
     paths:
       - packages/node/**
-      - packages/node-core/**
-      - packages/node-caps-sync/**
-      - packages/node-caps-ai/**
+      - packages/p2p/**
       - packages/node-desktop/**
       - scripts/node-release-gate.mjs
       - .github/workflows/node-desktop-*.yml
@@ -64,24 +60,11 @@ jobs:
 
       - name: Validate release metadata
         run: node scripts/node-release-gate.mjs
-        env:
-          # The 0.6 packages are not on npm yet, so the shell's internal
-          # file: links warn here instead of failing. Release workflows run
-          # the gate strict, so an actual publish still refuses them.
-          NODE_RELEASE_GATE_UNPUBLISHED_OK: '1'
 
       # file:-linked packages resolve imports from their real paths, so each
       # needs its own node_modules (see node-smoke.yml).
-      - name: Install node-core dependencies
-        working-directory: packages/node-core
-        run: npm install
-
-      - name: Install node-caps-sync dependencies
-        working-directory: packages/node-caps-sync
-        run: npm install
-
-      - name: Install node-caps-ai dependencies
-        working-directory: packages/node-caps-ai
+      - name: Install p2p dependencies
+        working-directory: packages/p2p
         run: npm install
 
       - name: Install node dependencies

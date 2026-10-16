@@ -1,12 +1,12 @@
 # Two Apps, No Personal Node
 
-A complete working pair. The runnable version lives in
-`sandbox/app-to-app-demo/`.
+A host/joiner pattern for the experimental P2P library. Save each snippet
+as a separate script in a project with `@unstoppable-stack/p2p` installed.
 
 ## Host — Notes
 
 ```js
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const NOTES = new Map([
   ['note-1', { title: 'Flat white', body: 'Ratio 1:2, 27s' }],
@@ -52,7 +52,7 @@ console.log('Pairing code:', invite.code)
 ## Joiner — Reader
 
 ```js
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const node = createNode({
   storage: './.reader-node',

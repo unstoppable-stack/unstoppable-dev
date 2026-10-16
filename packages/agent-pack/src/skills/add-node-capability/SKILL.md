@@ -18,7 +18,7 @@ version: "2026-08-18"
 *hosts* something.
 
 ## Prerequisites
-- `@unstoppable-stack/node-core` (`^0.6.0-alpha.1`)
+- `@unstoppable-stack/p2p` (`^0.6.0-alpha.1`)
 - Node.js 20+, Bare, Pear Desktop, or Expo Bare — anything with Hyperswarm
 
 ## The Model
@@ -35,7 +35,7 @@ methods are async generators.** That difference is the whole of the
 distinction — cancellation, backpressure and multiplexing come from the bus.
 
 ```js
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const notesPack = {
   name: 'notes',                 // lowercase, digits and dashes

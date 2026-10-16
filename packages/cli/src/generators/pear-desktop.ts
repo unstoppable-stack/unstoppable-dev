@@ -1,3 +1,5 @@
+import { manifest } from '../compatibility/index.js'
+import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
   has, gitignore, readme, planningReadme,
@@ -10,6 +12,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     gitignore(),
     readme(opts),
     planningReadme(),
+    ...projectFiles(opts),
     packageJson(opts),
     indexHtml(opts),
     electronMainJs(opts),
@@ -18,6 +21,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     appBridgeJs(),
     appComponent(opts),
   ]
+
 
   if (has(opts, 'multi-writer')) {
     files.push(schemaBuilder(), {
@@ -32,28 +36,8 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
 }
 
 function packageJson(opts: GeneratorOptions): GeneratedFile {
-  const deps: Record<string, string> = {
-    'pear-runtime': '^1.3.1',
-    'bare-rpc': '^1.1.0',
-    hyperswarm: '^4.17.0',
-    corestore: '^7.8.0',
-    hyperbee: '^2.27.3',
-    b4a: '^1.8.0',
-    'hypercore-crypto': '^3.7.0',
-  }
-
-  if (has(opts, 'local-ai')) {
-    Object.assign(deps, { '@qvac/sdk': '^0.15.0', zod: '^4.3.0' })
-  }
-
-  if (has(opts, 'node-sync')) {
-    Object.assign(deps, { '@unstoppable-stack/node-core': '^0.6.0-alpha.1' })
-  }
-
-  if (has(opts, 'multi-writer')) {
-    Object.assign(deps, MULTI_WRITER_DEPS)
-    delete deps.hyperbee
-  }
+  const profile = profileFor(opts.platform)
+  const deps = dependenciesFor(opts)
 
   return {
     path: 'package.json',
@@ -63,6 +47,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       private: true,
       type: 'module',
       main: 'electron/main.js',
+      engines: profile.engines,
       // Valid development-only link so pear-runtime can initialize before
       // the developer creates their own release line with `pear touch`.
       upgrade: 'pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o',
@@ -79,7 +64,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         start: 'electron .',
       },
       dependencies: deps,
-      devDependencies: { electron: '^40.2.1' },
+      devDependencies: profile.devDependencies,
     }, null, 2),
   }
 }
@@ -323,7 +308,7 @@ ${replicateLine}
   if (!multiWriter) cleanupCode.push(`  if (store) await store.close()`)
 
   if (has(opts, 'node-sync')) {
-    imports.push(`import { createNode } from '@unstoppable-stack/node-core'`)
+    imports.push(`import { createNode } from '@unstoppable-stack/p2p'`)
     moduleState.push(`let appNode = null`)
     moduleState.push(`let nodePeer = null`)
     initCode.push(`
@@ -344,7 +329,7 @@ ${replicateLine}
       send({ type: 'status', service: 'node-sync', status: 'reconnecting' })
     })
     appNode.on('reconnected', () => {
-      send({ type: 'status', service: 'node-sync', status: 'connected' })
+      send({ type: 'status', service: 'node-sync', status: 'registered' })
     })
     appNode.on('reconnectFailed', () => {
       send({ type: 'status', service: 'node-sync', status: 'unavailable' })
@@ -367,7 +352,7 @@ ${replicateLine}
         }]
       }
     })
-    send({ type: 'status', service: 'node-sync', status: 'connected' })
+    send({ type: 'status', service: 'node-sync', status: 'registered' })
   } catch (err) {
     send({ type: 'status', service: 'node-sync', status: 'unavailable', error: err.message })
   }
@@ -419,88 +404,61 @@ ${replicateLine}
   ]
 
   if (has(opts, 'local-ai')) {
-    // The SDK is NOT imported at module scope. A static import runs the
-    // SDK's native-module resolution as a side effect of loading worker.js,
-    // so any SDK problem kills the worker at import time — before it can
-    // write anything on its pipe, which surfaces to the UI as a silent hang
-    // with P2P and KV storage never coming up either. Loading it lazily in
-    // the 'load-ai' handler keeps that failure scoped to the AI feature and
-    // reportable over the pipe.
-    moduleState.push(`let sdk = null`)
-    moduleState.push(`let modelId = null`)
-    moduleState.push(`const CTX_SIZE = ${DEFAULT_CTX_SIZE}`)
-    moduleState.push(`let modelLoading = false`)
-    // QVAC_MOCK is read at module load (not inside init) so handleCommand
-    // can use it too. The worker runs in two different runtimes:
-    //   * Node — when driven by scripts/tests via `node worker.js`
-    //   * Bare — when hosted by pear-runtime
-    // `process.env` only exists in Node; Bare exposes env through
-    // `Bare.env`. Referencing an undefined `process` in Bare throws a
-    // ReferenceError at import time, hard-failing the worker before it
-    // can write anything on its pipe — so probe both safely.
-    moduleState.push(
-      `const MOCK_AI = (\n  (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env && globalThis.Bare.env.QVAC_MOCK === '1') ||\n  (typeof globalThis.process !== 'undefined' && globalThis.process.env && globalThis.process.env.QVAC_MOCK === '1')\n)`,
-    )
-    // Emit an initial "idle" status so the UI can render the Load button
-    // instead of assuming the model is silently (de)loading on boot.
-    initCode.push(`
-  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })
-  `)
-    cleanupCode.push(
-      `  if (modelId && modelId !== 'mock-model' && sdk) await sdk.unloadModel({ modelId })`,
-    )
-
+    imports.push(`import { createAISession, createBareAdapter, createMockAdapter } from './.unstoppable/runtime-ai/index.js'`)
+    moduleState.push(`const MOCK_AI = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env?.QVAC_MOCK === '1') ||
+  (typeof globalThis.process !== 'undefined' && globalThis.process.env?.QVAC_MOCK === '1')`)
+    moduleState.push(`const ai = createAISession({ adapter: MOCK_AI ? createMockAdapter() : createBareAdapter(), byteBudget: ${Math.floor(DEFAULT_CTX_SIZE / 2)} })`)
+    moduleState.push(`let activeChatRequestId = null`)
+    initCode.push(`  send({ type: 'status', service: 'ai', status: 'idle', mock: MOCK_AI })`)
+    cleanupCode.unshift(`  activeChatRequestId = null
+  try { await ai.close() } catch (err) {
+    send({ type: 'error', service: 'ai', code: err.code, error: err.message })
+  }`)
     commandHandlers.push(`
     case 'load-ai': {
-      if (modelId) { send({ type: 'status', service: 'ai', status: 'ready', modelId }); break }
-      if (modelLoading) { send({ type: 'status', service: 'ai', status: 'loading' }); break }
-      modelLoading = true
-      if (MOCK_AI) {
-        await new Promise((r) => setTimeout(r, 200))
-        modelId = 'mock-model'
-        modelLoading = false
-        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: true })
-        break
-      }
+      send({ type: 'status', service: 'ai', status: 'loading', mock: ai.mock })
       try {
-        send({ type: 'status', service: 'ai', status: 'loading' })
-        sdk = await import('@qvac/sdk')
-        modelId = await sdk.loadModel({
-          modelSrc: sdk.${DEFAULT_LLM_CONST},
+        const modelId = await ai.load({
+          modelSrc: msg.modelSrc,
+          modelConstant: '${DEFAULT_LLM_CONST}',
+          modelChecksum: '${manifest.model.sha256Checksum}',
           modelType: 'llm',
           modelConfig: ${llmModelConfig('          ')},
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })
-        send({ type: 'status', service: 'ai', status: 'ready', modelId })
+        send({ type: 'status', service: 'ai', status: 'ready', modelId, mock: ai.mock })
       } catch (err) {
-        send({ type: 'status', service: 'ai', status: 'error', error: String(err && err.message || err) })
-      } finally {
-        modelLoading = false
+        send({ type: 'status', service: 'ai', status: 'error', code: err.code, error: err.message })
       }
       break
     }
     case 'chat': {
-      if (!modelId) { send({ type: 'chat-error', error: 'Model not loaded. Click Load Assistant first.' }); break }
-      if (MOCK_AI) {
-        const last = msg.history[msg.history.length - 1]
-        const reply = \`Mock: \${last?.content ?? '(empty)'}\`
-        for (const ch of reply) {
-          send({ type: 'chat-token', token: ch })
-          await new Promise((r) => setTimeout(r, 5))
-        }
-        send({ type: 'chat-done' })
-        break
-      }
+      const requestId = msg.requestId
+      if (activeChatRequestId !== null) { send({ type: 'chat-error', requestId, error: 'Another response is already running.' }); break }
+      activeChatRequestId = requestId
       try {
-        // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
-        // tokens arrive as plain content — no reasoning-block filtering needed.
-        const result = sdk.completion({ modelId, history: msg.history, stream: true })
-        for await (const token of result.tokenStream) {
-          send({ type: 'chat-token', token })
+        for await (const token of ai.stream(msg.history, {
+          requestId,
+          onTrim: () => send({ type: 'chat-context', requestId }),
+        })) {
+          if (activeChatRequestId === requestId) send({ type: 'chat-token', requestId, token })
         }
-        send({ type: 'chat-done' })
+        if (activeChatRequestId === requestId) send({ type: 'chat-done', requestId })
       } catch (err) {
-        send({ type: 'chat-error', error: String(err && err.message || err) })
+        if (activeChatRequestId === requestId) send({ type: 'chat-error', requestId, code: err.code, error: err.message })
+      } finally {
+        if (activeChatRequestId === requestId) activeChatRequestId = null
+      }
+      break
+    }
+    case 'cancel-chat': {
+      const requestId = msg.requestId
+      if (activeChatRequestId === requestId) activeChatRequestId = null
+      try {
+        await ai.cancel(requestId)
+        send({ type: 'chat-cancelled', requestId })
+      } catch (err) {
+        send({ type: 'chat-error', requestId, code: err.code, error: 'Cancellation failed: ' + err.message })
       }
       break
     }`)
@@ -681,9 +639,9 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   if (hasNodeSync) {
     sectionHtml.push(`
       <section data-testid="node-sync-section" class="card">
-        <h2 class="card-title">Data Protection</h2>
+        <h2 class="card-title">Node Replication</h2>
         <p class="mono" id="node-sync-status">⏳ Looking for your Personal Node…</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">Your data stays on this device until a Personal Node is available. Developers can start one with <code>npx unstoppable-node</code>.</p>
+        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
       </section>`)
   }
 
@@ -691,7 +649,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     sectionHtml.push(`
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
-        <p class="card-hint">${DEFAULT_LLM_LABEL} · ~${DEFAULT_LLM_SIZE_MB}MB download on first run, cached after.</p>
+        <p class="card-hint">${DEFAULT_LLM_LABEL} · ~${DEFAULT_LLM_SIZE_MB} MB download on first run, cached after. A validation Mac used ~1.4–1.5 GiB for the warm app process tree; your usage may vary.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
         </div>
@@ -709,6 +667,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
           <div class="row gap-8">
             <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
             <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
       </section>`)
@@ -767,25 +726,41 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   document.getElementById('ai-retry').addEventListener('click', requestLoad)
 
   document.getElementById('chat-send').addEventListener('click', sendChat)
+  document.getElementById('chat-stop').addEventListener('click', () => {
+    if (activeChatRequestId === null) return
+    document.getElementById('chat-stop').disabled = true
+    sendToWorker({ type: 'cancel-chat', requestId: activeChatRequestId })
+  })
   document.getElementById('chat-input').addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat() }
   })
 
   let chatHistory = []
   let streamingEl = null
+  let chatSequence = 0
+  let activeChatRequestId = null
+
+  function setChatBusy(busy) {
+    const input = document.getElementById('chat-input')
+    input.disabled = busy
+    document.getElementById('chat-send').disabled = busy
+    document.getElementById('chat-stop').style.display = busy ? 'inline-block' : 'none'
+    document.getElementById('chat-stop').disabled = false
+    if (!busy) input.focus()
+  }
 
   function sendChat() {
     const input = document.getElementById('chat-input')
     const text = input.value.trim()
     if (!text) return
     input.value = ''
-    input.disabled = true
-    document.getElementById('chat-send').disabled = true
+    setChatBusy(true)
 
     chatHistory.push({ role: 'user', content: text })
     appendBubble('user', text)
     streamingEl = appendBubble('assistant', '')
-    sendToWorker({ type: 'chat', history: chatHistory })
+    activeChatRequestId = ++chatSequence
+    sendToWorker({ type: 'chat', requestId: activeChatRequestId, history: chatHistory })
   }
 
   function appendBubble(role, text) {
@@ -810,7 +785,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   // P2P status — always wired (base feature)
   msgCases.push(`
     if (msg.type === 'status' && msg.service === 'p2p') {
-      setText('p2p-status', msg.status === 'ready' ? '✅ Connected — peers will join automatically' : '❌ ' + msg.status)
+      setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }`)
 
   // KV Storage result — always wired (base feature)
@@ -854,11 +829,11 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
     if (msg.type === 'status' && msg.service === 'node-sync') {
       const hintEl = document.getElementById('node-sync-hint')
       if (msg.status === 'searching') setText('node-sync-status', '⏳ Looking for your Personal Node…')
-      if (msg.status === 'connected') {
-        setText('node-sync-status', '✅ Protected — background replication is active')
+      if (msg.status === 'registered') {
+        setText('node-sync-status', 'Registered for replication — copy verification pending')
         if (hintEl) hintEl.style.display = 'none'
       }
-      if (msg.status === 'disconnected' || msg.status === 'reconnecting') setText('node-sync-status', '⚠️ Protection paused — reconnecting…')
+      if (msg.status === 'disconnected' || msg.status === 'reconnecting') setText('node-sync-status', '⚠️ Replication paused — reconnecting…')
       if (msg.status === 'unavailable') {
         setText('node-sync-status', 'Device only — Personal Node not found')
         if (hintEl) hintEl.style.display = 'block'
@@ -888,25 +863,36 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       }
       setText('ai-loading-label', label)
     }
-    if (msg.type === 'chat-token' && streamingEl) {
+    if (msg.type === 'chat-token' && msg.requestId === activeChatRequestId && streamingEl) {
       streamingEl.textContent += msg.token
       document.getElementById('chat-messages').scrollTop = 9999
     }
-    if (msg.type === 'chat-done') {
+    if (msg.type === 'chat-done' && msg.requestId === activeChatRequestId) {
       if (streamingEl) {
         chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
         streamingEl = null
       }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      inp.focus()
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }
-    if (msg.type === 'chat-error') {
+    if (msg.type === 'chat-cancelled' && msg.requestId === activeChatRequestId) {
+      if (streamingEl) {
+        const partial = streamingEl.textContent.trim()
+        streamingEl.textContent = partial ? partial + ' [stopped]' : 'Stopped.'
+        chatHistory.push({ role: 'assistant', content: streamingEl.textContent })
+        streamingEl = null
+      }
+      activeChatRequestId = null
+      setChatBusy(false)
+    }
+    if (msg.type === 'chat-context' && msg.requestId === activeChatRequestId) {
+      appendBubble('system', 'Earlier messages were omitted from model context to fit this request.')
+    }
+    if (msg.type === 'chat-error' && msg.requestId === activeChatRequestId) {
+      if (chatHistory.at(-1)?.role === 'user') chatHistory.pop()
       if (streamingEl) { streamingEl.textContent = '❌ ' + (msg.error || 'chat failed'); streamingEl = null }
-      const inp = document.getElementById('chat-input')
-      inp.disabled = false
-      document.getElementById('chat-send').disabled = false
+      activeChatRequestId = null
+      setChatBusy(false)
     }`)
   }
 

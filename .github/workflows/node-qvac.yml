@@ -1,6 +1,6 @@
 name: Node Real QVAC
 
-# Stable-release validation for the exact SDK bundled by Personal Node.
+# Opt-in validation for the real QVAC provider in the Personal Node application.
 # Protect the qvac-validation environment with required reviewers so model
 # downloads and native inference run only after explicit approval.
 on:
@@ -34,7 +34,11 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install node deps
+      - name: Install P2P dependencies
+        working-directory: packages/p2p
+        run: npm ci
+
+      - name: Install Personal Node dependencies
         working-directory: packages/node
         run: npm ci
 

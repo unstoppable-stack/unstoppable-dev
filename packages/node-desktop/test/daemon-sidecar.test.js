@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { it } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { createSidecarHost } from '../electron/sidecar-host.js'
+import { createTestEnv } from '../../p2p/test/helpers.js'
 
 const packageRoot = fileURLToPath(new URL('..', import.meta.url))
 
@@ -15,13 +16,17 @@ it('boots and stops the real NodeDaemon inside a Bare sidecar', {
   skip: runSidecarE2E ? false : 'set RUN_ELECTRON_SIDECAR_E2E=1 (opens a local P2P listener)'
 }, async () => {
   const storagePath = await mkdtemp(join(tmpdir(), 'personal-node-sidecar-'))
+  const network = await createTestEnv()
   let host
 
   try {
     const ready = new Promise((resolve, reject) => {
       host = createSidecarHost({
-        entry: join(packageRoot, 'electron', 'worker.js'),
+        // Exercise the real daemon host with a local DHT. Public bootstrap
+        // reachability must not determine whether shutdown passes in CI.
+        entry: join(packageRoot, 'scripts/fixtures/daemon-worker.js'),
         storagePath,
+        args: [JSON.stringify(network.bootstrap)],
         onMessage: (message) => {
           if (message.type === 'ready') resolve(message)
           if (message.type === 'fatal') reject(new Error(message.error))
@@ -40,6 +45,7 @@ it('boots and stops the real NodeDaemon inside a Bare sidecar', {
     assert.equal(exit.signal, null)
   } finally {
     await host?.close()
+    await network.cleanup()
     await rm(storagePath, { recursive: true, force: true })
   }
 })

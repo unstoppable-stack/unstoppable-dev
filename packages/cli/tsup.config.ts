@@ -43,9 +43,11 @@ const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
     US_FEAT_REMOTE: false,
     US_FEAT_RESEARCH: false,
     US_FEAT_SEARCH: false,
-    US_FEAT_NODE: true,
-    // Excluded from the 0.3.0 release: Memory is not yet E2E-validated.
-    // Tracked in planning/status/release-plan-2026-06-12.md (fast-follow).
+    // Personal Node/runtime 0.6 is deferred from the core public preview.
+    // Keep the command available in full/internal builds until its packaging,
+    // trust, resource, and replication-status gates pass.
+    US_FEAT_NODE: false,
+    // Memory is also outside the focused public-preview contract.
     US_FEAT_MEMORY: false,
   },
   // Everything we've built. Used for `pnpm dev`, integration tests, and
@@ -121,8 +123,28 @@ export default defineConfig({
   format: ['esm'],
   dts: true,
   clean: true,
-  // node-pty is a native module consumed only by the remote command. Keep
-  // it external regardless of profile — bundling native modules breaks.
-  external: ['node-pty'],
+  // Full-profile-only runtime packages stay external. Several contain native
+  // modules or CommonJS internals that cannot be safely folded into the ESM
+  // bundle. They are development dependencies and are absent from the
+  // published minimal install.
+  external: [
+    '@extractus/article-extractor',
+    '@hyperswarm/testnet',
+    '@mozilla/readability',
+    'b4a',
+    'compact-encoding',
+    'corestore',
+    'duck-duck-scrape',
+    'fastify',
+    'hyperbee',
+    'hypercore',
+    'hypercore-crypto',
+    'hyperdht',
+    'hyperdrive',
+    'hyperswarm',
+    'jsdom',
+    'node-pty',
+    'qrcode-terminal',
+  ],
   define,
 })

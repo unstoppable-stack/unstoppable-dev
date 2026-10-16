@@ -1,95 +1,14 @@
 ---
 name: add-p2p-sync
-description: Single-writer P2P data replication with Hypercore and Corestore.
-when_to_use: User wants to sync an append-only log or data store across devices. For multi-writer, use add-multi-writer-sync instead.
-paths: ["src/p2p/**", "src/data/**"]
-version: "2026-04-14"
+description: Extend replication in an existing generated app while preserving its storage and runtime boundaries.
 ---
 
-# Add P2P Data Sync
+# Extend P2P replication
 
-## When to Use
-- User wants to sync data between devices or peers
-- User mentions "replication", "multi-device", "offline sync", or "shared state"
-- User needs an append-only log shared across peers
+Read the target app manifest and entrypoints. Node apps expose `src/swarm-manager.ts` and storage managers; desktop apps initialize networking/storage in `worker.js`; Expo uses `bare/index.js`. Do not assume old `SwarmManager` or `CorestoreManager` classes are included.
 
-> **Multi-writer?** If multiple peers need to **write** to the same database
-> and converge, use `add-multi-writer-sync` (Autobee) instead of this skill.
-> This skill covers **single-writer** replication — one peer writes, others read.
+Reuse the existing swarm/store and replicate the appropriate store or Autobee on each connection. Keep peer errors/disconnections harmless to local reads. Await core/database readiness before using it; do not block app startup waiting for peers. Discovery announces availability and is not evidence that remote data has arrived.
 
-## Prerequisites
-- Hypercore (`^11.24.0`) and Hyperswarm (`^4.16.0`) installed
-- Node.js or Bare runtime with ESM support
+For multi-writer data, use the app’s generated store, writer promotion and deterministic schema/apply policy. Replicated data and device-private state remain separate. For identity/pairing/grants, use P2P runtime only when installed; it is not required for simple database replication.
 
-> **CRITICAL — Pear Desktop Apps:** Hypercore, Hyperswarm, and Corestore
-> CANNOT run in the renderer (browser context). They MUST run in a **worker
-> process** started by embedded `pear-runtime`. The worker uses `Bare.IPC`,
-> bridged to the UI through Electron's sandboxed preload. See the `setup-pear-desktop` skill →
-> `resources/worker-pattern.md` for the full worker bridge implementation.
-
-## Included Components
-
-Your project includes battle-tested components in `src/p2p/` and `src/data/`:
-
-- **`src/p2p/swarm-manager.ts`** — Hyperswarm with connection lifecycle, error handling, graceful shutdown
-- **`src/p2p/replication.ts`** — Hypercore/Corestore replication wired to Hyperswarm with `findingPeers()`
-- **`src/data/corestore-manager.ts`** — Named Hypercore management with shared storage
-
-## Steps
-
-1. **Install dependencies** (if not present):
-   ```bash
-   npm i hypercore hyperswarm corestore b4a hypercore-crypto
-   ```
-
-2. **Use the included components** — they handle the common gotchas already:
-   ```ts
-   import { SwarmManager } from './p2p/swarm-manager.js'
-   import { joinAndReplicate } from './p2p/replication.js'
-   import { CorestoreManager } from './data/corestore-manager.js'
-   ```
-
-3. **Wire into your app** — create cores, join the swarm, replicate:
-   ```ts
-   const store = new CorestoreManager({ storagePath: './data' })
-   const core = await store.getCore('events')
-
-   const swarm = new SwarmManager({
-     onConnection: (conn) => store.replicate(conn),
-     onError: (err) => console.error('Peer error:', err.message),
-   })
-
-   await swarm.join(core.discoveryKey)
-   ```
-
-4. **Customize** the components for your specific data model
-
-## Key Gotchas
-- Always call `await core.ready()` before any operations
-- Use `const discovery = swarm.join(topic); await discovery.flushed()` to wait for discovery announcements (NOT `swarm.flush()`)
-- Both peers should join with `{ server: true, client: true }` for reliable mutual discovery
-- Call `await core.update({ wait: true })` to wait for remote data
-- Handle `conn.on('error')` and `conn.on('close')` events
-
-## Critical Rules
-- **Always replicate before reading remote data** — a Hypercore has no data until replication brings it from the writer
-- **Use Corestore for multi-core apps** — managing individual Hypercores manually leads to storage and replication bugs. Corestore handles shared storage and multiplexed replication
-- **Don't forget `swarm.flush()` / `discovery.flushed()`** — without waiting for discovery, you may read before any peers have connected
-- **Always `await core.ready()`** — accessing `core.key` or `core.discoveryKey` before ready returns `null`
-- **Replicate the `store`, not individual cores** — `store.replicate(conn)` handles all cores in the store automatically
-- **Never assume data is available immediately** — use `core.update({ wait: true })` to wait for remote data after replication starts
-- **Use `findingPeers()` for coordinated startup** — tells Hypercore to wait for peers before resolving reads, avoiding premature "empty" results
-- **Don't hardcode core keys across peers** — share them via a discovery mechanism or out-of-band
-
-## Validation
-1. [ ] Writer creates a Hypercore and appends data: `await core.append('hello')` succeeds
-2. [ ] Writer joins swarm on `core.discoveryKey` and `discovery.flushed()` resolves
-3. [ ] Reader creates a Hypercore from the writer's public key and joins the same swarm
-4. [ ] Reader receives data: `await core.get(0)` returns the appended block after replication
-5. [ ] Multiple appends sync: writer appends 5 entries, reader sees all 5 after `core.update()`
-6. [ ] Restart preserves data: kill and restart both peers — writer's data persists, reader re-syncs
-7. [ ] `core.length` matches on both sides after full replication
-
-## Deep Dive
-- Full writer/reader example: read `resources/full-example.md`
-- Troubleshooting guide: read `resources/troubleshooting.md`
+Use installed APIs and https://docs.holepunch.to/ for detailed replication calls. Validate two real peers, reconnect, local reads offline, and convergence rather than merely matching generated code strings.

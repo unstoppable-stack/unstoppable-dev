@@ -5,15 +5,12 @@ const root = resolve(import.meta.dirname, '..')
 const packageFiles = {
   cli: 'packages/cli/package.json',
   node: 'packages/node/package.json',
-  core: 'packages/node-core/package.json',
-  capsSync: 'packages/node-caps-sync/package.json',
-  capsAi: 'packages/node-caps-ai/package.json',
+  p2p: 'packages/p2p/package.json',
   desktop: 'packages/node-desktop/package.json'
 }
 
-// The Personal Node is a composition now: shipping it means shipping the
-// runtime and the packs it is built from, at the same version.
-const nodeLine = ['node', 'core', 'capsSync', 'capsAi']
+// Personal Node composes the P2P library and its own direct QVAC adapter.
+const nodeLine = ['node', 'p2p']
 
 const packages = Object.fromEntries(await Promise.all(
   Object.entries(packageFiles).map(async ([name, file]) => [name, JSON.parse(await readFile(resolve(root, file), 'utf8'))])
@@ -23,16 +20,8 @@ const failures = []
 const warnings = []
 const check = (condition, message) => { if (!condition) failures.push(message) }
 
-// Until the 0.6 packages exist on npm, the shell can only reference them by
-// file: link — a semver range would make every npm install 404. Release runs
-// stay strict (a published tarball with file: deps is broken for consumers);
-// PR CI sets this to get a loud warning instead of a permanently red check.
-const allowUnpublishedInternal = process.env.NODE_RELEASE_GATE_UNPUBLISHED_OK === '1'
-const internalNodeLineDeps = new Set([
-  '@unstoppable-stack/node-core',
-  '@unstoppable-stack/node-caps-sync',
-  '@unstoppable-stack/node-caps-ai'
-])
+// Only this exact development link is allowed. pack-node-release stages a
+// semver replacement and rejects all remaining local production dependencies.
 const baseVersion = (version) => version.split('-')[0]
 
 for (const name of nodeLine) {
@@ -61,8 +50,8 @@ for (const name of [...nodeLine, 'cli']) {
   })
   for (const [depName, value] of dependencyEntries) {
     if (!/^file:|^link:|^workspace:/.test(value)) continue
-    if (allowUnpublishedInternal && internalNodeLineDeps.has(depName)) {
-      warnings.push(`${name} depends on unpublished ${depName} via ${value} — must become a semver range before release`)
+    if (name === 'node' && depName === '@unstoppable-stack/p2p' && value === 'file:../p2p') {
+      warnings.push('Personal Node uses a development P2P link; publish only staged, verified release tarballs')
       continue
     }
     check(false, `${name} public package contains a local dependency (${depName}: ${value})`)
@@ -70,17 +59,16 @@ for (const name of [...nodeLine, 'cli']) {
   check(pkg.repository?.url === 'https://github.com/unstoppable-stack/unstoppable-dev.git', `${name} repository URL is not the public repository`)
 }
 
-const generatorFiles = [
-  'packages/cli/src/generators/node-cli.ts',
-  'packages/cli/src/generators/pear-desktop.ts',
-  'packages/cli/src/generators/expo-mobile.ts'
-]
-for (const file of generatorFiles) {
-  const source = await readFile(resolve(root, file), 'utf8')
-  check(
-    source.includes(`'@unstoppable-stack/node-core': '^${packages.core.version}'`),
-    `${file} does not generate the release node-core version`
-  )
+const profiles = JSON.parse(await readFile(resolve(root, 'packages/cli/src/compatibility/profiles.json'), 'utf8'))
+for (const profile of Object.values(profiles.profiles)) {
+  for (const deps of Object.values(profile.featureDependencies || {})) {
+    if (!deps['@unstoppable-stack/p2p']) continue
+    check(deps['@unstoppable-stack/p2p'] === `^${packages.p2p.version}`, `${profile.id} has a stale P2P version`)
+  }
+}
+for (const directory of ['memory', 'memory-client', 'memory-mcp', 'agent-pack', 'runtime-ai']) {
+  const pkg = JSON.parse(await readFile(resolve(root, `packages/${directory}/package.json`), 'utf8'))
+  check(pkg.private === true, `${directory} must stay private and outside npm release publishing`)
 }
 
 const changelog = await readFile(resolve(root, 'CHANGELOG.md'), 'utf8')
@@ -125,13 +113,9 @@ check(nodeRelease.includes('id-token: write'), 'Node publishing is missing npm t
 check(nodeRelease.includes('npm@12.0.2'), 'Node publishing is missing the pinned trusted-publishing npm CLI')
 check(!nodeRelease.includes('NODE_AUTH_TOKEN'), 'Node publishing must not use a long-lived npm token')
 check(!nodeRelease.includes('--provenance'), 'Private-repository Node publishing must not request unsupported npm provenance')
-for (const directory of ['node-core', 'node-caps-sync', 'node-caps-ai']) {
-  check(
-    nodeRelease.includes(`npm pack ./packages/${directory}`),
-    `Node release does not pack ${directory} from the monorepo root correctly`
-  )
-}
-check(nodeRelease.includes('npm pack ./packages/node '), 'Node release does not pack node from the monorepo root correctly')
+check(nodeRelease.includes('node scripts/pack-node-release.mjs'), 'Node release must use the staged P2P/Node packer')
+check(nodeRelease.includes('node scripts/release-artifacts.mjs'), 'Node release must verify packed manifests and record checksums')
+check(nodeRelease.includes('unstoppable-stack-p2p-*.tgz'), 'Node release does not publish the P2P artifact')
 
 const desktopRelease = await readFile(resolve(root, '.github/workflows/node-desktop-release.yml'), 'utf8')
 check(desktopRelease.includes('environment: desktop-release'), 'Desktop release is missing its protected environment')
