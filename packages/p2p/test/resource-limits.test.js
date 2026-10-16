@@ -60,7 +60,16 @@ it('bounds simultaneous requests, cancels timed-out work, and admits subsequent 
 
 it('cancels an active stream when its grant is removed', async () => {
   env = await createTestEnv()
-  const host = await env.makeNode({ capabilities: [echoPack()] })
+  const pack = echoPack()
+  let aborted = false
+  // Keep the stream active without racing already-sent chunks against the
+  // revocation frame. Network delivery is asynchronous after setPeerGrants.
+  pack.methods.forever = async function * (_params, { signal }) {
+    yield 'first'
+    if (!signal.aborted) await new Promise(resolve => signal.addEventListener('abort', resolve, { once: true }))
+    aborted = true
+  }
+  const host = await env.makeNode({ capabilities: [pack] })
   await host.listen()
   const client = await env.makeNode()
   const peer = await client.connect(host.publicKey)
@@ -69,6 +78,7 @@ it('cancels an active stream when its grant is removed', async () => {
   await host.setPeerGrants(client.publicKey, { echo: ['ping'] })
   await assert.rejects(() => iterator.next(), { code: 'NOT_GRANTED' })
   await env.until(() => host._activeRequests === 0)
+  assert.equal(aborted, true)
 })
 
 it('cancels slow consumers instead of buffering indefinitely', async () => {
