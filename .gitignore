@@ -52,3 +52,8 @@ packages/website/public/downloads/
 
 # Local release candidates and evidence are generated, never source inputs.
 /release-artifacts/
+# Historical names of private maintainer directories.
+/project-planning/
+/project-status/
+/Roadmap/
+/presentation/

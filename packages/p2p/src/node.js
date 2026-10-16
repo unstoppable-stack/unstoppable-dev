@@ -1,7 +1,7 @@
 import { EventEmitter } from 'bare-events'
 import Hyperswarm from 'hyperswarm'
 import Protomux from 'protomux'
-import c from 'compact-encoding'
+import { normalizeLimits, boundedJson } from './limits.js'
 import b4a from 'b4a'
 
 import { loadIdentity } from './identity.js'
@@ -52,9 +52,16 @@ export class UnstoppableNode extends EventEmitter {
     this.listening = false
     this.closed = false
 
+    this.limits = normalizeLimits(opts.limits)
+    this._activeRequests = 0
     this._swarmOpts = opts.swarm || {}
     this._topic = opts.topic ?? null
-    this._pairing = opts.pairing || {}
+    this._pairing = { ...(opts.pairing || {}) }
+    if (typeof this._pairing.approve !== 'function') {
+      this._pairing.approve = this._pairing.autoApprove === true
+        ? async () => 'approve'
+        : async () => 'approval required; use a scoped invitation'
+    }
     this._peers = new Map()          // remote public key (hex) -> Peer
     this._dialing = new Map()        // remote public key (hex) -> { deferred, requested, timer }
     this._discovering = null         // in-flight discover() by topic
@@ -140,6 +147,7 @@ export class UnstoppableNode extends EventEmitter {
       throw new InvalidOptionError('connect() needs a 32-byte public key (hex string or buffer)')
     }
     const hex = toPublicKeyHex(keyBuffer)
+    if (this.peerRegistry.isDenied(hex)) throw new PairDeniedError('peer revoked; forget the denial before pairing again')
 
     const existing = this._peers.get(hex)
     if (existing?.paired) return existing
@@ -203,7 +211,7 @@ export class UnstoppableNode extends EventEmitter {
 
     const issued = await issueInvite({
       storage: this.storage,
-      grants: grants ? this.capabilities.grantsFor(grants) : null,
+      grants: grants ? this.capabilities.grantsFor(grants) : this.capabilities.defaultGrants(),
       uses,
       expiresIn,
       label
@@ -360,7 +368,7 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   _onConnection (socket, info) {
-    if (this.closed) return
+    if (this.closed || this._peers.size >= this.limits.maxPeers) { socket.destroy(); return }
     const remotePublicKey = b4a.toString(socket.remotePublicKey, 'hex')
 
     // Hypercore's `createProtocolStream` looks for an existing muxer at
@@ -392,16 +400,11 @@ export class UnstoppableNode extends EventEmitter {
     })
 
     const message = channel.addMessage({
-      encoding: c.json,
-      onmessage: (msg) => {
-        const report = (err) => {
+      encoding: boundedJson(this.limits.maxFrameBytes),
+      onmessage: (msg) => Promise.resolve().then(() => peer.onmessage(msg)).catch((err) => {
           this.emit('error', { type: 'message', publicKey: remotePublicKey, error: err.message })
-        }
-        try {
-          const pending = peer.onmessage(msg)
-          if (pending?.catch) pending.catch(report)
-        } catch (err) { report(err) }
-      }
+          peer.close()
+      })
     })
     peer.attachMessage(message)
     channel.open()
@@ -498,7 +501,14 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   async _onPairRequest (peer, msg) {
+    if (!peer.publicKey || peer.paired || peer._pairRequestPending) return
+    peer._pairRequestPending = true
     const known = this.peerRegistry.get(peer.remotePublicKey)
+    if (this.peerRegistry.isDenied(peer.remotePublicKey) ||
+        await this._pairing.isDenied?.(peer.remotePublicKey)) {
+      peer.send({ type: MESSAGE.PAIR_DENIED, reason: 'peer revoked' })
+      return
+    }
 
     if (msg.invite) {
       const accepted = await this._redeemInvite(peer, msg)
@@ -514,14 +524,16 @@ export class UnstoppableNode extends EventEmitter {
     const network = this._matchNetwork(msg.networks)
     if (network) {
       const approve = network.approve || this._pairing.approve
-      if (!known && typeof approve === 'function') {
+      if (typeof approve === 'function' && known?.pairingMethod !== 'invite') {
         const decision = await this._askApproval(peer, msg, approve, { network: network.id })
         if (decision !== true) return
       }
+      if (peer.closed || this.peerRegistry.isDenied(peer.remotePublicKey)) return
       // The network's ceiling wins over whatever the peer asked for.
       peer.grantsGiven = network.grants
         ? this.capabilities.grantsFor(network.grants)
         : this.capabilities.grantsFor(msg.requested)
+      if (known) peer.grantsGiven = intersectGrants(peer.grantsGiven, known.grantsGiven || {})
       peer.network = network.id
 
       peer.send({
@@ -532,7 +544,7 @@ export class UnstoppableNode extends EventEmitter {
       return
     }
 
-    if (!known && typeof this._pairing.approve === 'function') {
+    if (typeof this._pairing.approve === 'function' && known?.pairingMethod !== 'invite') {
       this.emit('pairRequest', {
         publicKey: peer.remotePublicKey,
         profile: peer.profile,
@@ -560,8 +572,12 @@ export class UnstoppableNode extends EventEmitter {
       }
     }
 
+    if (peer.closed || this.peerRegistry.isDenied(peer.remotePublicKey)) return
+
     // Absent `requested` means the packs' own defaults, never everything.
-    peer.grantsGiven = this.capabilities.grantsFor(msg.requested)
+    peer.grantsGiven = known
+      ? intersectGrants(this.capabilities.grantsFor(msg.requested), known.grantsGiven || {})
+      : this.capabilities.grantsFor(msg.requested)
 
     // `grants` answers their direction; `requested` opens ours. Grants are
     // per-direction: each side decides what the other may call.
@@ -645,7 +661,9 @@ export class UnstoppableNode extends EventEmitter {
     // back to the packs' defaults the way a same-machine peer does.
     peer.grantsGiven = record.grants
       ? this.capabilities.grantsFor(record.grants)
-      : this.capabilities.grantsFor(msg.requested)
+      : this.capabilities.defaultGrants()
+    const known = this.peerRegistry.get(peer.remotePublicKey)
+    if (known) peer.grantsGiven = intersectGrants(peer.grantsGiven, known.grantsGiven || {})
     peer.inviteId = id
 
     this.emit('inviteRedeemed', { id, publicKey: peer.remotePublicKey, remaining: remainingUses(consumed) })
@@ -653,13 +671,19 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   async _onPairAccepted (peer, msg) {
+    if (!peer._requestedPairing || peer.paired || peer._pairAcceptedPending) return
+    peer._pairAcceptedPending = true
+    if (this.peerRegistry.isDenied(peer.remotePublicKey)) { await peer.close(); return }
     peer.grantsReceived = msg.grants || {}
     peer.grantsGiven = this.capabilities.grantsFor(msg.requested)
+    const known = this.peerRegistry.get(peer.remotePublicKey)
+    if (known) peer.grantsGiven = intersectGrants(peer.grantsGiven, known.grantsGiven || {})
     peer.send({ type: MESSAGE.PAIR_CONFIRM, grants: peer.grantsGiven })
     await this._finishPairing(peer)
   }
 
   async _onPairConfirm (peer, msg) {
+    if (!peer._acceptedPairing || peer.paired) return
     peer.grantsReceived = msg.grants || {}
     await this._finishPairing(peer)
   }
@@ -683,7 +707,7 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   async _finishPairing (peer) {
-    if (this.closed || peer.closed || peer.paired) return
+    if (this.closed || peer.paired || peer.closed || this.peerRegistry.isDenied(peer.remotePublicKey)) return
     peer.paired = true
 
     await this.peerRegistry.put({
@@ -694,7 +718,7 @@ export class UnstoppableNode extends EventEmitter {
       nodeType: peer.nodeType,
       grantsGiven: peer.grantsGiven,
       grantsReceived: peer.grantsReceived,
-      pairingMethod: peer.inviteId ? 'invite' : (peer.network ? 'network' : 'direct'),
+      pairingMethod: peer.inviteId ? 'invite' : (peer.network ? 'network' : this.peerRegistry.get(peer.remotePublicKey)?.pairingMethod || 'direct'),
       inviteId: peer.inviteId || null,
       network: peer.network || null
     })
@@ -757,7 +781,16 @@ export class UnstoppableNode extends EventEmitter {
     await this.peerRegistry.put({ publicKey: hex, grantsGiven: next })
 
     const peer = this._peers.get(hex)
-    if (peer) peer.grantsGiven = next
+    if (peer) {
+      peer.grantsGiven = next
+      for (const [requestId, controller] of peer._inbound) {
+        if (!this.capabilities.isGranted(next, controller.capability, controller.method)) {
+          controller.abort()
+          peer.send({ type: MESSAGE.ERROR, requestId, code: 'NOT_GRANTED',
+            capability: controller.capability, method: controller.method, message: 'Grant revoked' })
+        }
+      }
+    }
 
     this.emit('grantsChanged', { publicKey: hex, grants: next })
     return next
@@ -771,10 +804,12 @@ export class UnstoppableNode extends EventEmitter {
     return record
   }
 
-  // Forget a peer entirely: it loses its grants and must pair again.
+  // Revoke a peer persistently, including attempts using another invite.
+  // An operator must forget the denial explicitly before pairing again.
   async unpair (publicKey) {
     const hex = toPublicKeyHex(publicKey)
-    const removed = await this.peerRegistry.remove(hex)
+    const removed = this.peerRegistry.has(hex)
+    await this.peerRegistry.deny(hex)
 
     const peer = this._peers.get(hex)
     if (peer) await peer.close()
@@ -884,4 +919,13 @@ function normalizeReconnect (value) {
 
 export function createNode (opts) {
   return new UnstoppableNode(opts)
+}
+
+function intersectGrants (requested, ceiling) {
+  const grants = {}
+  for (const [name, methods] of Object.entries(requested)) {
+    const allowed = new Set(ceiling[name] || [])
+    grants[name] = methods.filter(method => allowed.has(method))
+  }
+  return grants
 }

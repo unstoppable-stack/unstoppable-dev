@@ -5,7 +5,7 @@ import { GettingStartedCards } from "@/components/getting-started-cards";
 
 export const metadata: Metadata = {
   title: "Get started with Claude, Codex or the CLI",
-  description: "Install the Claude Code or Codex plugin preview, or use the published raw CLI to build a local-first desktop app.",
+  description: "Install the Claude Code or Codex plugin preview, or use the raw CLI to build a local-first desktop app.",
   alternates: { canonical: "/getting-started" },
 };
 
@@ -21,7 +21,7 @@ export default function GettingStartedPage() {
             <p className="text-lg leading-8 text-text-secondary">Start with a plugin for your coding assistant or use the CLI directly. Choose a setup below to build a desktop app with local storage and peer networking.</p>
           </div>
           <GettingStartedCards />
-          <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-6 text-text-muted">Claude and Codex use downloadable local plugin previews. The raw CLI is published on npm. The plugin guides include the separate CLI install.</p>
+          <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-6 text-text-muted">Claude and Codex use downloadable plugin previews. Each guide includes the matching CLI setup; use the pinned source candidate until its npm release is available.</p>
         </div>
       </section>
       <section className="section border-b border-border">

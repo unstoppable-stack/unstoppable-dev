@@ -97,7 +97,7 @@ For older apps without metadata, inspect the installed dependencies and runtime 
 - Existing apps already have infrastructure. Extend their UI, domain logic, prompts, and schemas through generated managers and runtime contracts.
 - Desktop native code runs in the Bare worker; the renderer uses the preload/IPC bridge.
 ${aiEnabled ? `- Desktop/Node local AI uses \`.unstoppable/runtime-ai/index.js\`. Read the AI contract in \`${guidance}/modules/qvac.md\` before changing lifecycle behavior.` : '- This target has no local AI feature; do not assume an AI runtime is installed.'}
-- Data is local-first. Read locally before waiting for peers; keep private data outside replicated stores. Pairing and grants use P2P runtime only when that feature is present.
+- Data is local-first. Read locally before waiting for peers; keep private data outside replicated stores. Pairing and grants use P2P only when that feature is present.
 - Read the relevant local integration note or skill. Use version-matched upstream docs and installed types for detailed SDK APIs.
 - Dependency/native-runtime upgrades are deliberate migrations. Run \`us compatibility check -o <app>\`; preserve app edits and validate the new combination. Never use \`--force\` to upgrade an edited app.
 - Expo, wallet and Personal Node maturity is recorded separately; a scaffold or mock test alone does not establish native support.

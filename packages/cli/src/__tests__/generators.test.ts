@@ -146,7 +146,7 @@ describe('expo-mobile generator', () => {
       const files = fileMap(make(['local-ai']))
       const app = JSON.parse(files['app.json'])
       const plugins = app.expo.plugins as any[]
-      expect(plugins).toContain('@qvac/sdk/expo-plugin')
+      expect(plugins).toContainEqual(['@qvac/sdk/expo-plugin', { installMissingPrebuilds: true }])
     })
 
     it('index shows AI section with Load Assistant button', () => {
@@ -202,7 +202,7 @@ describe('expo-mobile generator', () => {
     it('disables reasoning via reasoning_budget, not prompt hacks', () => {
       const index = fileMap(make(['local-ai']))['app/index.tsx']
       expect(index).toContain('reasoning_budget: 0')
-      expect(index).toContain('n_discarded')
+      expect(index).not.toContain('n_discarded')
       expect(index).not.toContain('/no_think')
       expect(index).not.toContain('<think>')
     })
@@ -215,17 +215,17 @@ describe('expo-mobile generator', () => {
       expect(index).toContain("'Mock: '")
     })
 
-    it('rejects GPU on simulators with a clear, actionable error', () => {
+    it('rejects simulator inference before download with a clear, actionable error', () => {
       // Per QVAC docs: inference doesn't run on iOS Simulator / Android
-      // Emulator. GPU mode reliably fails (no Metal/Vulkan) so we refuse
+      // Emulator. Both modes are unsupported, so we refuse
       // fast with an actionable message instead of letting llamacpp fail
       // with a confusing native error. CPU mode is still attempted (see
       // the toggle test below) so users can experiment.
       const files = fileMap(make(['local-ai']))
       const index = files['app/index.tsx']
       expect(index).toContain('Device.isDevice === false')
-      expect(index).toContain("GPU inference doesn't run on the iOS Simulator")
-      expect(index).toContain('Toggle Device → CPU')
+      expect(index).toContain('Local AI requires a physical device')
+      expect(index).toContain('EXPO_PUBLIC_QVAC_MOCK=1')
     })
 
     it('README warns against Expo Go and points to npm run ios for native builds', () => {
@@ -243,19 +243,14 @@ describe('expo-mobile generator', () => {
     })
 
     it('exposes a GPU/CPU toggle so users can choose inference device', () => {
-      // GPU is fastest on real devices but Metal/Vulkan don't run on
-      // emulators. The toggle lets users fall back to CPU mode without
-      // editing source. The simulator gate only blocks GPU mode — CPU
-      // can be attempted (QVAC may still reject, but the user gets the
-      // real underlying error rather than a hard pre-block).
+      // GPU and CPU remain selectable on physical devices.
       const files = fileMap(make(['local-ai']))
       const index = files['app/index.tsx']
       expect(index).toContain("useState<'gpu' | 'cpu'>('gpu')")
       expect(index).toContain('Switch')
       expect(index).toContain('testID="ai-device-switch"')
       expect(index).toContain('device: aiDevice')
-      // GPU-only simulator block (CPU is allowed through to surface real error)
-      expect(index).toContain("Device.isDevice === false && aiDevice === 'gpu'")
+      expect(index).toContain('if (Device.isDevice === false)')
     })
 
     it('auto-builds the Bare worklet bundle on metro start', () => {

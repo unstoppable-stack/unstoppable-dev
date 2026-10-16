@@ -53,6 +53,27 @@ as clean. The generated directory is ignored by Git.
 
 ## Publication
 
+### First publication of the P2P package
+
+npm requires a package to exist before trusted publishing can be configured.
+P2P is new, so its first version needs an authenticated maintainer. Run the
+canonical workflow with `publish: false`, download its validated artifact and
+use a checkout at the recorded commit. Keep the downloaded tarballs intact.
+
+```sh
+node scripts/public-release.mjs verify release-artifacts/candidate --require-clean
+npm login --registry=https://registry.npmjs.org
+npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.1.tgz --ignore-scripts --access public --tag alpha
+```
+
+The publishing account needs permission to create packages in the
+`@unstoppable-stack` organization. Complete npm's interactive authentication
+and 2FA prompts locally; do not put credentials in Git or chat. Then configure
+the P2P trusted publisher, as well as the CLI publisher, before selecting the
+workflow's publishing input. See [npm prerequisites](https://docs.npmjs.com/cli/v11/commands/npm-trust/#prerequisites).
+
+### Following the manual release workflow
+
 The [canonical workflow](../.github/workflows/public-packages.yml) runs validation
 on pull requests and main. A manual dispatch defaults to validation only.
 Selecting `publish: true` enables the separate `npm-release` environment job,
@@ -68,11 +89,27 @@ publish other packages. An identical version already on its intended tag can
 be skipped when retrying a partially completed release; conflicting bytes or
 tags require review.
 
+After publishing, the workflow installs both exact versions from the public
+npm registry in a fresh temporary consumer and reruns the notes and CLI checks.
+It compares registry and installed-lockfile integrity against the validated
+tarballs, and records `registry-consumer-verification.json`. A local repeat is:
+
+```sh
+node scripts/test-public-artifacts.mjs release-artifacts/candidate --registry
+```
+
+This mode refuses missing versions or different bytes; it never falls back to
+local tarballs or source links. A registry test failure after publication is a
+release failure to investigate; it does not unpublish or overwrite a version.
+
 Configure ownership and trusted publishers in npm before dispatch; local
 preparation cannot validate OIDC authorization. A successful workflow is the
-publication record. After publication, verify the registry versions and switch
-website install commands from the current published CLI to the tested beta
-only if the preview should become the recommended install path.
+publication record. After publication, verify the registry versions and update
+`packages/agent-pack/release.json` to set `cliRegistryPublished: true` after the
+registry smoke passes. Rebuild the public catalogs and website: the setup guides
+will then use the exact CLI beta from npm instead of the pinned source build.
+Keep `registryLatestObserved` accurate; publishing to `beta` does not move
+`latest`. Bump the plugin preview when changing its bundled installation guide.
 
 ## Acceptance limits
 

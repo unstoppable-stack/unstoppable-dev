@@ -8,7 +8,9 @@
     ".": "./src/index.js",
     "./personal-node": "./src/personal-node.js",
     "./config": "./src/config.js",
-    "./export": "./src/export.js"
+    "./export": "./src/export.js",
+    "./internal/ai": "./src/ai/index.js",
+    "./internal/qvac-runtime": "./src/ai/qvac-runtime.js"
   },
   "files": [
     "src",
@@ -32,9 +34,9 @@
     "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/node"
   },
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.17.0"
   },
   "publishConfig": {
     "access": "public"
@@ -53,7 +55,7 @@
   "dependencies": {
     "b4a": "^1.8.0",
     "bare-events": "^2.8.3",
-    "bare-fs": "^4.5.5",
+    "bare-fs": "^4.8.2",
     "bare-path": "^3.0.0",
     "chalk": "^5.3.0",
     "@unstoppable-stack/p2p": "file:../p2p"
@@ -64,10 +66,10 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "hyperdht": "^6.29.1",
-    "corestore": "^7.8.0",
+    "hyperdht": "^6.34.1",
+    "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "hyperdrive": "^12.3.0",
-    "hyperswarm": "^4.17.0"
+    "hyperswarm": "^4.17.2"
   }
 }

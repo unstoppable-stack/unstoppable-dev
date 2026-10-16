@@ -158,3 +158,7 @@ Grants are **per direction**: each side decides what the other may call.
 
 ## Resources
 - `resources/two-app-example.md` — a complete host + joiner pair
+
+## Host approval and budgets
+
+`createNode` denies unknown direct peers by default. Use scoped invitations or an explicit approval callback for hosted capabilities. `pairing: { autoApprove: true }` is a deliberate development-only option. Persisted grants remain a ceiling on reconnect; revocation aborts active requests and survives restart. Respect `ctx.signal` in every long-running handler. The bus defaults to 8 requests per peer / 64 globally, 120-second server lifetime, 256 KiB JSON frames and finite stream output/buffers. Do not advertise hard disk quotas or complete backup recovery from logical replication budgets.

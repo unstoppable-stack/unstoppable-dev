@@ -26,6 +26,13 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     workletContext(opts),
   ]
 
+  if (has(opts, 'local-ai')) {
+    files.push({
+      path: 'qvac.config.json',
+      content: JSON.stringify({ plugins: ['@qvac/sdk/llamacpp-completion/plugin'] }, null, 2),
+    })
+  }
+
   return files
 }
 
@@ -73,11 +80,11 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         name: opts.projectName,
         version: '0.1.0',
         private: true,
+        engines: profile.engines,
         main: 'expo-router/entry',
         scripts,
         dependencies: deps,
         devDependencies: devDeps,
-
       },
       null,
       2,
@@ -103,7 +110,7 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (has(opts, 'local-ai')) {
-    plugins.unshift('@qvac/sdk/expo-plugin')
+    plugins.unshift(['@qvac/sdk/expo-plugin', { installMissingPrebuilds: true }])
   }
 
   return {
@@ -379,6 +386,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     'StyleSheet',
     'SafeAreaView',
     'ScrollView',
+    'Keyboard',
     'TouchableOpacity',
     'Linking',
     'TextInput',
@@ -458,6 +466,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   async function kvSave() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(5, { key: kvKey, value: kvValue })
       if (res.ok) setKvResult('Saved "' + kvKey + '"')
@@ -470,6 +479,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   async function kvFetch() {
     if (!kvKey.trim()) { setKvResult('Enter a key first'); return }
     if (!ready) { setKvResult('Worklet not ready'); return }
+    Keyboard.dismiss()
     try {
       const res = await rpcRequest(6, { key: kvKey })
       if (res.ok) {
@@ -528,19 +538,13 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       setAiStatus('ready')
       return
     }
-    // Per QVAC docs: "QVAC currently does not run on emulators. You must
-    // use a physical device." GPU mode reliably fails on simulator (Metal
-    // / Vulkan unavailable), so block early with a clear message. CPU
-    // mode is technically also unsupported by llamacpp on emulators, but
-    // we let users try it — if it fails, the underlying QVAC error is
-    // already surfaced via the catch block below.
-    if (Device.isDevice === false && aiDevice === 'gpu') {
+    // QVAC documents physical devices for mobile inference. Refuse before
+    // downloading a model on either simulator mode; mock UI remains available.
+    if (Device.isDevice === false) {
       setAiError(
-        "GPU inference doesn't run on the iOS Simulator / Android Emulator. " +
-        'Toggle Device → CPU below to try CPU mode (slower, may still ' +
-        'fail on emulators per QVAC limits), or run on a physical device ' +
-        'with: npx expo run:ios --device (or run:android --device). Or ' +
-        'set EXPO_PUBLIC_QVAC_MOCK=1 to exercise the UI without inference.',
+        'Local AI requires a physical device. Run npx expo run:ios --device ' +
+        '(or run:android --device), or set EXPO_PUBLIC_QVAC_MOCK=1 ' +
+        'to exercise the simulator UI without inference.',
       )
       setAiStatus('error')
       return
@@ -571,11 +575,6 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           // experimentation).
           device: aiDevice,
           ctx_size: CTX_SIZE,
-          // Sliding window — evict oldest ~10% on overflow instead of
-          // throwing. With this set, never hand-trim history: the SDK
-          // reuses its KV cache by message count, so dropping old messages
-          // forces a full re-prefill that overflows the window.
-          n_discarded: Math.floor(CTX_SIZE / 10),
           // 0 = no reasoning, -1 = unlimited. Replaces the old approach of
           // asking for no reasoning in the prompt and stripping the blocks
           // back out of the token stream by hand.
@@ -628,9 +627,14 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
       // Reasoning is disabled at load time via \`reasoning_budget: 0\`, so
       // tokens arrive as plain content — no reasoning-block filtering needed.
       let visible = ''
-      for await (const token of result.tokenStream) {
-        visible += token
-        setMessages([...next, { role: 'assistant', content: visible }])
+      for await (const event of result.events) {
+        if (event.type === 'completionDone' && event.stopReason === 'error') {
+          throw new Error(event.error?.message || 'Inference failed')
+        }
+        if (event.type === 'contentDelta') {
+          visible += event.text
+          setMessages([...next, { role: 'assistant', content: visible }])
+        }
       }
     } catch (e: any) {
       setMessages([...next, { role: 'assistant', content: '❌ ' + (e?.message ?? String(e)) }])
@@ -827,8 +831,8 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
   const docsSection = `
         <View style={styles.section} testID="docs-section">
           <Text style={styles.sectionTitle}>Resources</Text>
-          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable.dev')}>
-            <Text style={styles.link}>Docs — unstoppable.dev</Text>
+          <TouchableOpacity onPress={() => Linking.openURL('https://unstoppable-stack.dev')}>
+            <Text style={styles.link}>Docs — unstoppable-stack.dev</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://github.com/holepunchto')}>
             <Text style={styles.link}>Holepunch on GitHub</Text>
@@ -845,7 +849,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scroll} testID="home-screen">
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
           <Text style={styles.title}>${opts.projectName}</Text>
           <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>

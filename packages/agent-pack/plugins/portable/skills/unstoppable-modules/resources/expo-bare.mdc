@@ -1,0 +1,9 @@
+# Expo and Bare integration
+
+Read the target app’s manifest, app.json, Metro config and generated scripts. Expo uses a distinct experimental profile; inspect the generated compatibility table instead of copying version pins.
+
+React Native hosts QVAC’s client/native worker. The app’s Bare worklet owns P2P/storage and is bundled separately. Native dependencies are unavailable in Expo Go; use native builds. Keep Metro’s native-module mocks scoped to the renderer graph so worklet bundling still resolves actual dependencies.
+
+Expo, React Native, BareKit, Bare runtime, bundler and native addons form a coupled compatibility graph. The current experimental bundling scripts use bare-pack’s --host spelling. Preserve generated NDK/architecture plugins and memory settings until deliberately revalidated. Do not apply old bare-fs overrides or downgrade a bundler from an unrelated upstream example.
+
+Install, build and run the exact profile on each claimed physical device/architecture. Dependency resolution and mocks do not prove native inference. Use installed SDK/types and https://docs.qvac.tether.io/sdk/js-ts-sdk/ for details matching the target version.

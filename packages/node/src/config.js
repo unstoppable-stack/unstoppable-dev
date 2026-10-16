@@ -14,8 +14,8 @@ export const DEFAULT_CONFIG = Object.freeze({
     modelSrc: ''
   },
   storage: {
-    globalQuotaBytes: null,
-    perPeerQuotaBytes: null
+    globalQuotaBytes: 10 * 1024 ** 3,
+    perPeerQuotaBytes: 1024 ** 3
   },
   pairing: {
     requireApproval: true,

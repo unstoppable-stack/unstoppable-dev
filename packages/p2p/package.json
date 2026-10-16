@@ -31,7 +31,7 @@
     "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
     "directory": "packages/p2p"
   },
-  "homepage": "https://unstoppable.dev",
+  "homepage": "https://unstoppable-stack.dev",
   "engines": {
     "node": ">=20"
   },
@@ -61,7 +61,7 @@
     "bare-os": "^3.6.1"
   },
   "devDependencies": {
-    "hyperdht": "^6.29.1"
+    "hyperdht": "^6.34.1"
   },
   "license": "MIT"
 }

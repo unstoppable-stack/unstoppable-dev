@@ -47,7 +47,7 @@ Electron and Pear both forward these daemon flags:
 - `--ai-mock` — echo-mode AI provider, useful for UI development
 - `--ai-model <source>` — choose the QVAC model preset, path, or URL
 
-Real QVAC mode uses the pinned `@qvac/sdk` 0.15.0 release dependency. Package
+Real QVAC mode uses the pinned `@qvac/inference` 0.21.0 with llama.cpp addon 0.55.0 release dependency. Package
 tests verify that its API loads in the installed Bare sidecar; validating an
 actual production model on each platform remains a stable-release gate.
 
@@ -175,3 +175,13 @@ tray, IPC, and worker lifecycle.
   - Graphs for bandwidth and replication progress
   - Richer model picker UI for QVAC provider
   - Updater, branded installer assets, more installer formats, and real-model QVAC validation
+
+### October native migration validation
+
+Development requires Node 22.17+. The desktop host uses Electron 44.6.0 and Bare sidecar >=0.5.7. Local development links are confined to devDependencies; production metadata uses versioned internal packages. Forge materializes all four internal packages after pruning, so packaged applications have no source-tree symlinks.
+
+After packaging, run `PERSONAL_NODE_REAL_QVAC=1 QVAC_MODEL_SRC=/absolute/path/to/model.gguf npm run test:packaged` to exercise actual Bare inference, interruption and reuse in the packaged app. The default smoke checks API import and worker/UI readiness without loading a model. Signing, physical-device/platform validation and publication remain separate gates.
+
+### Approval and resource controls
+
+Direct unknown-peer pairing requires operator approval or an invitation; headless no longer auto-approves. `bin/headless.js --dev-auto-approve` is an explicit development-only option used by the smoke fixture. Pending approvals are capped at 32 and expire after 30 seconds; disconnect and shutdown clear them. Remembered denials apply to invitation attempts too. Unpair persists revocation in node-core as well as the desktop gate; Forget trust clears the core denial explicitly. Local discovery does not establish identity. New stores use finite logical replication budgets; see [Personal Node controls](../node/README.md#storage-quotas).

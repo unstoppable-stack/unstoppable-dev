@@ -8,7 +8,17 @@ import { verifyPublicRelease } from './public-release.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const directory = resolve(process.argv[2] || 'release-artifacts')
-const record = verifyPublicRelease(directory)
+const registry = process.argv.slice(3).includes('--registry')
+assert(process.argv.slice(3).every(arg => arg === '--registry'), 'Usage: node scripts/test-public-artifacts.mjs <directory> [--registry]')
+const record = verifyPublicRelease(directory, { requireClean: registry, requireTest: registry })
+if (registry) {
+  for (const artifact of record.artifacts) {
+    const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(artifact.name)}/${artifact.version}`, { signal: AbortSignal.timeout(20_000) })
+    assert(response.ok, `Not published or registry unavailable: ${artifact.name}@${artifact.version} (${response.status})`)
+    const metadata = await response.json()
+    assert.equal(metadata.dist?.integrity, artifact.integrity, `Registry bytes differ from tested candidate: ${artifact.name}`)
+  }
+}
 const consumer = mkdtempSync(join(tmpdir(), 'unstoppable-public-consumer-'))
 const example = join(root, 'examples/p2p-notes')
 const run = (command, args, options = {}) => execFileSync(command, args, { cwd: consumer, stdio: 'inherit', ...options })
@@ -18,9 +28,18 @@ try {
   cpSync(join(example, 'test'), join(consumer, 'test'), { recursive: true })
   const manifest = JSON.parse(readFileSync(join(example, 'package.json'), 'utf8'))
   manifest.name = 'installed-public-package-verification'
-  for (const artifact of record.artifacts) manifest.dependencies[artifact.name] = `file:${join(directory, artifact.file)}`
+  for (const artifact of record.artifacts) manifest.dependencies[artifact.name] = registry ? artifact.version : `file:${join(directory, artifact.file)}`
   writeFileSync(join(consumer, 'package.json'), JSON.stringify(manifest, null, 2))
-  run('npm', ['install', '--no-audit', '--no-fund'], { shell: process.platform === 'win32' })
+  run('npm', ['install', '--no-audit', '--no-fund', '--registry=https://registry.npmjs.org'], { shell: process.platform === 'win32' })
+  if (registry) {
+    const lock = JSON.parse(readFileSync(join(consumer, 'package-lock.json'), 'utf8'))
+    for (const artifact of record.artifacts) {
+      const installed = lock.packages[`node_modules/${artifact.name}`]
+      assert.equal(installed.version, artifact.version)
+      assert.equal(installed.integrity, artifact.integrity)
+      assert(installed.resolved.startsWith('https://registry.npmjs.org/'), 'Registry smoke must not consume a source link or local tarball')
+    }
+  }
   run(process.execPath, ['--input-type=module', '-e', `
     import assert from 'node:assert/strict';
     import { createNode } from '@unstoppable-stack/p2p';
@@ -57,7 +76,8 @@ try {
       assert.throws(() => require.resolve(name), { code: 'MODULE_NOT_FOUND' });
     }
   `])
-  writeFileSync(join(directory, 'consumer-verification.json'), JSON.stringify({
+  writeFileSync(join(directory, registry ? 'registry-consumer-verification.json' : 'consumer-verification.json'), JSON.stringify({
+    installation: registry ? 'public npm registry' : 'local release tarballs',
     checkedAt: new Date().toISOString(), status: 'passed', platform: process.platform, architecture: process.arch, node: process.version,
     artifacts: record.artifacts.map(({ name, sha256 }) => ({ name, sha256 })),
     checks: ['all six public P2P entry points load', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
@@ -65,5 +85,5 @@ try {
       'generated JavaScript syntax', 'no AI, Memory, Search or Personal Node dependency'],
     limits: ['Local DHT only; public-internet discovery not asserted', 'No native model or generated desktop UI ran'],
   }, null, 2) + '\n')
-  console.log('Canonical tarballs passed the real notes example and installed CLI checks outside the source checkout.')
+  console.log(`Canonical packages installed from ${registry ? 'the public npm registry' : 'release tarballs'} passed the notes example and CLI checks outside the source checkout.`)
 } finally { rmSync(consumer, { recursive: true, force: true }) }

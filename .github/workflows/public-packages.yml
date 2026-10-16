@@ -108,3 +108,12 @@ jobs:
         env:
           PUBLIC_RELEASE_APPROVED: '1'
         run: node scripts/public-release.mjs publish release-artifacts
+      - name: Test packages installed directly from the public registry
+        run: node scripts/test-public-artifacts.mjs release-artifacts --registry
+      - name: Retain registry acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: public-registry-${{ github.sha }}
+          path: release-artifacts/registry-consumer-verification.json
+          if-no-files-found: warn

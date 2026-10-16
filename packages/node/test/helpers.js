@@ -37,7 +37,8 @@ export async function createTestEnv () {
 
   async function makeNode ({ storage, ...opts } = {}) {
     const dir = storage || await tmpDir('node-')
-    const node = new PersonalNode(dir, { swarm: { bootstrap }, ...opts })
+    // Existing functional tests opt into development approval explicitly.
+    const node = new PersonalNode(dir, { approvePairing: async () => 'approve', swarm: { bootstrap }, ...opts })
     closeables.push(node)
     return node
   }

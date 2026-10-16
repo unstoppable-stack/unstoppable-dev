@@ -107,3 +107,21 @@ describe('node export/import', () => {
     await assert.rejects(() => previewNodeStateImport({ inPath: file }), /identity seed must be 32 bytes/)
   })
 })
+
+it('retains peer revocations through settings export and import', async () => {
+  const { PeerRegistry } = await import('@unstoppable-stack/p2p')
+  const source = await mkdtemp(join(tmpdir(), 'revoked-source-'))
+  const target = await mkdtemp(join(tmpdir(), 'revoked-target-'))
+  try {
+    const registry = new PeerRegistry(source)
+    await registry.ready()
+    const key = 'a'.repeat(64)
+    await registry.deny(key)
+    const file = join(source, 'settings.uns')
+    await exportNodeState({ storagePath: source, outPath: file })
+    await importNodeState({ storagePath: target, inPath: file })
+    const restored = new PeerRegistry(target)
+    await restored.ready()
+    assert.equal(restored.isDenied(key), true)
+  } finally { await rm(source, { recursive: true, force: true }); await rm(target, { recursive: true, force: true }) }
+})

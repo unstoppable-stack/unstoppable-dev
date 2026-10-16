@@ -1,5 +1,6 @@
 import { EventEmitter } from 'bare-events'
 import { AbortControllerImpl } from './abort.js'
+import { jsonBytes, resourceError } from './limits.js'
 import { MESSAGE } from './protocol.js'
 import {
   CancelledError,
@@ -112,11 +113,14 @@ export class Peer extends EventEmitter {
 
   send (msg) {
     if (this.closed || !this._message) return false
+    if (msg.type === MESSAGE.PAIR_REQUEST) this._requestedPairing = true
+    if (msg.type === MESSAGE.PAIR_ACCEPTED) this._acceptedPairing = true
     return this._message.send(msg)
   }
 
   async call (capability, method, params = {}, { timeout = 30_000, signal } = {}) {
     this._assertOpen()
+    if (this._outbound.size >= this.node.limits.maxRequestsPerPeer) throw resourceError('Too many outgoing requests')
     const requestId = this._newRequestId()
     const pending = deferred()
 
@@ -148,14 +152,16 @@ export class Peer extends EventEmitter {
     }
 
     this._outbound.set(requestId, { resolve, reject, capability, method })
-    this.send({ type: MESSAGE.CALL, requestId, capability, method, params })
+    try { this.send({ type: MESSAGE.CALL, requestId, capability, method, params }) }
+    catch (error) { reject(error) }
     return pending.promise
   }
 
   async * stream (capability, method, params = {}, { signal } = {}) {
     this._assertOpen()
+    if (this._outbound.size >= this.node.limits.maxRequestsPerPeer) throw resourceError('Too many outgoing requests')
     const requestId = this._newRequestId()
-    const queue = new AsyncQueue()
+    const queue = new AsyncQueue(this.node.limits)
 
     const onAbort = () => {
       this.send({ type: MESSAGE.CANCEL, requestId })
@@ -168,14 +174,17 @@ export class Peer extends EventEmitter {
     }
 
     this._outbound.set(requestId, { queue, capability, method })
-    this.send({ type: MESSAGE.CALL, requestId, capability, method, params })
-
+    let exhausted = false
     try {
+      this.send({ type: MESSAGE.CALL, requestId, capability, method, params })
       for await (const value of queue) yield value
+      exhausted = true
     } finally {
       // Consumer broke out early (or threw): tell the far side to stop
       // producing rather than leaving a generator running until disconnect.
-      if (!queue.finished) this.send({ type: MESSAGE.CANCEL, requestId })
+      // Closing the local iterator marks its queue finished too. Track
+      // natural exhaustion separately so an early return reaches the host.
+      if (!exhausted && !queue.error) this.send({ type: MESSAGE.CANCEL, requestId })
       if (signal) signal.removeEventListener('abort', onAbort)
       this._outbound.delete(requestId)
     }
@@ -196,50 +205,72 @@ export class Peer extends EventEmitter {
 
   async _onCall (msg) {
     const { requestId, capability, method, params } = msg
-    if (typeof requestId !== 'string') return
-
+    if (typeof requestId !== 'string' || requestId.length > 64 ||
+        typeof capability !== 'string' || capability.length > 128 ||
+        typeof method !== 'string' || method.length > 128) { await this.close(); return }
+    const fail = (error) => this.send({ type: MESSAGE.ERROR, requestId,
+      code: error.code || 'REQUEST_FAILED', message: error.message,
+      capability, method })
+    // Reusing an active id must not replace its abort controller.
+    if (this._inbound.has(requestId)) { await this.close(); return }
+    if (!this.paired || !this.node.capabilities.isGranted(this.grantsGiven, capability, method)) {
+      fail(new NotGrantedError(capability, method)); return
+    }
+    const limits = this.node.limits
+    if (this._inbound.size >= limits.maxRequestsPerPeer || this.node._activeRequests >= limits.maxRequests) {
+      fail(resourceError('Node request capacity reached')); return
+    }
     const controller = new AbortControllerImpl()
+    controller.capability = capability
+    controller.method = method
     this._inbound.set(requestId, controller)
-
+    this.node._activeRequests++
+    const timer = setTimeout(() => {
+      controller.abort()
+      fail(new RequestTimeoutError(capability, method, limits.requestTimeoutMs))
+    }, limits.requestTimeoutMs)
+    let bytes = 0
     try {
-      // Grants are checked before resolution so an ungranted peer cannot
-      // enumerate which capabilities exist by reading the error code.
-      if (!this.node.capabilities.isGranted(this.grantsGiven, capability, method)) {
-        throw new NotGrantedError(capability, method)
-      }
       const { handler, streaming } = this.node.capabilities.resolve(capability, method)
-      const ctx = {
-        peer: this,
-        appId: this.appId,
-        grants: this.grantsGiven,
-        signal: controller.signal
-      }
-
+      const ctx = { peer: this, appId: this.appId, grants: this.grantsGiven, signal: controller.signal }
       if (streaming) {
         for await (const value of handler(params ?? {}, ctx)) {
           if (controller.signal.aborted || this.closed) break
-          this.send({ type: MESSAGE.CHUNK, requestId, value })
+          bytes += jsonBytes(value)
+          if (bytes > limits.maxStreamBytes) throw resourceError('Stream output exceeds byte limit')
+          if (!this.send({ type: MESSAGE.CHUNK, requestId, value })) {
+            await this._waitForDrain(controller.signal)
+          }
         }
         if (!controller.signal.aborted) this.send({ type: MESSAGE.END, requestId })
       } else {
         const value = await handler(params ?? {}, ctx)
-        if (!controller.signal.aborted) {
-          this.send({ type: MESSAGE.RESULT, requestId, value: value === undefined ? null : value })
-        }
+        if (!controller.signal.aborted) this.send({ type: MESSAGE.RESULT, requestId, value: value === undefined ? null : value })
       }
     } catch (err) {
-      this.send({
-        type: MESSAGE.ERROR,
-        requestId,
-        code: err.code || 'REQUEST_FAILED',
-        message: err.message || 'Request failed',
-        capability,
-        method
-      })
+      if (!controller.signal.aborted && !this.closed) fail(err)
       this.node.emit('requestError', { peer: this, capability, method, error: err.message })
     } finally {
+      clearTimeout(timer)
       this._inbound.delete(requestId)
+      this.node._activeRequests--
     }
+  }
+
+  _waitForDrain (signal) {
+    if (signal.aborted || this.closed || this.mux.drained) return Promise.resolve()
+    return new Promise(resolve => {
+      const stream = this.mux.stream
+      const done = () => {
+        stream.removeListener('drain', done)
+        stream.removeListener('close', done)
+        signal.removeEventListener('abort', done)
+        resolve()
+      }
+      stream.once('drain', done)
+      stream.once('close', done)
+      signal.addEventListener('abort', done, { once: true })
+    })
   }
 
   _onCancel (msg) {
@@ -254,7 +285,9 @@ export class Peer extends EventEmitter {
 
   _onChunk (msg) {
     const pending = this._outbound.get(msg.requestId)
-    if (pending?.queue) pending.queue.push(msg.value)
+    if (pending?.queue && !pending.queue.push(msg.value)) {
+      this.send({ type: MESSAGE.CANCEL, requestId: msg.requestId })
+    }
   }
 
   _onEnd (msg) {
@@ -310,7 +343,9 @@ export class Peer extends EventEmitter {
 // the consumer asks for them are buffered; a consumer that asks first parks
 // on a promise.
 export class AsyncQueue {
-  constructor () {
+  constructor (limits = { maxBufferedChunks: 64, maxBufferedBytes: 1024 * 1024 }) {
+    this.limits = limits
+    this.bytes = 0
     this.values = []
     this.waiting = []
     this.finished = false
@@ -318,10 +353,19 @@ export class AsyncQueue {
   }
 
   push (value) {
-    if (this.finished) return
+    if (this.finished) return true
     const waiter = this.waiting.shift()
     if (waiter) waiter.resolve({ value, done: false })
-    else this.values.push(value)
+    else {
+      const size = jsonBytes(value)
+      if (this.values.length >= this.limits.maxBufferedChunks || this.bytes + size > this.limits.maxBufferedBytes) {
+        this.fail(resourceError('Consumer stream buffer is full'))
+        return false
+      }
+      this.bytes += size
+      this.values.push({ value, size })
+    }
+    return true
   }
 
   end () {
@@ -335,6 +379,8 @@ export class AsyncQueue {
     if (this.finished) return
     this.finished = true
     this.error = err
+    this.values = []
+    this.bytes = 0
     for (const waiter of this.waiting) waiter.reject(err)
     this.waiting = []
   }
@@ -342,7 +388,11 @@ export class AsyncQueue {
   [Symbol.asyncIterator] () {
     return {
       next: () => {
-        if (this.values.length > 0) return Promise.resolve({ value: this.values.shift(), done: false })
+        if (this.values.length > 0) {
+          const { value, size } = this.values.shift()
+          this.bytes -= size
+          return Promise.resolve({ value, done: false })
+        }
         if (this.error) return Promise.reject(this.error)
         if (this.finished) return Promise.resolve({ value: undefined, done: true })
         return new Promise((resolve, reject) => this.waiting.push({ resolve, reject }))

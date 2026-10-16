@@ -6,7 +6,9 @@ on:
     paths:
       - 'packages/cli/**'
       - 'packages/runtime-ai/**'
-      - 'packages/agent-pack/src/**'
+      - 'packages/agent-pack/**'
+      - '.agents/plugins/marketplace.json'
+      - '.claude-plugin/marketplace.json'
       - 'scripts/sync-stack-assets.mjs'
       - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
@@ -15,7 +17,9 @@ on:
     paths:
       - 'packages/cli/**'
       - 'packages/runtime-ai/**'
-      - 'packages/agent-pack/src/**'
+      - 'packages/agent-pack/**'
+      - '.agents/plugins/marketplace.json'
+      - '.claude-plugin/marketplace.json'
       - 'scripts/sync-stack-assets.mjs'
       - 'scripts/check-agent-pack.mjs'
       - '.github/workflows/cli.yml'
@@ -55,6 +59,13 @@ jobs:
         run: pnpm test
       - name: AI runtime contract tests
         run: pnpm test:runtime
+      - name: Build and validate harness plugin packages
+        run: |
+          node ../agent-pack/scripts/build-plugin.mjs
+          node ../agent-pack/scripts/build-plugin.mjs --check
+          node ../agent-pack/scripts/build-plugin.mjs --public --check
+          node --test ../agent-pack/scripts/build-plugin.test.mjs
+          node ../agent-pack/scripts/archive-plugin.mjs
       - name: Build CLI
         run: pnpm build
       - name: Upload dist
@@ -62,6 +73,13 @@ jobs:
         with:
           name: cli-dist
           path: packages/cli/dist
+
+      - name: Upload local plugin packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-plugin-prototype
+          path: packages/agent-pack/dist
+          include-hidden-files: true
 
   # Scaffold smoke tests — lightweight "scaffold works" validation for each
   # platform. No model loading, no simulator, no Xcode — just verify the

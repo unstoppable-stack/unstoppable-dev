@@ -58,7 +58,7 @@ describe('ai capability pack (real QVAC)', () => {
     async function makeNode (opts = {}) {
       const storage = await mkdtemp(join(tmpdir(), 'caps-ai-real-'))
       dirs.push(storage)
-      const node = createNode({ storage, swarm: { bootstrap }, ...opts })
+      const node = createNode({ pairing: { autoApprove: true }, storage, swarm: { bootstrap }, ...opts })
       nodes.push(node)
       await node.ready()
       return node
@@ -86,5 +86,33 @@ describe('ai capability pack (real QVAC)', () => {
     }
 
     assert.ok(output.trim().length > 0, 'expected non-empty streamed QVAC output')
+    for (let attempt = 0; attempt < 100 && host._activeRequests; attempt++) await new Promise(resolve => setTimeout(resolve, 50))
+    assert.equal(host._activeRequests, 0)
+    let received = 0
+    for await (const token of peer.stream('ai', 'completion.stream', {
+      messages: [{ role: 'user', content: 'Write a detailed essay about coffee cultivation.' }]
+    })) {
+      received += token.length
+      if (received >= 40) break
+    }
+    assert.ok(received > 0, 'real cancellation must follow visible output')
+    for (let attempt = 0; attempt < 100 && host._activeRequests; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 50))
+    }
+    assert.equal(pack.provider._active, false, 'native request must stop when the peer cancels')
+    let recovered = ''
+    for await (const token of peer.stream('ai', 'completion.stream', {
+      messages: [{ role: 'user', content: 'Reply with the word coffee.' }]
+    })) recovered += token
+    assert.ok(recovered.trim(), 'provider must complete another request after cancellation')
+    const revoked = peer.stream('ai', 'completion.stream', {
+      messages: [{ role: 'user', content: 'Write a detailed essay about coffee cultivation.' }]
+    })[Symbol.asyncIterator]()
+    assert.ok((await revoked.next()).value, 'native inference must be running before revocation')
+    await host.setPeerGrants(client.publicKey, { ai: [] })
+    await assert.rejects(() => revoked.next(), { code: 'NOT_GRANTED' })
+    for (let attempt = 0; attempt < 100 && host._activeRequests; attempt++) await new Promise(resolve => setTimeout(resolve, 50))
+    assert.equal(host._activeRequests, 0)
+    assert.equal(pack.provider._active, false, 'grant removal must stop native inference')
   })
 })

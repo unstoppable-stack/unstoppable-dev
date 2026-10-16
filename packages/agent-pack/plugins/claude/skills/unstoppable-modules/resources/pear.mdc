@@ -1,0 +1,79 @@
+# Pear
+
+Pear v3 separates runtime from deployment:
+
+- `pear-runtime` (Pear OTA) embeds P2P updates, application storage, and Bare
+  workers in a standard JavaScript application such as Electron.
+- The `pear` CLI builds, stages, provisions, installs, seeds, and multisig-signs
+  applications.
+
+`pear run`, `pear release`, the ambient `global.Pear` API, `pear.pre`,
+`pear-electron`, `pear-bridge`, and `pear-run` are removed legacy APIs. Do not
+use them in new projects.
+
+## Desktop architecture
+
+```text
+Electron renderer
+  -> context-isolated preload
+  -> Electron IPC
+  -> Electron main + pear-runtime
+  -> Bare.IPC
+  -> Bare worker (P2P, data, AI)
+```
+
+Install the runtime and Electron:
+
+```bash
+npm install pear-runtime
+npm install --save-dev electron
+```
+
+The package needs `main`, `version`, `name`, and a valid `upgrade` link. Create
+the application's real link with `pear touch` before enabling updates.
+
+```js
+const pear = new PearRuntime({ name, version, upgrade, dir, app, updates })
+await pear.ready()
+const worker = pear.run(workerPath, [pear.storage])
+```
+
+Inside the worker:
+
+```js
+const pipe = Bare.IPC
+const storagePath = Bare.argv[2]
+```
+
+Keep Hyperswarm, Corestore, Hyperbee/HyperDB, and QVAC in the worker. Keep the
+renderer browser-safe and expose only narrow preload operations.
+
+## Lifecycle
+
+- Await `pear.ready()` before launching workers.
+- Listen for updater events on `pear.updater` when OTA is enabled.
+- Close worker resources and call `Bare.exit()` on worker shutdown.
+- Wait for worker exit, then call `pear.close()` in the host.
+
+## Deployment
+
+1. Package vendor-signed Electron builds for each OS/architecture.
+2. Run `pear build` to assemble the deployment directory.
+3. Use `pear stage` for internal and preview builds.
+4. Use `pear provision` for prerelease promotion.
+5. Use `pear multisig` for production sign-off.
+6. Users install the application from its link with `pear install`.
+
+Use `pear seed <link>` on machines that should keep the application available.
+Treat upgrade and signing keys as production capabilities.
+
+## Testing
+
+- Unit-test worker protocol validation.
+- Spawn the worker and exercise real storage round trips.
+- Launch Electron and drive the UI with Playwright over CDP.
+- Run two instances with distinct storage directories for replication tests.
+- Test both standalone installs and npm/pnpm workspace layouts.
+
+See the `setup-pear-desktop` and `setup-local-testing` skills for complete
+patterns.

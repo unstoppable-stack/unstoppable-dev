@@ -1,5 +1,5 @@
 import { EventEmitter } from 'bare-events'
-import { createNode, localDiscoveryTopic, PROTOCOL_VERSION } from '@unstoppable-stack/p2p'
+import { createNode, localDiscoveryTopic, PROTOCOL_VERSION, NodeError } from '@unstoppable-stack/p2p'
 import { syncPack } from '@unstoppable-stack/p2p/sync'
 import { aiPack } from './ai/index.js'
 import { loadConfig, saveConfig, mergeConfigPatch } from './config.js'
@@ -21,7 +21,7 @@ export class PersonalNode extends EventEmitter {
     this.started = false
 
     this._aiOpts = opts.ai || null
-    this._sync = syncPack({ storage: runtimePath.join(storagePath, 'store') })
+    this._sync = syncPack({ storage: runtimePath.join(storagePath, 'store'), admit: key => this._admitStorage(key) })
     this._ai = aiPack({
       enabled: !!this._aiOpts,
       mock: !!this._aiOpts?.mock,
@@ -43,7 +43,13 @@ export class PersonalNode extends EventEmitter {
       // topic: "the node on this box" is exactly what it means. App-nodes
       // stay off it and are reached by key.
       topic: opts.topic === undefined ? localDiscoveryTopic() : opts.topic,
-      pairing: opts.approvePairing ? { approve: opts.approvePairing } : {}
+      pairing: { isDenied: opts.isDenied, approve: async (req) => {
+        const config = await this.getConfig()
+        if (config.pairing.requireApproval === false) return 'approve'
+        // Headless hosts have no prompt. Unknown keys require an invite or
+        // an explicit callback; a public key alone is never approval.
+        return opts.approvePairing ? opts.approvePairing(req) : 'approval required; use a scoped invitation'
+      } }
     })
 
     this._forward()
@@ -79,6 +85,14 @@ export class PersonalNode extends EventEmitter {
 
     await this.node.listen()
     this.started = true
+    // Quotas must run on headless hosts even when nobody requests status.
+    this._quotaTimer = setInterval(() => {
+      if (this._checkingQuota) return
+      this._checkingQuota = this._enforceQuotas(this._sync.engine?.getReplicatedBytes())
+        .catch(error => this.emit('error', { type: 'quota', error: error.message }))
+        .finally(() => { this._checkingQuota = null })
+    }, 1000)
+    this._quotaTimer.unref?.()
 
     const restored = this._sync.engine?.getStats().length || 0
     if (restored > 0) this.emit('restored', { resourceCount: restored })
@@ -235,6 +249,13 @@ export class PersonalNode extends EventEmitter {
     }
   }
 
+  async _admitStorage (publicKey) {
+    const quotas = await this._enforceQuotas(this._sync.engine?.getReplicatedBytes())
+    if (quotas.global.exceeded || quotas.perPeer[publicKey]?.exceeded) {
+      throw new NodeError('RESOURCE_LIMIT', 'Storage quota exceeded; increase the limit before registering or resuming replication')
+    }
+  }
+
   async setPeerQuota (publicKey, quotaBytes) {
     if (quotaBytes !== null && (!Number.isSafeInteger(quotaBytes) || quotaBytes < 0)) {
       throw new Error('quotaBytes must be a non-negative integer or null')
@@ -258,8 +279,9 @@ export class PersonalNode extends EventEmitter {
   }
 
   async unpairPeer (publicKey) {
+    const removed = await this.node.unpair(publicKey)
     if (this._sync.engine) await this._sync.engine.removeOwnerCores(publicKey)
-    return this.node.unpair(publicKey)
+    return removed
   }
 
   async pausePeer (publicKey) {
@@ -269,6 +291,7 @@ export class PersonalNode extends EventEmitter {
   }
 
   async resumePeer (publicKey) {
+    await this._admitStorage(publicKey)
     const touched = this._sync.engine ? await this._sync.engine.resumeOwner(publicKey) : 0
     this.emit('peerResumed', { publicKey, touched })
     return touched
@@ -344,6 +367,8 @@ export class PersonalNode extends EventEmitter {
 
   async close () {
     this.started = false
+    clearInterval(this._quotaTimer)
+    if (this._checkingQuota) await this._checkingQuota
     await this.node.close()
   }
 }

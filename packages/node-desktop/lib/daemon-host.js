@@ -43,6 +43,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   const node = new PersonalNode(storagePath, {
     ...nodeOptions,
     ai,
+    isDenied: async (key) => { await approvalGate.ready(); return Object.hasOwn(approvalGate.snapshot().denied, key) },
     approvePairing: async (req) => {
       const config = await node.getConfig()
       if (config.pairing.requireApproval === false) return 'approve'
@@ -70,7 +71,10 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
   node.on('paired', (info) => send({ type: 'paired', ...info }))
   node.on('pairDenied', (info) => send({ type: 'pairDenied', ...info }))
   node.on('connection', (info) => send({ type: 'peerConnected', ...info }))
-  node.on('peerDisconnected', (info) => send({ type: 'peerDisconnected', ...info }))
+  node.on('peerDisconnected', (info) => {
+    approvalGate.cancel(info.publicKey)
+    send({ type: 'peerDisconnected', ...info })
+  })
   node.on('error', (info) => send({ type: 'error', ...info }))
   node.on('requestError', (info) => send({ type: 'requestError', ...info }))
   node.on('aiReady', (info) => send({ type: 'aiReady', ...info }))
@@ -133,6 +137,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
       case 'forget-trust':
         await approvalGate.forget(msg.publicKey)
+        await node.node.peerRegistry.forgetDenial(msg.publicKey)
         break
 
       case 'promote-trust':
@@ -267,12 +272,31 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
       // from the renderer allowlist and can only be sent by the main process.
       case 'qvac-runtime-check': {
         try {
-          const sdk = await import('@qvac/sdk')
+          const { loadQvacRuntime } = await import('unstoppable-node/internal/qvac-runtime')
+          const sdk = await loadQvacRuntime()
           if (typeof sdk.loadModel !== 'function' || typeof sdk.completion !== 'function') {
             throw new Error('Required QVAC SDK exports are unavailable')
           }
-          const packageJson = await import('@qvac/sdk/package', { with: { type: 'json' } })
-          send({ type: 'qvacRuntimeReady', version: packageJson.default.version })
+          const packageJson = await import('@qvac/inference/package', { with: { type: 'json' } })
+          let text
+          if (msg.modelSrc) {
+            const { AIProvider } = await import('unstoppable-node/internal/ai')
+            const provider = new AIProvider({ modelSrc: msg.modelSrc })
+            provider.on('error', error => send({ type: 'error', ...error }))
+            try {
+              await provider.start()
+              let interrupted = ''
+              for await (const token of provider.runStreaming({ messages: [{ role: 'user', content: 'Write a detailed essay about coffee.' }] })) {
+                interrupted += token
+                if (interrupted.length >= 40) break
+              }
+              if (!interrupted.trim()) throw new Error('Real inference did not produce output before cancellation')
+              text = ''
+              for await (const token of provider.runStreaming({ messages: [{ role: 'user', content: 'Reply with one short sentence about coffee.' }] })) text += token
+              if (!text.trim()) throw new Error('Real inference did not recover after cancellation')
+            } finally { await provider.close() }
+          }
+          send({ type: 'qvacRuntimeReady', version: packageJson.default.version, text })
         } catch (err) {
           send({ type: 'fatal', phase: 'qvac-runtime-check', error: err.message })
         }
@@ -290,6 +314,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
 
   async function cleanup () {
     clearInterval(statusTimer)
+    approvalGate.close()
     await node.close()
     if (typeof exit === 'function') exit()
   }

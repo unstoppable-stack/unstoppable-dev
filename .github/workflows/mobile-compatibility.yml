@@ -1,0 +1,75 @@
+name: Deferred Mobile Compatibility
+
+on:
+  pull_request:
+    paths:
+      - packages/cli/src/generators/expo-mobile.ts
+      - packages/cli/src/generators/common.ts
+      - packages/cli/src/e2e/maestro-flow.ts
+      - packages/cli/e2e/test-scaffold.ts
+      - packages/cli/package.json
+      - packages/cli/pnpm-lock.yaml
+      - .github/workflows/mobile-compatibility.yml
+  push:
+    branches: [main]
+    paths:
+      - packages/cli/src/generators/expo-mobile.ts
+      - packages/cli/src/generators/common.ts
+      - packages/cli/src/e2e/maestro-flow.ts
+      - packages/cli/e2e/test-scaffold.ts
+      - packages/cli/package.json
+      - packages/cli/pnpm-lock.yaml
+      - .github/workflows/mobile-compatibility.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deferred-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-native:
+    name: Deferred iOS native build (${{ matrix.variant }})
+    runs-on: macos-15
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [bare, local-ai]
+    defaults:
+      run:
+        working-directory: packages/cli
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      # RN 0.81 requires Xcode >=16.1; macos-14 defaults to 15.4.
+      - name: Verify native toolchain
+        run: xcodebuild -version
+      - run: pnpm install --frozen-lockfile
+      - name: Build full internal CLI (mobile is deferred)
+        run: pnpm build:full
+      # Model inference is deliberately absent: Level 3 proves the native
+      # bundle/link/build pipeline. Physical-device AI needs separate evidence.
+      - name: Fresh scaffold, install, prebuild and simulator compilation
+        run: pnpm test:e2e:mobile -- --level 3 --variant '${{ matrix.variant }}'
+        env:
+          QVAC_MOCK: '1'
+      - name: Upload compatibility report and resolved package identities
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deferred-ios-${{ matrix.variant }}
+          path: |
+            /tmp/us-e2e-scaffold/report-*.json
+            /tmp/us-e2e-scaffold/mobile/${{ matrix.variant }}/package-lock.json
+            /tmp/us-e2e-scaffold/mobile/${{ matrix.variant }}/ios/Podfile.lock
+            /tmp/us-e2e-scaffold/mobile/${{ matrix.variant }}/prebuild.log
+            /tmp/us-e2e-scaffold/mobile/${{ matrix.variant }}/xcodebuild.log
+          if-no-files-found: ignore

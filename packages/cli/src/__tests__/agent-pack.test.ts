@@ -15,14 +15,14 @@ describe('agent-pack app integration', () => {
       const result = await buildAgentPack({ tool, template: 'blank', projectName: 'test', outputDir })
       const contents = await Promise.all(result.filesWritten.filter(f => /\.mdc?$/.test(f)).map(async path => ({ path, text: await readFile(join(outputDir, path), 'utf8') })))
       for (const { path, text } of contents) {
-        expect(text, path).not.toMatch(/startQVACProvider\s*\(|delegate:\s*\{|n_discarded:\s*|filterThinkBlocks:\s*/)
+        expect(text, path).not.toMatch(/startQVACProvider\s*\(|delegate:\s*\{|n_discarded:\s*|chat-context\.js|filterThinkBlocks:\s*/)
         for (const match of text.matchAll(/\]\((resources\/[^)]+)\)/g)) {
           await expect(readFile(join(outputDir, path, '..', match[1]), 'utf8')).resolves.toBeTruthy()
         }
-        if (path.endsWith('/SKILL.md')) {
-          for (const match of text.matchAll(/\]\((\.\.\/[^)]+)\)/g)) {
-            await expect(readFile(resolve(outputDir, dirname(path), match[1]), 'utf8')).resolves.toBeTruthy()
-          }
+      }
+      for (const { path, text } of contents.filter(file => file.path.endsWith('/SKILL.md'))) {
+        for (const match of text.matchAll(/\]\((\.\.\/[^)]+)\)/g)) {
+          await expect(readFile(resolve(outputDir, dirname(path), match[1]), 'utf8')).resolves.toBeTruthy()
         }
       }
       const root = tool === 'claude' ? 'CLAUDE.md' : tool === 'cursor' ? '.cursor/rules/project.mdc' : 'AGENTS.md'

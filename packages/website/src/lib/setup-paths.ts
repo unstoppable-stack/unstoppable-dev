@@ -27,10 +27,10 @@ export const gettingStartedPaths = [
     id: "cli",
     icon: "terminal",
     title: "Raw CLI",
-    badge: `Published · ${siteConfig.cli.publishedVersion}`,
+    badge: siteConfig.cli.candidatePublished ? `Published · ${siteConfig.cli.candidateVersion}` : "Source preview",
     description: "Work directly in your terminal. Initialize a workspace, scaffold a desktop app and check your environment.",
     action: "Install the CLI",
     href: "/docs/start/cli",
-    detail: "Install from npm. An AI assistant is optional.",
+    detail: siteConfig.cli.candidatePublished ? "Install from npm. An AI assistant is optional." : "Use the matching source candidate until its npm release.",
   },
 ] as const;

@@ -1,3 +1,5 @@
+import { AbortControllerImpl, NodeError } from '@unstoppable-stack/p2p'
+import b4a from 'b4a'
 import { AIProvider } from './provider.js'
 
 export { AIProvider } from './provider.js'
@@ -8,6 +10,7 @@ export { AIProvider } from './provider.js'
 // per-request multiplexing all come from the capability bus — the provider
 // only has to yield tokens. The 0.5 daemon hand-rolled all three.
 export function aiPack ({ mock = false, modelSrc, modelType, provider, enabled = true } = {}) {
+  let active = false
   let node = null
   let ai = provider || null
   let startError = null
@@ -45,14 +48,35 @@ export function aiPack ({ mock = false, modelSrc, modelType, provider, enabled =
           throw new Error('messages must be a non-empty array')
         }
 
-        node?.emit('inference', { publicKey: ctx.peer.remotePublicKey, appId: ctx.appId })
-
-        for await (const token of ai.runStreaming({ messages, stream: true })) {
-          // The bus aborts this signal on cancel, disconnect, or the consumer
-          // breaking out of its loop. Checking it here is what stops a model
-          // from burning tokens for a peer that stopped listening.
-          if (ctx.signal.aborted) return
-          yield token
+        if (messages.length > 64 || messages.some(message =>
+          !message || !['user', 'assistant', 'system'].includes(message.role) || typeof message.content !== 'string')) {
+          throw new NodeError('RESOURCE_LIMIT', 'AI accepts at most 64 text messages with user/assistant/system roles')
+        }
+        if (b4a.byteLength(JSON.stringify(messages)) > 64 * 1024) {
+          throw new NodeError('RESOURCE_LIMIT', 'AI prompt exceeds 64 KiB')
+        }
+        if (active) throw new NodeError('RESOURCE_LIMIT', 'AI provider is busy; retry after the current request stops')
+        active = true
+        const controller = new AbortControllerImpl()
+        const abort = () => controller.abort()
+        ctx.signal.addEventListener('abort', abort, { once: true })
+        if (ctx.signal.aborted) abort()
+        let timedOut = false
+        const timer = setTimeout(() => { timedOut = true; controller.abort() }, 60_000)
+        let bytes = 0
+        try {
+          node?.emit('inference', { publicKey: ctx.peer.remotePublicKey, appId: ctx.appId })
+          for await (const token of ai.runStreaming({ messages, stream: true, signal: controller.signal })) {
+            if (controller.signal.aborted) break
+            bytes += b4a.byteLength(String(token))
+            if (bytes > 256 * 1024) throw new NodeError('RESOURCE_LIMIT', 'AI output exceeds 256 KiB')
+            yield token
+          }
+          if (timedOut) throw new NodeError('REQUEST_TIMEOUT', 'AI completion exceeded 60 seconds')
+        } finally {
+          clearTimeout(timer)
+          ctx.signal.removeEventListener('abort', abort)
+          active = false
         }
       }
     },

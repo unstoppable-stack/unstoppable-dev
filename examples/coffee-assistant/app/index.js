@@ -59,7 +59,7 @@ document.getElementById('app').innerHTML = `
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
+        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
     </main>

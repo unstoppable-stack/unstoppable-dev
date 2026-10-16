@@ -89,7 +89,7 @@ async function registryPreflight(directory, options = {}) {
       assert.equal(metadata['dist-tags']?.[artifact.tag], artifact.version, 'Existing version is not on the intended tag; review manually')
     }
     results.push({ name: artifact.name, version: artifact.version, tag: artifact.tag,
-      status: existing ? 'already-published-identical' : 'available', latest: metadata['dist-tags']?.latest ?? null })
+      packageExists: response.ok, status: existing ? 'already-published-identical' : 'available', latest: metadata['dist-tags']?.latest ?? null })
   }
   writeFileSync(join(directory, 'registry-preflight.json'), JSON.stringify({ checkedAt: new Date().toISOString(), results,
     note: 'Public registry availability only; this does not verify npm ownership or OIDC authorization.' }, null, 2) + '\n')
@@ -123,6 +123,7 @@ async function main() {
     console.log(JSON.stringify(results, null, 2))
     if (command === 'publish') {
       assert(process.env.GITHUB_ACTIONS === 'true' && process.env.PUBLIC_RELEASE_APPROVED === '1', 'Publish only from the explicitly selected GitHub release job')
+      assert(results.every(item => item.packageExists), 'First publish requires an authenticated maintainer: publish the verified new-package tarball, then configure npm trusted publishing. See docs/public-release.md.')
       for (const artifact of record.artifacts) {
         if (results.find(item => item.name === artifact.name).status === 'already-published-identical') continue
         npm(['publish', join(directory, artifact.file), '--ignore-scripts', '--access', 'public', '--tag', artifact.tag])

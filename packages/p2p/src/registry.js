@@ -14,6 +14,7 @@ export class PeerRegistry {
   constructor (storagePath) {
     this.file = runtimePath.join(storagePath, PEERS_FILE)
     this.peers = new Map()
+    this.denied = new Set()
     this._ready = false
     this._writing = Promise.resolve()
   }
@@ -23,6 +24,9 @@ export class PeerRegistry {
     try {
       const parsed = JSON.parse(await runtimeFs.readFile(this.file, 'utf8'))
       if (parsed?.version === PEERS_VERSION && parsed.peers && typeof parsed.peers === 'object') {
+        for (const key of parsed.denied || []) {
+          if (/^[0-9a-f]{64}$/.test(key)) this.denied.add(key)
+        }
         for (const [key, record] of Object.entries(parsed.peers)) {
           if (isValidRecord(key, record)) this.peers.set(key, record)
         }
@@ -76,6 +80,20 @@ export class PeerRegistry {
     return removed
   }
 
+  isDenied (publicKey) { return this.denied.has(toPublicKeyHex(publicKey)) }
+
+  async deny (publicKey) {
+    const key = toPublicKeyHex(publicKey)
+    this.denied.add(key)
+    this.peers.delete(key)
+    await this._flush()
+  }
+
+  async forgetDenial (publicKey) {
+    this.denied.delete(toPublicKeyHex(publicKey))
+    await this._flush()
+  }
+
   flushed () {
     return this._writing
   }
@@ -83,8 +101,7 @@ export class PeerRegistry {
   _flush () {
     const peers = {}
     for (const [key, record] of this.peers) peers[key] = record
-    const data = JSON.stringify({ version: PEERS_VERSION, peers }, null, 2)
-    // Preserve write order when several peers finish pairing together.
+    const data = JSON.stringify({ version: PEERS_VERSION, peers, denied: [...this.denied] }, null, 2)
     this._writing = this._writing.catch(() => {}).then(() => atomicWriteFile(this.file, data))
     return this._writing
   }

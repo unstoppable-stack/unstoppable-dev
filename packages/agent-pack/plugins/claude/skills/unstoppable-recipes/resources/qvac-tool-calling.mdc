@@ -1,0 +1,5 @@
+# Tools as an adapter extension
+
+Read add-ai-chat/resources/tool-calling-example.md. The basic session streams text. Implement tool schemas/history/execution policy at an explicit adapter extension using installed types, then validate cancellation and resource ownership. Do not maintain a second SDK tutorial here.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

@@ -51,7 +51,9 @@
           "autobee": "1.0.10",
           "hyperdb": "^6.7.0",
           "hyperschema": "^1.21.0"
-        }
+        },
+        "wallet": {},
+        "node-host": {}
       },
       "aiRuntime": "0.1.0",
       "validation": {
@@ -98,13 +100,14 @@
         "node-sync": {
           "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         },
-        "node-host": {
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
-        },
         "multi-writer": {
           "autobee": "1.0.10",
           "hyperdb": "^6.7.0",
           "hyperschema": "^1.21.0"
+        },
+        "wallet": {},
+        "node-host": {
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         }
       },
       "aiRuntime": "0.1.0",
@@ -126,10 +129,12 @@
       }
     },
     "expo-mobile": {
-      "id": "expo-mobile-qvac-0.15",
+      "id": "expo-54-qvac-0.21",
       "revision": 2,
       "maturity": "experimental",
-      "engines": {},
+      "engines": {
+        "node": ">=22.17.0"
+      },
       "dependencies": {
         "expo": "~54.0.33",
         "expo-build-properties": "~1.0.9",
@@ -139,13 +144,14 @@
         "expo-splash-screen": "~31.0.10",
         "expo-status-bar": "~3.0.8",
         "react": "19.1.0",
+        "react-dom": "19.1.0",
         "react-native": "0.81.5",
         "react-native-safe-area-context": "~5.6.0",
         "react-native-screens": "~4.16.0",
-        "react-native-bare-kit": "0.15.0",
+        "react-native-bare-kit": "0.15.6",
         "bare-pack": "^2.2.1",
-        "bare-rpc": "^1.1.0",
-        "corestore": "^7.8.0",
+        "bare-rpc": "^1.3.2",
+        "corestore": "^7.13.0",
         "hyperbee": "^2.27.3"
       },
       "devDependencies": {
@@ -154,21 +160,24 @@
       },
       "featureDependencies": {
         "local-ai": {
-          "@qvac/sdk": "^0.15.0",
+          "@qvac/sdk": "0.21.0",
           "zod": "^4.3.0",
           "expo-device": "~8.0.10"
         },
         "node-sync": {
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1",
           "hyperswarm": "^4.17.0",
           "b4a": "^1.8.0",
-          "events": "^3.3.0"
-        }
+          "events": "^3.3.0",
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+        },
+        "multi-writer": {},
+        "wallet": {},
+        "node-host": {}
       },
       "aiRuntime": null,
       "validation": {
-        "baseline": "2026-10-06",
-        "adapter": "separate experimental implementation; physical-device acceptance pending",
+        "baseline": "2026-10-09",
+        "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
         "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
       },
       "featureMaturity": {

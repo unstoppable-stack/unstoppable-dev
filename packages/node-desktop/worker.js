@@ -5,7 +5,7 @@
 // the user gets a visual dashboard alongside the P2P runtime. The worker
 // process lives in Bare; NodeDaemon happens to run fine there because:
 //   1. protocol.js lazily loads `os` (Bare has no `os` module by default)
-//   2. ai-provider.js only imports `@qvac/sdk` dynamically when --ai is on
+//   2. AIProvider loads Bare inference 0.21 dynamically when --ai is on
 //   3. Hyperswarm/Corestore/Hyperdrive are all Bare-native
 //
 // Communication with the renderer uses the standard Pear worker pipe with

@@ -1,0 +1,5 @@
+# Bounded chat context
+
+The session bounds recent user/assistant history by UTF-8 byte cost, drops whole older turns and rejects an oversized latest message unchanged. SDK overflow recovery retries once with the latest message only before visible output. Surface omissions; never automatically replay partial output.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.

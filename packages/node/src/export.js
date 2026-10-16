@@ -33,6 +33,7 @@ export async function writeNodeStateBundle ({ storagePath, outPath, config, peer
     config,
     trust,
     identity: seed,
+    revokedKeys: (await readJson(join(storagePath, 'peers.json'), null))?.denied || [],
     peers
   }
 
@@ -50,6 +51,7 @@ export async function importNodeState ({ storagePath, inPath }) {
   const registry = new PeerRegistry(storagePath)
   await registry.ready()
   for (const peer of bundle.peers || []) await registry.put(peer)
+  for (const key of bundle.revokedKeys || []) await registry.deny(key)
 
   if (bundle.identity) {
     await atomicWriteFile(
@@ -112,6 +114,10 @@ export async function readNodeStateBundle (path) {
   if (bundle.peers != null && !Array.isArray(bundle.peers)) throw new Error('Settings bundle peers must be an array')
   if (bundle.peers?.length > 10_000) throw new Error('Settings bundle contains too many peers')
   if (bundle.peers) bundle.peers = bundle.peers.map(validateImportedPeer)
+  if (bundle.revokedKeys != null && (!Array.isArray(bundle.revokedKeys) || bundle.revokedKeys.length > 10_000 ||
+      bundle.revokedKeys.some(key => typeof key !== 'string' || !/^[0-9a-f]{64}$/.test(key)))) {
+    throw new Error('Settings bundle revokedKeys must be an array of public keys')
+  }
   validateIdentityShape(bundle.identity)
   if (bundle.config != null) bundle.config = validateConfig(migrateConfig(bundle.config))
   validateTrustShape(bundle.trust)

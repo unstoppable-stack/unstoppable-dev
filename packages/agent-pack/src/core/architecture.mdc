@@ -13,6 +13,6 @@ The runtime is shipped at `.unstoppable/runtime-ai/` with a recorded version. Ge
 
 Storage: Corestore manages Hypercores; Hyperbee supplies the default KV view. Multi-writer apps use Autobee with HyperDB and deterministic domain merge policy. Schemas and domain policy belong to the app. Keep the local namespace outside replication.
 
-Use P2P runtime for identity, pairing, grants and capability transport when those features are installed. Simple core/database replication does not require a Personal Node. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
+Use node-core for identity, pairing, grants and capability transport when those features are installed. Simple core/database replication does not require a Personal Node. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
 
 The app manifest and local compatibility profiles distinguish preview, experimental and deferred combinations. A scaffold does not certify support. Select guidance for the installed profile before reading upstream docs.

@@ -5,7 +5,7 @@
   <em>Build private apps with local AI and peer-to-peer communication</em>
   <br />
   <br />
-  <a href="https://unstoppable.dev">Website</a> ·
+  <a href="https://unstoppable-stack.dev">Website</a> ·
   <a href="#quick-start">Quick Start</a> ·
   <a href="#agent-pack">Agent Pack</a> ·
   <a href="https://github.com/unstoppable-stack/unstoppable-dev/issues">Issues</a> ·
@@ -20,9 +20,9 @@ The Unstoppable Stack is a developer toolkit for building private apps with loca
 
 The current source separates assistant setup from app generation: `us init` creates an assistant-configured workspace, then `us scaffold app` generates a runnable application inside it.
 
-Start with [Claude Code](https://unstoppable.dev/docs/start/claude),
-[Codex](https://unstoppable.dev/docs/start/codex), or the
-[raw CLI](https://unstoppable.dev/docs/start/cli). Each path creates the same
+Start with [Claude Code](https://unstoppable-stack.dev/docs/start/claude),
+[Codex](https://unstoppable-stack.dev/docs/start/codex), or the
+[raw CLI](https://unstoppable-stack.dev/docs/start/cli). Each path creates the same
 local-first desktop baseline; the plugin guides include the separate CLI install.
 
 
@@ -76,14 +76,14 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 
 | Start with | Install action | Availability |
 | --- | --- | --- |
-| Claude Code | [Install Claude plugin](https://unstoppable.dev/docs/start/claude) | Downloadable local preview; marketplace listing pending |
-| Codex | [Install Codex plugin](https://unstoppable.dev/docs/start/codex) | Downloadable local preview; marketplace listing pending |
-| Raw CLI | [Install the CLI](https://unstoppable.dev/docs/start/cli) | Published npm version `0.3.0` |
+| Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Downloadable local preview; marketplace listing pending |
+| Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Downloadable local preview; marketplace listing pending |
+| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Matching `0.4.0-beta.1` source preview; npm `0.3.0` is the earlier API |
 
-For the raw CLI path:
+For the raw CLI path, install the matching preview using the linked guide
+(source build until the beta is published), then:
 
 ```bash
-npm install -g @unstoppable-stack/cli@0.3.0
 us --version
 us init coffee-workspace --assistant none --no-install
 cd coffee-workspace
@@ -153,7 +153,7 @@ unstoppable-stack/
 │   ├── p2p/              # P2P capabilities and /sync replication
 │   ├── node/             # Optional Personal Node app; internal QVAC adapter
 │   ├── runtime-ai/       # Private lifecycle helpers copied into generated apps
-│   ├── website/          # unstoppable.dev — Next.js site
+│   ├── website/          # unstoppable-stack.dev — Next.js site
 │   ├── runtime-ai/       # Maintained desktop/Node AI lifecycle
 │   ├── p2p/              # P2P library (alpha)
 │   ├── node/             # Personal Node composition (alpha)

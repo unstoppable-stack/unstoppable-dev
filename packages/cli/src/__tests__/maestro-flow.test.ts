@@ -35,13 +35,7 @@ describe('generateMaestroFlow', () => {
   })
 
   describe('simulator mode (real, no QVAC_MOCK) — AI wiring smoke', () => {
-    // Context: an earlier iteration tried a full CPU-inference test on
-    // the simulator. The 2026-05-21 verification run showed Maestro's
-    // tap on Load Assistant doesn't reliably propagate to RN onPress
-    // there. We deliberately do NOT tap Load on the simulator now —
-    // real inference is verified in --device mode. The simulator flow
-    // proves the AI section + toggle render and that no BareKit/
-    // TurboModule red-box surfaces at launch.
+    // Static SDK import and simulator refusal are tested without a model download.
     it('toggles to CPU and asserts "Device: CPU" is visible', () => {
       const flow = generateMaestroFlow('demo', ['local-ai'])
       const sectionStart = flow.indexOf('# --- Simulator AI wiring smoke')
@@ -62,19 +56,13 @@ describe('generateMaestroFlow', () => {
       expect(flow).toContain('assertNotVisible: "BareKit"')
     })
 
-    it('does NOT tap Load Assistant on the simulator (Maestro tap unreliable there)', () => {
-      // The 2026-05-21 verification run showed the tap on load-ai-btn
-      // reported COMPLETED in Maestro but never reached RN's onPress.
-      // No download started, no JS logs, button stayed visible past
-      // 5min. Removing the tap (rather than papering over with a
-      // longer timeout) keeps the simulator test fast and deterministic.
+    it('taps Load and verifies physical-device guidance before inference', () => {
       const flow = generateMaestroFlow('demo', ['local-ai'])
       const sectionStart = flow.indexOf('# --- Simulator AI wiring smoke')
       const sectionEnd = flow.indexOf('# --- Relaunch', sectionStart)
       const section = flow.slice(sectionStart, sectionEnd)
-      // load-ai-btn is asserted visible higher up, but never tapped
-      // inside the AI wiring smoke section.
-      expect(section).not.toContain('tapOn:\n    id: "load-ai-btn"')
+      expect(section).toContain('tapOn:\n    id: "load-ai-btn"')
+      expect(section).toContain('Local AI requires a physical device')
       expect(section).not.toContain('id: "chat-input"')
       expect(section).not.toContain('id: "chat-send-btn"')
     })
@@ -162,11 +150,13 @@ describe('generateMaestroFlow', () => {
   })
 
   describe('relaunch step', () => {
-    it('is included in simulator mode (state-restore smoke)', () => {
+    it('retrieves the previously saved value after simulator relaunch', () => {
       const flow = generateMaestroFlow('demo', ['local-ai'])
       expect(flow).toContain('# --- Relaunch to verify state restores cleanly')
       expect(flow).toContain('- stopApp')
       expect(flow).toContain('- launchApp')
+      expect(flow.lastIndexOf('hello from e2e')).toBeGreaterThan(flow.indexOf('- stopApp'))
+      expect(flow.indexOf('Saved.*e2e-key')).toBeLessThan(flow.indexOf('.*e2e-key.*hello from e2e'))
     })
 
     it('handles the bare variant (no AI section) without crashing', () => {

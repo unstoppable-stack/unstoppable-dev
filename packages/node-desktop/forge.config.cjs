@@ -6,16 +6,22 @@ const { FusesPlugin } = require('@electron-forge/plugin-fuses')
 const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 const { pruneForeignPrebuilds } = require('./scripts/prune-prebuilds.cjs')
 
-function copyLocalNodePackage (buildPath) {
-  const source = path.resolve(__dirname, '..', 'node')
-  const target = path.join(buildPath, 'node_modules', 'unstoppable-node')
-  fs.rmSync(target, { recursive: true, force: true })
-  fs.mkdirSync(target, { recursive: true })
-
-  for (const entry of ['src', 'scripts', 'package.json', 'README.md', 'LICENSE']) {
-    const from = path.join(source, entry)
-    if (!fs.existsSync(from)) continue
-    fs.cpSync(from, path.join(target, entry), { recursive: true })
+function copyLocalNodePackages (buildPath) {
+  const packages = {
+    node: 'unstoppable-node',
+    'node-core': '@unstoppable-stack/node-core',
+    'node-caps-sync': '@unstoppable-stack/node-caps-sync',
+    'node-caps-ai': '@unstoppable-stack/node-caps-ai'
+  }
+  for (const [directory, name] of Object.entries(packages)) {
+    const source = path.resolve(__dirname, '..', directory)
+    const target = path.join(buildPath, 'node_modules', name)
+    fs.rmSync(target, { recursive: true, force: true })
+    fs.mkdirSync(target, { recursive: true })
+    for (const entry of ['src', 'scripts', 'package.json', 'README.md', 'LICENSE']) {
+      const from = path.join(source, entry)
+      if (fs.existsSync(from)) fs.cpSync(from, path.join(target, entry), { recursive: true })
+    }
   }
 }
 
@@ -72,7 +78,7 @@ module.exports = {
     // npm represents the monorepo's file: dependency as a symlink. Replace it
     // after pruning so an installed app never points back to the source tree.
     packageAfterPrune: async (_forgeConfig, buildPath, _electronVersion, platform, arch) => {
-      copyLocalNodePackage(buildPath)
+      copyLocalNodePackages(buildPath)
       const result = pruneForeignPrebuilds(buildPath, platform, arch)
       console.info(`Pruned ${result.removed} foreign native prebuilds; kept ${result.kept} for ${platform}-${arch}`)
     }
@@ -105,7 +111,7 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Unstoppable Stack',
-          homepage: 'https://unstoppable.dev'
+          homepage: 'https://unstoppable-stack.dev'
         }
       },
       platforms: ['linux']

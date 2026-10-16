@@ -1,14 +1,15 @@
 let buffer = ''
 
 try {
-  const sdk = await import('@qvac/sdk')
-  const packageJson = await import('@qvac/sdk/package', { with: { type: 'json' } })
+  const { loadQvacRuntime } = await import('unstoppable-node/internal/qvac-runtime')
+  const sdk = await loadQvacRuntime()
+  const packageJson = await import('@qvac/inference/package', { with: { type: 'json' } })
   Bare.IPC.write(JSON.stringify({
     type: 'qvac-imported',
     version: packageJson.default.version,
     loadModel: typeof sdk.loadModel,
     completion: typeof sdk.completion,
-    hasDefaultModel: Boolean(sdk.LLAMA_3_2_1B_INST_Q4_0)
+    hasDefaultModel: Boolean(sdk.QWEN3_5_0_8B_MULTIMODAL_Q4_K_M)
   }) + '\n')
 } catch (error) {
   Bare.IPC.write(JSON.stringify({ type: 'qvac-import-error', error: error.message }) + '\n')

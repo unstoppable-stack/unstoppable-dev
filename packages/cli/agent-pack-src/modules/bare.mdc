@@ -17,7 +17,7 @@ Pear OTA uses Bare for embedded desktop workers. Those workers are started by
 ## Version Notes
 
 - Bare runtime version not pinned in local sources.
-- Mobile tooling: `bare-pack` ^2.2.1 (2.x, uses `--host`), `react-native-bare-kit` 0.15.0.
+- Mobile tooling: `bare-pack` ^2.2.1 (2.x, uses `--host`), `react-native-bare-kit` 0.15.6.
 
 ## Installation
 

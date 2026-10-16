@@ -1,0 +1,5 @@
+# AI diagnostics
+
+Preserve session error codes and request IDs through the bridge. Separate host/IPC, dependency/addon, download and inference failures. Configure SDK logging according to installed types; redact app secrets and private prompts before sharing diagnostics.
+
+Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.
