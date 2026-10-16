@@ -31,7 +31,7 @@ export function validatePublicManifest(manifest, entry) {
 }
 
 export function inspectPublicArchive(path, entry) {
-  const paths = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).trim().split('\n')
+  const paths = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).trim().split(/\r?\n/)
   for (const name of paths) {
     assert(name.startsWith('package/') && !name.split('/').includes('..'), `Unsafe archive path ${name}`)
     assert(!/(?:^|\/)(?:node_modules|\.git|\.npmrc|\.env(?:\.[^/]+)?)(?:\/|$)/.test(name), `Private/build content in archive: ${name}`)

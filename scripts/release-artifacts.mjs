@@ -17,7 +17,7 @@ const record = {
   artifacts: files.map(file => {
     const path = join(directory, file)
     const bytes = readFileSync(path)
-    const entries = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).split('\n')
+    const entries = execFileSync('tar', ['-tzf', path], { encoding: 'utf8' }).split(/\r?\n/)
     for (const required of ['package/package.json', 'package/README.md', 'package/LICENSE']) {
       if (!entries.includes(required)) throw new Error(`${file} is missing ${required}`)
     }
