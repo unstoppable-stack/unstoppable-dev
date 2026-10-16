@@ -35,7 +35,7 @@ async function startWorker() {
   if (worker) return true
   const runtime = getPear()
   await runtime.ready()
-  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage, process.env.COFFEE_P2P_BOOTSTRAP || ''])
+  worker = runtime.run(join(import.meta.dirname, '..', 'worker.js'), [runtime.storage, process.env.ECOMMERCE_P2P_BOOTSTRAP || ''])
   worker.on('data', (data) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('worker:message', data.toString())
@@ -87,7 +87,7 @@ ipcMain.handle('worker:send', (event, message) => {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    title: 'coffee-assistant',
+    title: 'ecommerce-assistant',
     backgroundColor: '#1a1a2e',
     width: 1100,
     height: 720,

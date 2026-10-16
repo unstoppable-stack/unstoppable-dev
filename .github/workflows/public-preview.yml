@@ -7,7 +7,7 @@ on:
       - 'packages/agent-pack/src/**'
       - 'packages/runtime-ai/**'
       - 'scripts/sync-stack-assets.mjs'
-      - 'examples/coffee-assistant/**'
+      - 'examples/ecommerce-assistant/**'
       - 'scripts/release-*.mjs'
       - 'scripts/release-smoke.sh'
       - 'scripts/check-agent-pack.mjs'
@@ -19,7 +19,7 @@ on:
       - 'packages/agent-pack/src/**'
       - 'packages/runtime-ai/**'
       - 'scripts/sync-stack-assets.mjs'
-      - 'examples/coffee-assistant/**'
+      - 'examples/ecommerce-assistant/**'
       - 'scripts/release-*.mjs'
       - 'scripts/release-smoke.sh'
       - 'scripts/check-agent-pack.mjs'
@@ -58,6 +58,7 @@ jobs:
           node scripts/sync-stack-assets.mjs --check
           node scripts/check-agent-pack.mjs
           node --test packages/runtime-ai/test/*.test.js
+          node --test examples/ecommerce-assistant/test/*.test.js
           pnpm --dir packages/cli typecheck
           pnpm --dir packages/cli test
       - name: Packed CLI through installed desktop UI

@@ -1,3 +1,4 @@
+import { products, money } from '../catalog.js'
 import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
 
 // ---------------------------------------------------------------------------
@@ -7,34 +8,34 @@ import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
 document.getElementById('app').innerHTML = `
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">coffee-assistant</h1>
-      <p class="app-subtitle">Coffee notes · local storage and local AI</p>
+      <h1 class="app-title">Local Goods <span class="badge">DEMO STORE</span></h1>
+      <p class="app-subtitle">Everyday essentials. Stored on your device. Assisted by local AI.</p>
       <p class="mono" id="worker-status">⏳ Worker starting...</p>
     </header>
     <main class="content">
-      <section data-testid="p2p-section" class="card">
-        <h2 class="card-title">Share coffee orders with a trusted peer</h2>
-        <p class="card-hint">Sharing exposes all saved orders to anyone who knows this key. Downloaded copies can remain on the recipient's device. Only share it with trusted people.</p>
-        <button id="share-orders" class="btn">Share my orders</button>
-        <p id="sharing-key" class="mono" style="overflow-wrap:anywhere"></p>
-        <input id="peer-key" class="inp" placeholder="Trusted peer's sharing key" />
-        <input id="peer-order-name" class="inp" placeholder="Order name (for example morning)" />
-        <button id="fetch-peer-order" class="btn btn-outline">Fetch peer order</button>
-        <p id="peer-order-result" class="result"></p>
-        <p class="mono" id="p2p-status">⏳ Starting...</p>
+      <section class="card catalog-section">
+        <p class="eyebrow">THE EVERYDAY COLLECTION</p>
+        <h2 class="hero-title">Good things for your daily routine.</h2>
+        <p class="card-hint">Browse offline, build a cart, and save a demo order locally.</p>
+        <label for="catalog-search">Find a product</label>
+        <input id="catalog-search" class="inp" type="search" placeholder="Search products or categories" />
+        <div id="catalog" class="product-grid"></div>
       </section>
       <section data-testid="kv-section" class="card">
-        <h2 class="card-title">Saved coffee orders</h2>
-        <input id="kv-key" class="inp" placeholder="Order name (for example morning)" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Order (for example one oat latte)" data-testid="kv-value-input" />
+        <h2 class="card-title">Your cart</h2>
+        <div id="cart-items" aria-live="polite"></div>
+        <p id="cart-total" class="cart-total">Total $0.00 USD</p>
+        <p class="card-hint">Demo checkout only. No payment, shipping, tax calculation, or fulfillment.</p>
+        <label for="kv-key">Order reference</label>
+        <input id="kv-key" class="inp" placeholder="For example order-001" data-testid="kv-key-input" />
         <div class="row gap-8">
-          <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
-          <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
+          <button id="kv-save" class="btn" data-testid="kv-save-btn" disabled>Save demo order</button>
+          <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Look up order</button>
         </div>
-        <p id="kv-result" class="result" style="display:none" data-testid="kv-result"></p>
+        <p id="kv-result" class="result" style="display:none" role="status" data-testid="kv-result"></p>
       </section>
       <section data-testid="ai-section" class="card">
-        <h2 class="card-title">Coffee Assistant</h2>
+        <h2 class="card-title">Shopping assistant</h2>
         <p class="card-hint">Qwen 3.5 0.8B · ~532 MB download on first run, cached after. A validation Mac used ~1.4–1.5 GiB for the warm app process tree; your usage may vary.</p>
         <div id="ai-idle">
           <button id="load-ai" class="btn" data-testid="load-ai-btn">Load Assistant</button>
@@ -48,19 +49,27 @@ document.getElementById('app').innerHTML = `
         </div>
         <div id="ai-chat" style="display:none">
           <div id="chat-messages" class="chat-list" data-testid="chat-messages">
-            <p class="chat-hint">Ask me anything…</p>
+            <p class="chat-hint">Ask about the products in this catalog.</p>
           </div>
           <div class="row gap-8">
-            <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Suggest a coffee for someone who likes mild flavors" data-testid="chat-input" />
-            <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <input aria-label="Message the shopping assistant" id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="What would you recommend for a commute under $80?" data-testid="chat-input" />
+            <button aria-label="Send message" id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
             <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
       </section>
-      <section data-testid="docs-section" class="card">
-        <h2 class="card-title">Resources</h2>
-        <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable.dev</a>
-        <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
+      <section data-testid="p2p-section" class="card">
+        <h2 class="card-title">Share with a trusted peer</h2>
+        <p class="card-hint">Sharing exposes this entire store database, including the cart and all orders, to anyone who knows the key. Recipients can keep copies. Use demo data only.</p>
+        <button id="share-orders" class="btn">Share store data</button>
+        <p id="sharing-key" class="mono" style="overflow-wrap:anywhere"></p>
+        <label for="peer-key">Peer sharing key</label>
+        <input id="peer-key" class="inp" placeholder="Trusted peer's sharing key" />
+        <label for="peer-order-name">Peer order reference</label>
+        <input id="peer-order-name" class="inp" placeholder="For example order-001" />
+        <button id="fetch-peer-order" class="btn btn-outline">Fetch peer order</button>
+        <p id="peer-order-result" class="result" role="status"></p>
+        <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
     </main>
   </div>
@@ -79,18 +88,47 @@ document.getElementById('fetch-peer-order').addEventListener('click', () => {
 // Feature wiring (runs after DOM is built above)
 // ---------------------------------------------------------------------------
 
-  // KV Storage — in-worker Hyperbee via bridge
+  let cart = []
+  let cartBusy = true
+  function renderCatalog() {
+    const query = document.getElementById('catalog-search').value.toLowerCase()
+    const list = document.getElementById('catalog')
+    list.replaceChildren()
+    for (const product of products.filter(p => (p.name + ' ' + p.category).toLowerCase().includes(query))) {
+      const card = document.createElement('article')
+      card.className = 'product'
+      // Catalog content is static and app-owned; user/peer data is rendered with textContent.
+      card.innerHTML = `<div class="product-art" aria-hidden="true">${product.symbol}</div><p class="eyebrow">${product.category}</p><h3>${product.name}</h3><p>${product.description}</p><div class="product-bottom"><strong>${money(product.price)}</strong><button class="btn" data-add="${product.id}" aria-label="Add ${product.name} to cart">Add to cart</button></div>`
+      card.querySelector('button').disabled = cartBusy
+      card.querySelector('button').addEventListener('click', () => {
+        const next = cart.map(item => ({ ...item }))
+        const existing = next.find(item => item.productId === product.id)
+        if (existing) existing.quantity++
+        else next.push({ productId: product.id, quantity: 1 })
+        updateCart(next)
+      })
+      list.appendChild(card)
+    }
+    if (!list.children.length) list.textContent = 'No matching products.'
+  }
+  function updateCart(next) {
+    setCommerceBusy(true)
+    sendToWorker({ type: 'cart-set', cart: next })
+  }
+  function setCommerceBusy(busy) {
+    cartBusy = busy
+    document.querySelectorAll('[data-add], #cart-items button').forEach(button => { button.disabled = busy })
+    document.getElementById('kv-save').disabled = busy || !cart.length
+  }
+  document.getElementById('catalog-search').addEventListener('input', renderCatalog)
+  renderCatalog()
   document.getElementById('kv-save').addEventListener('click', () => {
-    const key = document.getElementById('kv-key').value.trim()
-    const value = document.getElementById('kv-value').value
-    if (!key) return
-    sendToWorker({ type: 'db-put', key, value })
+    setCommerceBusy(true)
+    sendToWorker({ type: 'checkout', orderName: document.getElementById('kv-key').value.trim() })
   })
-
   document.getElementById('kv-fetch').addEventListener('click', () => {
     const key = document.getElementById('kv-key').value.trim()
-    if (!key) return
-    sendToWorker({ type: 'db-get', key })
+    if (key) sendToWorker({ type: 'db-get', key })
   })
 
   // AI Assistant
@@ -167,7 +205,39 @@ onWorkerMessage((msg) => {
       setText('peer-order-result', msg.type === 'peer-error' ? msg.error : msg.value === null ? 'Peer order not found' : msg.key + ' → ' + JSON.stringify(msg.value))
     }
 
+    if (msg.type === 'cart') {
+      cart = msg.cart
+      const list = document.getElementById('cart-items')
+      list.replaceChildren()
+      if (!msg.items.length) list.textContent = 'Your cart is empty. Find something you like above.'
+      for (const item of msg.items) {
+        const row = document.createElement('div')
+        row.className = 'cart-row'
+        const label = document.createElement('span')
+        label.textContent = item.name + ' × ' + item.quantity + ' · ' + money(item.subtotal)
+        row.appendChild(label)
+        for (const [text, delta] of [['−', -1], ['+', 1], ['Remove', -item.quantity]]) {
+          const button = document.createElement('button')
+          button.className = 'btn btn-outline'
+          button.textContent = text
+          button.setAttribute('aria-label', text === 'Remove' ? 'Remove ' + item.name : (delta > 0 ? 'Increase ' : 'Decrease ') + item.name + ' quantity')
+          button.addEventListener('click', () => updateCart(cart.map(entry => entry.productId === item.productId ? { ...entry, quantity: entry.quantity + delta } : entry).filter(entry => entry.quantity > 0)))
+          row.appendChild(button)
+        }
+        list.appendChild(row)
+      }
+      setText('cart-total', 'Total ' + money(msg.total) + ' USD')
+      setCommerceBusy(false)
+    }
+    if (msg.type === 'commerce-error') {
+      setCommerceBusy(false)
+      showResult('kv-result', msg.error)
+    }
+    if (msg.type === 'order-saved') {
+      showResult('kv-result', 'Saved demo order ' + msg.order.id + ' · ' + money(msg.order.total) + ' USD · No payment or fulfillment')
+    }
     if (msg.type === 'init-complete') {
+      sendToWorker({ type: 'cart-get' })
       setText('worker-status', '✅ Ready')
     }
 
@@ -175,9 +245,6 @@ onWorkerMessage((msg) => {
       setText('p2p-status', msg.status === 'ready' ? '✅ Networking initialized — no peer connection verified' : '❌ ' + msg.status)
     }
 
-    if (msg.type === 'db-put-ok') {
-      showResult('kv-result', 'Saved "' + msg.key + '"')
-    }
     if (msg.type === 'db-get-ok') {
       const val = msg.value
       showResult('kv-result', val !== null ? '"' + msg.key + '" → ' + JSON.stringify(val) : '"' + msg.key + '" not found')
@@ -262,9 +329,25 @@ function injectStyles() {
   style.textContent = `
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
+    label { display: block; font-size: .8rem; margin: 10px 0 6px; color: #aebbc5; }
+    .badge { font-size: .65rem; color: #96ddc5; border: 1px solid #3d655b; padding: 5px 8px; border-radius: 20px; vertical-align: middle; margin-left: 10px; }
+    .eyebrow { font-size: .65rem; letter-spacing: .16em; color: #96ddc5; margin-bottom: 10px; text-transform: uppercase; }
+    .hero-title { font-size: 2rem; margin-bottom: 20px; }
+    .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+    .product { border: 1px solid #303f44; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+    .product-art { background: #263b3b; border-radius: 8px; text-align: center; padding: 22px; font-size: 3rem; }
+    .product h3 { font-size: 1rem; }
+    .product p:not(.eyebrow) { color: #aebbc5; font-size: .85rem; line-height: 1.5; flex: 1; }
+    .product-bottom, .cart-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+    .product-bottom { justify-content: space-between; }
+    .cart-row span { flex: 1; }
+    .cart-total { font-size: 1.4rem; font-weight: 700; margin: 20px 0; }
+    @media(max-width: 700px) { .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .product-bottom { align-items: stretch; flex-direction: column; } }
+    @media(max-width: 430px) { .product-grid { grid-template-columns: 1fr; } }
+    .btn:focus-visible { outline: 2px solid #96ddc5; outline-offset: 3px; }
     .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
+    .app-title { font-size: 1.5rem; font-weight: 700; color: #96ddc5; margin-bottom: 2px; }
     .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
     .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
     .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
@@ -274,20 +357,20 @@ function injectStyles() {
     .row { display: flex; align-items: center; }
     .gap-8 { gap: 8px; }
     .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
+    .inp:focus { border-color: #96ddc5; }
+    .btn { background: #28715f; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #358b76; }
     .btn:disabled { opacity: 0.4; cursor: default; }
     .btn-outline { background: #21262d; border: 1px solid #30363d; }
     .btn-outline:hover { background: #30363d; }
     .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
+    .result { overflow-wrap: anywhere; white-space: pre-wrap; margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
     .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
     .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
     .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
+    .bubble-user { background: #28715f; align-self: flex-end; }
     .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
+    .link { display: block; color: #96ddc5; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
     .link:hover { text-decoration: underline; }
   `
   document.head.appendChild(style)

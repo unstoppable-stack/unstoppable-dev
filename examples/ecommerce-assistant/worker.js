@@ -4,6 +4,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
+import { cartSummary, shoppingPrompt } from './catalog.js'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -13,6 +14,7 @@ let store = null
 let swarm = null
 let db = null
 let peerCount = 0
+let commerceQueue = Promise.resolve()
 const MOCK_AI = (typeof globalThis.Bare !== 'undefined' && globalThis.Bare.env?.QVAC_MOCK === '1') ||
   (typeof globalThis.process !== 'undefined' && globalThis.process.env?.QVAC_MOCK === '1')
 const ai = createAISession({ adapter: MOCK_AI ? createMockAdapter() : createBareAdapter(), byteBudget: 2048 })
@@ -30,7 +32,12 @@ pipe.on('data', (data) => {
   for (const line of lines) {
     if (!line.trim()) continue
     try {
-      handleCommand(JSON.parse(line)).catch(err => send({ type: 'peer-error', error: String(err.message || err) }))
+      const msg = JSON.parse(line)
+      if (['cart-get', 'cart-set', 'checkout'].includes(msg.type)) {
+        commerceQueue = commerceQueue.then(() => handleCommand(msg)).catch(err => send({ type: 'commerce-error', error: String(err.message || err) }))
+      } else {
+        handleCommand(msg).catch(err => send({ type: 'peer-error', error: String(err.message || err) }))
+      }
     } catch (err) { send({ type: 'peer-error', error: String(err.message || err) }) }
   }
 })
@@ -96,9 +103,31 @@ async function handleCommand(msg) {
       send({ type: 'joined', topic: msg.topic })
       break
     }
-    case 'db-put': {
-      await db.put(msg.key, msg.value)
-      send({ type: 'db-put-ok', key: msg.key })
+    case 'cart-get': {
+      const cart = (await db.get('_cart'))?.value || []
+      send({ type: 'cart', cart, ...cartSummary(cart) })
+      break
+    }
+    case 'cart-set': {
+      const summary = cartSummary(msg.cart)
+      await db.put('_cart', msg.cart)
+      send({ type: 'cart', cart: msg.cart, ...summary })
+      break
+    }
+    case 'checkout': {
+      if (typeof msg.orderName !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9-]{0,79}$/.test(msg.orderName)) {
+        throw new Error('Use an order reference of 1–80 letters, numbers or hyphens')
+      }
+      if (await db.get(msg.orderName)) throw new Error('That order reference already exists; choose another')
+      const summary = cartSummary((await db.get('_cart'))?.value || [])
+      if (!summary.items.length) throw new Error('Add a product before checking out')
+      const order = { ...summary, id: msg.orderName, status: 'demo — no payment or fulfillment', createdAt: new Date().toISOString() }
+      const batch = db.batch()
+      await batch.put(msg.orderName, order)
+      await batch.put('_cart', [])
+      await batch.flush()
+      send({ type: 'order-saved', order })
+      send({ type: 'cart', cart: [], ...cartSummary([]) })
       break
     }
     case 'db-get': {
@@ -117,7 +146,7 @@ async function handleCommand(msg) {
           modelConfig: {
             "ctx_size": 4096,
             "reasoning_budget": 0,
-            "system_prompt": "You are a coffee assistant. Help users choose drinks and explain brewing. You cannot save orders yourself; ask users to use the saved coffee orders controls."
+            "system_prompt": shoppingPrompt
           },
           onProgress: (p) => send({ type: 'model-progress', ...p }),
         })

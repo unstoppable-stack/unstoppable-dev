@@ -42,7 +42,7 @@
   "validation": {
     "baseline": "2026-10-06",
     "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
-    "evidence": "planning/technical-improvements/20261010-agent-pack-implementation.md"
+    "evidence": "docs/validation.md"
   },
   "expected": {
     "dependencies": {

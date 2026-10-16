@@ -6,18 +6,18 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
-const out = process.env.COFFEE_DEMO_DIR || join(root, '.local/coffee-demo')
+const out = process.env.ECOMMERCE_DEMO_DIR || join(root, '.local/ecommerce-demo')
 const require = createRequire(join(root, 'packages/cli/package.json'))
 const { chromium } = require('playwright')
-const app = join(root, 'examples/coffee-assistant')
-const testnet = process.env.COFFEE_TEST_PUBLIC_DHT === '1' ? null : await require('@hyperswarm/testnet')(3)
-const work = mkdtempSync(join(tmpdir(), 'coffee-peer-e2e-'))
+const app = join(root, 'examples/ecommerce-assistant')
+const testnet = process.env.ECOMMERCE_TEST_PUBLIC_DHT === '1' ? null : await require('@hyperswarm/testnet')(3)
+const work = mkdtempSync(join(tmpdir(), 'ecommerce-peer-e2e-'))
 const sessions = []
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function launch(storage, port) {
   const proc = spawn(join(app, 'node_modules/.bin/electron'), ['.', `--user-data-dir=${join(work, 'browser-' + port)}`, '--storage', storage, `--remote-debugging-port=${port}`], {
-    cwd: app, env: { ...process.env, COFFEE_P2P_BOOTSTRAP: testnet ? JSON.stringify(testnet.bootstrap) : '' }, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
+    cwd: app, env: { ...process.env, ECOMMERCE_P2P_BOOTSTRAP: testnet ? JSON.stringify(testnet.bootstrap) : '' }, detached: true, stdio: ['ignore', 'pipe', 'pipe'],
   })
   const session = { proc, browser: null }
   sessions.push(session)
@@ -60,12 +60,16 @@ try {
   console.log(testnet ? 'Using a real local DHT test network (public Internet discovery not tested)' : 'Using public DHT discovery')
   const a = await launch(join(work, 'a'), port)
   const b = await launch(join(work, 'b'), port + 1)
-  const order = `one oat latte ${Date.now()}`
-  await a.page.locator('#kv-key').fill('morning')
-  await a.page.locator('#kv-value').fill(order)
+  const order = `order-${Date.now()}`
+  await a.page.locator('[data-add="daypack"]').click()
+  await a.page.waitForFunction(() => document.querySelector('#cart-total')?.textContent?.includes('68.00'))
+  await a.page.locator('[data-add="notebook"]').click()
+  await a.page.waitForFunction(() => document.querySelector('#cart-total')?.textContent?.includes('80.00'))
+  await a.page.locator('#kv-key').fill(order)
   await a.page.locator('#kv-save').click()
-  await a.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('Saved'))
-  await b.page.locator('#kv-key').fill('morning')
+  await a.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('Saved demo order'))
+  await a.page.waitForFunction(() => document.querySelector('#cart-total')?.textContent?.includes('0.00'))
+  await b.page.locator('#kv-key').fill(order)
   await b.page.locator('#kv-fetch').click()
   await b.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('not found'))
   await a.page.locator('#share-orders').click()
@@ -74,7 +78,7 @@ try {
   console.log('Sharing announced on DHT')
   const key = await a.page.locator('#sharing-key').textContent()
   await b.page.locator('#peer-key').fill(key)
-  await b.page.locator('#peer-order-name').fill('morning')
+  await b.page.locator('#peer-order-name').fill(order)
   await b.page.locator('#fetch-peer-order').click()
   try {
     await b.page.waitForFunction(value => document.querySelector('#peer-order-result')?.textContent?.includes(value), order, { timeout: 45000 })
@@ -88,23 +92,26 @@ try {
   await b.page.waitForFunction(() => document.querySelector('#p2p-status')?.textContent?.includes('0 connected'), undefined, { timeout: 45000 })
   console.log('PASS: peer disconnection is visible')
   const restarted = await launch(join(work, 'a'), port + 2)
-  await restarted.page.locator('#kv-key').fill('morning')
+  await restarted.page.locator('#kv-key').fill(order)
   await restarted.page.locator('#kv-fetch').click()
   await restarted.page.waitForFunction(value => document.querySelector('#kv-result')?.textContent?.includes(value), order)
   await restarted.page.setViewportSize({width:1100,height:1600})
   await restarted.page.screenshot({path:out+'/06-restart-persistence.png'})
   console.log('PASS: saved order survived full application restart')
-  const revised = order + ' updated after restart'
-  await restarted.page.locator('#kv-value').fill(revised)
+  const revised = order + '-new'
+  await restarted.page.locator('[data-add="bottle"]').click()
+  await restarted.page.waitForFunction(() => document.querySelector('#cart-total')?.textContent?.includes('28.00'))
+  await restarted.page.locator('#kv-key').fill(revised)
   await restarted.page.locator('#kv-save').click()
   await restarted.page.waitForFunction(() => document.querySelector('#kv-result')?.textContent?.includes('Saved'))
   await restarted.page.locator('#share-orders').click()
   await restarted.page.waitForFunction(() => document.querySelector('#sharing-key')?.dataset.ready === 'true', undefined, { timeout: 90000 })
+  await b.page.locator('#peer-order-name').fill(revised)
   await b.page.locator('#fetch-peer-order').click()
   await b.page.waitForFunction(value => document.querySelector('#peer-order-result')?.textContent?.includes(value), revised, { timeout: 45000 })
   await b.page.setViewportSize({width:1100,height:1600})
   await b.page.screenshot({path:out+'/07-reconnected-updated-order.png'})
-  console.log('PASS: reconnected peer fetches the updated order, rather than an old cached copy')
+  console.log('PASS: reconnected peer fetches the new order after restart')
 } finally {
   for (const session of sessions) await stop(session)
   rmSync(work, { recursive: true, force: true })

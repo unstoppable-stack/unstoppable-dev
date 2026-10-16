@@ -45,16 +45,16 @@ export default function Home() {
       <section className="section border-t border-border bg-surface/40" aria-labelledby="example-title">
         <div className="section-inner grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
-            <p className="eyebrow">Working reference</p>
-            <h2 id="example-title" className="section-title">Coffee Assistant</h2>
-            <p className="section-copy mb-7">Ask a local model about coffee and save named orders on your device. The current desktop example has passed real inference, offline restart, persistence, and peer retrieval on a local test network; public discovery, graceful disconnect and fresh retrieval after reconnect have now passed on the validation Mac.</p>
+            <p className="eyebrow">Ecommerce example</p>
+            <h2 id="example-title" className="section-title">Local Goods: ecommerce on your device</h2>
+            <p className="section-copy mb-7">Browse a product catalog, build a persistent cart, and save a demo order on your device. Ask an on-device shopping assistant for product advice and retrieve orders from a trusted peer. Checkout is a local demonstration with no payment or fulfillment.</p>
             <div className="flex flex-wrap gap-3">
               <Link href="/showcase" className="button-primary">Explore the example <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </div>
           <figure className="rounded-2xl border border-border bg-background p-3 shadow-2xl shadow-black/30">
-            <Image src="/examples/coffee-assistant.png" alt="Actual Coffee Assistant app with trusted peer-sharing and saved-order controls" width={1100} height={1600} className="h-80 w-full rounded-xl object-cover object-top" />
-            <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual app capture from the 5 October local validation. See the example for the full image and verification limits.</figcaption>
+            <Image unoptimized src="/examples/ecommerce-assistant.png" alt="Local Goods ecommerce desktop app with product catalog and demo checkout" width={1100} height={1600} className="h-80 w-full rounded-xl object-cover object-top" />
+            <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual ecommerce app capture. See the example for validation scope and remaining acceptance checks.</figcaption>
           </figure>
         </div>
       </section>

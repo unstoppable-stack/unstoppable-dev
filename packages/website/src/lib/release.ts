@@ -75,4 +75,4 @@ export const supportMatrix = [
 ] as const;
 
 export const defaultScaffoldCommand =
-  "us scaffold app -p pear-desktop -n coffee-notes";
+  "us scaffold app -p pear-desktop -n shop-starter";

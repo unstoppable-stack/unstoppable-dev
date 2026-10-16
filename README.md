@@ -58,7 +58,7 @@ tests both public npm artifacts and builds the plugin download.
 
 P2P runtimes, native modules, model loading, and renderer/worker boundaries are easy to combine incorrectly. This project turns fixes found while building real apps into starters, reusable components, and assistant-readable guidance.
 
-The [Coffee Assistant example](./examples/coffee-assistant/README.md) demonstrates the desktop integration. Its README records the example’s scope and validation limits.
+The [Local Goods ecommerce example](./examples/ecommerce-assistant/README.md) demonstrates the desktop integration. Its README records the example’s scope and validation limits.
 
 ## The Stack
 
@@ -85,10 +85,10 @@ For the raw CLI path, install the matching preview using the linked guide
 
 ```bash
 us --version
-us init coffee-workspace --assistant none --no-install
-cd coffee-workspace
-us scaffold app -p pear-desktop -n coffee-notes
-cd coffee-notes
+us init shop-workspace --assistant none --no-install
+cd shop-workspace
+us scaffold app -p pear-desktop -n shop-starter
+cd shop-starter
 npm install
 npm run dev
 ```
@@ -100,7 +100,7 @@ native dependencies. See the [package structure](docs/package-architecture.md).
 
 ### Proposed first assistant prompt
 
-*"Scaffold a Pear Desktop app named coffee-assistant with local AI. Use the Unstoppable Stack CLI, keep storage and inference in the worker, and tell me which generated folder to run."*
+*"Scaffold a Pear Desktop app named shop-assistant with local AI. Use the Unstoppable Stack CLI, keep storage and inference in the worker, and tell me which generated folder to run."*
 
 ## Agent Pack
 
