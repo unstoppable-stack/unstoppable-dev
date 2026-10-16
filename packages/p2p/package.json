@@ -1,22 +1,35 @@
 {
   "name": "@unstoppable-stack/p2p",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "description": "P2P identity, pairing, capability calls, streaming and optional data/file replication",
   "type": "module",
   "main": "src/index.js",
   "exports": {
-    ".": "./src/index.js",
+    ".": {
+      "types": "./src/index.d.ts",
+      "default": "./src/index.js"
+    },
     "./errors": "./src/errors.js",
     "./protocol": "./src/protocol.js",
     "./sync": "./src/sync/index.js",
     "./sync/replication": "./src/sync/replication.js",
-    "./sync/resource-manifest": "./src/sync/resource-manifest.js"
+    "./sync/resource-manifest": "./src/sync/resource-manifest.js",
+    "./rpc": {
+      "types": "./src/rpc.d.ts",
+      "default": "./src/rpc.js"
+    },
+    "./db": {
+      "types": "./src/db/index.d.ts",
+      "default": "./src/db/index.js"
+    }
   },
   "files": [
     "src",
     "README.md",
     "LICENSE",
-    "docs"
+    "docs",
+    "scripts/smoke-bare.mjs",
+    "scripts/run-bare-smoke.mjs"
   ],
   "keywords": [
     "p2p",
@@ -33,35 +46,52 @@
   },
   "homepage": "https://unstoppable-stack.dev",
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "bare": ">=1.32.0"
   },
   "publishConfig": {
     "access": "public",
     "tag": "alpha"
   },
   "scripts": {
-    "test": "node --test --test-force-exit --test-timeout 120000 test/*.test.js test/sync/*.test.js",
+    "test": "node --test --test-force-exit --test-timeout 120000 test/*.test.js test/sync/*.test.js test/db/*.test.js",
     "test:unit": "node --test test/capabilities.test.js test/identity.test.js test/registry.test.js",
-    "test:integration": "node --test --test-force-exit test/pairing.test.js"
+    "test:integration": "node --test --test-force-exit test/pairing.test.js",
+    "test:bare": "node scripts/run-bare-smoke.mjs",
+    "test:types": "tsc --noEmit --project test/types/tsconfig.json"
   },
   "dependencies": {
-    "b4a": "^1.8.0",
-    "bare-events": "^2.8.3",
+    "b4a": "^1.9.0",
+    "bare-events": "^2.9.2",
+    "bare-fs": "^4.8.4",
+    "bare-path": "^3.1.2",
     "compact-encoding": "^2.16.0",
-    "hypercore-crypto": "^3.6.0",
-    "hyperswarm": "^4.17.0",
-    "protomux": "^3.10.1",
     "corestore": "^7.8.0",
+    "fd-lock": "^2.2.0",
     "hyperbee": "^2.27.3",
     "hypercore": "^11.27.0",
-    "hyperdrive": "^12.3.0"
+    "hypercore-crypto": "^3.6.0",
+    "hyperdrive": "^12.3.0",
+    "hyperswarm": "^4.17.2",
+    "protomux": "^3.13.0"
   },
   "optionalDependencies": {
     "bare-env": "^3.0.0",
     "bare-os": "^3.6.1"
   },
   "devDependencies": {
-    "hyperdht": "^6.34.1"
+    "autobase": "7.28.2",
+    "hyperdht": "^6.34.1",
+    "typescript": "^5.9.3"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "types": "./src/index.d.ts",
+  "peerDependencies": {
+    "autobase": "7.28.2"
+  },
+  "peerDependenciesMeta": {
+    "autobase": {
+      "optional": true
+    }
+  }
 }

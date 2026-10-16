@@ -75,7 +75,7 @@ app.register({
     { name: 'key', type: 'string', required: true },
     { name: 'value', type: 'string', required: false },
     { name: 'authorId', type: 'string', required: false },
-    // Optional uints decode to 0 when absent — guard with \`||\`, never \`??\`.
+    // Writer sequence for diagnostics, not wall-clock time or conflict ordering.
     { name: 'updatedAt', type: 'uint', required: false },
     // There is no replicating DELETE, so deletes are tombstones.
     { name: 'deletedAt', type: 'uint', required: false },
@@ -142,7 +142,14 @@ import b4a from 'b4a'
 import AppSpec from '${specPath}/app/index.js'
 import LocalSpec from '${specPath}/local/index.js'
 
-const encode = (op${t(': any')}) => b4a.from(JSON.stringify(op))
+const encode = (op${t(': any')}) => {
+  const value = b4a.from(JSON.stringify({ version: 1, ...op }))
+  if (value.byteLength > 65536) throw new Error('Operation exceeds 64 KiB')
+  return value
+}
+const checkKey = (key${t(': string')}) => {
+  if (typeof key !== 'string' || key.length === 0 || key.length > 512) throw new Error('Key must contain 1-512 characters')
+}
 const decode = (buf${t(': any')}) => JSON.parse(b4a.toString(buf))
 
 /**
@@ -156,39 +163,55 @@ function open(bee${t(': any')}) {
 
 /**
  * Merge ops into the view. Runs on every device over the same linearized
- * order, so it must be deterministic: no Date.now(), no randomness, no I/O.
+ * order, so it must be deterministic: no wall clock, randomness or external I/O.
  */
 async function apply(nodes${t(': any')}, view${t(': any')}, host${t(': any')}) {
   for (const node of nodes) {
-    const op = decode(node.value)
-
-    if (op.type === 'add-writer') {
-      await host.addWriter(b4a.from(op.key, 'hex'))
+    // Reject malformed immutable log entries deterministically. Never let one
+    // invalid operation prevent the rest of a writer's log from applying.
+    if (!node.value || node.value.byteLength > 65536) continue
+    let op${t(': any')}
+    try { op = decode(node.value) } catch { continue }
+    if (!op || typeof op !== 'object' || Array.isArray(op) || (op.version !== undefined && op.version !== 1)) continue
+    // Earlier scaffolds emitted unversioned upserts, including tombstones.
+    // Preserve their data under the same source authorization and log order.
+    if (op.version === undefined && op.type === 'upsert' && Number.isSafeInteger(op.doc?.deletedAt) && op.doc.deletedAt > 0) op.type = 'delete'
+    // Autobee's node.key is the authenticated writer; authorId in a payload
+    // is not an identity. Only the founding writer may change membership.
+    const writer = b4a.toString(node.key, 'hex')
+    if (op.type === 'add-writer' || op.type === 'remove-writer') {
+      if (writer !== b4a.toString(host.key, 'hex')) continue
+      if (typeof op.key !== 'string' || !/^[a-f0-9]{64}$/.test(op.key)) continue
+      if (op.type === 'add-writer') await host.addWriter(b4a.from(op.key, 'hex'), { isIndexer: false })
+      else if (op.key !== writer) await host.removeWriter(b4a.from(op.key, 'hex'))
       continue
     }
-
+    if (op.type !== 'upsert' && op.type !== 'delete') continue
+    if (!op.doc || typeof op.doc.key !== 'string' || op.doc.key.length === 0 || op.doc.key.length > 512) continue
     if (op.type === 'upsert') {
-      const existing = await view.db.get('@app/entries', { key: op.doc.key })
-      // Optional uints decode to 0, not null — \`||\`, never \`??\`.
-      // NOTE: comparing wall-clock stamps across devices is only safe here
-      // because it is a tiebreak of last resort. For anything where losing a
-      // write matters, use a hybrid logical clock — clocks on different
-      // devices are not comparable. See the p2p-conflict-resolution recipe.
-      if (existing && (op.doc.updatedAt || 0) < (existing.updatedAt || 0)) continue
-      await view.db.insert('@app/entries', op.doc)
-      await view.db.flush()
+      if (typeof op.doc.value !== 'string') continue
+      try { JSON.parse(op.doc.value) } catch { continue }
     }
+    // Ordered operations win in the linearized view. Device wall clocks never
+    // decide winners. Reordering can change provisional state until confirmed.
+    await view.db.insert('@app/entries', {
+      key: op.doc.key,
+      value: op.type === 'delete' ? '' : op.doc.value,
+      authorId: writer,
+      updatedAt: node.length,
+      deletedAt: op.type === 'delete' ? 1 : 0,
+    })
+    await view.db.flush()
   }
 }
 
 export async function createStore(store${t(': any')}, storagePath${t(': string')}, bootstrapKey${t(': any')} = null) {
-  const autobee = new Autobee(store, bootstrapKey, { open, apply })
+  const autobee = new Autobee(store, bootstrapKey, { open, apply, optimistic: false, close: async (view${t(': any')}) => { await view.db.close() } })
   await autobee.ready()
 
   // Device-private. Separate engine, separate file, never replicated.
   const local = HyperDB.rocks(\`\${storagePath}/local\`, LocalSpec)
 
-  const authorId = autobee.local.key.toString('hex').slice(0, 8)
 
   return {
     autobee,
@@ -205,7 +228,7 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
     get key() { return autobee.key.toString('hex') },
     /** This device's writer key — another device passes it to addWriter. */
     get writerKey() { return autobee.local.key.toString('hex') },
-    /** False until an existing writer promotes this device. */
+    /** False until the founding writer promotes this device. */
     get writable() { return autobee.writable },
 
     /**
@@ -215,10 +238,11 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
      * straight through would crash compact-encoding's string preencode.
      */
     async put(key${t(': string')}, value${t(': unknown')}) {
+      checkKey(key)
       if (!autobee.writable) throw new Error('Not yet a writer — ask a peer to add this device')
       await autobee.append(encode({
         type: 'upsert',
-        doc: { key, value: JSON.stringify(value ?? null), authorId, updatedAt: Date.now(), deletedAt: 0 },
+        doc: { key, value: JSON.stringify(value ?? null) },
       }))
     },
 
@@ -231,12 +255,9 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
     },
 
     async del(key${t(': string')}) {
-      const row = await autobee.view.db.get('@app/entries', { key })
-      if (!row) return
-      await autobee.append(encode({
-        type: 'upsert',
-        doc: { ...row, deletedAt: Date.now(), updatedAt: Date.now() },
-      }))
+      checkKey(key)
+      if (!autobee.writable) throw new Error('Not yet a writer — ask a peer to add this device')
+      await autobee.append(encode({ type: 'delete', doc: { key } }))
     },
 
     /**
@@ -255,9 +276,17 @@ export async function createStore(store${t(': any')}, storagePath${t(': string')
         .map((r${t(': any')}) => ({ ...r, value: r.value == null ? null : JSON.parse(r.value) }))
     },
 
-    /** Promote another device. Pass ITS writerKey, not its database key. */
+    /** Only the founding device can change writers; readers cannot self-promote. */
     async addWriter(writerKeyHex${t(': string')}) {
+      if (!b4a.equals(autobee.local.key, autobee.key)) throw new Error('Only the founding writer can manage membership')
+      if (!/^[a-f0-9]{64}$/.test(writerKeyHex)) throw new Error('Writer key must be 32-byte lowercase hex')
       await autobee.append(encode({ type: 'add-writer', key: writerKeyHex }))
+    },
+
+    async removeWriter(writerKeyHex${t(': string')}) {
+      if (!b4a.equals(autobee.local.key, autobee.key)) throw new Error('Only the founding writer can manage membership')
+      if (!/^[a-f0-9]{64}$/.test(writerKeyHex) || writerKeyHex === autobee.key.toString('hex')) throw new Error('Invalid writer removal')
+      await autobee.append(encode({ type: 'remove-writer', key: writerKeyHex }))
     },
 
     async setLocal(key${t(': string')}, value${t(': string')}) {

@@ -16,6 +16,9 @@ import { runtimeFs, runtimePath } from './runtime-files.js'
 export class PersonalNode extends EventEmitter {
   constructor (storagePath, opts = {}) {
     super()
+    // Forwarded network diagnostics are observable without requiring every
+    // daemon embedder to register an error listener before startup.
+    this.on('error', () => {})
     this.storagePath = storagePath
     this.config = null
     this.started = false
@@ -226,7 +229,7 @@ export class PersonalNode extends EventEmitter {
       }
       if (!exceeded || !this._sync.engine) continue
 
-      const touched = await this._sync.engine.pauseOwner(publicKey)
+      const touched = await this._sync.pauseOwner(publicKey)
       if (touched > 0) {
         const info = {
           publicKey,
@@ -285,14 +288,14 @@ export class PersonalNode extends EventEmitter {
   }
 
   async pausePeer (publicKey) {
-    const touched = this._sync.engine ? await this._sync.engine.pauseOwner(publicKey) : 0
+    const touched = this._sync.engine ? await this._sync.pauseOwner(publicKey) : 0
     this.emit('peerPaused', { publicKey, touched, reason: 'user' })
     return touched
   }
 
   async resumePeer (publicKey) {
     await this._admitStorage(publicKey)
-    const touched = this._sync.engine ? await this._sync.engine.resumeOwner(publicKey) : 0
+    const touched = this._sync.engine ? await this._sync.resumeOwner(publicKey) : 0
     this.emit('peerResumed', { publicKey, touched })
     return touched
   }

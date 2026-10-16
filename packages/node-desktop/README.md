@@ -1,5 +1,9 @@
 # Unstoppable Node Desktop
 
+> **Deferred alpha:** this optional application is outside the core preview.
+> Shared APIs live in the [P2P reference](../p2p/docs/README.md); dashboard and
+> daemon administration use the [local Personal Node API](../node/docs/api.md).
+
 Electron-first desktop home for a user's **Personal Node**. It runs the same daemon as
 `unstoppable-node`, with a control panel intended to make replication and local
 AI understandable without requiring protocol knowledge:
@@ -27,8 +31,9 @@ npm run dev:pear
 
 The dashboard binds to the same machine-local discovery topic as
 `unstoppable-node`, so apps on this computer connect without setup. Discovery
-across a phone or second computer requires an explicit shared topic; a safe
-end-user device-linking flow is not implemented yet.
+across a phone or second computer uses the runtime's scoped invitations and
+direct-key reconnect. A complete QR/linking and recovery user journey remains
+unfinished; joining a shared topic alone does not authorize a device.
 
 The tray menu exposes Show,
 Pause All, Resume All, and Quit actions. Closing the dashboard hides it to the tray on supported desktop
@@ -43,7 +48,7 @@ sound and best-effort window restore for pair requests; both are off by default.
 
 Electron and Pear both forward these daemon flags:
 
-- `--ai` — load a real QVAC model and advertise `services.ai = true`
+- `--ai` — load a real QVAC model for the granted `ai.completion.stream` capability
 - `--ai-mock` — echo-mode AI provider, useful for UI development
 - `--ai-model <source>` — choose the QVAC model preset, path, or URL
 

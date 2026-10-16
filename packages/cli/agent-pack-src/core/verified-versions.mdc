@@ -34,7 +34,7 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | @qvac/langdetect-text | ^0.1.2 | local-ai |
 | @qvac/decoder-audio | ^0.7.0 | local-ai |
 | bare-process | ^4.5.1 | local-ai |
-| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.2 | node-sync |
 | autobee | 1.0.10 | multi-writer |
 | hyperdb | ^6.7.0 | multi-writer |
 | hyperschema | ^1.21.0 | multi-writer |
@@ -53,11 +53,11 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | tsx | ^4.0.0 | development |
 | @qvac/sdk | 0.21.0 | local-ai |
 | zod | ^4.3.0 | local-ai |
-| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.2 | node-sync |
 | autobee | 1.0.10 | multi-writer |
 | hyperdb | ^6.7.0 | multi-writer |
 | hyperschema | ^1.21.0 | multi-writer |
-| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-host |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.2 | node-host |
 
 ## expo-mobile
 
@@ -88,6 +88,6 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | hyperswarm | ^4.17.0 | node-sync |
 | b4a | ^1.8.0 | node-sync |
 | events | ^3.3.0 | node-sync |
-| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.2 | node-sync |
 
 For upgrades, run `us compatibility check -o <app>` and review the plan. It reads metadata and files without changing them. Do not regenerate edited apps with `--force`. Compare the installed SDK types and version-matched upstream release notes; keep the coupled Expo/native graph together.

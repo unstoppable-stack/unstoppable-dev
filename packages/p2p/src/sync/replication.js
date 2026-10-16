@@ -51,10 +51,16 @@ export class ReplicationEngine {
     }
 
     const core = this.store.get({ key: keyBuf })
-    await core.ready()
-
-    const topic = core.discoveryKey
-    if (!paused) this.swarm.join(topic)
+    let topic
+    let discovery = null
+    try {
+      await core.ready()
+      topic = core.discoveryKey
+      if (!paused) discovery = this.swarm.join(topic)
+    } catch (error) {
+      await core.close().catch(() => {})
+      throw error
+    }
 
     this.replicating.set(keyHex, {
       core,
@@ -64,6 +70,7 @@ export class ReplicationEngine {
       resourceId,
       metadata,
       topic,
+      discovery,
       paused,
       protection: protectionState(protection?.mode)
     })
@@ -102,10 +109,16 @@ export class ReplicationEngine {
     // so passing the root would tear down every other session on this node —
     // the manifest bee included — the first time a drive is dropped.
     const drive = new Hyperdrive(this.store.session(), keyBuf)
-    await drive.ready()
-
-    const topic = drive.discoveryKey
-    if (!paused) this.swarm.join(topic)
+    let topic
+    let discovery = null
+    try {
+      await drive.ready()
+      topic = drive.discoveryKey
+      if (!paused) discovery = this.swarm.join(topic)
+    } catch (error) {
+      await drive.close().catch(() => {})
+      throw error
+    }
 
     this.drives.set(keyHex, {
       drive,
@@ -114,6 +127,7 @@ export class ReplicationEngine {
       resourceId,
       metadata,
       topic,
+      discovery,
       paused,
       protection: protectionState(protection?.mode)
     })
@@ -154,7 +168,8 @@ export class ReplicationEngine {
     const info = this.replicating.get(keyHex)
     if (!info) return
 
-    this.swarm.leave(info.topic)
+    await info.discovery?.destroy()
+    info.discovery = null
     await info.core.close()
     this.replicating.delete(keyHex)
   }
@@ -163,7 +178,8 @@ export class ReplicationEngine {
     const info = this.drives.get(keyHex)
     if (!info) return
 
-    this.swarm.leave(info.topic)
+    await info.discovery?.destroy()
+    info.discovery = null
     await info.drive.close()
     this.drives.delete(keyHex)
   }
@@ -196,14 +212,16 @@ export class ReplicationEngine {
       if (info.owner !== owner || info.paused) continue
       info.paused = true
       info.download?.destroy()
-      try { await this.swarm.leave(info.topic) } catch {}
+      try { await info.discovery?.destroy() } catch {}
+      info.discovery = null
       touched++
     }
     for (const [, info] of this.drives) {
       if (info.owner !== owner || info.paused) continue
       info.paused = true
       info.download?.destroy()
-      try { await this.swarm.leave(info.topic) } catch {}
+      try { await info.discovery?.destroy() } catch {}
+      info.discovery = null
       touched++
     }
     return touched
@@ -214,14 +232,14 @@ export class ReplicationEngine {
     let touched = 0
     for (const [key, info] of this.replicating) {
       if (info.owner !== owner || !info.paused) continue
-      try { this.swarm.join(info.topic) } catch {}
+      info.discovery = this.swarm.join(info.topic)
       info.paused = false
       if (info.protection.mode === 'mirror') this._scheduleCoreMirror(key)
       touched++
     }
     for (const [key, info] of this.drives) {
       if (info.owner !== owner || !info.paused) continue
-      try { this.swarm.join(info.topic) } catch {}
+      info.discovery = this.swarm.join(info.topic)
       info.paused = false
       if (info.protection.mode === 'mirror') this._scheduleDriveMirror(key)
       touched++
@@ -391,11 +409,13 @@ export class ReplicationEngine {
     }
 
     for (const [, info] of this.replicating) {
+      try { await info.discovery?.destroy() } catch {}
       try { await info.core.close() } catch {}
     }
     this.replicating.clear()
 
     for (const [, info] of this.drives) {
+      try { await info.discovery?.destroy() } catch {}
       try { await info.drive.close() } catch {}
     }
     this.drives.clear()

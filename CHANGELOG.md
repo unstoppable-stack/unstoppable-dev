@@ -7,6 +7,26 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
+## Unreleased — CLI 0.4.0-beta.2 / P2P 0.6.0-alpha.2
+
+- Fix concurrent identity/invite updates, runtime ownership, startup/close races,
+  bounded handshakes, RPC execution/cancellation and sync manifest replacement.
+- Add optional typed `/rpc` contracts, runtime schemas, inferred clients and
+  TypeScript declarations without requiring a validator library.
+- Add the experimental `/db` Autobase adapter with deterministic application
+  views, offline writes and founder-controlled writer admission/removal.
+- Update Local Goods to scoped receipt RPC with a private local cart. Add typed
+  notes calls and a collaborative database example with restart/convergence tests.
+- Expand website package guides and runnable examples; distinguish published
+  beta.1/alpha.1 from these source candidates. Pin plugin installer metadata
+  independently of the advancing source version; rebuild plugin preview 0.1.4.
+- Keep optional Personal Node and Desktop source versions aligned at
+  0.6.0-alpha.2 for their existing release gate. They remain deferred and excluded
+  from the canonical CLI/P2P publication allowlist.
+
+No alpha.2/beta.2 artifacts have been published. Published CLI beta.1 and P2P
+alpha.1 remain the current preview; see [the release guide](docs/public-release.md).
+
 ## Unreleased — package consolidation (16 October 2026)
 
 - Merge unpublished `node-core` and `node-caps-sync` into

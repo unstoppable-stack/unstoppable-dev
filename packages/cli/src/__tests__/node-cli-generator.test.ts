@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { generateNodeCli } from '../generators/node-cli.js'
 import type { GeneratorOptions, Feature } from '../generators/types.js'
+import ts from 'typescript'
 
 function make(features: Feature[] = []): GeneratorOptions {
   return { projectName: 'test-cli', platform: 'node-cli', features }
@@ -19,6 +20,49 @@ const ALL_COMBOS: { name: string; features: Feature[] }[] = [
 ]
 
 describe('node-cli generator', () => {
+  describe('multiwriter startup', () => {
+    function executableEntry() {
+      const entry = fileMap(make(['multi-writer']))['src/index.ts']
+      const main = entry.slice(0, entry.indexOf('\nmain().catch')).replace(/^import .*$/gm, '')
+      const { outputText } = ts.transpileModule(main, { compilerOptions: { target: ts.ScriptTarget.ES2022 } })
+      return new Function('Corestore', 'createStore', 'createSwarm', 'process', 'console', `${outputText}; return main`)
+    }
+
+    it('waits for the database before making any swarm connection available', async () => {
+      const events: string[] = []
+      let ready!: (db: any) => void
+      const pending = new Promise(resolve => { ready = resolve })
+      const socket = {}
+      const db = { autobee: { replicate(conn: unknown) { expect(conn).toBe(socket); events.push('autobee-replication') } } }
+      const main = executableEntry()(
+        class {},
+        () => pending,
+        (_store: unknown, replicate: (conn: unknown) => void) => { events.push('swarm'); replicate(socket); return {} },
+        { env: {}, on() {} },
+        { log() {} },
+      )
+      const starting = main()
+      await Promise.resolve()
+      expect(events).toEqual([])
+      ready(db)
+      await starting
+      expect(events).toEqual(['swarm', 'autobee-replication'])
+    })
+
+    it('closes the store if opening the database fails before swarm startup', async () => {
+      let closed = false
+      const main = executableEntry()(
+        class { async close() { closed = true } },
+        async () => { throw new Error('database unavailable') },
+        () => { throw new Error('swarm must not start') },
+        { env: {}, on() {} },
+        { log() {} },
+      )
+      await expect(main()).rejects.toThrow('database unavailable')
+      expect(closed).toBe(true)
+    })
+  })
+
   describe('generates valid file sets', () => {
     for (const combo of ALL_COMBOS) {
       it(`${combo.name}: produces required files`, () => {
@@ -207,9 +251,10 @@ describe('node-cli generator', () => {
       expect(store).toContain('gte: { authorId: author }, lte: { authorId: author }')
     })
 
-    it('guards optional uints with || not ?? (they decode to 0)', () => {
+    it('disables optimistic input and never uses wall clocks for conflict ordering', () => {
       const store = fileMap(make(['multi-writer']))['src/multi-writer-store.ts']
-      expect(store).toContain('(op.doc.updatedAt || 0)')
+      expect(store).toContain('optimistic: false')
+      expect(store).not.toContain('Date.now()')
       expect(store).not.toContain('updatedAt ??')
     })
 

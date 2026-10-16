@@ -1,5 +1,6 @@
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
 import { gettingStartedGuides, gettingStartedPaths } from "@/lib/getting-started";
+import { packageDocs } from "@/lib/package-docs";
 
 export type DocBlock =
   | { type: "lead"; text: string }
@@ -26,6 +27,7 @@ export const docsNav = [
   { title: "Get started", pages: [{ title: "Overview", slug: "" }, { title: "Choose your path", slug: "quickstart" }, { title: "Claude Code", slug: "start/claude" }, { title: "Codex", slug: "start/codex" }, { title: "Raw CLI", slug: "start/cli" }] },
   { title: "Build", pages: [{ title: "Project architecture", slug: "architecture" }, { title: "Assistant workflow", slug: "agent-pack" }, { title: "Local AI", slug: "local-ai" }] },
   { title: "Connect", pages: [{ title: "P2P and pairing", slug: "connect" }, { title: "Personal Node", slug: "node" }] },
+  { title: "Package APIs", pages: [{ title: "P2P runtime", slug: "p2p" }, { title: "Runnable examples", slug: "p2p/examples" }, { title: "Typed RPC", slug: "p2p/rpc" }, { title: "Replication", slug: "p2p/sync" }, { title: "Database prototype", slug: "p2p/database" }, { title: "Capability roadmap", slug: "p2p/roadmap" }, { title: "AI lifecycle", slug: "runtime-ai" }, { title: "Node Desktop", slug: "node-desktop" }, { title: "Deferred packages", slug: "experiments" }] },
   { title: "Reference", pages: [{ title: "Packages & integrations", slug: "packages" }, { title: "CLI commands", slug: "cli" }, { title: "Modules", slug: "modules" }] },
   { title: "Operate", pages: [{ title: "Compatibility", slug: "compatibility" }, { title: "Troubleshooting", slug: "troubleshooting" }, { title: "Support & limitations", slug: "support" }, { title: "Upgrades", slug: "upgrades" }] },
 ];
@@ -34,6 +36,7 @@ const verifiedOn = siteConfig.verifiedOn;
 
 export const docsPages: DocPage[] = [
   ...gettingStartedGuides,
+  ...packageDocs,
   {
     slug: "packages",
     title: "Packages and integrations",
@@ -44,16 +47,29 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Start through Claude Code, Codex or the raw CLI. The plugins guide your assistant; the CLI configures workspaces and generates apps. Apps use one Unstoppable P2P library and upstream QVAC or wallet SDKs when needed." },
       { type: "heading", text: "Packages we maintain" },
       { type: "list", items: [
-        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.3.0 is published; 0.4.0-beta.1 remains an unpublished source candidate.",
-        "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.1 is unpublished alpha source.",
+        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.1 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
+        "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.1 is published under alpha; install that exact version.",
         "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Local prototypes exist; public marketplace listings remain pending. Local-install preview downloads are available in the Claude and Codex guides.",
-        "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.1 source. It is outside the core preview.",
+        "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.2 source. It is outside the core preview.",
       ] },
-      { type: "code", language: "js", code: "// Proposed alpha imports; publish the P2P package before registry installation.\nimport { createNode } from '@unstoppable-stack/p2p'\nimport { syncPack } from '@unstoppable-stack/p2p/sync'" },
+      { type: "code", language: "bash", code: "npm install @unstoppable-stack/p2p@0.6.0-alpha.1" },
+      { type: "code", language: "js", code: "// Published alpha imports.\nimport { createNode } from '@unstoppable-stack/p2p'\nimport { syncPack } from '@unstoppable-stack/p2p/sync'" },
       { type: "heading", text: "Use upstream SDKs directly" },
       { type: "paragraph", text: "QVAC owns inference. Generated apps use its SDK or inference packages for their runtime, with small private lifecycle helpers for cancellation and shutdown. Personal Node's delegated AI adapter is internal application code. Wallet integration will use WDK directly; current wallet scaffolds are stubs." },
       { type: "heading", text: "Release boundaries" },
       { type: "paragraph", text: "Memory and Search are excluded from this release. The website, shared agent-pack source and runtime helpers are internal packages. The P2P root does not load replication, but npm installs the storage dependencies with the library. Published releases and unpublished source candidates must use their own version-matched instructions." },
+      { type: "heading", text: "Feature and API references" },
+      { type: "cards", items: [
+        { title: "CLI", body: "Workspace setup, supported scaffold targets, feature flags and compatibility checks.", href: "/docs/cli" },
+        { title: "Agent pack and plugins", body: "Shared skills, recipes, hooks and project guidance for Claude Code, Cursor, OpenCode and Codex.", href: "/docs/agent-pack" },
+        { title: "P2P runtime", body: "Identity, invites, discovery, app networks, grants, calls and streams.", href: "/docs/p2p" },
+        { title: "P2P replication", body: "Resource manifests, peer ownership, protection, usage and pause/resume.", href: "/docs/p2p/sync" },
+        { title: "Personal Node", body: "Optional host composition, local management and delegated AI.", href: "/docs/node" },
+        { title: "Node Desktop", body: "Operator dashboard, approval controls, tray and Bare sidecar.", href: "/docs/node-desktop" },
+        { title: "AI lifecycle helpers", body: "Private vendored sessions, cancellation and runtime adapters.", href: "/docs/runtime-ai" },
+        { title: "Deferred packages", body: "Memory implementations and experimental feature boundaries.", href: "/docs/experiments" },
+        { title: "Capability roadmap", body: "Original cloud-like services, current implementation and remaining gaps.", href: "/docs/p2p/roadmap" },
+      ] },
       { type: "start-paths" },
       { type: "cards", items: [
         { title: "Choose a setup guide", body: "Install a plugin preview or the published CLI.", href: "/getting-started" },
@@ -95,7 +111,7 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Choose the tool you already use. All three paths lead to the same desktop baseline with local storage and peer networking. Plugin paths include a local preview download; the CLI installs from npm." },
       { type: "start-paths" },
       { type: "heading", text: "How the pieces fit" },
-      { type: "paragraph", text: "The plugins supply workflows and references. The CLI creates workspaces and apps. The consolidated P2P library owns pairing, permissions and replication; QVAC and wallet features use upstream SDKs directly. The P2P alpha is still unpublished, and wallet scaffolds remain stubs. Memory and Search are excluded from this release." },
+      { type: "paragraph", text: "The plugins supply workflows and references. The CLI creates workspaces and apps. The consolidated P2P library owns pairing, permissions and replication; QVAC and wallet features use upstream SDKs directly. The P2P alpha is available on npm, and wallet scaffolds remain stubs. Memory and Search are excluded from this release." },
       { type: "cards", items: [
         { title: "Packages and integrations", body: "Purpose, versions and publication status for every layer.", href: "/docs/packages" },
         { title: "Compatibility", body: "Platform and feature maturity before adding capabilities.", href: "/docs/compatibility" },
@@ -158,6 +174,13 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Install the Claude or Codex plugin for portable workflows, or use us init for project-local guidance. Both delivery methods share the same maintained agent-pack source. The raw CLI also works without an assistant." },
       { type: "start-paths" },
       { type: "paragraph", text: "Plugin installation adds guidance, not the CLI or native dependencies. The entry skill checks the installed CLI catalog before scaffolding. Existing apps keep their recorded runtime and project instructions; updating the plugin does not migrate them." },
+      { type: "heading", text: "What the agent pack contains" },
+      { type: "list", items: [
+        "Core architecture and runtime constraints; module references for networking, storage, AI and platform integration.",
+        "Task skills for setup and feature implementation, focused recipes, reusable components and activation hooks.",
+        "Generated project guidance for Claude Code, Cursor, OpenCode and Codex, plus separate Claude/Codex plugin distributions.",
+        "Canonical content lives in packages/agent-pack/src. The CLI bundles synchronized output; plugin builders distribute the same maintained guidance.",
+      ] },
       { type: "steps", items: [
         { title: "Initialize", body: "Select Claude Code, Cursor, OpenCode, Codex, or none.", code: "us init my-workspace" },
         { title: "Scaffold first", body: "Create the smallest supported target before asking for feature work.", code: defaultScaffoldCommand },
@@ -197,22 +220,38 @@ export const docsPages: DocPage[] = [
         "A desktop Personal Node may require explicit approval; a headless development daemon can be configured differently.",
         "Remote inference sends the request to the selected trusted device. It is not on-device inference.",
       ] },
+      { type: "cards", items: [
+        { title: "P2P runtime API", body: "Host and consume capabilities without a separate client SDK.", href: "/docs/p2p" },
+        { title: "Replication API", body: "Register and protect app-owned resources.", href: "/docs/p2p/sync" },
+      ] },
     ],
   },
   {
     slug: "node",
     title: "Personal Node",
-    description: "Deferred alpha architecture for replication and delegated inference.",
+    description: "Deferred alpha host composition, local management and delegated inference.",
     category: "Connect",
-    verifiedOn,
+    verifiedOn: "16 October 2026",
     blocks: [
-      { type: "lead", text: "The Personal Node is not required for a local app and is deferred from the core preview. Its alpha source explores retained replicas, file seeding, and delegated inference, but packaging, trust defaults, and replication-status gates remain open." },
+      { type: "lead", text: "Personal Node is an optional application composed from the P2P runtime, its sync pack and an internal QVAC adapter. The reorganized 0.6.0-alpha.2 source is unpublished and deferred from the core preview; published 0.4.0 has a different API." },
+      { type: "heading", text: "Local operator API" },
+      { type: "list", items: [
+        "PersonalNode.start()/close() manage the host. getStatus() reports all peers, resources, quotas, invitations and AI readiness to the owner.",
+        "getConfig()/updateConfig(patch), setPeerQuota, setPeerGrant, pausePeer/resumePeer and unpairPeer control local policy and trust.",
+        "enableAI/disableAI manage optional QVAC or labelled mock inference. Granted peers call ai.completion.stream; the AI adapter is internal application code.",
+        "createInvite/listInvites/revokeInvite manage scoped invitations. getDiskUsage and peekCore/peekDrive are local operator diagnostics.",
+        "exportState/importState handle settings and peer metadata. They include the sensitive identity seed and revocation records, but no replicated app payloads.",
+      ] },
+      { type: "paragraph", text: "These local methods drive the daemon CLI and desktop dashboard. They are not remote peer.api methods. Remote peers receive granted sync methods and optional completion streaming, scoped to their authenticated identity. Quotas pause replication and gate registration/resume; they are not hard filesystem limits." },
+      { type: "heading", text: "Protection boundaries" },
       { type: "list", items: [
         "Replication protects observed data; it does not automatically guarantee future writes or a complete backup.",
         "Settings export does not imply that all replicated application payloads are included.",
         "Disconnecting pauses Node services but must not erase local data or block local reads and writes.",
         "Removing or unpairing an app stops replication and revokes access, but already downloaded blocks remain. The alpha has no per-app purge control.",
       ] },
+      { type: "actions", items: [{ label: "Local management reference", href: "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/packages/node/docs/api.md" }, { label: "Internal AI adapter", href: "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/packages/node/docs/ai.md" }] },
+      { type: "cards", items: [{ title: "Desktop controls", body: "Dashboard, tray lifecycle and packaged acceptance.", href: "/docs/node-desktop" }, { title: "Capability roadmap", body: "Restore, retention and the remaining service contracts.", href: "/docs/p2p/roadmap" }] },
     ],
   },
   {
@@ -222,16 +261,16 @@ export const docsPages: DocPage[] = [
     category: "Reference",
     verifiedOn,
     blocks: [
-      { type: "lead", text: `Published CLI ${siteConfig.cli.publishedVersion} exposes init, scaffold, doctor and node. The source candidate ${siteConfig.cli.candidateVersion} has a narrower minimal release with compatibility checks. Use the reference for your installed version.` },
+      { type: "lead", text: `CLI ${siteConfig.cli.candidateVersion} is the published beta: init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.publishedVersion} also exposes the deferred node command. Install the exact beta for this guide.` },
       { type: "code", language: "bash", code: "us --version\nus --help\nus init [project-name] --assistant <claude|codex|cursor|opencode|none>\nus scaffold app -p pear-desktop -n <name>\nus scaffold list-platforms\nus scaffold list-features\nus doctor -p pear-desktop" },
-      { type: "heading", text: "Candidate-only compatibility commands" },
-      { type: "paragraph", text: "The unpublished 0.4.0-beta.1 source adds the read-only commands below. They are absent from published 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
+      { type: "heading", text: "Compatibility commands" },
+      { type: "paragraph", text: "The published 0.4.0-beta.1 adds the read-only commands below. They are absent from earlier 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
       { type: "code", language: "bash", code: "us compatibility list -o <workspace>\nus compatibility check -o <app>" },
       { type: "heading", text: "Scaffold facts" },
       { type: "list", items: [
-        "Platforms in source: pear-desktop, expo-mobile, and node-cli. The launch guide defaults to pear-desktop.",
+        "The published beta exposes pear-desktop. Expo Mobile and Node CLI remain deferred source targets.",
         "Base Hyperswarm/Corestore networking and Hyperbee storage are always included.",
-        "Feature flags: local-ai, wallet (stub), node-sync, node-host (node-cli only), and multi-writer.",
+        "The published beta exposes local-ai. Wallet (stub), node-sync, node-host and multi-writer remain deferred source features.",
         "multi-writer and node-sync are rejected when combined.",
         "Node CLI is a Node.js command-line target; it is not described as a Bare-only app.",
       ] },

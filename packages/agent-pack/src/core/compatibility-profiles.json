@@ -45,7 +45,7 @@
           "bare-process": "^4.5.1"
         },
         "node-sync": {
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
         },
         "multi-writer": {
           "autobee": "1.0.10",
@@ -98,7 +98,7 @@
           "zod": "^4.3.0"
         },
         "node-sync": {
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
         },
         "multi-writer": {
           "autobee": "1.0.10",
@@ -107,7 +107,7 @@
         },
         "wallet": {},
         "node-host": {
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
         }
       },
       "aiRuntime": "0.1.0",
@@ -168,7 +168,7 @@
           "hyperswarm": "^4.17.0",
           "b4a": "^1.8.0",
           "events": "^3.3.0",
-          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
         },
         "multi-writer": {},
         "wallet": {},

@@ -10,6 +10,7 @@ on:
       - 'packages/website/scripts/prepare-plugin-download.mjs'
       - 'packages/website/src/lib/plugin-download.json'
       - 'examples/p2p-notes/**'
+      - 'examples/p2p-database/**'
       - 'release/public-packages.json'
       - 'scripts/*public*.mjs'
       - 'scripts/sync-stack-assets.mjs'
@@ -25,6 +26,7 @@ on:
       - 'packages/website/scripts/prepare-plugin-download.mjs'
       - 'packages/website/src/lib/plugin-download.json'
       - 'examples/p2p-notes/**'
+      - 'examples/p2p-database/**'
       - 'release/**'
       - 'scripts/*public*.mjs'
       - 'scripts/sync-stack-assets.mjs'
@@ -60,9 +62,12 @@ jobs:
           pnpm --dir packages/cli install --frozen-lockfile
           npm ci --prefix packages/p2p
           npm ci --prefix examples/p2p-notes
+          npm ci --prefix examples/p2p-database
       - name: Build and test the exact public artifacts
         run: |
-          node scripts/prepare-public-release.mjs release-artifacts
+          options=()
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then options+=(--source-check); fi
+          node scripts/prepare-public-release.mjs release-artifacts "${options[@]}"
           node scripts/public-release.mjs verify release-artifacts --require-clean
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()

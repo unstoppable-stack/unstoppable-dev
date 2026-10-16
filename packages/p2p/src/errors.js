@@ -98,3 +98,12 @@ export function errorFromRemote ({ code, message, capability, method }) {
     default: return new NodeError(code || 'REQUEST_FAILED', message || 'Request failed', { capability, method })
   }
 }
+
+// Normalize arbitrary handler throws before creating bounded public errors.
+export function normalizeError (value) {
+  const message = typeof value?.message === 'string' ? value.message
+    : typeof value === 'string' ? value : 'Request failed'
+  const code = typeof value?.code === 'string' && /^[A-Z][A-Z0-9_]{0,63}$/.test(value.code)
+    ? value.code : 'REQUEST_FAILED'
+  return new NodeError(code, message)
+}

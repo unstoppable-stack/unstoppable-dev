@@ -2,10 +2,9 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Release status:** this README describes the unreleased `0.4.0-beta.1`
-> source candidate. The exact preview version/tag is not approved yet. Existing
-> registry releases may describe the older architecture; do not use `latest`
-> as evidence that this candidate journey works.
+> **Release status:** `0.4.0-beta.1` is published under `beta`. Install it with
+> `npm install -g @unstoppable-stack/cli@0.4.0-beta.1`. The `latest` tag remains
+> on earlier `0.3.0`, which has a different command surface.
 
 - **Website:** [unstoppable-stack.dev](https://unstoppable-stack.dev)
 - **Repo:** [unstoppable-stack/unstoppable-dev](https://github.com/unstoppable-stack/unstoppable-dev)
@@ -34,12 +33,14 @@
 
 ## Install
 
-The public-preview install command will be added after the final package
-artifact passes the isolated consumer smoke. Until then, build this checkout
-using the [development instructions](#development); no registry tag is the
-approved preview channel.
+Install the exact published beta:
 
-The candidate requires Node **22.17+**. Run `us doctor` after building to verify
+```sh
+npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+us --version
+```
+
+The beta requires Node **22.17+**. Run `us doctor` after installation to verify
 the rest of your environment.
 
 ---
@@ -558,3 +559,6 @@ Maintainers edit `packages/runtime-ai/src/` and
 `packages/cli/src/compatibility/profiles.json`, then run
 `node scripts/sync-stack-assets.mjs` from the repository root. Builds generate
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
+
+The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
+Published setup commands above remain pinned to beta.1 until registry acceptance.

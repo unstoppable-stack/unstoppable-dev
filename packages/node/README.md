@@ -21,6 +21,10 @@ As of 0.6 this is a **composition, not an implementation**: it is
 plus the CLI, config, and settings export/import surface. Any app can build the same thing —
 that is the point. See the [P2P library](../p2p/README.md) for the shared runtime API.
 
+The [local management reference](docs/api.md) documents the daemon/dashboard
+surface. The [shared capability roadmap](../p2p/docs/roadmap.md) tracks implemented
+and missing services across the library and optional applications.
+
 Internal/full CLI builds can manage `unstoppable-node` with a wrapper. Those
 commands are not part of the minimal public-preview CLI:
 
@@ -110,18 +114,18 @@ Storage path comes from positional arg or `--storage`.
 Export/import currently writes a JSON `.uns` bundle containing:
 
 - Node config (`node-config.json` contents)
-- Paired-app registry records, including registered cores/drives, grants, paused
-  state, and per-app quota overrides
+- Peer registry records keyed by public key, including grants and quota policy
 - Dashboard trust decisions (`trust-registry.json`)
+- Node identity seed and revoked peer keys
 
 The dashboard previews bundle metadata, app list, config presence, and trust
 counts before importing. The CLI can print the same read-only summary with
 `unstoppable-node inspect <backup.uns>`. Importing overwrites existing paired-app
-records with the same app IDs and replaces config/trust files included in the
+records with the same peer keys and replaces config/trust files included in the
 bundle.
 
-This is not a full data archive yet. It does not include encrypted Corestore
-data, stable node identity seeds, or replicated app payloads.
+The bundle contains sensitive identity material in plaintext. It is not a full
+data archive: replicated app payloads and Corestore data are not included.
 
 ## Storage quotas
 

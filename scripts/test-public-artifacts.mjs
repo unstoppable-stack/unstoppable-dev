@@ -48,7 +48,9 @@ try {
     import { syncPack } from '@unstoppable-stack/p2p/sync';
     import { ReplicationEngine } from '@unstoppable-stack/p2p/sync/replication';
     import { validateResourceManifest } from '@unstoppable-stack/p2p/sync/resource-manifest';
-    for (const api of [createNode, syncPack, ReplicationEngine, validateResourceManifest]) assert.equal(typeof api, 'function');
+    import { defineCapability } from '@unstoppable-stack/p2p/rpc';
+    import { openDatabase, autobaseAdapter } from '@unstoppable-stack/p2p/db';
+    for (const api of [createNode, syncPack, ReplicationEngine, validateResourceManifest, defineCapability, openDatabase, autobaseAdapter]) assert.equal(typeof api, 'function');
     assert.equal(PROTOCOL_VERSION, 2);
     assert.equal(new NotGrantedError('notes', 'delete').code, 'NOT_GRANTED');
     assert.deepEqual(validateResourceManifest({ schemaVersion: 1, resources: [] }), { schemaVersion: 1, resources: [] });
@@ -72,15 +74,23 @@ try {
     import { createRequire } from 'node:module';
     import assert from 'node:assert/strict';
     const require = createRequire(import.meta.url);
-    for (const name of ['@qvac/sdk', '@qvac/inference', 'unstoppable-node', '@unstoppable/memory', '@unstoppable-stack/search']) {
+    for (const name of ['autobase', '@qvac/sdk', '@qvac/inference', 'unstoppable-node', '@unstoppable/memory', '@unstoppable-stack/search']) {
       assert.throws(() => require.resolve(name), { code: 'MODULE_NOT_FOUND' });
     }
   `])
+  // Opt in only after proving that ordinary P2P consumers do not install it.
+  const databaseExample = join(consumer, 'database-example')
+  cpSync(join(root, 'examples/p2p-database'), databaseExample, {
+    recursive: true,
+    filter: path => !path.split(/[\\/]/).includes('node_modules') && !path.endsWith('package-lock.json'),
+  })
+  run('npm', ['install', '--no-save', '--package-lock=false', '--no-audit', '--no-fund', 'autobase@7.28.2'], { shell: process.platform === 'win32' })
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', join(databaseExample, 'test/database.test.js')])
   writeFileSync(join(directory, registry ? 'registry-consumer-verification.json' : 'consumer-verification.json'), JSON.stringify({
     installation: registry ? 'public npm registry' : 'local release tarballs',
     checkedAt: new Date().toISOString(), status: 'passed', platform: process.platform, architecture: process.arch, node: process.version,
     artifacts: record.artifacts.map(({ name, sha256 }) => ({ name, sha256 })),
-    checks: ['all six public P2P entry points load', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
+    checks: ['all eight public P2P entry points load', 'optional database engine is not installed by default', 'explicit Autobase opt-in: offline writes, restart, conflict convergence and removal', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
       'replica restart while source offline', 'installed CLI minimal catalog', 'workspace and app generation',
       'generated JavaScript syntax', 'no AI, Memory, Search or Personal Node dependency'],
     limits: ['Local DHT only; public-internet discovery not asserted', 'No native model or generated desktop UI ran'],

@@ -29,6 +29,34 @@ loading, native cancellation/reuse, or offline inference.
 
 ## Release artifacts and native acceptance
 
+The P2P correctness/API work has a standalone installed-consumer gate:
+
+```bash
+npm test --prefix packages/p2p
+npm run test:types --prefix packages/p2p
+node scripts/p2p-artifact-smoke.mjs
+npm ci --prefix examples/p2p-database
+npm test --prefix examples/p2p-database
+npm run demo --prefix examples/p2p-database
+BARE_BIN=/absolute/path/to/supported/bare node scripts/p2p-artifact-smoke.mjs --bare
+```
+
+It packs the library into a temporary directory, installs it outside the checkout,
+checks that ordinary consumers do not install the optional Autobase engine, tests
+notes replication/offline restart and typed RPC, explicitly installs Autobase
+7.28.2, then runs the experimental database acceptance tests. The optional Bare
+step verifies native storage, advisory locks, ownership and sync attach/reopen.
+Fresh dependency resolution requires Bare >=1.32.0; the maintained desktop
+sidecar's Bare 1.34.1 was exercised. A global Bare 1.28.6 passes the older locked
+source tree but fails current registry resolution, so it is not a fresh-install
+acceptance runtime. These checks do not publish artifacts or validate native AI.
+
+The database prototype tests cover actual Autobase offline convergence,
+authenticated membership, adversarial log entries, writer removal, encrypted
+fresh-reader reconstruction and coexistence with RPC on a paired connection.
+They do not establish complete database backup, administrator recovery, schema
+migration or support for the `multi-writer` + `node-sync` combination.
+
 The [canonical package preparation](public-release.md) tests the CLI beta and
 P2P alpha as installed tarballs outside the repository. The P2P notes example
 covers granted RPC/streaming, denied access, real replication, and offline
@@ -78,10 +106,15 @@ the intended published history separately before changing repository visibility.
 
 ## Ecommerce desktop example
 
+The database example uses paired peers over a local DHT, destroys both
+transports before offline edits, restarts from disk, compares derived views and
+observes writer removal. It does not establish public discovery, full backup,
+Bare or desktop database acceptance.
+
 The [Local Goods example](../examples/ecommerce-assistant/README.md) replaces
 Coffee Assistant with a catalog, persistent cart, local demo checkout, and
 catalog-aware assistant. Checkout has no payment or fulfillment integration.
-After installing the example and CLI development dependencies:
+After installing the example, P2P and CLI development dependencies:
 
 ```bash
 node --test examples/ecommerce-assistant/test/*.test.js
@@ -90,8 +123,17 @@ ECOMMERCE_TEST_PUBLIC_DHT=1 node scripts/ecommerce-example-e2e.mjs
 ```
 
 The default desktop check uses real app instances and an isolated local DHT.
+A separate device starts and checks out with an unreachable loopback bootstrap,
+confirming local startup does not wait for DHT announcement. This is not full
+operating-system offline or offline-inference acceptance.
 It checks catalog filtering, quantity changes, cart restart persistence,
 checkout totals, duplicate-reference rejection, receipt persistence, peer
 retrieval, visible disconnect and a new order after reconnect. It does not
 load a model or prove public Internet discovery. Native shopping responses,
 offline inference and packaged-artifact acceptance remain separate checks.
+
+The Local Goods RPC flow uses a single-use, 15-minute invitation and persistent
+peer grants. Its desktop regression checks private `_cart` reference rejection
+and retrieval after full host restart. It does not replicate the private store.
+Receipt field allowlisting and malformed stored-record rejection are covered by
+its application tests. These checks do not establish customer identity or payments.

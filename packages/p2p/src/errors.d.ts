@@ -1,0 +1,1 @@
+export { NodeError, PeerNotFoundError, PairDeniedError, NotGrantedError, UnknownCapabilityError, UnknownMethodError, RequestTimeoutError, CancelledError, InvalidOptionError, ClosedError, errorFromRemote, normalizeError } from './index.js'

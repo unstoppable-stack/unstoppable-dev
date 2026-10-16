@@ -3,6 +3,7 @@ import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import { createNode } from '@unstoppable-stack/p2p'
 import { syncPack } from '@unstoppable-stack/p2p/sync'
+import { createNotesCapability } from './contract.js'
 
 // Application data and business methods live here. Identity, invitations,
 // permission checks, streams and replication come from the public P2P library.
@@ -18,18 +19,15 @@ export async function createNotesPeer({ storage, swarm, deviceName = 'notes' }) 
     // A new peer needs an explicitly scoped invitation, even if it knows a key.
     pairing: { approve: async () => 'deny' },
     capabilities: [
-      {
-        name: 'notes', version: 1, defaultGrants: [],
-        methods: {
-          get: async ({ name }) => (await notes.get(name))?.value ?? null,
-          list: async function* (_params, { signal }) {
-            for await (const entry of notes.createReadStream()) {
-              if (signal.aborted) return
-              yield { name: entry.key, value: entry.value }
-            }
-          },
+      createNotesCapability({
+        get: async name => (await notes.get(name))?.value ?? null,
+        list: async function* (signal) {
+          for await (const entry of notes.createReadStream()) {
+            if (signal.aborted) return
+            yield { name: entry.key, value: entry.value }
+          }
         },
-      },
+      }),
       // This attaches replication to the same connections as capability calls.
       syncPack({ store }),
     ],

@@ -1,9 +1,9 @@
 # Canonical public release
 
 [release/public-packages.json](../release/public-packages.json) is the explicit
-npm release allowlist. The candidate consists of:
+npm release allowlist. The published preview consists of:
 
-| Package | Candidate | npm tag |
+| Package | Version | npm tag |
 | --- | --- | --- |
 | `@unstoppable-stack/cli` | `0.4.0-beta.1` | `beta` |
 | `@unstoppable-stack/p2p` | `0.6.0-alpha.1` | `alpha` |
@@ -13,6 +13,52 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
+## Published preview (16 October 2026)
+
+Install the tested versions explicitly:
+
+```sh
+npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+```
+
+Both versions were first published using an authenticated maintainer account
+from the exact, clean [merged-main CI artifacts](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38936285871).
+Registry integrity matched those artifacts, and fresh npm installs passed the
+notes replication/authorization/offline-restart tests plus CLI catalog and
+scaffolding checks. The [canonical acceptance run](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38937905740)
+retains the CI registry evidence. Native model and public-internet acceptance
+remain separate.
+
+CLI `latest` remains `0.3.0`; the current preview is on `beta`. npm also assigned
+`latest` to the first P2P version and rejected its removal with HTTP 400, so P2P
+currently has both `alpha` and `latest` pointing at `0.6.0-alpha.1`. This is still
+an alpha: use the explicit version above. See the [npm registry report](https://github.com/npm/cli/issues/8490).
+
+No persistent trusted-publisher permission was added for this release. Setting
+that up for future versions requires separate authorization for the repository,
+workflow and environment described below. The acceptance job can skip versions
+already published with identical bytes and run its registry tests.
+
+## Next source candidate
+
+This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
+published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
+optional `/db` Autobase prototype. Beta.2 carries the safe scaffold fixes and
+updates generated P2P dependencies to alpha.2. Keep the published setup commands
+above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
+The plugin installer uses explicit `cliInstallVersion` release metadata so a
+source version bump cannot claim that an unpublished candidate is on npm.
+
+The [notes example](../examples/p2p-notes/README.md) now uses typed calls and
+streams; [Local Goods](../examples/ecommerce-assistant/README.md) uses scoped
+receipt RPC instead of sharing its database. The separate
+[database example](../examples/p2p-database/README.md) exercises offline edits,
+restart, conflict convergence and writer removal. The standalone
+`node scripts/p2p-artifact-smoke.mjs` also runs the database example against an
+installed tarball after explicitly installing Autobase, and checks that ordinary
+P2P consumers do not acquire that engine.
+
 ## Prepare and test
 
 Install dependencies from the repository root with Node 22.17 or later:
@@ -21,16 +67,19 @@ Install dependencies from the repository root with Node 22.17 or later:
 pnpm --dir packages/cli install --frozen-lockfile
 npm ci --prefix packages/p2p
 npm ci --prefix examples/p2p-notes
+npm ci --prefix examples/p2p-database
 node scripts/prepare-public-release.mjs release-artifacts/candidate
 ```
 
 Use a new candidate directory each time. Preparation runs source regressions,
-the real [notes example](../examples/p2p-notes/README.md), plugin tests, and release
+the real notes and database examples, P2P type inference, plugin tests, and release
 validator tests. It builds the CLI's minimal profile, packs exactly the two
 allowlisted packages, validates their exports and dependencies, then installs
 the tarballs in a temporary consumer outside the checkout. That consumer runs
 the notes tests, invokes the installed CLI, generates a workspace and desktop
-app, loads all six P2P entry points, and checks the generated JavaScript.
+app, loads all eight P2P entry points, and checks the generated JavaScript. It checks
+engine isolation before explicitly installing Autobase and running the collaborative
+database example against the installed P2P package.
 Preparation checks production dependency advisories, performs npm
 publication dry runs, checks registry version availability, and copies the
 website plugin download into `plugins/`.
@@ -40,6 +89,14 @@ and whether the source was dirty. `consumer-verification.json` binds the tests
 to those exact npm bytes. `preparation.json`, `registry-preflight.json` and
 `logs/` contain the remaining evidence. Nothing is published by this command.
 Public registry checks do not establish ownership or publishing permissions.
+
+Pull-request and push CI use `--source-check`: they still build, audit, dry-run
+and test the exact source artifacts, but skip registry version availability.
+This allows documentation and development changes after a version is published.
+Local preparation defaults and manual release runs retain registry preflight;
+the publish command always rechecks registry version, tags and integrity. Source
+CI does not authorize overwriting a published version.
+
 
 To enforce a source freeze:
 
@@ -56,7 +113,8 @@ as clean. The generated directory is ignored by Git.
 ### First publication of the P2P package
 
 npm requires a package to exist before trusted publishing can be configured.
-P2P is new, so its first version needs an authenticated maintainer. Run the
+This historical first-publication procedure was used for alpha.1; subsequent
+releases still need an authenticated maintainer until trusted publishing is configured. Run the
 canonical workflow with `publish: false`, download its validated artifact and
 use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 

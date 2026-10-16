@@ -1,103 +1,90 @@
-import { atomicWriteFile, runtimeFs, runtimePath } from './runtime-files.js'
+import { atomicWriteFile, runtimeFs, runtimePath, withStorageLock } from './runtime-files.js'
 
 export const INVITES_FILE = 'invites.json'
 export const INVITES_VERSION = 1
 
-// Pending invites the node has issued. Persisted because an invite is
-// something a person is carrying to another device: it has to survive a
-// restart, and its expiry and remaining uses have to be honoured after one.
+// Every mutation reloads under a cross-process lock. Atomic rename alone cannot
+// prevent a stale CLI process from resurrecting an invite consumed by the daemon.
 export class InviteStore {
   constructor (storagePath) {
     this.file = runtimePath.join(storagePath, INVITES_FILE)
     this.invites = new Map()
     this._ready = false
+    this._writing = Promise.resolve()
   }
 
-  // Re-read from disk. Invites can be created by another process against the
-  // same storage directory — `us node invite` talks to no daemon — so a
-  // running node has to notice them.
-  async reload () {
-    this._ready = false
-    this.invites.clear()
-    await this.ready()
-  }
-
-  async ready () {
-    if (this._ready) return
+  async _read () {
+    const records = new Map()
     try {
       const parsed = JSON.parse(await runtimeFs.readFile(this.file, 'utf8'))
-      if (parsed?.version === INVITES_VERSION && parsed.invites && typeof parsed.invites === 'object') {
-        for (const [id, record] of Object.entries(parsed.invites)) {
-          if (record && typeof record === 'object' && record.id === id) this.invites.set(id, record)
-        }
+      if (parsed?.version !== INVITES_VERSION || !parsed.invites || typeof parsed.invites !== 'object') {
+        throw new Error('Unsupported or corrupt invite store')
       }
-    } catch (err) {
-      if (err.code !== 'ENOENT') throw err
+      for (const [id, record] of Object.entries(parsed.invites)) {
+        if (record && typeof record === 'object' && record.id === id) records.set(id, record)
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
     }
+    this.invites = records
     this._ready = true
-    await this.prune()
   }
 
-  async put (record) {
-    this.invites.set(record.id, record)
-    await this._flush()
-    return record
+  _transaction (operation, persist = true) {
+    const result = this._writing.catch(() => {}).then(() => withStorageLock(this.file, async () => {
+      await this._read()
+      const value = await operation()
+      if (persist) {
+        await atomicWriteFile(this.file, JSON.stringify({
+          version: INVITES_VERSION, invites: Object.fromEntries(this.invites)
+        }, null, 2))
+      }
+      return value
+    }))
+    this._writing = result
+    return result
+  }
+
+  reload () { return this._transaction(() => {}, false) }
+  async ready () { if (!this._ready) await this.reload() }
+  flushed () { return this._writing }
+
+  put (record) {
+    return this._transaction(() => {
+      this.invites.set(record.id, record)
+      return record
+    })
   }
 
   get (id) {
     const record = this.invites.get(id)
-    if (!record || !isLive(record)) return null
-    return record
+    return record && isLive(record) ? record : null
   }
 
-  // Only invites that can still be redeemed. Expired and spent records linger
-  // in the map until prune() runs, but nothing should offer them: the node
-  // must not keep announcing their topics, and the dashboard must not show
-  // them as live codes.
-  list () {
-    return [...this.invites.values()].filter((record) => isLive(record))
+  list () { return [...this.invites.values()].filter(isLive) }
+  listAll () { return [...this.invites.values()] }
+
+  consume (id) {
+    return this._transaction(() => {
+      const record = this.get(id)
+      if (!record) return null
+      record.used++
+      record.lastUsedAt = new Date().toISOString()
+      if (record.uses !== null && record.used >= record.uses) this.invites.delete(id)
+      return record
+    })
   }
 
-  // Everything on disk, including dead records awaiting prune. For diagnostics.
-  listAll () {
-    return [...this.invites.values()]
-  }
+  revoke (id) { return this._transaction(() => this.invites.delete(id)) }
 
-  // Returns the record if it still had a use left, after spending one.
-  async consume (id) {
-    const record = this.get(id)
-    if (!record) return null
-    record.used++
-    record.lastUsedAt = new Date().toISOString()
-    if (record.uses !== null && record.used >= record.uses) {
-      this.invites.delete(id)
-    }
-    await this._flush()
-    return record
-  }
-
-  async revoke (id) {
-    const removed = this.invites.delete(id)
-    if (removed) await this._flush()
-    return removed
-  }
-
-  async prune () {
-    let changed = false
-    for (const [id, record] of [...this.invites]) {
-      if (!isLive(record)) {
-        this.invites.delete(id)
-        changed = true
+  prune () {
+    return this._transaction(() => {
+      let changed = false
+      for (const [id, record] of this.invites) {
+        if (!isLive(record)) { this.invites.delete(id); changed = true }
       }
-    }
-    if (changed) await this._flush()
-    return changed
-  }
-
-  async _flush () {
-    const invites = {}
-    for (const [id, record] of this.invites) invites[id] = record
-    await atomicWriteFile(this.file, JSON.stringify({ version: INVITES_VERSION, invites }, null, 2))
+      return changed
+    })
   }
 }
 

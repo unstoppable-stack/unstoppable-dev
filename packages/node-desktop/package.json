@@ -1,6 +1,6 @@
 {
   "name": "unstoppable-node-desktop",
-  "version": "0.6.0-alpha.1",
+  "version": "0.6.0-alpha.2",
   "productName": "Unstoppable Personal Node",
   "description": "Desktop Personal Node for private P2P data sync and local or remote AI inference",
   "author": "Unstoppable Stack",
@@ -73,13 +73,13 @@
     "pear-electron": "^1.7.0",
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
-    "unstoppable-node": "^0.6.0-alpha.1",
+    "unstoppable-node": "^0.6.0-alpha.2",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
     "@qvac/decoder-audio": "^0.7.0",
     "bare-process": "^4.5.1",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",

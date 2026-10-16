@@ -1,0 +1,19 @@
+{
+  "name": "unstoppable-p2p-database-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Experimental Autobase notes: admission, offline writes, restart, convergence and removal",
+  "scripts": {
+    "demo": "node demo.js",
+    "test": "node --test --test-force-exit --test-timeout=60000 test/*.test.js"
+  },
+  "dependencies": {
+    "@unstoppable-stack/p2p": "file:../../packages/p2p",
+    "autobase": "7.28.2",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hyperdht": "^6.34.1"
+  },
+  "engines": { "node": ">=22.17.0" }
+}

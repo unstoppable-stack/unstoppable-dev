@@ -1,8 +1,9 @@
 {
   "channel": "preview",
   "marketplace": "unstoppable-stack",
-  "cliRegistryPublished": false,
-  "cliSourceRef": "121cabca1ed2978f98ff1795cc6b87401889be9e",
+  "cliRegistryPublished": true,
+  "cliSourceRef": "26643ce2d6ebdf2d020cc102f1cfdb46ad2dbe73",
   "registryCheckedOn": "2026-10-16",
-  "registryLatestObserved": "0.3.0"
+  "registryLatestObserved": "0.3.0",
+  "cliInstallVersion": "0.4.0-beta.1"
 }

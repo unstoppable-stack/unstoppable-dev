@@ -1,8 +1,9 @@
 # @unstoppable-stack/p2p
 
-> **Release status:** unpublished `0.6.0-alpha.1` candidate for the canonical
-> public package release. The package is experimental; preparation and tests
-> are separate from publication and production acceptance.
+> **Release status:** `0.6.0-alpha.1` is published. This source prepares
+> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes.
+> Those additions are not in alpha.1. Preparation and tests are separate from
+> publication and production acceptance; all P2P APIs remain experimental.
 
 > Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable-stack.dev) —
 > identity, pairing, and a capability bus for apps that act as nodes.
@@ -16,6 +17,10 @@ does not load the storage implementation; import `@unstoppable-stack/p2p/sync`
 to enable it. npm installs the storage dependencies with the package either way.
 QVAC and wallet SDKs remain upstream dependencies of the apps that use them.
 
+```sh
+npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+```
+
 ```js
 import { createNode } from '@unstoppable-stack/p2p'
 import { syncPack } from '@unstoppable-stack/p2p/sync'
@@ -24,9 +29,18 @@ import { syncPack } from '@unstoppable-stack/p2p/sync'
 See [replication](docs/sync.md) for resource manifests and permissions. Delegated
 AI is an internal adapter in Personal Node, not part of this library.
 
+See the [documentation index](docs/README.md), [runtime API](docs/api.md) and
+[capability inventory and roadmap](docs/roadmap.md) for the complete shared
+surface and the distinction between implemented methods and planned services.
+
+The optional [typed RPC layer](docs/rpc.md) adds schema-backed procedures and
+inferred clients over the same transport. The [database prototype](docs/db.md)
+integrates a separately installed, pinned Autobase engine; it is experimental
+and does not remove the collaborative-database backup acceptance gates.
+
 ## Install
 
-After publication, install the explicit preview version:
+For the existing published API, install the explicit preview version:
 
 ```bash
 npm install @unstoppable-stack/p2p@0.6.0-alpha.1
@@ -37,6 +51,11 @@ tests invited calls, streaming and replication through an offline replica
 restart, including an isolated install of the release tarball. Release
 preparation records exact hashes and publishes this candidate to `alpha`,
 never implicitly to `latest`.
+
+Node consumers require Node 20 or newer. Fresh npm dependency resolution on Bare
+requires Bare 1.32 or newer; installed-artifact acceptance was run with the desktop
+sidecar's Bare 1.34.1. A locked older source dependency tree working on an older
+global Bare runtime does not establish fresh-install compatibility.
 
 ## Usage
 
@@ -227,9 +246,12 @@ a server is how peers end up greeting each other.
 
 ## Errors
 
-Every rejection is a `NodeError` with a stable `code`: `PEER_NOT_FOUND`,
+Capability failures use `NodeError` with a stable `code`: `PEER_NOT_FOUND`,
 `PAIR_DENIED`, `NOT_GRANTED`, `UNKNOWN_CAPABILITY`, `UNKNOWN_METHOD`,
-`REQUEST_FAILED`, `REQUEST_TIMEOUT`, `CANCELLED`, `INVALID_OPTION`, `CLOSED`.
+`REQUEST_FAILED`, `REQUEST_TIMEOUT`, `RESOURCE_LIMIT`, `CANCELLED`,
+`INVALID_OPTION`, `CLOSED`, `METHOD_KIND_MISMATCH`, `INCOMPATIBLE_CAPABILITY`,
+`INVALID_INPUT` and `INVALID_OUTPUT`. Startup/storage failures can also preserve
+filesystem error codes; competing runtime ownership reports `STORAGE_LOCKED`.
 
 ## Resource limits
 
@@ -258,10 +280,30 @@ lifecycle.
 ```bash
 npm test              # everything
 npm run test:unit     # fast, no network
+npm run test:types    # TypeScript contract inference and invalid-input checks
+npm run test:bare     # native Bare storage, locks, sync attach and reopen
 ```
+
+Set `BARE_BIN=/absolute/path/to/bare` when the supported sidecar/runtime is not
+the global `bare` command. To exercise the packed library outside this checkout,
+run `node ../../scripts/p2p-artifact-smoke.mjs --bare` from this package, with the
+same `BARE_BIN` override when needed.
 
 The integration suite spins up a local DHT bootstrapper and takes ~90s.
 
 ## License
 
 MIT
+
+## Runnable examples
+
+| App | Demonstrates |
+| --- | --- |
+| [Notes](../../examples/p2p-notes/README.md) | Typed unary calls, streams, scoped grants, single-owner sync and offline replicas |
+| [Collaborative notes](../../examples/p2p-database/README.md) | Optional Autobase, writer admission/removal, offline edits, restart and convergence |
+| [Local Goods](../../examples/ecommerce-assistant/README.md) | Desktop worker RPC, private local cart, validated receipt output and persistent pairing |
+
+These source examples target the `0.6.0-alpha.2` candidate. Use the checkout or
+an installed candidate tarball until it is published. The database adapter's
+acceptance is currently Node-only; the desktop example uses RPC and local
+Hyperbee storage, not `/db`.
