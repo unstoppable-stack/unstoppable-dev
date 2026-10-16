@@ -46,8 +46,8 @@ jobs:
         run: |
           node --input-type=module -e "import pkg from './packages/node/package.json' with { type: 'json' }; if (pkg.version.includes('-') && process.env.DIST_TAG === 'latest') throw new Error('Prereleases must not publish to the latest tag')"
 
-      - name: Install and test node-core
-        working-directory: packages/node-core
+      - name: Install and test p2p
+        working-directory: packages/p2p
         run: npm ci && npm audit --omit=dev --audit-level=high && npm test
 
       - name: Install and test node
@@ -57,10 +57,9 @@ jobs:
       - name: Pack publishable artifacts
         run: |
           mkdir -p release-artifacts
-          npm pack ./packages/node-core --pack-destination "$PWD/release-artifacts"
-          npm pack ./packages/node-caps-sync --pack-destination "$PWD/release-artifacts"
-          npm pack ./packages/node-caps-ai --pack-destination "$PWD/release-artifacts"
-          npm pack ./packages/node --pack-destination "$PWD/release-artifacts"
+          node scripts/pack-node-release.mjs "$PWD/release-artifacts"
+          node scripts/release-artifacts.mjs "$PWD/release-artifacts"
+          node scripts/test-node-artifacts.mjs "$PWD/release-artifacts"
           sha256sum release-artifacts/*.tgz > release-artifacts/SHA256SUMS.txt
 
       - name: Upload validated tarballs
@@ -96,27 +95,28 @@ jobs:
           name: node-npm-${{ github.sha }}
           path: release-artifacts
 
-      - name: Refuse an existing version
+      - name: Require canonical P2P and refuse an existing Node version
         run: |
-          CORE_VERSION=$(node -p "require('./packages/node-core/package.json').version")
-          NODE_VERSION=$(node -p "require('./packages/node/package.json').version")
-          if npm view "@unstoppable-stack/node-core@$CORE_VERSION" version >/dev/null 2>&1; then
-            echo "@unstoppable-stack/node-core@$CORE_VERSION already exists" >&2
-            exit 1
-          fi
-          if npm view "unstoppable-node@$NODE_VERSION" version >/dev/null 2>&1; then
-            echo "unstoppable-node@$NODE_VERSION already exists" >&2
-            exit 1
-          fi
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict'
+          import { readFileSync } from 'node:fs'
+          import { createHash } from 'node:crypto'
+          const { artifacts } = JSON.parse(readFileSync('release-artifacts/artifact-manifest.json'))
+          for (const artifact of artifacts) {
+            const response = await fetch(`https://registry.npmjs.org/${encodeURIComponent(artifact.name)}/${artifact.version}`, { signal: AbortSignal.timeout(20000) })
+            if (artifact.name === '@unstoppable-stack/p2p') {
+              assert(response.ok, 'Canonical P2P must already be published by public-packages.yml')
+              const metadata = await response.json()
+              const integrity = 'sha512-' + createHash('sha512').update(readFileSync(`release-artifacts/${artifact.file}`)).digest('base64')
+              assert.equal(metadata.dist.integrity, integrity, 'Published P2P differs from the validated Node dependency')
+            } else {
+              assert.equal(response.status, 404, 'Node version exists or registry lookup failed')
+            }
+          }
+          NODE
 
-      - name: Publish node-core
-        run: npm publish ./release-artifacts/unstoppable-stack-node-core-*.tgz --access public --tag "${{ inputs.dist_tag }}"
-
-      - name: Publish node-caps-sync
-        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-sync-*.tgz --access public --tag "${{ inputs.dist_tag }}"
-
-      - name: Publish node-caps-ai
-        run: npm publish ./release-artifacts/unstoppable-stack-node-caps-ai-*.tgz --access public --tag "${{ inputs.dist_tag }}"
+      - name: Verify downloaded artifacts
+        run: sha256sum --check release-artifacts/SHA256SUMS.txt
 
       - name: Publish node
-        run: npm publish ./release-artifacts/unstoppable-node-*.tgz --access public --tag "${{ inputs.dist_tag }}"
+        run: npm publish ./release-artifacts/unstoppable-node-*.tgz --ignore-scripts --access public --tag "${{ inputs.dist_tag }}"

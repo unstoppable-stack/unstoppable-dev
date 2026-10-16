@@ -10,8 +10,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return [...routes, ...docs].map((route) => ({
     url: `${siteConfig.url}${route}`,
-    lastModified: new Date("2026-09-23"),
+    lastModified: new Date("2026-10-16"),
     changeFrequency: route.startsWith("/docs") ? "weekly" : "monthly",
-    priority: route === "" ? 1 : route === "/getting-started" ? 0.9 : 0.7,
+    priority: route === "" ? 1 : route === "/getting-started" || route.startsWith("/docs/start/") ? 0.9 : 0.7,
   }));
 }

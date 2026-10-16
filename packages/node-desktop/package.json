@@ -74,14 +74,12 @@
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
     "unstoppable-node": "^0.6.0-alpha.1",
-    "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
-    "@unstoppable-stack/node-caps-sync": "^0.6.0-alpha.1",
-    "@unstoppable-stack/node-caps-ai": "^0.6.0-alpha.1",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
     "@qvac/decoder-audio": "^0.7.0",
-    "bare-process": "^4.5.1"
+    "bare-process": "^4.5.1",
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "@electron-forge/cli": "7.11.2",
@@ -92,9 +90,7 @@
     "@electron-forge/plugin-fuses": "7.11.2",
     "electron": "44.6.0",
     "unstoppable-node": "file:../node",
-    "@unstoppable-stack/node-core": "file:../node-core",
-    "@unstoppable-stack/node-caps-sync": "file:../node-caps-sync",
-    "@unstoppable-stack/node-caps-ai": "file:../node-caps-ai"
+    "@unstoppable-stack/p2p": "file:../p2p"
   },
   "engines": {
     "node": ">=22.17.0"

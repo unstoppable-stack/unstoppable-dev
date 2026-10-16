@@ -38,15 +38,18 @@ pnpm build
 
 ### Runtime packages
 
-Runtime and Personal Node packages are deferred alpha work. Each package has
-its own lockfile and tests; run commands from that package directory. Some
+The P2P library is an experimental public alpha candidate; Personal Node is
+deferred. Each package has its own lockfile and tests; run commands from that
+package directory. Some
 packages use local `file:` dependencies and are not yet registry-installable.
 Do not describe a source-level test as a published-package result.
+Use [canonical release preparation](docs/public-release.md) to test the CLI and
+P2P tarballs outside the source checkout before publication.
 
 ## Agent-pack changes
 
-Edit `packages/agent-pack/src/`, then synchronize it to
-`packages/cli/agent-pack-src/`. Before submitting, verify the trees match:
+Edit `packages/agent-pack/src/`. After source changes, regenerate maintained
+assets and verify the CLI bundle:
 
 ```bash
 node scripts/sync-stack-assets.mjs
@@ -61,7 +64,7 @@ node scripts/check-agent-pack.mjs
 - Keep local-first and peer-disconnection behavior explicit.
 - Label mocks, stubs, and documentation-only patterns as such.
 - Do not commit model files, credentials, seed phrases, private user data, or
-  ignored planning/research/sandbox/reference contents or local assistant settings.
+  ignored planning/research/sandbox contents or local assistant settings.
 - Use conventional commit messages when committing.
 
 Opening a pull request confirms that you have the right to contribute the

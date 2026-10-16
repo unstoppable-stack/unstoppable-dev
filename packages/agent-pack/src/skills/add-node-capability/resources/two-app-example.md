@@ -1,14 +1,14 @@
 # Two Apps, No Personal Node
 
 A host/joiner pattern for the experimental P2P runtime. Save each snippet
-as a separate script in a project with `@unstoppable-stack/node-core` installed.
+as a separate script in a project with `@unstoppable-stack/p2p` installed.
 
 This development-only demo deliberately accepts peers. Use scoped invitations or an approval callback for an unattended host.
 
 ## Host — Notes
 
 ```js
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const NOTES = new Map([
   ['note-1', { title: 'Flat white', body: 'Ratio 1:2, 27s' }],
@@ -55,7 +55,7 @@ console.log('Pairing code:', invite.code)
 ## Joiner — Reader
 
 ```js
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const node = createNode({
   storage: './.reader-node',

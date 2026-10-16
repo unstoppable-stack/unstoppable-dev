@@ -99,7 +99,7 @@ describe('node-cli generator', () => {
       const files = fileMap(make(['node-sync']))
       const sync = files['src/node-sync.ts']
       expect(sync).toBeDefined()
-      expect(sync).toContain("from '@unstoppable-stack/node-core'")
+      expect(sync).toContain("from '@unstoppable-stack/p2p'")
       expect(sync).toContain('createNode(')
       expect(sync).toContain('discover(')
       expect(sync).toContain("'manifest.replace'")
@@ -108,9 +108,9 @@ describe('node-cli generator', () => {
       expect(sync).not.toContain('replicates and backs up')
     })
 
-    it('includes @unstoppable-stack/node-core dependency', () => {
+    it('includes @unstoppable-stack/p2p dependency', () => {
       const pkg = JSON.parse(fileMap(make(['node-sync']))['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeDefined()
     })
 
     it('entry point imports setupNodeSync', () => {
@@ -119,9 +119,9 @@ describe('node-cli generator', () => {
       expect(entry).toContain('nodeSync.close()')
     })
 
-    it('type declarations include @unstoppable-stack/node-core', () => {
+    it('type declarations include @unstoppable-stack/p2p', () => {
       const decls = fileMap(make(['node-sync']))['src/types.d.ts']
-      expect(decls).toContain("declare module '@unstoppable-stack/node-core'")
+      expect(decls).toContain("declare module '@unstoppable-stack/p2p'")
     })
 
     it('README labels Personal Node support as deferred and registration as unverified', () => {
@@ -230,7 +230,7 @@ describe('node-cli generator — node-host', () => {
   it('emits a capability pack the app hosts itself', () => {
     const host = fileMap(make(['node-host']))['src/node-host.ts']
     expect(host).toBeDefined()
-    expect(host).toContain("from '@unstoppable-stack/node-core'")
+    expect(host).toContain("from '@unstoppable-stack/p2p'")
     expect(host).toContain('createNode(')
     expect(host).toContain('capabilities: [')
     expect(host).toContain('defaultGrants')
@@ -249,15 +249,15 @@ describe('node-cli generator — node-host', () => {
     expect(host).toContain('createInvite(')
   })
 
-  it('adds the node-core dependency', () => {
+  it('adds the P2P runtime dependency', () => {
     const pkg = JSON.parse(fileMap(make(['node-host']))['package.json'])
-    expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
+    expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeDefined()
   })
 
   it('is absent without the flag', () => {
     const files = fileMap(make([]))
     expect(files['src/node-host.ts']).toBeUndefined()
-    expect(JSON.parse(files['package.json']).dependencies['@unstoppable-stack/node-core']).toBeUndefined()
+    expect(JSON.parse(files['package.json']).dependencies['@unstoppable-stack/p2p']).toBeUndefined()
   })
 
   // node-sync consumes a node; node-host is one. They compose.

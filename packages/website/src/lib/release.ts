@@ -1,14 +1,41 @@
+import pluginDownload from "./plugin-download.json";
+import pluginRelease from "../../../agent-pack/release.json";
+
+const candidateVersion = "0.4.0-beta.1";
+const setupInstallCommand = pluginRelease.cliRegistryPublished
+  ? `npm install -g @unstoppable-stack/cli@${candidateVersion}`
+  : `git clone https://github.com/unstoppable-stack/unstoppable-dev.git unstoppable-cli-source
+cd unstoppable-cli-source
+git checkout ${pluginRelease.cliSourceRef}
+cd packages/cli
+npm ci --ignore-scripts
+mkdir -p ../../cli-artifacts
+npm pack --pack-destination ../../cli-artifacts
+npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-${candidateVersion}.tgz
+export PATH="$HOME/.local/bin:$PATH"
+cd ~`;
+
 export const siteConfig = {
   name: "Unstoppable Stack",
   url: "https://unstoppable-stack.dev",
-  publicRepositoryUrl: null,
-  publicIssuesUrl: null,
+  publicRepositoryUrl: "https://github.com/unstoppable-stack/unstoppable-dev",
+  publicIssuesUrl: "https://github.com/unstoppable-stack/unstoppable-dev/issues",
   status: "Developer preview",
   verifiedOn: "25 September 2026",
+  docsUpdatedOn: "16 October 2026",
+  plugins: {
+    version: pluginDownload.version,
+    downloadPath: `/downloads/${pluginDownload.filename}`,
+    checksumPath: "/downloads/plugin-release.json",
+    filename: pluginDownload.filename,
+    directory: pluginDownload.directory,
+  },
   cli: {
     packageName: "@unstoppable-stack/cli",
     publishedVersion: "0.3.0",
-    candidateVersion: "0.4.0-beta.1",
+    candidateVersion,
+    candidatePublished: pluginRelease.cliRegistryPublished,
+    setupInstallCommand,
     installCommand: "npm install -g @unstoppable-stack/cli@0.3.0",
     versionCommand: "us --version",
   },

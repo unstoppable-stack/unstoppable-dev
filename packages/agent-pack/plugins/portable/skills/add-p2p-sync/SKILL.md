@@ -9,7 +9,7 @@ Read the target app manifest and entrypoints. Node apps expose `src/swarm-manage
 
 Reuse the existing swarm/store and replicate the appropriate store or Autobee on each connection. Keep peer errors/disconnections harmless to local reads. Await core/database readiness before using it; do not block app startup waiting for peers. Discovery announces availability and is not evidence that remote data has arrived.
 
-For multi-writer data, use the app’s generated store, writer promotion and deterministic schema/apply policy. Replicated data and device-private state remain separate. For identity/pairing/grants, use node-core only when installed; it is not required for simple database replication.
+For multi-writer data, use the app’s generated store, writer promotion and deterministic schema/apply policy. Replicated data and device-private state remain separate. For identity/pairing/grants, use `@unstoppable-stack/p2p` only when installed; it is not required for simple database replication.
 
 Use installed APIs and https://docs.holepunch.to/ for detailed replication calls. Validate two real peers, reconnect, local reads offline, and convergence rather than merely matching generated code strings.
 

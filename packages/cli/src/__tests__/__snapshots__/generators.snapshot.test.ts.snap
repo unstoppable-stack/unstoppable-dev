@@ -37,7 +37,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "features": [],
   "compatibility": {
     "id": "expo-54-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {},
@@ -824,7 +824,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "expo-54-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -1885,7 +1885,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "expo-54-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -1921,10 +1921,10 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "bare-rpc": "^1.3.2",
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3",
-      "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
       "hyperswarm": "^4.17.0",
       "b4a": "^1.8.0",
-      "events": "^3.3.0"
+      "events": "^3.3.0",
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
     },
     "devDependencies": {
       "@types/react": "~19.1.10",
@@ -2238,8 +2238,8 @@ const RPC = require('bare-rpc')
 const { IPC } = BareKit
 const Corestore = require('corestore')
 const Hyperbee = require('hyperbee')
-// node-core is ESM; bare supports dynamic import and the @unstoppable
-// scope resolves once '@unstoppable-stack/node-core' is installed.
+// P2P runtime is ESM; bare supports dynamic import and the @unstoppable
+// scope resolves once '@unstoppable-stack/p2p' is installed.
 
 let storagePath = null
 let store = null
@@ -2288,7 +2288,7 @@ const rpc = new RPC(IPC, async (request) => {
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable-stack/node-core')
+          const mod = await import('@unstoppable-stack/p2p')
           appNode = mod.createNode({
             storage: storagePath + '/app-node',
             profile: { appId: 'snap-test', appName: 'snap-test' },
@@ -2462,10 +2462,10 @@ module.exports = config
     "bare-rpc": "^1.3.2",
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
-    "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
     "hyperswarm": "^4.17.0",
     "b4a": "^1.8.0",
-    "events": "^3.3.0"
+    "events": "^3.3.0",
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
@@ -3024,7 +3024,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "features": [],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {},
@@ -3272,7 +3272,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -3864,7 +3864,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -3888,7 +3888,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -3920,7 +3920,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4014,7 +4014,7 @@ main().catch((err) => {
  *   const peer = await node.pair(code)
  *   const { items } = await peer.api.snap-test.list({})
  */
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const CAPABILITY = 'snap-test'
 
@@ -4134,7 +4134,7 @@ declare module 'corestore'
 declare module 'hyperbee'
 declare module 'hypercore-crypto'
 declare module 'b4a'
-declare module '@unstoppable-stack/node-core'
+declare module '@unstoppable-stack/p2p'
 ",
     "path": "src/types.d.ts",
   },
@@ -4205,7 +4205,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4229,7 +4229,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -4261,7 +4261,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4363,7 +4363,7 @@ main().catch((err) => {
  * To add more resources later, add them to the manifest below — it describes
  * the complete set, so anything omitted stops replicating.
  */
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
@@ -4471,7 +4471,7 @@ declare module 'corestore'
 declare module 'hyperbee'
 declare module 'hypercore-crypto'
 declare module 'b4a'
-declare module '@unstoppable-stack/node-core'
+declare module '@unstoppable-stack/p2p'
 ",
     "path": "src/types.d.ts",
   },
@@ -4542,7 +4542,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4813,7 +4813,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "features": [],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "preview",
   "featureMaturity": {},
@@ -5411,7 +5411,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -6535,7 +6535,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -7641,7 +7641,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -7669,7 +7669,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -8085,7 +8085,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -8147,7 +8147,7 @@ import Corestore from 'corestore'
 import Hyperswarm from 'hyperswarm'
 import Hyperbee from 'hyperbee'
 import crypto from 'hypercore-crypto'
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const pipe = Bare.IPC
 const storagePath = Bare.argv[2]
@@ -8319,7 +8319,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 1
+    "revision": 2
   },
   "maturity": "preview",
   "featureMaturity": {

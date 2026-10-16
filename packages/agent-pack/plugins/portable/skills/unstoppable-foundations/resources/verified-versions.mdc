@@ -6,9 +6,9 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 
 | Platform | Profile | Maturity | AI runtime | Validation |
 | --- | --- | --- | --- | --- |
-| pear-desktop | pear-desktop-qvac-0.21 / revision 1 | preview | 0.1.0 | contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending |
-| node-cli | node-cli-qvac-0.21 / revision 1 | experimental | 0.1.0 | contract-tested; native acceptance pending |
-| expo-mobile | expo-54-qvac-0.21 / revision 1 | experimental | separate Expo implementation | separate Expo implementation; physical-device AI and Android acceptance pending |
+| pear-desktop | pear-desktop-qvac-0.21 / revision 2 | preview | 0.1.0 | contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending |
+| node-cli | node-cli-qvac-0.21 / revision 2 | experimental | 0.1.0 | contract-tested; native acceptance pending |
+| expo-mobile | expo-54-qvac-0.21 / revision 2 | experimental | separate Expo implementation | separate Expo implementation; physical-device AI and Android acceptance pending |
 
 ## pear-desktop
 
@@ -29,7 +29,7 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | @qvac/langdetect-text | ^0.1.2 | local-ai |
 | @qvac/decoder-audio | ^0.7.0 | local-ai |
 | bare-process | ^4.5.1 | local-ai |
-| @unstoppable-stack/node-core | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
 | autobee | 1.0.10 | multi-writer |
 | hyperdb | ^6.7.0 | multi-writer |
 | hyperschema | ^1.21.0 | multi-writer |
@@ -48,11 +48,11 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | tsx | ^4.0.0 | development |
 | @qvac/sdk | 0.21.0 | local-ai |
 | zod | ^4.3.0 | local-ai |
-| @unstoppable-stack/node-core | ^0.6.0-alpha.1 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
 | autobee | 1.0.10 | multi-writer |
 | hyperdb | ^6.7.0 | multi-writer |
 | hyperschema | ^1.21.0 | multi-writer |
-| @unstoppable-stack/node-core | ^0.6.0-alpha.1 | node-host |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-host |
 
 ## expo-mobile
 
@@ -80,9 +80,9 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | @qvac/sdk | 0.21.0 | local-ai |
 | zod | ^4.3.0 | local-ai |
 | expo-device | ~8.0.10 | local-ai |
-| @unstoppable-stack/node-core | ^0.6.0-alpha.1 | node-sync |
 | hyperswarm | ^4.17.0 | node-sync |
 | b4a | ^1.8.0 | node-sync |
 | events | ^3.3.0 | node-sync |
+| @unstoppable-stack/p2p | ^0.6.0-alpha.1 | node-sync |
 
 For upgrades, run `us compatibility check -o <app>` and review the plan. It reads metadata and files without changing them. Do not regenerate edited apps with `--force`. Compare the installed SDK types and version-matched upstream release notes; keep the coupled Expo/native graph together.

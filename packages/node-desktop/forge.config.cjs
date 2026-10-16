@@ -9,9 +9,7 @@ const { pruneForeignPrebuilds } = require('./scripts/prune-prebuilds.cjs')
 function copyLocalNodePackages (buildPath) {
   const packages = {
     node: 'unstoppable-node',
-    'node-core': '@unstoppable-stack/node-core',
-    'node-caps-sync': '@unstoppable-stack/node-caps-sync',
-    'node-caps-ai': '@unstoppable-stack/node-caps-ai'
+    p2p: '@unstoppable-stack/p2p'
   }
   for (const [directory, name] of Object.entries(packages)) {
     const source = path.resolve(__dirname, '..', directory)

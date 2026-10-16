@@ -1,0 +1,125 @@
+name: Canonical public packages
+
+on:
+  pull_request:
+    paths:
+      - 'packages/cli/**'
+      - 'packages/p2p/**'
+      - 'packages/runtime-ai/**'
+      - 'packages/agent-pack/**'
+      - 'packages/website/scripts/prepare-plugin-download.mjs'
+      - 'packages/website/src/lib/plugin-download.json'
+      - 'examples/p2p-notes/**'
+      - 'release/public-packages.json'
+      - 'scripts/*public*.mjs'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'scripts/check-agent-pack.mjs'
+      - '.github/workflows/public-packages.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/cli/**'
+      - 'packages/p2p/**'
+      - 'packages/runtime-ai/**'
+      - 'packages/agent-pack/**'
+      - 'packages/website/scripts/prepare-plugin-download.mjs'
+      - 'packages/website/src/lib/plugin-download.json'
+      - 'examples/p2p-notes/**'
+      - 'release/**'
+      - 'scripts/*public*.mjs'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'scripts/check-agent-pack.mjs'
+      - '.github/workflows/public-packages.yml'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the tested CLI beta and P2P alpha tarballs
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Install package dependencies
+        run: |
+          npm install --global pnpm@9.15.9
+          pnpm --dir packages/cli install --frozen-lockfile
+          npm ci --prefix packages/p2p
+          npm ci --prefix examples/p2p-notes
+      - name: Build and test the exact public artifacts
+        run: |
+          node scripts/prepare-public-release.mjs release-artifacts
+          node scripts/public-release.mjs verify release-artifacts --require-clean
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: public-npm-failure-logs-${{ github.sha }}
+          path: release-artifacts/logs
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: public-npm-${{ github.sha }}
+          path: release-artifacts
+          if-no-files-found: error
+          retention-days: 14
+
+  node20-consumer:
+    name: P2P consumer on Node 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+      - run: npm ci --prefix packages/p2p && npm ci --prefix examples/p2p-notes
+      - working-directory: examples/p2p-notes
+        run: node --test --test-concurrency=1 test/notes.test.js
+
+  publish:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.publish }}
+    needs: [validate, node20-consumer]
+    runs-on: ubuntu-24.04
+    environment: npm-release
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - name: Install trusted publishing npm CLI
+        run: npm install --global npm@12.0.2
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: public-npm-${{ github.sha }}
+          path: release-artifacts
+      - name: Publish only the verified canonical tarballs
+        env:
+          PUBLIC_RELEASE_APPROVED: '1'
+        run: node scripts/public-release.mjs publish release-artifacts
+      - name: Test packages installed directly from the public registry
+        run: node scripts/test-public-artifacts.mjs release-artifacts --registry
+      - name: Retain registry acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: public-registry-${{ github.sha }}
+          path: release-artifacts/registry-consumer-verification.json
+          if-no-files-found: warn

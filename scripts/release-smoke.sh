@@ -90,7 +90,7 @@ step "Packing launch packages"
 if [ "${SKIP_PACK:-0}" = "1" ]; then
   REQUIRED_TARBALLS=(unstoppable-stack-cli)
   if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
-    REQUIRED_TARBALLS+=(unstoppable-stack-node-core unstoppable-stack-node-caps-sync unstoppable-stack-node-caps-ai unstoppable-node)
+    REQUIRED_TARBALLS+=(unstoppable-stack-p2p unstoppable-node)
   fi
   for glob in "${REQUIRED_TARBALLS[@]}"; do
     ls "$STAGE/$glob"-*.tgz >/dev/null 2>&1 \
@@ -100,7 +100,7 @@ if [ "${SKIP_PACK:-0}" = "1" ]; then
 else
   PACKAGES=(cli)
   if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
-    PACKAGES=(node-core node-caps-sync node-caps-ai node cli)
+    node "$REPO_ROOT/scripts/pack-node-release.mjs" "$STAGE"
   fi
   for pkg in "${PACKAGES[@]}"; do
     ( cd "$REPO_ROOT/packages/$pkg" && npm pack --pack-destination "$STAGE" >/dev/null )
@@ -122,11 +122,9 @@ step "Installing globally (isolated prefix, dependency order)"
 # ---------------------------------------------------------------------------
 CLI_TGZ="$(ls "$STAGE"/unstoppable-stack-cli-*.tgz)"
 if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
-  CORE_TGZ="$(ls "$STAGE"/unstoppable-stack-node-core-*.tgz)"
-  SYNC_TGZ="$(ls "$STAGE"/unstoppable-stack-node-caps-sync-*.tgz)"
-  AI_TGZ="$(ls "$STAGE"/unstoppable-stack-node-caps-ai-*.tgz)"
+  P2P_TGZ="$(ls "$STAGE"/unstoppable-stack-p2p-*.tgz)"
   NODE_TGZ="$(ls "$STAGE"/unstoppable-node-*.tgz)"
-  npm install -g "$CORE_TGZ" "$SYNC_TGZ" "$AI_TGZ" "$NODE_TGZ" "$CLI_TGZ" --no-audit --no-fund
+  npm install -g "$P2P_TGZ" "$NODE_TGZ" "$CLI_TGZ" --no-audit --no-fund
   pass "installed CLI plus deferred Node alpha packages"
 else
   npm install -g "$CLI_TGZ" --no-audit --no-fund

@@ -17,7 +17,7 @@
   "profiles": {
     "pear-desktop": {
       "id": "pear-desktop-qvac-0.21",
-      "revision": 1,
+      "revision": 2,
       "maturity": "preview",
       "engines": {
         "node": ">=22.17.0"
@@ -45,7 +45,7 @@
           "bare-process": "^4.5.1"
         },
         "node-sync": {
-          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         },
         "multi-writer": {
           "autobee": "1.0.10",
@@ -75,7 +75,7 @@
     },
     "node-cli": {
       "id": "node-cli-qvac-0.21",
-      "revision": 1,
+      "revision": 2,
       "maturity": "experimental",
       "engines": {
         "node": ">=22.17.0"
@@ -98,7 +98,7 @@
           "zod": "^4.3.0"
         },
         "node-sync": {
-          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         },
         "multi-writer": {
           "autobee": "1.0.10",
@@ -107,7 +107,7 @@
         },
         "wallet": {},
         "node-host": {
-          "@unstoppable-stack/node-core": "^0.6.0-alpha.1"
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         }
       },
       "aiRuntime": "0.1.0",
@@ -130,7 +130,7 @@
     },
     "expo-mobile": {
       "id": "expo-54-qvac-0.21",
-      "revision": 1,
+      "revision": 2,
       "maturity": "experimental",
       "engines": {
         "node": ">=22.17.0"
@@ -165,10 +165,10 @@
           "expo-device": "~8.0.10"
         },
         "node-sync": {
-          "@unstoppable-stack/node-core": "^0.6.0-alpha.1",
           "hyperswarm": "^4.17.0",
           "b4a": "^1.8.0",
-          "events": "^3.3.0"
+          "events": "^3.3.0",
+          "@unstoppable-stack/p2p": "^0.6.0-alpha.1"
         },
         "multi-writer": {},
         "wallet": {},

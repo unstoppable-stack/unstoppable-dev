@@ -12,7 +12,7 @@ function parseArgs (args = []) {
   return { aiEnabled, aiMock, aiModelSrc }
 }
 
-export function createDaemonHost ({ storagePath, args = [], send, approvalMode = 'prompt', exit } = {}) {
+export function createDaemonHost ({ storagePath, args = [], send, approvalMode = 'prompt', exit, nodeOptions = {} } = {}) {
   if (!storagePath) throw new Error('createDaemonHost requires storagePath')
   if (typeof send !== 'function') throw new Error('createDaemonHost requires send(msg)')
 
@@ -41,6 +41,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
     : undefined
 
   const node = new PersonalNode(storagePath, {
+    ...nodeOptions,
     ai,
     isDenied: async (key) => { await approvalGate.ready(); return Object.hasOwn(approvalGate.snapshot().denied, key) },
     approvePairing: async (req) => {
@@ -271,7 +272,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
       // from the renderer allowlist and can only be sent by the main process.
       case 'qvac-runtime-check': {
         try {
-          const { loadQvacRuntime } = await import('@unstoppable-stack/node-caps-ai/qvac-runtime')
+          const { loadQvacRuntime } = await import('unstoppable-node/internal/qvac-runtime')
           const sdk = await loadQvacRuntime()
           if (typeof sdk.loadModel !== 'function' || typeof sdk.completion !== 'function') {
             throw new Error('Required QVAC SDK exports are unavailable')
@@ -279,7 +280,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
           const packageJson = await import('@qvac/inference/package', { with: { type: 'json' } })
           let text
           if (msg.modelSrc) {
-            const { AIProvider } = await import('@unstoppable-stack/node-caps-ai')
+            const { AIProvider } = await import('unstoppable-node/internal/ai')
             const provider = new AIProvider({ modelSrc: msg.modelSrc })
             provider.on('error', error => send({ type: 'error', ...error }))
             try {

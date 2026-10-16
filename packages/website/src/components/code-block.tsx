@@ -28,7 +28,7 @@ export function CodeBlock({ code, language = "bash" }: CodeBlockProps) {
         <button
           type="button"
           onClick={handleCopy}
-          aria-label="Copy command"
+          aria-label={language === "bash" || language === "sh" ? "Copy command" : "Copy text"}
           className="flex items-center gap-1 rounded text-xs text-text-muted transition-colors hover:text-text-secondary"
         >
           {copyState === "copied" ? (
@@ -51,7 +51,7 @@ export function CodeBlock({ code, language = "bash" }: CodeBlockProps) {
       </div>
       <pre className="p-4 overflow-x-auto">
         <code>
-          <span className="text-text-muted">$ </span>
+          {language === "bash" || language === "sh" ? <span aria-hidden="true" className="text-text-muted">$ </span> : null}
           <span className="text-accent">{code}</span>
         </code>
       </pre>

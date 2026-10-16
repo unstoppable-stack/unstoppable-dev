@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen } from "lucide-react";
 import { docsNav, type DocBlock, type DocPage } from "@/lib/docs";
+import { CodeBlock } from "@/components/code-block";
+import { GettingStartedCards } from "@/components/getting-started-cards";
+import { siteConfig } from "@/lib/release";
 
 function headingId(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 function DocBlockView({ block }: { block: DocBlock }) {
+  if (block.type === "start-paths") return <GettingStartedCards />;
+
+  if (block.type === "actions") {
+    return <div className="flex flex-wrap items-center gap-3">{block.items.map((item) => <a key={item.href} href={item.href} download={item.download || undefined} className={item.download ? "button-primary" : "button-secondary"}>{item.label}<ArrowRight aria-hidden="true" className="h-4 w-4" /></a>)}</div>;
+  }
+
   if (block.type === "lead") {
     return <p className="text-lg leading-8 text-text-secondary">{block.text}</p>;
   }
@@ -50,9 +59,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
             </div>
             <p className="text-sm leading-6 text-text-secondary">{item.body}</p>
             {item.code ? (
-              <pre className="mt-4 overflow-x-auto rounded-xl border border-border bg-background p-4 text-sm text-text-secondary">
-                <code>{item.code}</code>
-              </pre>
+              <div className="mt-4"><CodeBlock code={item.code} language={item.language || "bash"} /></div>
             ) : null}
           </div>
         ))}
@@ -62,9 +69,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
 
   if (block.type === "code") {
     return (
-      <pre className="overflow-x-auto rounded-2xl border border-border bg-background p-5 text-sm text-text-secondary">
-        <code>{block.code}</code>
-      </pre>
+      <CodeBlock code={block.code} language={block.language} />
     );
   }
 
@@ -148,7 +153,7 @@ export function DocsShell({ page }: { page: DocPage }) {
             <p className="mt-3 text-xs text-text-muted">Verified {page.verifiedOn}</p>
           </div>
           <div className="space-y-7">{page.blocks.map((block, index) => <DocBlockView key={index} block={block} />)}</div>
-          <div className="mt-14 border-t border-border pt-7 text-sm text-text-muted">Public issue reporting will be linked here after the repository and support route are anonymously accessible.</div>
+          <div className="mt-14 border-t border-border pt-7 text-sm text-text-muted">Need help? <a href={siteConfig.publicIssuesUrl} className="text-accent underline underline-offset-4">Report an issue</a> with your CLI version, platform, command and first relevant error.</div>
         </article>
       </div>
     </div>

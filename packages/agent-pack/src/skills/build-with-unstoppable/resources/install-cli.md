@@ -8,7 +8,7 @@ Run us --version, us --help, us compatibility --help, us scaffold list-platforms
 
 ## Registry status
 
-As checked on 2026-10-13, npm latest is 0.3.0. The matching 0.4.0-beta.1 candidate is not published. Do not use npm install -g @unstoppable-stack/cli@latest for this workflow.
+As checked on 2026-10-16, npm latest is 0.3.0. The matching 0.4.0-beta.1 candidate is not published. Do not use npm install -g @unstoppable-stack/cli@latest for this workflow.
 
 Use the pinned source install below. Publishing the CLI candidate is a separate release step; plugin installation must not claim it is available on npm.
 
@@ -19,7 +19,7 @@ This public repository revision contains the matching maintained CLI/runtime con
 ```sh
 git clone https://github.com/unstoppable-stack/unstoppable-dev.git unstoppable-cli-source
 cd unstoppable-cli-source
-git checkout e34f61dce6d9b1d3f823ae38d58b1856f8c2c896
+git checkout 121cabca1ed2978f98ff1795cc6b87401889be9e
 cd packages/cli
 npm ci --ignore-scripts
 npm run build
@@ -51,5 +51,5 @@ Use the installed catalog for other features. If the harness plugin is already e
 
 Initial package/native/model downloads require connectivity. Desktop native code runs in the Bare worker through the maintained runtime; renderer code uses IPC. For advanced SDK details use installed types and the version-matched official QVAC documentation: https://docs.qvac.tether.io/sdk/js-ts-sdk/. Node native AI and Expo require separate acceptance; wallets are stubs and Personal Node remains deferred. Report build/mock/native/cached-offline evidence separately.
 
-Source: https://github.com/unstoppable-stack/unstoppable-dev/tree/e34f61dce6d9b1d3f823ae38d58b1856f8c2c896/packages/cli
-CLI guide: https://github.com/unstoppable-stack/unstoppable-dev/blob/e34f61dce6d9b1d3f823ae38d58b1856f8c2c896/packages/cli/README.md
+Source: https://github.com/unstoppable-stack/unstoppable-dev/tree/121cabca1ed2978f98ff1795cc6b87401889be9e/packages/cli
+CLI guide: https://github.com/unstoppable-stack/unstoppable-dev/blob/121cabca1ed2978f98ff1795cc6b87401889be9e/packages/cli/README.md

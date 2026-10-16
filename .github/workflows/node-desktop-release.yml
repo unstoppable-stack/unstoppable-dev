@@ -30,6 +30,10 @@ jobs:
       - name: Validate release metadata and security controls
         run: node scripts/node-release-gate.mjs
 
+      - name: Install P2P dependencies
+        working-directory: packages/p2p
+        run: npm ci
+
       - name: Install node dependencies
         working-directory: packages/node
         run: npm ci

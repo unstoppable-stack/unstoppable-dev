@@ -16,9 +16,8 @@ keep their experimental status explicit. See README.md and SUPPORT.md.
   Generators vendor this into `.unstoppable/runtime-ai/`. Apps own UI, prompts,
   schemas, and domain logic. Expo has a separate experimental implementation.
 - `packages/website/`: Next.js App Router site, Tailwind, shadcn/ui.
-- `packages/node-core/`, `packages/node-caps-sync/`, `packages/node-caps-ai/`:
-  experimental P2P runtime and capability packs.
-- `packages/node/`, `packages/node-desktop/`: Personal Node and desktop shell.
+- `packages/p2p/`, `packages/node/`, `packages/node-desktop/`: experimental P2P
+  library, Personal Node composition, and desktop shell.
 - `examples/`: first-party examples and CI fixtures.
 - `docs/validation.md`: public validation commands and acceptance boundaries.
 

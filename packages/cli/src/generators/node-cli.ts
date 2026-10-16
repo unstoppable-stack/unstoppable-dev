@@ -18,7 +18,7 @@ import {
  *   - local-ai  → QVAC SDK (with QVAC_MOCK=1 env var support)
  *   - wallet    → WDK stub
  *   - node-sync → register cores with the Personal Node alpha for
- *                 replication via @unstoppable-stack/node-core
+ *                 replication via @unstoppable-stack/p2p
  */
 export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
   const files: GeneratedFile[] = [
@@ -271,7 +271,7 @@ function nodeSyncManager(opts: GeneratorOptions): GeneratedFile {
  * To add more resources later, add them to the manifest below — it describes
  * the complete set, so anything omitted stops replicating.
  */
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 interface NodeSyncOpts {
   db: any // Hyperbee — we just need its \`core.key\` to register for replication
@@ -349,7 +349,7 @@ function nodeHostManager(opts: GeneratorOptions): GeneratedFile {
  *   const peer = await node.pair(code)
  *   const { items } = await peer.api.${opts.projectName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}.list({})
  */
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const CAPABILITY = '${opts.projectName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}'
 
@@ -456,7 +456,7 @@ const UNTYPED_MODULES = [
 
 function typeDeclarations(opts: GeneratorOptions): GeneratedFile {
   const modules = [...UNTYPED_MODULES]
-  if (has(opts, 'node-sync') || has(opts, 'node-host')) modules.push('@unstoppable-stack/node-core')
+  if (has(opts, 'node-sync') || has(opts, 'node-host')) modules.push('@unstoppable-stack/p2p')
   if (has(opts, 'multi-writer')) {
     // The spec/ tree is generated JS with no .d.ts. Ambient declarations only
     // work for non-relative specifiers, so match the generated files with a

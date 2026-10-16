@@ -959,12 +959,12 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
   ]
 
   if (hasNodeSync) {
-    // @unstoppable-stack/node-core is ESM-only; wrap the dynamic import lazily
+    // @unstoppable-stack/p2p is ESM-only; wrap the dynamic import lazily
     // so bare-pack still traces it but we control timing (createNode builds a
     // Hyperswarm — we want to defer until init() has given us a Hyperbee to
     // register).
     imports.push(
-      `// node-core is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/node-core' is installed.`,
+      `// P2P runtime is ESM; bare supports dynamic import and the @unstoppable\n// scope resolves once '@unstoppable-stack/p2p' is installed.`,
     )
   }
 
@@ -1041,7 +1041,7 @@ function bareWorklet(opts: GeneratorOptions): GeneratedFile {
         if (!db) { response = { error: 'Storage not ready' }; break }
         nodeStatus = 'searching'
         try {
-          const mod = await import('@unstoppable-stack/node-core')
+          const mod = await import('@unstoppable-stack/p2p')
           appNode = mod.createNode({
             storage: storagePath + '/app-node',
             profile: { appId: '${opts.projectName}', appName: '${opts.projectName}' },

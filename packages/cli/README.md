@@ -36,10 +36,8 @@
 
 The public-preview install command will be added after the final package
 artifact passes the isolated consumer smoke. Until then, build this checkout
-using the [development instructions](#development), or follow the plugin’s
-[pinned CLI installation guide](agent-pack-src/skills/build-with-unstoppable/resources/install-cli.md).
-That guide was verified with an isolated packed consumer install; no registry
-tag is the approved preview channel.
+using the [development instructions](#development); no registry tag is the
+approved preview channel.
 
 The candidate requires Node **22.17+**. Run `us doctor` after building to verify
 the rest of your environment.

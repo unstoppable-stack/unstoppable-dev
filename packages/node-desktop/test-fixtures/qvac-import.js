@@ -1,7 +1,7 @@
 let buffer = ''
 
 try {
-  const { loadQvacRuntime } = await import('@unstoppable-stack/node-caps-ai/qvac-runtime')
+  const { loadQvacRuntime } = await import('unstoppable-node/internal/qvac-runtime')
   const sdk = await loadQvacRuntime()
   const packageJson = await import('@qvac/inference/package', { with: { type: 'json' } })
   Bare.IPC.write(JSON.stringify({

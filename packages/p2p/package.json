@@ -1,0 +1,67 @@
+{
+  "name": "@unstoppable-stack/p2p",
+  "version": "0.6.0-alpha.1",
+  "description": "P2P identity, pairing, capability calls, streaming and optional data/file replication",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./errors": "./src/errors.js",
+    "./protocol": "./src/protocol.js",
+    "./sync": "./src/sync/index.js",
+    "./sync/replication": "./src/sync/replication.js",
+    "./sync/resource-manifest": "./src/sync/resource-manifest.js"
+  },
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE",
+    "docs"
+  ],
+  "keywords": [
+    "p2p",
+    "hyperswarm",
+    "protomux",
+    "unstoppable-stack",
+    "local-first",
+    "capabilities"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/unstoppable-stack/unstoppable-dev.git",
+    "directory": "packages/p2p"
+  },
+  "homepage": "https://unstoppable-stack.dev",
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "test": "node --test --test-force-exit --test-timeout 120000 test/*.test.js test/sync/*.test.js",
+    "test:unit": "node --test test/capabilities.test.js test/identity.test.js test/registry.test.js",
+    "test:integration": "node --test --test-force-exit test/pairing.test.js"
+  },
+  "dependencies": {
+    "b4a": "^1.8.0",
+    "bare-events": "^2.8.3",
+    "compact-encoding": "^2.16.0",
+    "hypercore-crypto": "^3.6.0",
+    "hyperswarm": "^4.17.0",
+    "protomux": "^3.10.1",
+    "corestore": "^7.8.0",
+    "hyperbee": "^2.27.3",
+    "hypercore": "^11.27.0",
+    "hyperdrive": "^12.3.0"
+  },
+  "optionalDependencies": {
+    "bare-env": "^3.0.0",
+    "bare-os": "^3.6.1"
+  },
+  "devDependencies": {
+    "hyperdht": "^6.34.1"
+  },
+  "license": "MIT"
+}

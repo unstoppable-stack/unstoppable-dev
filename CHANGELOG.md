@@ -7,6 +7,30 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
+## Unreleased — package consolidation (16 October 2026)
+
+- Merge unpublished `node-core` and `node-caps-sync` into
+  `@unstoppable-stack/p2p`, with replication exported from `/sync`.
+- Move `node-caps-ai` into Personal Node's internal `src/ai/` adapter; use QVAC
+  upstream directly and retain private generated-app lifecycle helpers.
+- Update generators, compatibility profile revisions, assistant guidance,
+  consumer dependencies and CI for the consolidated library.
+- Mark internal guidance and excluded Memory packages private. Memory and Search
+  remain outside the release; existing source and internal tools are retained.
+- Stage P2P/Node release tarballs without filesystem dependencies and test them
+  through an isolated installed consumer before publishing.
+- Await P2P listener readiness before advertising readiness to callers.
+- Serialize peer-registry writes and wait for pairing persistence during
+  shutdown; catch asynchronous message failures.
+- Add a direct P2P notes consumer that verifies scoped calls, real replication
+  and offline replica restart from the installed package.
+- Prepare the canonical CLI beta and P2P alpha through an explicit allowlist,
+  exact-artifact consumer tests, production audits, npm dry runs and a manual
+  publishing workflow. Build Claude/Codex plugin downloads separately.
+
+These are source changes, not published releases. Published CLI `0.3.0` and Node
+`0.4.0` are unchanged. See [migration notes](docs/package-architecture.md).
+
 ## 2026-08-18 — Node as a Library
 
 The Personal Node stops being a product with a client SDK and becomes a

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, rm, readFile, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { PeerRegistry, loadIdentity } from '@unstoppable-stack/node-core'
+import { PeerRegistry, loadIdentity } from '@unstoppable-stack/p2p'
 import { loadConfig, saveConfig, mergeConfigPatch } from '../src/config.js'
 import { exportNodeState, importNodeState, previewNodeStateImport } from '../src/export.js'
 
@@ -109,7 +109,7 @@ describe('node export/import', () => {
 })
 
 it('retains peer revocations through settings export and import', async () => {
-  const { PeerRegistry } = await import('@unstoppable-stack/node-core')
+  const { PeerRegistry } = await import('@unstoppable-stack/p2p')
   const source = await mkdtemp(join(tmpdir(), 'revoked-source-'))
   const target = await mkdtemp(join(tmpdir(), 'revoked-target-'))
   try {

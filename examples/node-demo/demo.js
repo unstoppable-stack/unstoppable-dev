@@ -7,7 +7,7 @@
 //   1. Stand up a Hyperbee, write a few entries, announce its core on
 //      the replication DHT (so the Node can fetch the bytes — the
 //      handshake alone is not enough).
-//   2. Pair with the Node via @unstoppable-stack/node-core (discover the
+//   2. Pair with the Node via @unstoppable-stack/p2p (discover the
 //      machine-local topic, then hand it a resource manifest).
 //   3. Stream a one-shot prompt through the Node's AI provider
 //      (requires the node to be started with --ai-mock or --ai).
@@ -18,7 +18,7 @@
 // Usage:
 //   Terminal 1 (one of):
 //     node packages/node/src/index.js --ai-mock          # CLI daemon
-//     pear run -d packages/node-desktop -- --ai-mock     # Pear dashboard
+//     npm --prefix packages/node-desktop start -- --ai-mock # Desktop dashboard
 //
 //   Terminal 2:
 //     node examples/node-demo/demo.js
@@ -28,7 +28,7 @@ import Corestore from 'corestore'
 import Hyperbee from 'hyperbee'
 import Hyperswarm from 'hyperswarm'
 import b4a from 'b4a'
-import { createNode } from '@unstoppable-stack/node-core'
+import { createNode } from '@unstoppable-stack/p2p'
 
 const args = new Set(process.argv.slice(2))
 const STORE_ONLY = args.has('--store-only')

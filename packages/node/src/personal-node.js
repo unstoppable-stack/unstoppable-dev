@@ -1,13 +1,13 @@
 import { EventEmitter } from 'bare-events'
-import { createNode, localDiscoveryTopic, PROTOCOL_VERSION, NodeError } from '@unstoppable-stack/node-core'
-import { syncPack } from '@unstoppable-stack/node-caps-sync'
-import { aiPack } from '@unstoppable-stack/node-caps-ai'
+import { createNode, localDiscoveryTopic, PROTOCOL_VERSION, NodeError } from '@unstoppable-stack/p2p'
+import { syncPack } from '@unstoppable-stack/p2p/sync'
+import { aiPack } from './ai/index.js'
 import { loadConfig, saveConfig, mergeConfigPatch } from './config.js'
 import { exportNodeState, importNodeState, writeNodeStateBundle } from './export.js'
 import { runtimeFs, runtimePath } from './runtime-files.js'
 
 // The Personal Node is not a special kind of peer any more — it is
-// `node-core` composed with every built-in capability pack, plus the
+// the P2P library composed with replication and an internal QVAC adapter, plus the
 // local management surface the CLI and the desktop dashboard drive.
 //
 // Everything here is *local* administration: quotas, config, backup, and

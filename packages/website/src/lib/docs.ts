@@ -1,13 +1,16 @@
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
+import { gettingStartedGuides, gettingStartedPaths } from "@/lib/getting-started";
 
 export type DocBlock =
   | { type: "lead"; text: string }
   | { type: "heading"; text: string }
   | { type: "paragraph"; text: string }
   | { type: "list"; items: string[] }
-  | { type: "steps"; items: { title: string; body: string; code?: string }[] }
+  | { type: "steps"; items: { title: string; body: string; code?: string; language?: string }[] }
   | { type: "code"; language: string; code: string }
   | { type: "callout"; title: string; body: string }
+  | { type: "start-paths" }
+  | { type: "actions"; items: { label: string; href: string; download?: boolean }[] }
   | { type: "cards"; items: { title: string; body: string; href?: string }[] };
 
 export type DocPage = {
@@ -20,16 +23,45 @@ export type DocPage = {
 };
 
 export const docsNav = [
-  { title: "Start", pages: [{ title: "Overview", slug: "" }, { title: "Quickstart", slug: "quickstart" }, { title: "Compatibility", slug: "compatibility" }, { title: "Troubleshooting", slug: "troubleshooting" }] },
+  { title: "Get started", pages: [{ title: "Overview", slug: "" }, { title: "Choose your path", slug: "quickstart" }, { title: "Claude Code", slug: "start/claude" }, { title: "Codex", slug: "start/codex" }, { title: "Raw CLI", slug: "start/cli" }] },
   { title: "Build", pages: [{ title: "Project architecture", slug: "architecture" }, { title: "Assistant workflow", slug: "agent-pack" }, { title: "Local AI", slug: "local-ai" }] },
   { title: "Connect", pages: [{ title: "P2P and pairing", slug: "connect" }, { title: "Personal Node", slug: "node" }] },
-  { title: "Reference", pages: [{ title: "CLI commands", slug: "cli" }, { title: "Modules", slug: "modules" }] },
-  { title: "Operate", pages: [{ title: "Support & limitations", slug: "support" }, { title: "Upgrades", slug: "upgrades" }] },
+  { title: "Reference", pages: [{ title: "Packages & integrations", slug: "packages" }, { title: "CLI commands", slug: "cli" }, { title: "Modules", slug: "modules" }] },
+  { title: "Operate", pages: [{ title: "Compatibility", slug: "compatibility" }, { title: "Troubleshooting", slug: "troubleshooting" }, { title: "Support & limitations", slug: "support" }, { title: "Upgrades", slug: "upgrades" }] },
 ];
 
 const verifiedOn = siteConfig.verifiedOn;
 
 export const docsPages: DocPage[] = [
+  ...gettingStartedGuides,
+  {
+    slug: "packages",
+    title: "Packages and integrations",
+    description: "The CLI, one P2P library, assistant plugins and direct upstream SDK integrations.",
+    category: "Reference",
+    verifiedOn: "16 October 2026",
+    blocks: [
+      { type: "lead", text: "Start through Claude Code, Codex or the raw CLI. The plugins guide your assistant; the CLI configures workspaces and generates apps. Apps use one Unstoppable P2P library and upstream QVAC or wallet SDKs when needed." },
+      { type: "heading", text: "Packages we maintain" },
+      { type: "list", items: [
+        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.3.0 is published; 0.4.0-beta.1 remains an unpublished source candidate.",
+        "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.1 is unpublished alpha source.",
+        "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Local prototypes exist; public marketplace listings remain pending. Local-install preview downloads are available in the Claude and Codex guides.",
+        "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.1 source. It is outside the core preview.",
+      ] },
+      { type: "code", language: "js", code: "// Proposed alpha imports; publish the P2P package before registry installation.\nimport { createNode } from '@unstoppable-stack/p2p'\nimport { syncPack } from '@unstoppable-stack/p2p/sync'" },
+      { type: "heading", text: "Use upstream SDKs directly" },
+      { type: "paragraph", text: "QVAC owns inference. Generated apps use its SDK or inference packages for their runtime, with small private lifecycle helpers for cancellation and shutdown. Personal Node's delegated AI adapter is internal application code. Wallet integration will use WDK directly; current wallet scaffolds are stubs." },
+      { type: "heading", text: "Release boundaries" },
+      { type: "paragraph", text: "Memory and Search are excluded from this release. The website, shared agent-pack source and runtime helpers are internal packages. The P2P root does not load replication, but npm installs the storage dependencies with the library. Published releases and unpublished source candidates must use their own version-matched instructions." },
+      { type: "start-paths" },
+      { type: "cards", items: [
+        { title: "Choose a setup guide", body: "Install a plugin preview or the published CLI.", href: "/getting-started" },
+        { title: "Assistant workflow", body: "Understand how guidance and scaffolding work together.", href: "/docs/agent-pack" },
+        { title: "Upgrades", body: "Inspect compatibility differences before migrating an existing app.", href: "/docs/upgrades" },
+      ] },
+    ],
+  },
   {
     slug: "",
     title: "Documentation",
@@ -37,9 +69,10 @@ export const docsPages: DocPage[] = [
     category: "Start",
     verifiedOn,
     blocks: [
-      { type: "lead", text: "Unstoppable Stack helps developers create local-first applications with direct peer communication and optional on-device AI. Start with the Pear Desktop baseline; capabilities outside that path carry an explicit maturity label." },
+      { type: "lead", text: "Unstoppable Stack helps developers create local-first applications with direct peer communication and optional on-device AI. Choose Claude Code, Codex or the raw CLI to build the Pear Desktop baseline. Capabilities outside that baseline carry an explicit maturity label." },
+      { type: "start-paths" },
       { type: "cards", items: [
-        { title: "Build the baseline", body: "Install the public CLI, configure an assistant workspace, run a desktop app, and verify local persistence.", href: "/getting-started" },
+        { title: "Packages and integrations", body: "One P2P library, direct upstream SDKs and optional applications.", href: "/docs/packages" },
         { title: "Understand the boundaries", body: "Learn what is local, what needs a reachable peer, and what the project does and does not retain.", href: "/docs/support" },
         { title: "Check compatibility", body: "Use one support table for platforms, features, and combinations instead of relying on promotional copy.", href: "/docs/compatibility" },
       ] },
@@ -54,20 +87,19 @@ export const docsPages: DocPage[] = [
   },
   {
     slug: "quickstart",
-    title: "Quickstart",
-    description: "The concise version of the supported Pear Desktop walkthrough.",
-    category: "Start",
-    verifiedOn,
+    title: "Choose your starting path",
+    description: "Install the Claude plugin, the Codex plugin or the raw CLI.",
+    category: "Get started",
+    verifiedOn: siteConfig.docsUpdatedOn,
     blocks: [
-      { type: "lead", text: "Use this path for the fewest dependencies. It creates a base app with local storage and peer networking; it does not require a model, payment setup, or Personal Node." },
-      { type: "steps", items: [
-        { title: "Check tools", body: "Use Node.js 20 or newer and npm. The generated project installs Electron and pear-runtime locally.", code: "node --version\nnpm --version" },
-        { title: "Install the released CLI", body: `The repository candidate is ${siteConfig.cli.candidateVersion}, but public docs remain pinned to the verified registry release.`, code: `${siteConfig.cli.installCommand}\n${siteConfig.cli.versionCommand}` },
-        { title: "Create an assistant workspace", body: "Choose the assistant you actually use; the no-assistant option is valid.", code: "us init coffee-workspace\ncd coffee-workspace" },
-        { title: "Scaffold the app", body: "Base P2P and Hyperbee storage are included automatically.", code: defaultScaffoldCommand },
-        { title: "Run it", body: "Run from the generated application folder.", code: "cd coffee-notes\nnpm install\nnpm run dev" },
+      { type: "lead", text: "Choose the tool you already use. All three paths lead to the same desktop baseline with local storage and peer networking. Plugin paths include a local preview download; the CLI installs from npm." },
+      { type: "start-paths" },
+      { type: "heading", text: "How the pieces fit" },
+      { type: "paragraph", text: "The plugins supply workflows and references. The CLI creates workspaces and apps. The consolidated P2P library owns pairing, permissions and replication; QVAC and wallet features use upstream SDKs directly. The P2P alpha is still unpublished, and wallet scaffolds remain stubs. Memory and Search are excluded from this release." },
+      { type: "cards", items: [
+        { title: "Packages and integrations", body: "Purpose, versions and publication status for every layer.", href: "/docs/packages" },
+        { title: "Compatibility", body: "Platform and feature maturity before adding capabilities.", href: "/docs/compatibility" },
       ] },
-      { type: "callout", title: "Need the full path?", body: "The Getting Started page includes a first change, persistence check, and symptom-based troubleshooting." },
     ],
   },
   {
@@ -123,7 +155,9 @@ export const docsPages: DocPage[] = [
     category: "Build",
     verifiedOn,
     blocks: [
-      { type: "lead", text: "us init writes tool-specific instructions and progressively loaded skills. It does not replace review, testing, or explicit user approval for consequential actions." },
+      { type: "lead", text: "Install the Claude or Codex plugin for portable workflows, or use us init for project-local guidance. Both delivery methods share the same maintained agent-pack source. The raw CLI also works without an assistant." },
+      { type: "start-paths" },
+      { type: "paragraph", text: "Plugin installation adds guidance, not the CLI or native dependencies. The entry skill checks the installed CLI catalog before scaffolding. Existing apps keep their recorded runtime and project instructions; updating the plugin does not migrate them." },
       { type: "steps", items: [
         { title: "Initialize", body: "Select Claude Code, Cursor, OpenCode, Codex, or none.", code: "us init my-workspace" },
         { title: "Scaffold first", body: "Create the smallest supported target before asking for feature work.", code: defaultScaffoldCommand },
@@ -188,7 +222,11 @@ export const docsPages: DocPage[] = [
     category: "Reference",
     verifiedOn,
     blocks: [
-      { type: "code", language: "bash", code: "us init [project-name]\nus scaffold app -p <platform> -n <name> [-f features]\nus scaffold list-platforms\nus scaffold list-features\nus doctor\nus doctor -p pear-desktop\nus research list\nus research run <experiment-id>\nus research scaffold-test" },
+      { type: "lead", text: `Published CLI ${siteConfig.cli.publishedVersion} exposes init, scaffold, doctor and node. The source candidate ${siteConfig.cli.candidateVersion} has a narrower minimal release with compatibility checks. Use the reference for your installed version.` },
+      { type: "code", language: "bash", code: "us --version\nus --help\nus init [project-name] --assistant <claude|codex|cursor|opencode|none>\nus scaffold app -p pear-desktop -n <name>\nus scaffold list-platforms\nus scaffold list-features\nus doctor -p pear-desktop" },
+      { type: "heading", text: "Candidate-only compatibility commands" },
+      { type: "paragraph", text: "The unpublished 0.4.0-beta.1 source adds the read-only commands below. They are absent from published 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
+      { type: "code", language: "bash", code: "us compatibility list -o <workspace>\nus compatibility check -o <app>" },
       { type: "heading", text: "Scaffold facts" },
       { type: "list", items: [
         "Platforms in source: pear-desktop, expo-mobile, and node-cli. The launch guide defaults to pear-desktop.",
@@ -236,7 +274,7 @@ export const docsPages: DocPage[] = [
       { type: "heading", text: "Logs and website" },
       { type: "paragraph", text: "The project does not add product analytics in this website source. That statement does not mean the hosting provider keeps no network or request logs. Generated apps may log runtime status and errors; developers should avoid writing prompts, secrets, wallet material, or application records to logs." },
       { type: "heading", text: "Get help" },
-      { type: "paragraph", text: "The repository and issue tracker are not yet anonymously accessible, so this draft does not publish a broken support action. Before launch, add a verified public destination. A useful report should include the CLI version, platform, exact command, expected result, and first relevant error with private data removed." },
+      { type: "paragraph", text: "Use the public GitHub issue tracker linked below. Include the CLI version, platform, exact command, expected result, and first relevant error with private data removed. For a plugin issue, include the assistant version and confirm whether catalog registration, installation or session activation failed." },
     ],
   },
   {
@@ -272,10 +310,12 @@ export function getDocMarkdown(page: DocPage) {
     if (block.type === "lead" || block.type === "paragraph") lines.push(block.text, "");
     if (block.type === "heading") lines.push(`## ${block.text}`, "");
     if (block.type === "list") lines.push(...block.items.map((item) => `- ${item}`), "");
-    if (block.type === "steps") block.items.forEach((item, index) => { lines.push(`${index + 1}. ${item.title}`, "", item.body, ""); if (item.code) lines.push("```bash", item.code, "```", ""); });
+    if (block.type === "steps") block.items.forEach((item, index) => { lines.push(`${index + 1}. ${item.title}`, "", item.body, ""); if (item.code) lines.push(`\`\`\`${item.language || "bash"}`, item.code, "```", ""); });
     if (block.type === "code") lines.push(`\`\`\`${block.language}`, block.code, "```", "");
     if (block.type === "callout") lines.push(`> ${block.title}: ${block.body}`, "");
-    if (block.type === "cards") block.items.forEach((item) => lines.push(`### ${item.title}`, "", item.body, ""));
+    if (block.type === "cards") block.items.forEach((item) => lines.push(`### ${item.title}`, "", item.body, "", ...(item.href ? [`[Read more](${item.href})`, ""] : [])));
+    if (block.type === "start-paths") gettingStartedPaths.forEach((path) => lines.push(`### ${path.title} — ${path.badge}`, "", path.description, "", `[${path.action}](${path.href})`, ""));
+    if (block.type === "actions") block.items.forEach((item) => lines.push(`[${item.label}](${item.href})`, ""));
   }
   return lines.join("\n").trim();
 }

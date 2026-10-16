@@ -1,4 +1,5 @@
 import { test } from 'node:test'
+import { release } from './release-config.mjs'
 import assert from 'node:assert/strict'
 import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, cpSync, symlinkSync } from 'node:fs'
 import { join } from 'node:path'
@@ -115,7 +116,7 @@ test('public catalogs resolve tracked packages and CLI instructions match the ca
   const guide = portable.get('skills/build-with-unstoppable/resources/install-cli.md').toString()
   assert(guide.includes('0.4.0-beta.1'))
   assert(guide.includes('not published'))
-  assert(guide.includes('git checkout e34f61dce6d9b1d3f823ae38d58b1856f8c2c896'))
+  assert(guide.includes(`git checkout ${release.cliSourceRef}`))
   assert(portable.has('LICENSE'))
   const metadata = JSON.parse(portable.get('plugin.json'))
   for (const key of ['logo', 'composerIcon']) {

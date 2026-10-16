@@ -1,4 +1,4 @@
-import { PeerRegistry } from '@unstoppable-stack/node-core'
+import { PeerRegistry } from '@unstoppable-stack/p2p'
 import { loadConfig, migrateConfig, saveConfig, validateConfig } from './config.js'
 import { atomicWriteFile, runtimeFs, runtimePath } from './runtime-files.js'
 

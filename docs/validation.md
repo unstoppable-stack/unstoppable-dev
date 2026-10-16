@@ -29,6 +29,13 @@ loading, native cancellation/reuse, or offline inference.
 
 ## Release artifacts and native acceptance
 
+The [canonical package preparation](public-release.md) tests the CLI beta and
+P2P alpha as installed tarballs outside the repository. The P2P notes example
+covers granted RPC/streaming, denied access, real replication, and offline
+replica restart. Its workflow also checks a Node 20 consumer. The allowlist,
+archive checks and exact artifact hashes keep deferred packages out of this
+release. This flow prepares packages; it does not publish them.
+
 The [public preview workflow](../.github/workflows/public-preview.yml) builds
 and tests the installed CLI artifact and generated desktop UI on macOS arm64.
 Its optional `real_model` input enables real-model and offline checks.
@@ -63,8 +70,8 @@ and discovery checks do not establish the quality of an assistant-driven app.
 
 Internal plans, copied research, sandbox results, and local assistant settings
 are ignored. CI fixtures live in `examples/`; public CI must not depend on
-ignored directories. Upstream reference checkouts are local maintainer material
-and are not included in the public repository.
+ignored directories. Upstream reference checkouts are local maintainer material and are not included
+in the public repository.
 
 Removing a file from the current tree does not remove older Git objects. Review
 the intended published history separately before changing repository visibility.

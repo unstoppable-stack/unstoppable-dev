@@ -115,13 +115,38 @@ describe('peer rows', () => {
       peers: [{ publicKey: KEY_A }, { publicKey: KEY_B }, { publicKey: 'c'.repeat(64) }],
       cores: [
         { owner: KEY_B, key: 'c1', paused: true },
-        { owner: 'c'.repeat(64), key: 'c2', paused: false }
+        {
+          owner: 'c'.repeat(64),
+          key: 'c2',
+          paused: false,
+          protection: { mode: 'mirror', state: 'protected' }
+        }
       ]
     }))
     assert.equal(connected.state, 'connected')
     assert.equal(paused.state, 'paused')
     assert.equal(paused.allPaused, true)
     assert.equal(isProtected.state, 'protected')
+  })
+
+  it('does not call pending, copying, metadata-only, or failed resources protected', () => {
+    const peers = [
+      { publicKey: KEY_A },
+      { publicKey: KEY_B },
+      { publicKey: 'c'.repeat(64) },
+      { publicKey: 'd'.repeat(64) }
+    ]
+    const rows = peerRows(status({
+      peers,
+      cores: [
+        { owner: KEY_A, key: 'pending', protection: { mode: 'mirror', state: 'pending' } },
+        { owner: KEY_B, key: 'copying', protection: { mode: 'mirror', state: 'syncing' } },
+        { owner: 'c'.repeat(64), key: 'metadata', protection: { mode: 'metadata-only', state: 'metadata-only' } },
+        { owner: 'd'.repeat(64), key: 'failed', protection: { mode: 'mirror', state: 'error' } }
+      ]
+    }))
+
+    assert.deepEqual(rows.map((row) => row.state), ['pending', 'copying', 'pending', 'error'])
   })
 
   it('surfaces the per-peer quota and its default', () => {

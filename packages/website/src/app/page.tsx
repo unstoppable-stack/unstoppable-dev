@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, BrainCircuit, CheckCircle2, Database, Laptop, Network, Server, Terminal } from "lucide-react";
+import { ArrowRight, BrainCircuit, CheckCircle2, Database, Network, Plug, Terminal } from "lucide-react";
+import { SetupChooser } from "@/components/setup-chooser";
 import { CodeBlock } from "@/components/code-block";
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
 
@@ -11,15 +12,15 @@ const benefits = [
 ];
 
 const included = [
-  { icon: Terminal, title: "CLI and agent pack", body: "Create a project and give your coding assistant stack-specific architecture, recipes, and constraints." },
-  { icon: Laptop, title: "Reusable app runtime", body: "Use tested Pear, Bare, Hyperswarm, Hyperbee, and QVAC integration patterns in generated projects." },
-  { icon: Server, title: "Deferred Personal Node", body: "Explore the alpha source separately. It is excluded from the core preview until packaging, trust, and status gates pass." },
+  { icon: Terminal, title: "CLI and assistant plugins", body: "Scaffold directly, or install the Claude and Codex plugin previews for guided workflows from one shared knowledge base." },
+  { icon: Network, title: "One P2P library", body: "Identity, pairing, permissions and capability calls, with replication under /sync. The consolidated alpha is still unpublished." },
+  { icon: Plug, title: "Upstream SDKs, directly", body: "Use QVAC for local inference and WDK for future wallet integration. Small lifecycle helpers stay inside generated apps; wallet scaffolds are stubs." },
 ];
 
 const faqs = [
   { question: "Does an app work offline?", answer: "Local UI and storage can keep working offline. Peer discovery, replication, and delegated inference need reachable peers; local inference works after its model is installed." },
   { question: "What does local AI require?", answer: "A compatible machine, disk space for the selected model, and an initial model download. Exact memory and disk guidance is model-specific and still being measured for the preview." },
-  { question: "Which coding assistants are supported?", answer: "The generated agent pack targets Claude Code, Cursor, OpenCode, and Codex. You can also create a project without assistant configuration." },
+  { question: "Which coding assistants are supported?", answer: "Claude Code and Codex have downloadable plugin previews and dedicated setup guides. The raw CLI also generates project guidance for Cursor and OpenCode, or works without an assistant." },
   { question: "Do I need a Personal Node?", answer: "No. The recommended app runs without it, and the current Personal Node alpha is deferred from the core preview while its release gates are completed." },
   { question: "Are payments available?", answer: "Not as a supported preview path. WDK integration is planned and the current generator surface is a stub, so this site does not present payments as shipped." },
   { question: "Does this eliminate every infrastructure cost?", answer: "No. It removes the mandatory application backend from the core architecture. Devices, model downloads, peer availability, website hosting, and any optional services still have real costs." },
@@ -34,13 +35,10 @@ export default function Home() {
           <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-4 py-1.5 text-xs font-medium text-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />{siteConfig.status}
           </div>
-          <h1 className="mx-auto mb-6 max-w-5xl text-5xl font-bold leading-[1.08] tracking-tight md:text-7xl">Build private apps with local AI and peer-to-peer sync.</h1>
-          <p className="mx-auto mb-10 max-w-3xl text-lg leading-relaxed text-text-secondary md:text-xl">Unstoppable Stack gives your AI coding assistant tested starters, implementation guides, and reusable components built with Tether and Holepunch technology.</p>
-          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link href="/getting-started" className="button-primary">Build your first app <ArrowRight className="h-4 w-4" /></Link>
-            <Link href="/showcase" className="button-secondary">See the example</Link>
-          </div>
-          <p className="mt-7 text-sm text-text-muted">Start with the verified desktop guide. Other capabilities are labeled by maturity.</p>
+          <h1 className="mx-auto mb-6 max-w-5xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl md:text-7xl">Build private apps with local AI and peer-to-peer sync.</h1>
+          <p className="mx-auto mb-10 max-w-3xl text-base leading-relaxed text-text-secondary sm:text-lg md:text-xl">Start with your coding assistant or work directly from the terminal. Choose the workflow that fits you, with local-first app starters, P2P capabilities and direct QVAC integration underneath.</p>
+          <SetupChooser />
+          <p className="mt-6 text-sm text-text-muted">Your workflow. The same stack. Switch paths as your project grows.</p>
         </div>
       </section>
 
@@ -69,15 +67,15 @@ export default function Home() {
 
       <section className="section border-t border-border bg-surface/40" aria-labelledby="build-title">
         <div className="section-inner grid gap-10 lg:grid-cols-2">
-          <div><p className="eyebrow">How to build</p><h2 id="build-title" className="section-title">From workspace to running app.</h2>
-            <ol className="mt-8 space-y-5">{[["Configure your assistant", "Run us init so the workspace includes stack-aware guidance."], ["Scaffold and run", "Create the supported Pear Desktop baseline, install its dependencies, and open it locally."], ["Extend deliberately", "Ask the assistant for one change at a time, using the included recipes and runtime boundaries."]].map(([title, body], index) => <li key={title} className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-background">{index + 1}</span><div><h3 className="font-semibold">{title}</h3><p className="mt-1 text-sm leading-6 text-text-secondary">{body}</p></div></li>)}</ol>
+          <div className="min-w-0"><p className="eyebrow">How to build</p><h2 id="build-title" className="section-title">From workspace to running app.</h2>
+            <ol className="mt-8 space-y-5">{[["Choose your starting path", "Install the Claude or Codex plugin preview, or use the raw CLI."], ["Scaffold and run", "Create the supported Pear Desktop baseline, install its dependencies, and open it locally."], ["Extend deliberately", "Ask the assistant for one change at a time, using the included recipes and runtime boundaries."]].map(([title, body], index) => <li key={title} className="flex gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-background">{index + 1}</span><div><h3 className="font-semibold">{title}</h3><p className="mt-1 text-sm leading-6 text-text-secondary">{body}</p></div></li>)}</ol>
           </div>
-          <div className="self-center"><CodeBlock code={defaultScaffoldCommand} /><p className="mt-3 text-xs leading-5 text-text-muted">This creates the base desktop app. Local AI is an optional follow-on; Personal Node remains outside the core preview.</p></div>
+          <div className="min-w-0 self-center"><CodeBlock code={defaultScaffoldCommand} /><p className="mt-3 text-xs leading-5 text-text-muted">This creates the base desktop app. Local AI is an optional follow-on; Personal Node remains outside the core preview.</p></div>
         </div>
       </section>
 
       <section className="section border-t border-border" aria-labelledby="included-title">
-        <div className="section-inner"><p className="eyebrow">What is included</p><h2 id="included-title" className="section-title">Three pieces with distinct jobs.</h2>
+        <div className="section-inner"><p className="eyebrow">What is included</p><h2 id="included-title" className="section-title">A small toolkit. Clear boundaries.</h2>
           <div className="mt-10 grid gap-5 md:grid-cols-3">{included.map((item) => <div key={item.title} className="card"><item.icon className="mb-5 h-6 w-6 text-accent" /><h3 className="mb-2 text-lg font-semibold">{item.title}</h3><p className="text-sm leading-6 text-text-secondary">{item.body}</p></div>)}</div>
         </div>
       </section>
@@ -94,7 +92,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="section border-t border-border text-center"><div className="section-inner max-w-3xl"><CheckCircle2 className="mx-auto mb-5 h-8 w-8 text-accent" /><h2 className="section-title">Build the supported desktop baseline.</h2><p className="section-copy mx-auto mb-8">Follow one path, see what the CLI creates, and add capabilities only when the base app works.</p><Link href="/getting-started" className="button-primary">Open the quickstart <ArrowRight className="h-4 w-4" /></Link></div></section>
+      <section className="section border-t border-border text-center"><div className="section-inner max-w-3xl"><CheckCircle2 className="mx-auto mb-5 h-8 w-8 text-accent" /><h2 className="section-title">Start where you already work.</h2><p className="section-copy mx-auto mb-8">Find the setup that fits your tools, whether you build with an assistant or directly from the terminal.</p><Link href="/getting-started" className="button-primary">Explore setup options <ArrowRight className="h-4 w-4" /></Link></div></section>
     </div>
   );
 }

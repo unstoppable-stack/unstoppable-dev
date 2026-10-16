@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { createRequire } from 'node:module'
-import { readFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdtempSync, readFileSync, realpathSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, it } from 'node:test'
 import { findPackagedExecutable } from '../scripts/packaged-paths.mjs'
 
@@ -12,6 +14,25 @@ const forgeSource = readFileSync(new URL('../forge.config.cjs', import.meta.url)
 const smokeSource = readFileSync(new URL('../scripts/packaged-smoke.mjs', import.meta.url), 'utf8')
 
 describe('Electron packaging contract', () => {
+  it('stages resolvable P2P and internal AI exports without the removed packages or source symlinks', async () => {
+    const directory = realpathSync(mkdtempSync(join(tmpdir(), 'node-packaging-')))
+    try {
+      await forge.hooks.packageAfterPrune({}, directory, '', process.platform, process.arch)
+      const staged = createRequire(join(directory, 'package.json'))
+      for (const entry of ['@unstoppable-stack/p2p', '@unstoppable-stack/p2p/sync', 'unstoppable-node/internal/ai', 'unstoppable-node/internal/qvac-runtime']) {
+        const file = staged.resolve(entry)
+        assert(file.startsWith(directory), `${entry} must resolve inside the packaged application`)
+        assert.equal(lstatSync(file).isFile(), true)
+      }
+      for (const name of ['unstoppable-node', '@unstoppable-stack/p2p']) {
+        assert.equal(lstatSync(join(directory, 'node_modules', name)).isSymbolicLink(), false)
+      }
+      for (const name of ['node-core', 'node-caps-sync', 'node-caps-ai']) {
+        assert.equal(existsSync(join(directory, 'node_modules/@unstoppable-stack', name)), false)
+      }
+    } finally { rmSync(directory, { recursive: true, force: true }) }
+  })
+
   it('keeps the Bare worker outside ASAR and defines native installers', () => {
     assert.equal(forge.packagerConfig.asar, false)
     assert.equal(typeof forge.hooks.packageAfterPrune, 'function')

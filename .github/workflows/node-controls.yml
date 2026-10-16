@@ -2,10 +2,10 @@ name: Node Trust and Resource Controls
 
 on:
   pull_request:
-    paths: ['packages/node/**', 'packages/node-core/**', 'packages/node-caps-sync/**', 'packages/node-caps-ai/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
+    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
   push:
     branches: [main]
-    paths: ['packages/node/**', 'packages/node-core/**', 'packages/node-caps-sync/**', 'packages/node-caps-ai/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
+    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
   workflow_dispatch:
 
 permissions:
@@ -34,12 +34,12 @@ jobs:
           node-version: '22'
       - name: Install runtime and capability dependencies
         run: |
-          for package in node-core node-caps-sync node-caps-ai node; do
+          for package in p2p node; do
             npm ci --prefix "packages/$package"
           done
       - name: Exercise trust, grants, admission, cancellation and quotas
         # Serialize suites: their local DHT bootstrappers select ephemeral ports.
-        run: node --test --test-force-exit --test-concurrency=1 --test-timeout=120000 packages/node-core/test/*.test.js packages/node-caps-sync/test/*.test.js packages/node-caps-ai/test/*.test.js packages/node/test/*.test.js > node-controls.log 2>&1
+        run: node --test --test-force-exit --test-concurrency=1 --test-timeout=120000 packages/p2p/test/*.test.js packages/p2p/test/sync/*.test.js packages/node/test/*.test.js > node-controls.log 2>&1
       - uses: actions/upload-artifact@v4
         if: always()
         with:

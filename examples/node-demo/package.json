@@ -14,6 +14,6 @@
     "corestore": "^7.8.0",
     "hyperbee": "^2.27.3",
     "hyperswarm": "^4.17.0",
-    "@unstoppable-stack/node-core": "file:../../packages/node-core"
+    "@unstoppable-stack/p2p": "file:../../packages/p2p"
   }
 }

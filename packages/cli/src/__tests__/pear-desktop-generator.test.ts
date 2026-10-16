@@ -320,15 +320,15 @@ describe('pear-desktop generator', () => {
   })
 
   describe('node-sync feature', () => {
-    it('adds @unstoppable-stack/node-core dependency', () => {
+    it('adds @unstoppable-stack/p2p dependency', () => {
       const files = fileMap(make(['node-sync']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeDefined()
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeDefined()
     })
 
     it('wires node discovery into the worker after db.ready()', () => {
       const worker = fileMap(make(['node-sync']))['worker.js']
-      expect(worker).toContain("from '@unstoppable-stack/node-core'")
+      expect(worker).toContain("from '@unstoppable-stack/p2p'")
       expect(worker).toContain('createNode(')
       expect(worker).toContain('discover(')
       expect(worker).toContain("service: 'node-sync'")
@@ -351,11 +351,11 @@ describe('pear-desktop generator', () => {
       expect(worker).toContain('appNode.close()')
     })
 
-    it('bare variant does not include node-core', () => {
+    it('bare variant does not include P2P runtime', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/node-core']).toBeUndefined()
-      expect(files['worker.js']).not.toContain('@unstoppable-stack/node-core')
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeUndefined()
+      expect(files['worker.js']).not.toContain('@unstoppable-stack/p2p')
     })
   })
 

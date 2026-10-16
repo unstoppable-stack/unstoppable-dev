@@ -1,9 +1,11 @@
 # unstoppable-node
 
-**Development alpha:** Personal Node remains outside the public desktop preview. The 0.6 packages below are unpublished; use the source or the tested tarball workflow until a release is approved.
-
 > Personal sync node for [Unstoppable Stack](https://unstoppable-stack.dev) apps —
-> replicates, backs up, and seeds your P2P data.
+> replicates and seeds declared P2P data.
+
+> **Deferred alpha:** the Personal Node is outside the core public preview.
+> Registration starts replication; only a resource reported as `protected` has
+> a locally verified copy. Export/import is settings metadata, not app-data backup.
 
 A long-running Node.js / Bare process that:
 
@@ -14,14 +16,13 @@ A long-running Node.js / Bare process that:
 - Persists a registry of paired peers under its storage directory
 
 As of 0.6 this is a **composition, not an implementation**: it is
-[`@unstoppable-stack/node-core`](../node-core) with the
-[sync](../node-caps-sync) and [ai](../node-caps-ai) capability packs installed,
-plus the CLI, config, and backup surface. Any app can build the same thing —
-that is the point. See the [shared P2P runtime](../node-core/README.md) for its API.
+[`@unstoppable-stack/p2p`](../p2p) with its
+[sync module](../p2p/docs/sync.md) and an [internal QVAC adapter](docs/ai.md),
+plus the CLI, config, and settings export/import surface. Any app can build the same thing —
+that is the point. See the [P2P library](../p2p/README.md) for the shared runtime API.
 
-You don't usually run `unstoppable-node` directly — the
-[`us` CLI](https://www.npmjs.com/package/@unstoppable-stack/cli) ships a
-friendlier wrapper:
+Internal/full CLI builds can manage `unstoppable-node` with a wrapper. Those
+commands are not part of the minimal public-preview CLI:
 
 ```bash
 us node start --ai-mock    # spawn in background
@@ -136,7 +137,7 @@ Standalone/headless Personal Node denies direct unknown-peer pairing unless `app
 
 The desktop’s embedded headless binary follows the same policy. Its `--dev-auto-approve` flag is solely an explicit development/test opt-in; smoke fixtures supply it deliberately. Local discovery and self-reported device names do not prove local identity; `autoApproveLocal` grants no bypass.
 
-The shared bus enforces request/frame/stream limits documented in [node-core](../node-core/README.md). AI additionally admits one completion, at most 64 text messages / 64 KiB prompt, 256 KiB output, and 60 seconds of inference. Native cancellation must finish before admission is reusable. Settings exports retain revoked keys; importing an older export without this field preserves existing denials.
+The shared bus enforces request/frame/stream limits documented in [P2P](../p2p/README.md). AI additionally admits one completion, at most 64 text messages / 64 KiB prompt, 256 KiB output, and 60 seconds of inference. Native cancellation must finish before admission is reusable. Settings exports retain revoked keys; importing an older export without this field preserves existing denials.
 
 ## Resource manifests
 
@@ -154,6 +155,20 @@ checkpoints, remaining blocks/bytes where measurable, completion time, and the
 last mirror error. The Node reports `protected` only after it has observed a
 source peer and verified the current checkpoint locally.
 
+## Disconnecting, unpairing, and retained data
+
+- A disconnect only pauses communication. It does not erase either device.
+- Pausing an app stops its announcements; already downloaded blocks remain.
+- Unpairing (the desktop **Remove app** action) revokes the peer, forgets its
+  registered resources, and stops their replication. Already downloaded blocks
+  still remain in the Node's storage.
+- This alpha has no supported per-app purge. Do not use **Remove app** as an
+  erasure control. If a test profile must be discarded, stop the Node first and
+  remove the entire configured storage directory (`~/.unstoppable-node` for the
+  default headless CLI; the desktop's Electron user-data `node` directory for
+  the packaged app). That resets every paired app and Node-local setting, so
+  keep the source app's data and any needed settings export elsewhere first.
+
 ## Quickstart
 
 ```bash
@@ -162,7 +177,7 @@ npx unstoppable-node start --ai-mock
 ```
 
 In another terminal, run an app built on
-[`@unstoppable-stack/node-core`](../node-core) that calls
+[`@unstoppable-stack/p2p`](../p2p) that calls
 `discover()` and then `peer.stream('ai', 'completion.stream', …)`. The node
 pairs with the app, replicates the resources it registers, and streams mock
 inference without downloading a model.
@@ -189,11 +204,13 @@ Optional knobs:
 | `NODE_DISCOVERY_WARMUP_MS`   | Daemon ready warmup delay, defaults to 0      |
 | `NODE_DISCOVERY_TOPIC`       | `isolated` or `default`, defaults to isolated |
 
-Real QVAC validation is opt-in because it requires `@qvac/sdk` and a model
-source. Use a local path, preset, or URL accepted by QVAC:
+Real QVAC validation lives with the AI capability pack and is opt-in because it
+requires `@qvac/sdk` and a model source. Use a local path, preset, or URL
+accepted by QVAC:
 
 ```bash
-npm install @qvac/sdk
+cd ../node
+npm install --no-save @qvac/sdk@0.15.0
 QVAC_MODEL_SRC=/path/or/url/to/model npm run test:qvac
 ```
 
@@ -211,4 +228,8 @@ MIT
 
 ### Local package development
 
-Production dependencies use version ranges. The same packages appear as local `file:` development dependencies so unpublished 0.6 work remains installable from source. Install node-core, node-caps-sync and node-caps-ai first, then node. `node scripts/node-package-smoke.mjs` from the repository root packs all four and verifies a paired P2P consumer outside the checkout. Passing this test does not publish the alpha packages or establish standalone npm availability. Real Node inference needs Node 22.17+ and SDK 0.21.0 installed alongside node-caps-ai when developing through local links.
+Source development uses a local P2P link. Install P2P and then Personal Node.
+`node scripts/node-package-smoke.mjs` packs the two release artifacts with the
+known link replaced by a matching semver range, then verifies them in an
+isolated consumer. The AI adapter lives in `src/ai/`; native QVAC inference is
+an opt-in host dependency and requires its own acceptance checks.

@@ -4,11 +4,15 @@ on:
   pull_request:
     paths:
       - "packages/website/**"
+      - "packages/agent-pack/src/**"
+      - "packages/agent-pack/scripts/build-plugin.mjs"
       - ".github/workflows/website-ci.yml"
   push:
     branches: [main]
     paths:
       - "packages/website/**"
+      - "packages/agent-pack/src/**"
+      - "packages/agent-pack/scripts/build-plugin.mjs"
       - ".github/workflows/website-ci.yml"
 
 permissions:
@@ -22,7 +26,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Enable pnpm
         run: corepack enable
       - name: Install dependencies

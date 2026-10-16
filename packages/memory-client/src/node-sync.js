@@ -1,4 +1,4 @@
-import { createNode as defaultCreateNode } from '@unstoppable-stack/node-core'
+import { createNode as defaultCreateNode } from '@unstoppable-stack/p2p'
 import Hyperswarm from 'hyperswarm'
 
 // Connects a memory engine to whatever Personal Node is running on this

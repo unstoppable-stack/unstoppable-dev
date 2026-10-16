@@ -308,7 +308,7 @@ ${replicateLine}
   if (!multiWriter) cleanupCode.push(`  if (store) await store.close()`)
 
   if (has(opts, 'node-sync')) {
-    imports.push(`import { createNode } from '@unstoppable-stack/node-core'`)
+    imports.push(`import { createNode } from '@unstoppable-stack/p2p'`)
     moduleState.push(`let appNode = null`)
     moduleState.push(`let nodePeer = null`)
     initCode.push(`

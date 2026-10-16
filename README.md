@@ -20,20 +20,39 @@ The Unstoppable Stack is a developer toolkit for building private apps with loca
 
 The current source separates assistant setup from app generation: `us init` creates an assistant-configured workspace, then `us scaffold app` generates a runnable application inside it.
 
-```bash
-us init my-workspace --assistant codex
-cd my-workspace
-us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
-cd coffee-assistant
-npm install
-npm run dev
-```
+Start with [Claude Code](https://unstoppable-stack.dev/docs/start/claude),
+[Codex](https://unstoppable-stack.dev/docs/start/codex), or the
+[raw CLI](https://unstoppable-stack.dev/docs/start/cli). Each path creates the same
+local-first desktop baseline; the plugin guides include the separate CLI install.
+
 
 > **Release status:** the repository is preparing a developer preview. The exact package tag and default local-AI journey are not approved until artifact and real-model validation pass. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
 
 Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the same agent-pack source. The recommended Codex path still requires an independent pilot before it becomes a support claim.
 
 **Full CLI reference:** [`packages/cli/README.md`](./packages/cli/README.md) — every command, every flag, troubleshooting, and dev setup.
+
+## Packages and integrations
+
+The public architecture is the CLI, one P2P library, and Claude/Codex plugin
+packages built from the shared agent pack. Personal Node is an optional application.
+
+- `@unstoppable-stack/cli`: assistant workspace setup, scaffolding and checks.
+- `@unstoppable-stack/p2p`: identity, pairing, grants, capability calls and streaming;
+  its `/sync` entry adds replication without a second package.
+- QVAC is used directly through its upstream SDK/inference packages. Small tested
+  lifecycle helpers remain internal to generated apps; there is no public AI wrapper.
+- Wallets will use the upstream WDK SDK directly. Current wallet scaffolds are stubs.
+- Memory and Search are excluded from this release. Their source is retained.
+
+The new P2P package and reorganized Personal Node are unpublished alpha source.
+Published CLI `0.3.0` and Node `0.4.0` retain their existing APIs. See
+[package architecture and migration](docs/package-architecture.md) for status,
+imports, local development and release assembly. See
+[plugin setup](packages/agent-pack/PLUGIN.md) for local Claude/Codex previews.
+The [P2P notes example](examples/p2p-notes/README.md) consumes the consolidated
+library directly. [Canonical release preparation](docs/public-release.md)
+tests both public npm artifacts and builds the plugin download.
 
 ## Why?
 
@@ -55,9 +74,29 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 
 ## Quick Start
 
-Use the source-accurate workspace and scaffold commands shown above. The public installation command will be frozen only after the final CLI artifact succeeds in an isolated consumer environment; do not assume the registry's `latest` tag refers to this source candidate.
+| Start with | Install action | Availability |
+| --- | --- | --- |
+| Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Downloadable local preview; marketplace listing pending |
+| Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Downloadable local preview; marketplace listing pending |
+| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Matching `0.4.0-beta.1` source preview; npm `0.3.0` is the earlier API |
 
-For every command, flag, and troubleshooting tip, see the full CLI reference: [`packages/cli/README.md`](./packages/cli/README.md).
+For the raw CLI path, install the matching preview using the linked guide
+(source build until the beta is published), then:
+
+```bash
+us --version
+us init coffee-workspace --assistant none --no-install
+cd coffee-workspace
+us scaffold app -p pear-desktop -n coffee-notes
+cd coffee-notes
+npm install
+npm run dev
+```
+
+Use `--assistant claude` or `--assistant codex` instead of `none` for generated
+project guidance. The source candidate `0.4.0-beta.1` and P2P alpha are unpublished;
+use version-matched commands. The plugin download adds guidance, not models or
+native dependencies. See the [package structure](docs/package-architecture.md).
 
 ### Proposed first assistant prompt
 
@@ -71,14 +110,14 @@ The core of the project. A structured knowledge base that teaches AI assistants 
 packages/agent-pack/src/
 ├── core/               # Architecture, patterns, verified package versions
 ├── modules/            # 14 module docs (Pear, Bare, Hyperswarm, QVAC, ...)
-├── skills/             # 24 tiered skills organized by capability
+├── skills/             # Task-specific implementation workflows
 │   ├── setup-pear-desktop/    # Platform: Desktop app with worker pattern
 │   ├── add-p2p-networking/    # P2P: Hyperswarm peer discovery
 │   ├── add-ai-chat/           # AI: QVAC chat with tool calling
 │   ├── add-database/          # Data: HyperDB structured storage
 │   └── ...
 ├── recipes/            # 24 focused patterns (kv-cache, NDJSON, encryption, ...)
-├── components/         # Reusable TypeScript (chat session, swarm manager, ...)
+├── components/         # Reusable integration components
 └── hooks/              # Auto-activation rules
 ```
 
@@ -111,11 +150,13 @@ unstoppable-stack/
 ├── packages/
 │   ├── cli/              # Assistant setup, scaffolding, diagnostics
 │   ├── agent-pack/       # Canonical assistant guidance and plugin builders
-│   ├── website/          # Next.js site
+│   ├── p2p/              # P2P capabilities and /sync replication
+│   ├── node/             # Optional Personal Node app; internal QVAC adapter
+│   ├── runtime-ai/       # Private lifecycle helpers copied into generated apps
+│   ├── website/          # unstoppable-stack.dev — Next.js site
 │   ├── runtime-ai/       # Maintained desktop/Node AI lifecycle
-│   ├── node-core/        # Experimental P2P runtime
-│   ├── node-caps-*/      # Experimental sync and AI capability packs
-│   ├── node/             # Personal Node app (alpha)
+│   ├── p2p/              # P2P library (alpha)
+│   ├── node/             # Personal Node composition (alpha)
 │   ├── node-desktop/     # Personal Node desktop shell (alpha)
 │   └── memory*/          # Deferred Memory experiments
 ├── examples/             # First-party examples and smoke fixtures
@@ -153,7 +194,7 @@ All agent pack content lives in `packages/agent-pack/src/`. After making changes
 node scripts/sync-stack-assets.mjs
 
 # Rebuild CLI from its package directory
-cd packages/cli && pnpm build
+pnpm --dir packages/cli build
 ```
 
 ## Validated Patterns
@@ -171,7 +212,7 @@ See [validation and release checks](./docs/validation.md) for test scope and rem
 
 ## Release plan
 
-The core preview focuses on assistant workspace setup and app scaffolding. See [SUPPORT.md](./SUPPORT.md) for scope and [validation and release checks](./docs/validation.md) for release gates. Internal planning, research downloads, local test builds, and upstream reference checkouts remain local maintainer material.
+The core preview focuses on assistant workspace setup and app scaffolding. See [SUPPORT.md](./SUPPORT.md) for scope and [validation and release checks](./docs/validation.md) for release gates. Internal planning, research downloads, and local test builds are kept outside the tracked source tree.
 
 ## Built With
 
@@ -184,7 +225,3 @@ The core preview focuses on assistant workspace setup and app scaffolding. See [
 
 [MIT](./LICENSE). See [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting a
 change and [SECURITY.md](./SECURITY.md) for private vulnerability reporting.
-
-## Coding harness plugin
-
-Installable Codex and Claude Code/Claude Desktop Code-tab workflows are being prepared for public preview. See [plugin installation](packages/agent-pack/PLUGIN.md) and the [matching CLI setup](packages/agent-pack/src/skills/build-with-unstoppable/resources/install-cli.md). The npm latest CLI is not yet the maintained-contract candidate; use the pinned source instructions until that candidate is published.

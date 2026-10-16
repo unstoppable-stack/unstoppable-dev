@@ -1,5 +1,5 @@
 # Delegated AI boundaries
 
-The deferred node-caps-ai pack is a separate experimental capability transport. It is not the local AI session or current QVAC distributed-GPU RPC. Validate its installed engine version, grants, resource policy and native cancellation before use. Do not generate the removed provider/delegate APIs.
+Personal Node's internal AI adapter exposes inference over granted P2P methods and remains experimental. It is not the local AI session or current QVAC distributed-GPU RPC. Validate its installed engine version, grants, resource policy and native cancellation before use. Do not generate the removed provider/delegate APIs.
 
 Select the installed app profile before using https://docs.qvac.tether.io/sdk/js-ts-sdk/ and https://docs.qvac.tether.io/sdk/reference/release-notes/.
