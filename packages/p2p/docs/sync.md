@@ -1,8 +1,7 @@
 # @unstoppable-stack/p2p/sync
 
-> **Release status:** deferred alpha. This module is not part of the core
-> developer preview. Replication is not a complete or independently verified
-> backup, and the npm installation path is not approved yet.
+> **Release status:** part of the unpublished P2P `0.6.0-alpha.1` candidate.
+> Replication is not a complete or independently verified backup.
 
 > Data and file replication as a capability pack for
 > [`@unstoppable-stack/p2p`](https://www.npmjs.com/package/@unstoppable-stack/p2p).
@@ -14,9 +13,14 @@ this module, although npm installs its storage dependencies.
 
 ## Install
 
+After publication:
+
 ```bash
-npm install @unstoppable-stack/p2p
+npm install @unstoppable-stack/p2p@0.6.0-alpha.1
 ```
+
+Until then, use a locally packed tarball. The repository's P2P notes example
+exercises this module with actual data and offline replica restart.
 
 ## Usage
 
@@ -30,22 +34,29 @@ const node = createNode({
 })
 
 await node.listen()
+const invite = await node.createInvite({
+  grants: { sync: ['manifest.replace', 'status', 'usage'] },
+  uses: 1
+})
+console.log(invite.code)
 ```
 
 Pass an existing `store` instead of a `storage` path when the host app already
 has a Corestore — the pack will not close a store it does not own.
 
-From a peer:
+From an app that exposes its data for replication, for example by attaching
+`syncPack({ store: appStore })` to its own node, redeem the shared invitation.
+Use each resource's actual core key in the manifest:
 
 ```js
-const peer = await app.connect(nodePublicKey)
+const peer = await app.pair(inviteCode)
 
 await peer.call('sync', 'manifest.replace', {
   manifest: {
     schemaVersion: 1,
     resources: [
-      { id: 'data', kind: 'hyperbee', key: hex, name: 'Data', protection: { mode: 'mirror' } },
-      { id: 'files', kind: 'hyperdrive', key: hex, name: 'Files', protection: { mode: 'mirror' } }
+      { id: 'data', kind: 'hyperbee', key: dataCoreKey, name: 'Data', protection: { mode: 'mirror' } },
+      { id: 'files', kind: 'hyperdrive', key: driveCoreKey, name: 'Files', protection: { mode: 'mirror' } }
     ]
   }
 })

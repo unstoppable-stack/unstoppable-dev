@@ -49,14 +49,18 @@ const node = createNode({
   capabilities: [notesPack({ db })]
 })
 
-await node.listen()          // reachable by public key; accepts pair requests
-console.log(node.publicKey)  // stable across restarts — share this
+await node.listen()
+const invite = await node.createInvite({
+  grants: { notes: ['search', 'watch'] },
+  uses: 1
+})
+console.log(invite.code)     // share with the intended peer
 ```
 
 Another app pairs with it and calls the capability:
 
 ```js
-const peer = await other.connect(publicKey)
+const peer = await other.pair(inviteCode) // the code shared by the host
 const { hits } = await peer.api.notes.search({ q: 'coffee' })
 
 for await (const change of peer.api.notes.watch({ prefix: 'a' })) {
@@ -111,6 +115,8 @@ Grants are **per direction**: each side decides what the other may call.
   what the host actually hosts.
 - An ungranted call is rejected with `NOT_GRANTED` *before* method resolution,
   so a peer cannot enumerate capabilities by reading error codes.
+
+After the initial invitation or operator approval, reconnect by the known key:
 
 ```js
 const peer = await node.connect(key, { requested: { notes: ['search'] } })
