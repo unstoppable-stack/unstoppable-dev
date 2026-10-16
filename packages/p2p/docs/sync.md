@@ -1,6 +1,6 @@
 # @unstoppable-stack/p2p/sync
 
-> **Release status:** part of the unpublished P2P `0.6.0-alpha.1` candidate.
+> **Release status:** part of the published P2P `0.6.0-alpha.1` alpha.
 > Replication is not a complete or independently verified backup.
 
 > Data and file replication as a capability pack for

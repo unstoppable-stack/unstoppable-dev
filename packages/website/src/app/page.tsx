@@ -13,7 +13,7 @@ const benefits = [
 
 const included = [
   { icon: Terminal, title: "CLI and assistant plugins", body: "Scaffold directly, or install the Claude and Codex plugin previews for guided workflows from one shared knowledge base." },
-  { icon: Network, title: "One P2P library", body: "Identity, pairing, permissions and capability calls, with replication under /sync. The consolidated alpha is still unpublished." },
+  { icon: Network, title: "One P2P library", body: "Identity, pairing, permissions and capability calls, with replication under /sync. Install the published alpha directly from npm." },
   { icon: Plug, title: "Upstream SDKs, directly", body: "Use QVAC for local inference and WDK for future wallet integration. Small lifecycle helpers stay inside generated apps; wallet scaffolds are stubs." },
 ];
 

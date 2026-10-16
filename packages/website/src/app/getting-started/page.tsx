@@ -21,7 +21,7 @@ export default function GettingStartedPage() {
             <p className="text-lg leading-8 text-text-secondary">Start with a plugin for your coding assistant or use the CLI directly. Choose a setup below to build a desktop app with local storage and peer networking.</p>
           </div>
           <GettingStartedCards />
-          <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-6 text-text-muted">Claude and Codex use downloadable plugin previews. Each guide includes the matching CLI setup; use the pinned source candidate until its npm release is available.</p>
+          <p className="mx-auto mt-6 max-w-3xl text-center text-sm leading-6 text-text-muted">Claude and Codex use downloadable plugin previews. Each guide includes the matching CLI setup; install the published CLI beta from npm.</p>
         </div>
       </section>
       <section className="section border-b border-border">
@@ -35,7 +35,7 @@ export default function GettingStartedPage() {
           <div className="rounded-2xl border border-border bg-surface p-7">
             <h2 className="mb-5 text-xl font-semibold">Your first milestone</h2>
             <ul className="space-y-4">{["Open a Pear Desktop app from its generated folder.", "Save an entry and find it after a restart.", "Make one small change and check the result."].map((item) => <li key={item} className="flex gap-3 text-sm leading-6 text-text-secondary"><CheckCircle2 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-accent" />{item}</li>)}</ul>
-            <p className="mt-6 border-t border-border pt-5 text-sm leading-6 text-text-muted">Add local AI once the baseline works. Personal Node is optional and deferred; the consolidated P2P alpha is unpublished. Wallet scaffolds are stubs, and Memory and Search are excluded from this release.</p>
+            <p className="mt-6 border-t border-border pt-5 text-sm leading-6 text-text-muted">Add local AI once the baseline works. Personal Node is optional and deferred; the consolidated P2P alpha is available on npm. Wallet scaffolds are stubs, and Memory and Search are excluded from this release.</p>
           </div>
         </div>
       </section>

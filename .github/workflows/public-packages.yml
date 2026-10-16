@@ -62,7 +62,9 @@ jobs:
           npm ci --prefix examples/p2p-notes
       - name: Build and test the exact public artifacts
         run: |
-          node scripts/prepare-public-release.mjs release-artifacts
+          options=()
+          if [ "$GITHUB_EVENT_NAME" != "workflow_dispatch" ]; then options+=(--source-check); fi
+          node scripts/prepare-public-release.mjs release-artifacts "${options[@]}"
           node scripts/public-release.mjs verify release-artifacts --require-clean
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()

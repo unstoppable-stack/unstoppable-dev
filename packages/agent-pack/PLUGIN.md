@@ -22,7 +22,7 @@ codex plugin add unstoppable-stack@unstoppable-stack
 
 Use the supported desktop plugin directory for installation if the installed CLI does not expose `plugin add`. Start a new target-workspace chat after enabling the plugin. Repository catalogs and official public directories are different distribution channels.
 
-Read [CLI installation](src/skills/build-with-unstoppable/resources/install-cli.md) before building an app. npm currently serves CLI 0.3.0; the matching 0.4.0-beta.1 candidate is not published, so this guide supplies an immutable source install. Never substitute `latest` for that candidate. The same guide is bundled in both packages and generated from release metadata.
+Read [CLI installation](src/skills/build-with-unstoppable/resources/install-cli.md) before building an app. Install the published CLI beta with `npm install -g @unstoppable-stack/cli@0.4.0-beta.1`. npm `latest` remains on earlier 0.3.0; do not substitute it for this workflow. The immutable source install remains an optional fallback. The same guide is bundled in both packages and generated from release metadata.
 
 For public preview updates, use `claude plugin marketplace update unstoppable-stack` then `claude plugin update unstoppable-stack@unstoppable-stack`, or `codex plugin marketplace upgrade unstoppable-stack` followed by your supported plugin update/reinstall flow. Restart the session. If transitioning from the development catalog, remove only the old `unstoppable-stack@unstoppable-stack-dev` plugin after the public one is working; retain unrelated catalogs/plugins and app instructions.
 

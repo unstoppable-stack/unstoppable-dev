@@ -1,10 +1,14 @@
 import { execFileSync } from 'node:child_process'
+import assert from 'node:assert/strict'
 import { closeSync, copyFileSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { verifyPublicRelease } from './public-release.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const flags = process.argv.slice(3)
+assert(flags.every(flag => flag === '--source-check'), 'Usage: prepare-public-release.mjs <directory> [--source-check]')
+const sourceCheck = flags.includes('--source-check')
 const directory = resolve(process.argv[2] || join(root, 'release-artifacts', new Date().toISOString().replaceAll(':', '-')))
 mkdirSync(join(directory, 'logs'), { recursive: true })
 const checks = []
@@ -39,13 +43,16 @@ const record = verifyPublicRelease(directory, { requireTest: true })
 for (const artifact of record.artifacts) {
   run(`dry-run-${artifact.tag}`, 'npm', ['publish', join(directory, artifact.file), '--dry-run', '--ignore-scripts', '--access', 'public', '--tag', artifact.tag])
 }
-node('registry', ['scripts/public-release.mjs', 'preflight', directory])
+// Ordinary source CI must allow edits after a version has been published.
+// Manual release preparation and the publish command keep strict registry checks.
+if (sourceCheck) checks.push({ name: 'registry', status: 'skipped', reason: 'Source validation only; publication rechecks registry version and integrity.' })
+else node('registry', ['scripts/public-release.mjs', 'preflight', directory])
 node('plugin-download', ['packages/website/scripts/prepare-plugin-download.mjs'])
 const plugin = JSON.parse(readFileSync(join(root, 'packages/website/public/downloads/plugin-release.json')))
 mkdirSync(join(directory, 'plugins'), { recursive: true })
 for (const name of [plugin.filename, 'plugin-release.json']) copyFileSync(join(root, 'packages/website/public/downloads', name), join(directory, 'plugins', name))
 writeFileSync(join(directory, 'preparation.json'), JSON.stringify({
-  checkedAt: new Date().toISOString(), status: 'passed', commit: record.commit, workingTree: record.workingTree,
+  checkedAt: new Date().toISOString(), status: 'passed', scope: sourceCheck ? 'source-validation' : 'release-candidate', commit: record.commit, workingTree: record.workingTree,
   artifacts: record.artifacts, plugin, checks,
   note: 'Preparation only. A clean reviewed commit, native acceptance and npm publishing authorization remain separate gates.',
 }, null, 2) + '\n')
