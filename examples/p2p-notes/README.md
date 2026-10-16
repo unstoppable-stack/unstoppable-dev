@@ -14,10 +14,10 @@ npm test --prefix examples/p2p-notes
 npm run demo --prefix examples/p2p-notes
 ```
 
-The source dependency is a local link while the alpha is unpublished. To verify
-what an npm consumer receives, run the [canonical release preparation](../../docs/public-release.md).
-It copies this example outside the checkout and installs the exact release
-tarballs instead of the link.
+Repository development uses a local dependency link. Public consumers can install
+`@unstoppable-stack/p2p@0.6.0-alpha.1` directly. The
+[canonical release checks](../../docs/public-release.md) copy this example outside
+the checkout and test exact tarballs or public-registry versions instead of the link.
 
 The demo runs two peers over an isolated loopback DHT, replicates a real note,
 disconnects the writer, and reads the replica. The tests additionally check

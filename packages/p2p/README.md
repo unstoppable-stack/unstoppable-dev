@@ -1,6 +1,6 @@
 # @unstoppable-stack/p2p
 
-> **Release status:** unpublished `0.6.0-alpha.1` candidate for the canonical
+> **Release status:** published `0.6.0-alpha.1` alpha for the canonical
 > public package release. The package is experimental; preparation and tests
 > are separate from publication and production acceptance.
 
@@ -15,6 +15,10 @@ One package provides capability calls and optional replication. The root entry
 does not load the storage implementation; import `@unstoppable-stack/p2p/sync`
 to enable it. npm installs the storage dependencies with the package either way.
 QVAC and wallet SDKs remain upstream dependencies of the apps that use them.
+
+```sh
+npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+```
 
 ```js
 import { createNode } from '@unstoppable-stack/p2p'

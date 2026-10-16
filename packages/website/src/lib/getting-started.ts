@@ -72,7 +72,7 @@ export const gettingStartedGuides: DocPage[] = [
       { type: "paragraph", text: "If us is not found, check npm prefix -g and ensure its bin directory is on PATH. For runtime problems, run the command below from shop-starter and check the first failed diagnostic. A successful scaffold is separate from a successful app launch." },
       { type: "code", language: "bash", code: "us doctor -p pear-desktop" },
       { type: "cards", items: [
-        { title: "CLI reference", body: "Published commands and the difference from the source candidate.", href: "/docs/cli" },
+        { title: "CLI reference", body: "Published beta commands and differences from earlier 0.3.0.", href: "/docs/cli" },
         { title: "Add local AI", body: "Use QVAC after the desktop baseline works.", href: "/docs/local-ai" },
         { title: "Troubleshooting", body: "Recognize a setup failure and find the next check.", href: "/docs/troubleshooting" },
         { title: "Packages and integrations", body: "One P2P library, upstream SDKs and optional applications.", href: "/docs/packages" },

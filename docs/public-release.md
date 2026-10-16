@@ -1,9 +1,9 @@
 # Canonical public release
 
 [release/public-packages.json](../release/public-packages.json) is the explicit
-npm release allowlist. The candidate consists of:
+npm release allowlist. The published preview consists of:
 
-| Package | Candidate | npm tag |
+| Package | Version | npm tag |
 | --- | --- | --- |
 | `@unstoppable-stack/cli` | `0.4.0-beta.1` | `beta` |
 | `@unstoppable-stack/p2p` | `0.6.0-alpha.1` | `alpha` |
@@ -12,6 +12,33 @@ Claude and Codex plugins share a separately built website download. They remain
 local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
+
+## Published preview (16 October 2026)
+
+Install the tested versions explicitly:
+
+```sh
+npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+```
+
+Both versions were first published using an authenticated maintainer account
+from the exact, clean [merged-main CI artifacts](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38936285871).
+Registry integrity matched those artifacts, and fresh npm installs passed the
+notes replication/authorization/offline-restart tests plus CLI catalog and
+scaffolding checks. The [canonical acceptance run](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38937905740)
+retains the CI registry evidence. Native model and public-internet acceptance
+remain separate.
+
+CLI `latest` remains `0.3.0`; the current preview is on `beta`. npm also assigned
+`latest` to the first P2P version and rejected its removal with HTTP 400, so P2P
+currently has both `alpha` and `latest` pointing at `0.6.0-alpha.1`. This is still
+an alpha: use the explicit version above. See the [npm registry report](https://github.com/npm/cli/issues/8490).
+
+No persistent trusted-publisher permission was added for this release. Setting
+that up for future versions requires separate authorization for the repository,
+workflow and environment described below. The acceptance job can skip versions
+already published with identical bytes and run its registry tests.
 
 ## Prepare and test
 
@@ -40,6 +67,14 @@ and whether the source was dirty. `consumer-verification.json` binds the tests
 to those exact npm bytes. `preparation.json`, `registry-preflight.json` and
 `logs/` contain the remaining evidence. Nothing is published by this command.
 Public registry checks do not establish ownership or publishing permissions.
+
+Pull-request and push CI use `--source-check`: they still build, audit, dry-run
+and test the exact source artifacts, but skip registry version availability.
+This allows documentation and development changes after a version is published.
+Local preparation defaults and manual release runs retain registry preflight;
+the publish command always rechecks registry version, tags and integrity. Source
+CI does not authorize overwriting a published version.
+
 
 To enforce a source freeze:
 
