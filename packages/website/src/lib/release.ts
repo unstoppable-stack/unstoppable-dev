@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "Unstoppable Stack",
-  url: "https://unstoppable.dev",
+  url: "https://unstoppable-stack.dev",
   publicRepositoryUrl: null,
   publicIssuesUrl: null,
   status: "Developer preview",
