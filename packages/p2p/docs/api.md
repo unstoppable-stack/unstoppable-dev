@@ -47,7 +47,9 @@ Concurrent first-use identity creation and separate-process invitation mutations
 are serialized. Do not clone one identity into simultaneously running devices.
 
 `handshakeTimeoutMs` defaults to 30 seconds and bounds incomplete handshakes and
-approval waits. Errors emitted as local diagnostics are observable through
+approval waits, starting when the remote opens the control channel. Replication-only
+peers do not open that channel and remain connected; all connections still count
+toward `limits.maxPeers`. Errors emitted as local diagnostics are observable through
 `node.on('error', ...)`; a missing application listener does not turn malformed
 remote traffic into an uncaught exception.
 
@@ -100,6 +102,11 @@ incoming pairing is denied. Invitations authorize their own scoped grants.
 the host owns its approval policy. `pairing.autoApprove` is a deliberate
 development option. Each direction has independent grants; outgoing dialing
 authorizes the selected remote identity, not unrestricted access in reverse.
+
+Resource discovery never authorizes capability pairing, even when the node also
+belongs to an app network. App-network pairing applies the matched network’s
+approval callback and grant ceiling in both connection directions. An explicit
+`connect(key)` can pair a peer already connected for replication.
 
 Requested methods are intersected with hosted methods and the applicable
 invitation, remembered grant ceiling or approval decision. Omitted requests use

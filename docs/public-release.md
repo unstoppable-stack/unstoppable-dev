@@ -44,7 +44,10 @@ already published with identical bytes and run its registry tests.
 
 This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
 published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
-optional `/db` Autobase prototype. Beta.2 carries the safe scaffold fixes and
+optional `/db` Autobase prototype. It also closes the resource-discovery callback
+authorization gap, applies app-network policy in both directions, and preserves
+replication-only connections beyond the control handshake deadline. The installed
+consumer gate runs regressions for these boundaries against the packed bytes. Beta.2 carries the safe scaffold fixes and
 updates generated P2P dependencies to alpha.2. Keep the published setup commands
 above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
 The plugin installer uses explicit `cliInstallVersion` release metadata so a

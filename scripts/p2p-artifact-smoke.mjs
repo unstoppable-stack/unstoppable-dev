@@ -56,9 +56,15 @@ try {
   run(process.execPath, [join(consumer, 'node_modules/typescript/bin/tsc'), '--noEmit', '--project', join(installed, 'test/types/tsconfig.json')])
   run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', ...rpcTests.map(name => join(installed, 'test', name))])
 
+  mkdirSync(join(installed, 'test/sync'), { recursive: true })
+  for (const name of ['helpers.js', 'connection-policy.test.js']) {
+    cpSync(join(source, 'test/sync', name), join(installed, 'test/sync', name))
+  }
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=30000', join(installed, 'test/sync/connection-policy.test.js')])
+
   // Installing the experimental engine is an explicit consumer choice.
   npm(['install', '--no-save', '--package-lock=false', '--no-audit', '--no-fund', 'autobase@7.28.2'])
-  mkdirSync(join(installed, 'test/sync'))
+  mkdirSync(join(installed, 'test/sync'), { recursive: true })
   cpSync(join(source, 'test/sync/helpers.js'), join(installed, 'test/sync/helpers.js'))
   cpSync(join(source, 'test/db'), join(installed, 'test/db'), { recursive: true })
   const dbTests = readdirSync(join(installed, 'test/db')).filter(name => name.endsWith('.test.js'))

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -56,6 +56,13 @@ try {
     assert.deepEqual(validateResourceManifest({ schemaVersion: 1, resources: [] }), { schemaVersion: 1, resources: [] });
   `])
   run(process.execPath, ['--test', '--test-concurrency=1', '--test-force-exit', '--test-timeout=60000', 'test/notes.test.js'])
+  // Exercise the trust and replication regressions against the exact packed bytes.
+  const installedP2p = join(consumer, 'node_modules/@unstoppable-stack/p2p')
+  mkdirSync(join(installedP2p, 'test/sync'), { recursive: true })
+  for (const name of ['helpers.js', 'connection-policy.test.js']) {
+    cpSync(join(root, 'packages/p2p/test/sync', name), join(installedP2p, 'test/sync', name))
+  }
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=30000', join(installedP2p, 'test/sync/connection-policy.test.js')])
   const cli = join(consumer, 'node_modules/@unstoppable-stack/cli/dist/us.js')
   const capture = args => execFileSync(process.execPath, [cli, ...args], { cwd: consumer, encoding: 'utf8' })
   const help = capture(['--help'])
@@ -90,7 +97,7 @@ try {
     installation: registry ? 'public npm registry' : 'local release tarballs',
     checkedAt: new Date().toISOString(), status: 'passed', platform: process.platform, architecture: process.arch, node: process.version,
     artifacts: record.artifacts.map(({ name, sha256 }) => ({ name, sha256 })),
-    checks: ['all eight public P2P entry points load', 'optional database engine is not installed by default', 'explicit Autobase opt-in: offline writes, restart, conflict convergence and removal', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
+    checks: ['resource discovery cannot grant capability authority', 'outgoing network approval and grant ceilings', 'replication-only connections survive control deadlines', 'incomplete control handshakes expire', 'all eight public P2P entry points load', 'optional database engine is not installed by default', 'explicit Autobase opt-in: offline writes, restart, conflict convergence and removal', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
       'replica restart while source offline', 'installed CLI minimal catalog', 'workspace and app generation',
       'generated JavaScript syntax', 'no AI, Memory, Search or Personal Node dependency'],
     limits: ['Local DHT only; public-internet discovery not asserted', 'No native model or generated desktop UI ran'],

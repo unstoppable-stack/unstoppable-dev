@@ -1,7 +1,8 @@
 # @unstoppable-stack/p2p
 
 > **Release status:** `0.6.0-alpha.1` is published. This source prepares
-> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes.
+> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes, including resource-discovery
+> authorization and replication-only connection lifetime fixes.
 > Those additions are not in alpha.1. Preparation and tests are separate from
 > publication and production acceptance; all P2P APIs remain experimental.
 
@@ -259,7 +260,7 @@ filesystem error codes; competing runtime ownership reports `STORAGE_LOCKED`.
 
 | Boundary | Default |
 | --- | --- |
-| Live control peers | 128 |
+| Live transport connections (control and replication) | 128 |
 | Encoded JSON control frame | 256 KiB, checked before JSON decoding |
 | Active incoming requests | 8 per peer, 64 per node |
 | Server request lifetime | 120 seconds |
@@ -267,6 +268,19 @@ filesystem error codes; competing runtime ownership reports `STORAGE_LOCKED`.
 | Consumer stream buffer | 64 chunks / 1 MiB |
 
 Excess capacity/output/buffering reports `RESOURCE_LIMIT`; host deadlines report `REQUEST_TIMEOUT`. Streaming respects transport drain. A slow consumer is cancelled when its finite buffer fills rather than receiving an unbounded backlog. Grant removal aborts matching active work. Duplicate active request IDs and unsolicited pairing responses cannot replace controllers or authorize peers. Handlers must honor `ctx.signal`; a handler that ignores cancellation retains its capacity slot until it actually returns. This bounds admission but does not forcibly terminate arbitrary in-process plugin code. Replication binary channels are separate from these capability JSON limits.
+
+## Corrective candidate
+
+Alpha.2 prevents automatically discovered resource seeders from acquiring
+capability grants through reverse-direction pairing. App-network approval and
+grant ceilings apply to outgoing as well as incoming connections. Explicit
+pairing/dialing and scoped invitations retain their existing behavior.
+
+The control handshake deadline starts when the remote opens the control channel;
+plain Hypercore seeders remain connected beyond that deadline. All connections
+still count toward the finite peer limit. Regression checks cover both fixes,
+network policy in both directions, and stalled control handshakes, including
+against installed release tarballs. Alpha.2 remains unpublished and experimental.
 
 ## Transport
 

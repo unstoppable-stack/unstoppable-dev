@@ -66,6 +66,7 @@ export class UnstoppableNode extends EventEmitter {
         ? async () => 'approve'
         : async () => 'approval required; use a scoped invitation'
     }
+    this._connections = new Set() // all transports, including replication-only peers
     this._peers = new Map()          // remote public key (hex) -> Peer
     this._dialing = new Map()        // remote public key (hex) -> { deferred, requested, timer }
     this._discovering = null         // in-flight discover() by topic
@@ -240,6 +241,7 @@ export class UnstoppableNode extends EventEmitter {
       this._sticky.set(hex, { attempts: 0, timer: null, requested })
     }
     this.swarm.joinPeer(keyBuffer)
+    if (existing?.publicKey && !existing.closed) this._initiatePairing(existing)
 
     return pending.promise
   }
@@ -476,7 +478,9 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   _onConnection (socket, info) {
-    if (this.closed || this._peers.size >= this.limits.maxPeers) { socket.destroy(); return }
+    if (this.closed || this._connections.size >= this.limits.maxPeers) { socket.destroy(); return }
+    this._connections.add(socket)
+    socket.once('close', () => this._connections.delete(socket))
     const remotePublicKey = b4a.toString(socket.remotePublicKey, 'hex')
 
     // Hypercore's `createProtocolStream` looks for an existing muxer at
@@ -491,6 +495,12 @@ export class UnstoppableNode extends EventEmitter {
 
     const channel = mux.createChannel({
       protocol: CONTROL_PROTOCOL,
+      // A plain Hypercore seeder never opens this channel. Its connection
+      // remains bounded by maxPeers, but is not a stalled control handshake.
+      onopen: () => {
+        peer._handshakeTimer = setTimeout(() => { peer.close() }, this._handshakeTimeout)
+        if (peer._handshakeTimer.unref) peer._handshakeTimer.unref()
+      },
       onclose: () => this._onPeerClose(remotePublicKey)
     })
     // Already have a control channel with this peer on this stream.
@@ -501,16 +511,15 @@ export class UnstoppableNode extends EventEmitter {
       mux,
       channel,
       remotePublicKey,
-      // Hyperswarm marks the side that dialed. Only the dialer sends a
-      // pairRequest, so a node never initiates pairing toward a peer it
-      // merely discovered.
+      // Transport direction alone does not authorize pairing. The dialer
+      // must also have an explicit operation or a matching network policy.
       initiator: !!info?.client
     })
 
     peer._discovery = this._discovering && info?.topics?.some(topic => b4a.equals(topic, this._discovering.topic))
       ? this._discovering : null
-    peer._handshakeTimer = setTimeout(() => { peer.close() }, this._handshakeTimeout)
-    if (peer._handshakeTimer.unref) peer._handshakeTimer.unref()
+    peer._networkCandidates = [...this._networks.values()].filter(network =>
+      info?.topics?.some(topic => b4a.equals(topic, network.topic)))
 
     const message = channel.addMessage({
       encoding: boundedJson(this.limits.maxFrameBytes),
@@ -569,6 +578,7 @@ export class UnstoppableNode extends EventEmitter {
       return
     }
 
+    if (peer.publicKey) { peer.close(); return }
     peer.publicKey = msg.publicKey
     peer.profile = msg.profile || {}
     peer.nodeType = msg.nodeType || null
@@ -576,41 +586,29 @@ export class UnstoppableNode extends EventEmitter {
     peer.helloed.resolve(peer)
     this.emit('hello', { publicKey: peer.publicKey, profile: peer.profile, capabilities: peer.capabilities })
 
-    if (peer.initiator) {
-      const dialing = this._dialing.get(peer.remotePublicKey)
-      const redeeming = this._redeeming?.invite.publicKey === peer.remotePublicKey
-        ? this._redeeming
-        : null
+    if (peer.initiator) this._initiatePairing(peer)
+  }
 
-      // On a network we dialed a peer we have never met, so say which
-      // networks we are on and let them intersect. `info.topics` would answer
-      // this directly but upstream has it marked for removal, and naming the
-      // networks leaks nothing: those topics are already announced on the DHT.
-      const onNetwork = !dialing && !redeeming && !peer._discovery && this._networks.size > 0
-      const networkRequested = onNetwork
-        ? [...this._networks.values()].find((n) => n.requested)?.requested ?? null
-        : null
-
-      // What we want to call on them. Absent means "your defaults" — except
-      // when redeeming an invite, where the invite's own grants win.
-      peer.send({
-        type: MESSAGE.PAIR_REQUEST,
-        ...(onNetwork ? { networks: [...this._networks.keys()] } : {}),
-        requested: dialing?.requested ?? redeeming?.requested ?? peer._discovery?.requested ?? networkRequested ?? null,
-        ...(redeeming
-          ? {
-              invite: {
-                id: redeeming.invite.id,
-                proof: inviteProof(
-                  redeeming.invite.secret,
-                  this.identity.publicKey,
-                  peer.remotePublicKey
-                )
-              }
-            }
-          : {})
-      })
-    }
+  _initiatePairing (peer) {
+    if (peer.closed || peer.paired || peer._requestedPairing) return
+    const dialing = this._dialing.get(peer.remotePublicKey)
+    const redeeming = this._redeeming?.invite.publicKey === peer.remotePublicKey ? this._redeeming : null
+    const discovering = peer._discovery === this._discovering ? peer._discovery : null
+    const network = peer._networkCandidates?.find(candidate => this._networks.get(candidate.id) === candidate)
+    // Transport initiation is not consent: replication discovers arbitrary
+    // seeders. Only an explicit operation or a matched app network may pair.
+    if (!dialing && !redeeming && !discovering && !network) return
+    peer._pairingIntent = dialing || redeeming || discovering
+      ? { kind: 'explicit' } : { kind: 'network', network }
+    peer.send({
+      type: MESSAGE.PAIR_REQUEST,
+      ...(peer._pairingIntent.kind === 'network' ? { networks: [network.id] } : {}),
+      requested: dialing?.requested ?? redeeming?.requested ?? discovering?.requested ?? network?.requested ?? null,
+      ...(redeeming ? { invite: {
+        id: redeeming.invite.id,
+        proof: inviteProof(redeeming.invite.secret, this.identity.publicKey, peer.remotePublicKey)
+      } } : {})
+    })
   }
 
   async _onPairRequest (peer, msg) {
@@ -795,11 +793,23 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   async _onPairAccepted (peer, msg) {
-    if (!peer._requestedPairing || peer.paired || peer._pairAcceptedPending) return
+    if (!peer._requestedPairing || !peer._pairingIntent || peer.paired || peer._pairAcceptedPending) return
     peer._pairAcceptedPending = true
     if (this.peerRegistry.isDenied(peer.remotePublicKey)) { await peer.close(); return }
     peer.grantsReceived = msg.grants || {}
-    peer.grantsGiven = this.capabilities.grantsFor(msg.requested)
+    const network = peer._pairingIntent.network
+    if (network) {
+      if (this._networks.get(network.id) !== network) { await peer.close(); return }
+      if (this.peerRegistry.get(peer.remotePublicKey)?.pairingMethod !== 'invite' &&
+          !await this._askApproval(peer, msg, network.approve || this._pairing.approve, { network: network.id })) {
+        await peer.close()
+        return
+      }
+      if (peer.closed || this.peerRegistry.isDenied(peer.remotePublicKey)) return
+      if (this._networks.get(network.id) !== network) { await peer.close(); return }
+      peer.network = network.id
+    }
+    peer.grantsGiven = this.capabilities.grantsFor(network?.grants ?? msg.requested)
     const known = this.peerRegistry.get(peer.remotePublicKey)
     if (known) peer.grantsGiven = intersectGrants(peer.grantsGiven, known.grantsGiven || {})
     peer.send({ type: MESSAGE.PAIR_CONFIRM, grants: peer.grantsGiven })
