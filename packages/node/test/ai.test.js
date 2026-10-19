@@ -19,6 +19,17 @@ function getFreePort () {
   })
 }
 
+// A UDP port can be claimed between probing and binding on busy CI hosts.
+async function bootstrapper () {
+  for (let attempt = 0; ; attempt++) {
+    const node = DHT.bootstrapper(await getFreePort(), '127.0.0.1')
+    try { await node.ready(); return node } catch (error) {
+      await node.destroy().catch(() => {})
+      if (error.code !== 'EADDRINUSE' || attempt === 4) throw error
+    }
+  }
+}
+
 describe('ai capability pack', () => {
   let bootstrapNode, nodes, dirs
 
@@ -30,9 +41,7 @@ describe('ai capability pack', () => {
   })
 
   async function env () {
-    const port = await getFreePort()
-    bootstrapNode = DHT.bootstrapper(port, '127.0.0.1')
-    await bootstrapNode.ready()
+    bootstrapNode = await bootstrapper()
     const bootstrap = [{ host: '127.0.0.1', port: bootstrapNode.address().port }]
     nodes = []; dirs = []
 
@@ -146,9 +155,7 @@ describe('runtime toggle', () => {
   })
 
   async function env2 () {
-    const port = await getFreePort()
-    bootstrapNode2 = DHT.bootstrapper(port, '127.0.0.1')
-    await bootstrapNode2.ready()
+    bootstrapNode2 = await bootstrapper()
     const bootstrap = [{ host: '127.0.0.1', port: bootstrapNode2.address().port }]
     nodes2 = []; dirs2 = []
     return async function makeNode (opts = {}) {

@@ -112,21 +112,26 @@ as clean. The generated directory is ignored by Git.
 
 ## Publication
 
-### First publication of the P2P package
+### Authenticated maintainer publication
 
 npm requires a package to exist before trusted publishing can be configured.
-This historical first-publication procedure was used for alpha.1; subsequent
-releases still need an authenticated maintainer until trusted publishing is configured. Run the
+The packages already exist, but releases still need an authenticated maintainer
+until trusted publishing is configured. Run the
 canonical workflow with `publish: false`, download its validated artifact and
 use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 
 ```sh
 node scripts/public-release.mjs verify release-artifacts/candidate --require-clean
 npm login --registry=https://registry.npmjs.org
-npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.1.tgz --ignore-scripts --access public --tag alpha
+npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.2.tgz --ignore-scripts --access public --tag alpha
+npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.2.tgz --ignore-scripts --access public --tag beta
+node scripts/test-public-artifacts.mjs release-artifacts/candidate --registry
 ```
 
-The publishing account needs permission to create packages in the
+Publish P2P first: generated apps from this CLI depend on that exact candidate.
+Do not publish the CLI if P2P publication or its registry verification fails.
+
+The publishing account needs permission to publish packages in the
 `@unstoppable-stack` organization. Complete npm's interactive authentication
 and 2FA prompts locally; do not put credentials in Git or chat. Then configure
 the P2P trusted publisher, as well as the CLI publisher, before selecting the

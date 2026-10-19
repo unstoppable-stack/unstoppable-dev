@@ -50,6 +50,11 @@ function showWindow () {
 }
 
 function sendToRenderer (message) {
+  if (smokeMode && message?.type === 'fatal') {
+    console.error('PERSONAL_NODE_SMOKE_FATAL', message.error)
+    app.exit(1)
+    return
+  }
   if (smokeMode && message?.type === 'ready') {
     smokeNodeKey = message.publicKey
     if (qvacSmokeMode) sidecar?.send({ type: 'qvac-runtime-check', modelSrc: process.env.PERSONAL_NODE_REAL_QVAC === '1' ? process.env.QVAC_MODEL_SRC : undefined })
@@ -306,7 +311,7 @@ if (hasSingleInstanceLock) {
     startSidecar()
     if (smokeMode) {
       smokeTimer = setTimeout(() => {
-        console.error('PERSONAL_NODE_SMOKE_TIMEOUT')
+        console.error('PERSONAL_NODE_SMOKE_TIMEOUT', JSON.stringify({ rendererReady, nodeReady: !!smokeNodeKey, qvacReady: smokeQvacReady }))
         app.exit(1)
       }, process.env.PERSONAL_NODE_REAL_QVAC === '1' ? 120_000 : 15_000)
     }
