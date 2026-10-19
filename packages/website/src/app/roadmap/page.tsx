@@ -15,7 +15,8 @@ const groups = [
     title: "Available in this preview",
     tone: "text-accent",
     items: [
-      ["Published CLI", `Version ${siteConfig.cli.publishedVersion} provides init, scaffold, doctor, and research commands.`],
+      ["Published CLI beta", `Version ${siteConfig.cli.version} is the public quickstart: init, scaffold, doctor and compatibility checks. Research is outside the minimal release.`],
+      ["Published P2P alpha", `Version ${siteConfig.p2p.version} provides pairing, grants, calls, streams and optional /sync replication.`],
       ["Pear Desktop baseline", "Generated renderer/worker app with P2P discovery and local Hyperbee storage."],
       ["Assistant guidance", "Portable project context for Claude Code, Cursor, OpenCode, and Codex."],
     ],
@@ -25,7 +26,7 @@ const groups = [
     title: "Being validated",
     tone: "text-amber-400",
     items: [
-      ["CLI release candidate", `${siteConfig.cli.candidateVersion} is in the repository but is not the version used by the public quickstart.`],
+      ["Next CLI and P2P candidates", `CLI ${siteConfig.cli.sourceVersion} and P2P ${siteConfig.p2p.sourceVersion} are unpublished source. Typed /rpc and the /db prototype require that candidate source, not the published alpha.1 package.`],
       ["Real local inference", "Model compatibility, download behavior, hardware guidance, and recovery paths."],
       ["Personal Node alpha", "Packaging, explicit trust defaults, and truthful replication status before it can become an optional public path."],
       ["Expo Mobile", "Generated app and Bare worklet integration across the selected support matrix."],

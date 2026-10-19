@@ -261,7 +261,7 @@ export const docsPages: DocPage[] = [
     category: "Reference",
     verifiedOn,
     blocks: [
-      { type: "lead", text: `CLI ${siteConfig.cli.candidateVersion} is the published beta: init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.publishedVersion} also exposes the deferred node command. Install the exact beta for this guide.` },
+      { type: "lead", text: `CLI ${siteConfig.cli.version} is the published beta: init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.latestVersion} also exposes the deferred node command. Install the exact beta for this guide.` },
       { type: "code", language: "bash", code: "us --version\nus --help\nus init [project-name] --assistant <claude|codex|cursor|opencode|none>\nus scaffold app -p pear-desktop -n <name>\nus scaffold list-platforms\nus scaffold list-features\nus doctor -p pear-desktop" },
       { type: "heading", text: "Compatibility commands" },
       { type: "paragraph", text: "The published 0.4.0-beta.1 adds the read-only commands below. They are absent from earlier 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
