@@ -13,7 +13,26 @@ it('runs the documented host/reader and founder/joiner commands in separate proc
     for (const close of cleanup) await close()
     await env.cleanup()
   })
-  const script = await readFile(process.env.P2P_DEVICE_EXAMPLE || new URL('../../../examples/p2p-data/device.js', import.meta.url), 'utf8')
+  const example = await readFile(process.env.P2P_DEVICE_EXAMPLE || new URL('../../../examples/p2p-data/device.js', import.meta.url), 'utf8')
+  // Include transport evidence only in captured failure transcripts. The
+  // example itself remains unchanged, including in installed-consumer checks.
+  const script = `
+import { UnstoppableNode } from '@unstoppable-stack/p2p'
+const originalConnection = UnstoppableNode.prototype._onConnection
+UnstoppableNode.prototype._onConnection = function (socket, info) {
+  const result = originalConnection.call(this, socket, info)
+  const stream = socket.noiseStream || socket
+  const peer = this._peers.get(Buffer.from(socket.remotePublicKey).toString('hex'))
+  const diagnostic = () => console.error('TRANSPORT', JSON.stringify({
+    corked: stream.userData?.corked, hello: !!peer?.publicKey,
+    read: stream.rawBytesRead, written: stream.rawBytesWritten, closed: peer?.closed
+  }))
+  const timer = setInterval(diagnostic, 10000); timer.unref()
+  socket.on('error', error => console.error('TRANSPORT_ERROR', error.message))
+  socket.once('close', () => { diagnostic(); clearInterval(timer) })
+  return result
+}
+` + example
   function run (...args) {
     const process = spawn(globalThis.process.execPath, ['--input-type=module', '-e', script, 'device.js', ...args], {
       cwd: globalThis.process.env.P2P_CONSUMER_CWD || fileURLToPath(new URL('..', import.meta.url)),
