@@ -5,50 +5,53 @@ npm release allowlist. The published preview consists of:
 
 | Package | Version | npm tag |
 | --- | --- | --- |
-| `@unstoppable-stack/cli` | `0.4.0-beta.1` | `beta` |
-| `@unstoppable-stack/p2p` | `0.6.0-alpha.1` | `alpha` |
+| `@unstoppable-stack/cli` | `0.4.0-beta.2` | `beta` |
+| `@unstoppable-stack/p2p` | `0.6.0-alpha.2` | `alpha` |
 
 Claude and Codex plugins share a separately built website download. They remain
 local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
-## Published preview (16 October 2026)
+## Published preview (19 October 2026)
 
 Install the tested versions explicitly:
 
 ```sh
-npm install -g @unstoppable-stack/cli@0.4.0-beta.1
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install -g @unstoppable-stack/cli@0.4.0-beta.2
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
-Both versions were first published using an authenticated maintainer account
-from the exact, clean [merged-main CI artifacts](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38936285871).
-Registry integrity matched those artifacts, and fresh npm installs passed the
-notes replication/authorization/offline-restart tests plus CLI catalog and
-scaffolding checks. The [canonical acceptance run](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/38937905740)
-retains the CI registry evidence. Native model and public-internet acceptance
-remain separate.
+These versions were published using an authenticated maintainer account from
+clean commit `a96d424e3ce481d4b336c38488e560da94cd01b7`, reviewed and merged in
+[PR #20](https://github.com/unstoppable-stack/unstoppable-dev/pull/20).
+The [canonical source checks](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/39274026233)
+passed before publication. A fresh local registry acceptance run then verified
+both npm integrity hashes against the tested tarballs ([acceptance record](../release/registry-acceptance-2026-10-19.json)) and passed the installed
+package and generated sharing-example tests. This was a registry install on
+macOS arm64 / Node 22, not a public-network or native-model acceptance run.
 
-CLI `latest` remains `0.3.0`; the current preview is on `beta`. npm also assigned
-`latest` to the first P2P version and rejected its removal with HTTP 400, so P2P
-currently has both `alpha` and `latest` pointing at `0.6.0-alpha.1`. This is still
-an alpha: use the explicit version above. See the [npm registry report](https://github.com/npm/cli/issues/8490).
+CLI `latest` remains `0.3.0`; P2P `latest` remains `0.6.0-alpha.1`.
+The new versions use the `beta` and `alpha` tags respectively. Install the exact
+versions above; both remain prereleases. No trusted-publisher permission was
+added for this release.
 
-No persistent trusted-publisher permission was added for this release. Setting
-that up for future versions requires separate authorization for the repository,
-workflow and environment described below. The acceptance job can skip versions
-already published with identical bytes and run its registry tests.
+### Included in this release
 
-## Next source candidate
+P2P alpha.2 adds typed `/rpc` contracts, managed `/service` sessions, JSON
+collections and collaborative databases through `/data`, and the optional `/db`
+Autobase prototype. It fixes resource-discovery authorization, applies
+app-network policy in both directions, and preserves replication-only
+connections beyond the control handshake deadline. Discovery retries and
+bounded diagnostics help identify unreachable networks; no HTTP fallback or
+all-network connectivity guarantee is provided.
 
-This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
-published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
-optional `/db` Autobase prototype, managed `/service` sessions and `/data` helpers. It also closes the resource-discovery callback
-authorization gap, applies app-network policy in both directions, and preserves
-replication-only connections beyond the control handshake deadline. The installed
-consumer gate runs regressions for these boundaries against the packed bytes. Beta.2 carries the safe scaffold fixes, includes opt-in managed data modules and a two-device sharing example in generated Node/desktop apps, and updates generated P2P dependencies to alpha.2. Existing app storage formats are preserved. Keep the published setup commands
-above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
+CLI beta.2 includes opt-in managed data modules and a two-device sharing example
+in generated Node/desktop apps, and pins their P2P dependency to alpha.2.
+Existing app storage formats are preserved. The installed consumer checks run
+the exact sharing example emitted by the published CLI in separate processes
+on an isolated loopback DHT. Cross-device public discovery remains pending.
+
 The plugin installer uses explicit `cliInstallVersion` release metadata so a
 source version bump cannot claim that an unpublished candidate is on npm.
 

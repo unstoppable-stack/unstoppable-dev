@@ -16,9 +16,8 @@ npm test --prefix examples/p2p-notes
 npm run demo --prefix examples/p2p-notes
 ```
 
-Repository development uses a local dependency link. Published `@unstoppable-stack/p2p@0.6.0-alpha.1` supports plain RPC and sync.
-This updated typed example needs the alpha.2 source or candidate tarball until
-alpha.2 publication. The
+Repository development uses a local dependency link. External apps can install
+published `@unstoppable-stack/p2p@0.6.0-alpha.2` for the same typed APIs. The
 [canonical release checks](../../docs/public-release.md) copy this example outside
 the checkout and test exact tarballs or public-registry versions instead of the link.
 
@@ -48,8 +47,7 @@ or `for await (const entry of api.list())`. Invalid names fail with
 The demo first reads and streams through RPC. The replica then explicitly grants
 sync administration to the paired writer, receives its manifest and keeps a
 local copy after the writer closes. RPC permission and dataset replication are
-separate choices. This example uses `/rpc` from the `0.6.0-alpha.2` candidate;
-published `0.6.0-alpha.1` supports the original plain-pack calls and sync only.
+separate choices. This example uses `/rpc` from published `0.6.0-alpha.2`.
 
 For collaborative offline writes and Autobase membership, run the separate
 [database example](../p2p-database/README.md). For scoped desktop receipt queries

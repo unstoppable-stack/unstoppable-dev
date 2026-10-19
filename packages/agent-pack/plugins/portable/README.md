@@ -1,6 +1,6 @@
 # Unstoppable Stack plugin
 
-Version 0.1.5, public preview. Build local-first P2P apps using maintained workflow skills, the Unstoppable CLI and per-app runtime contracts.
+Version 0.1.6, public preview. Build local-first P2P apps using maintained workflow skills, the Unstoppable CLI and per-app runtime contracts.
 
 ## CLI prerequisite
 

@@ -15,9 +15,8 @@ npm run demo --prefix examples/p2p-database
 npm test --prefix examples/p2p-database
 ```
 
-The example uses the local P2P source link because `/db` is new in the
-`0.6.0-alpha.2` candidate; the published `0.6.0-alpha.1` has no `/db` export.
-After that candidate is published, an external app can install
+The repository example uses a local P2P source link. The `/db` API is available
+in published `0.6.0-alpha.2`; an external app can install
 `@unstoppable-stack/p2p@0.6.0-alpha.2 autobase@7.28.2 corestore hyperbee`.
 Autobase is an explicit opt-in dependency, separate from ordinary RPC/sync apps.
 

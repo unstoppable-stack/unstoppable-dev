@@ -1,0 +1,51 @@
+{
+  "installation": "public npm registry",
+  "checkedAt": "2026-10-19T15:15:32.219Z",
+  "status": "passed",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "node": "v22.21.1",
+  "artifacts": [
+    {
+      "name": "@unstoppable-stack/p2p",
+      "version": "0.6.0-alpha.2",
+      "tag": "alpha",
+      "file": "unstoppable-stack-p2p-0.6.0-alpha.2.tgz",
+      "bytes": 84275,
+      "sha256": "caa9392fd23361651ca1939c017ee276e6d8d13d6d43e82fc98ede4791c52d33",
+      "integrity": "sha512-l10gcWx7FygUVS2gcAcrqxIWnfen/XV43PdOy3klTewzLSR7xcFi/yIPk8eKfn8G5A5VvTArsevo/NRzvSFQ+g=="
+    },
+    {
+      "name": "@unstoppable-stack/cli",
+      "version": "0.4.0-beta.2",
+      "tag": "beta",
+      "file": "unstoppable-stack-cli-0.4.0-beta.2.tgz",
+      "bytes": 155440,
+      "sha256": "89e4b353e48ac0f67f13aa2b5a097ca01b41c91ef541d6c34b6b52438381c980",
+      "integrity": "sha512-gkkIWhLX4MaOvl3gyLS0YDA+1MpE0S7nwIsAbYt7TK9OowOB1UnHPwj+6fYwHZi5KBRHSkXMF/6p3Sx2KMdohw=="
+    }
+  ],
+  "checks": [
+    "resource discovery cannot grant capability authority",
+    "outgoing network approval and grant ceilings",
+    "replication-only connections survive control deadlines",
+    "incomplete control handshakes expire",
+    "managed data and service public entry points load",
+    "installed CLI emits working separate-process data examples",
+    "optional database engine is not installed by default",
+    "explicit Autobase opt-in: offline writes, restart, conflict convergence and removal",
+    "invited RPC and streaming",
+    "denied uninvited/ungranted access",
+    "real Hyperbee replication",
+    "replica restart while source offline",
+    "installed CLI minimal catalog",
+    "workspace and app generation",
+    "generated JavaScript syntax",
+    "no AI, Memory, Search or Personal Node dependency"
+  ],
+  "limits": [
+    "Local DHT only; public-internet discovery not asserted",
+    "No native model or generated desktop UI ran"
+  ],
+  "commit": "a96d424e3ce481d4b336c38488e560da94cd01b7"
+}

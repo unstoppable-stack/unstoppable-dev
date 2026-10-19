@@ -54,7 +54,7 @@ There is no customer identity, order ownership policy or revoke-device UI in
 this example; the runtime provides `node.unpair(publicKey)` for apps implementing
 that control. This remains a trusted-device demo, not a customer order service,
 payment system or collaborative commerce database. The local source link uses
-the `0.6.0-alpha.2` candidate; `/rpc` is absent from published `0.6.0-alpha.1`.
+version `0.6.0-alpha.2`, whose `/rpc` API is also available on npm.
 See the [RPC/sync notes example](../p2p-notes/README.md) and separate
 [collaborative database prototype](../p2p-database/README.md).
 

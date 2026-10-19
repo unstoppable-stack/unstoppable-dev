@@ -1,7 +1,6 @@
 # Sync JSON data between apps
 
-Source-candidate examples for `@unstoppable-stack/p2p/data` (alpha.2, not
-available in published alpha.1). Node 20+; collaborative storage is experimental.
+Examples for published `@unstoppable-stack/p2p/data` version `0.6.0-alpha.2`. Node 20+; collaborative storage is experimental.
 
 From the repository root:
 
@@ -36,7 +35,7 @@ and custom reducers. See the [data API guide](../../packages/p2p/docs/data.md).
 
 ## Use two devices
 
-Install the same checkout/candidate on both devices using the commands above.
+Install the same version of the examples on both devices using the commands above.
 No bootstrap configuration is needed for ordinary public discovery. Each device
 keeps its own directory. Run these commands from the repository root.
 

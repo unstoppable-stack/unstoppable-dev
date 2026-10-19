@@ -6,8 +6,8 @@ come from upstream SDKs, not separately published Unstoppable wrapper packages.
 
 | Component | Responsibility | Status |
 | --- | --- | --- |
-| `@unstoppable-stack/cli` | Workspace setup, app scaffolding, diagnostics and compatibility checks | `0.4.0-beta.1` published under `beta`; `latest` remains `0.3.0` |
-| `@unstoppable-stack/p2p` | Identity, discovery, pairing, permissions, RPC, streaming and optional replication | `0.6.0-alpha.1` published under `alpha` |
+| `@unstoppable-stack/cli` | Workspace setup, app scaffolding, diagnostics and compatibility checks | `0.4.0-beta.2` published under `beta`; `latest` remains `0.3.0` |
+| `@unstoppable-stack/p2p` | Identity, discovery, pairing, permissions, RPC, streaming and optional replication | `0.6.0-alpha.2` published under `alpha` |
 | Claude and Codex `unstoppable-stack` plugins | Shared workflows and integration guidance | Public repository catalogs and downloadable previews; no official host directory listing |
 | `unstoppable-node` | Personal Node daemon, local administration, replication and optional delegated QVAC inference | `0.4.0` published; reorganized `0.6.0-alpha.2` source unpublished and deferred |
 | `runtime-ai` | Tested lifecycle helpers copied into generated desktop/Node apps | Private implementation, not a public dependency |
@@ -100,7 +100,7 @@ node scripts/node-release-gate.mjs
 ```
 
 Source development uses `file:../p2p`; public consumers install
-`@unstoppable-stack/p2p@0.6.0-alpha.1`. After
+`@unstoppable-stack/p2p@0.6.0-alpha.2`. After
 maintained source changes, run `node scripts/sync-stack-assets.mjs` to update
 compatibility guidance and the CLI-bundled pack. Rebuild local plugin artifacts
 with `node packages/agent-pack/scripts/build-plugin.mjs`.
