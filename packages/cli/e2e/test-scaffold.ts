@@ -73,7 +73,7 @@
  *                          --device` once from the scaffolded project).
  */
 
-import { execSync, spawn, type ChildProcess } from 'child_process'
+import { execFileSync, execSync, spawn, type ChildProcess } from 'child_process'
 import { existsSync, mkdirSync, rmSync, writeFileSync, appendFileSync, readFileSync } from 'fs'
 import { join, resolve, dirname } from 'path'
 import { fileURLToPath } from 'url'
@@ -85,6 +85,23 @@ const __dirname = dirname(__filename)
 const CLI_ROOT = resolve(__dirname, '..')
 
 const TMP_BASE = '/tmp/us-e2e-scaffold'
+let candidateP2P: string | undefined
+
+// Scaffold acceptance uses this checkout's candidate, which may not be on npm.
+// Keep the generated manifest unchanged so its public dependency is still checked.
+function installCandidateApp(projectDir: string) {
+  if (!candidateP2P) {
+    const stage = join(TMP_BASE, 'candidate-packages')
+    mkdirSync(stage, { recursive: true })
+    const packed = JSON.parse(execFileSync('npm', ['pack', '--json', '--pack-destination', stage], {
+      cwd: resolve(CLI_ROOT, '../p2p'), encoding: 'utf8', shell: process.platform === 'win32',
+    }))
+    candidateP2P = join(stage, packed[0].filename)
+  }
+  execFileSync('npm', ['install', '--no-save', candidateP2P], {
+    cwd: projectDir, stdio: 'pipe', timeout: 180_000, shell: process.platform === 'win32',
+  })
+}
 const SIMULATOR_NAME = process.env.US_SIMULATOR || 'iPhone 16'
 const QVAC_MOCK = process.env.QVAC_MOCK === '1'
 const QVAC_REAL_E2E = process.env.QVAC_REAL_E2E === '1'
@@ -1291,7 +1308,7 @@ async function testDesktopVariant(
   if (!aborted && opts.level >= 2 && !opts.skipBuild) {
     push(
       await runStep('npm install', async () => {
-        exec('npm install', { cwd: projectDir, timeout: 180_000 })
+        installCandidateApp(projectDir)
       }),
     )
   } else if (opts.level >= 2) {
@@ -1387,7 +1404,7 @@ async function testNodeCliVariant(
   if (!aborted && opts.level >= 2 && !opts.skipBuild) {
     push(
       await runStep('npm install', async () => {
-        exec('npm install', { cwd: projectDir, timeout: 180_000 })
+        installCandidateApp(projectDir)
       }),
     )
   } else if (opts.level >= 2) {

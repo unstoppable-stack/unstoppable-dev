@@ -7,7 +7,7 @@
 # release is not ready.
 #
 # What it does:
-#   1. Packs the CLI into a tarball. Deferred Node alpha packages are included
+#   1. Packs the CLI and its generated-app P2P dependency into tarballs. Deferred Node alpha packages are included
 #      only when INCLUDE_NODE_ALPHA=1 is explicitly set.
 #   2. Installs the selected tarballs into an ISOLATED prefix (no pollution of
 #      your real global npm).
@@ -88,9 +88,9 @@ step "Packing launch packages"
 # `npm pack` honors each package's prepack (the CLI rebuilds the minimal
 # profile), so tarballs reflect exactly what would be published.
 if [ "${SKIP_PACK:-0}" = "1" ]; then
-  REQUIRED_TARBALLS=(unstoppable-stack-cli)
+  REQUIRED_TARBALLS=(unstoppable-stack-cli unstoppable-stack-p2p)
   if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
-    REQUIRED_TARBALLS+=(unstoppable-stack-p2p unstoppable-node)
+    REQUIRED_TARBALLS+=(unstoppable-node)
   fi
   for glob in "${REQUIRED_TARBALLS[@]}"; do
     ls "$STAGE/$glob"-*.tgz >/dev/null 2>&1 \
@@ -99,6 +99,7 @@ if [ "${SKIP_PACK:-0}" = "1" ]; then
   pass "using pre-staged tarballs from $STAGE"
 else
   PACKAGES=(cli)
+  if [ "$INCLUDE_NODE_ALPHA" != "1" ]; then PACKAGES+=(p2p); fi
   if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
     node "$REPO_ROOT/scripts/pack-node-release.mjs" "$STAGE"
   fi
@@ -121,6 +122,7 @@ fi
 step "Installing globally (isolated prefix, dependency order)"
 # ---------------------------------------------------------------------------
 CLI_TGZ="$(ls "$STAGE"/unstoppable-stack-cli-*.tgz)"
+P2P_TGZ="$(ls "$STAGE"/unstoppable-stack-p2p-*.tgz)"
 if [ "$INCLUDE_NODE_ALPHA" = "1" ]; then
   P2P_TGZ="$(ls "$STAGE"/unstoppable-stack-p2p-*.tgz)"
   NODE_TGZ="$(ls "$STAGE"/unstoppable-node-*.tgz)"
@@ -217,7 +219,9 @@ if [ "$INSTALL_GENERATED_APP" = "1" ]; then
   # This is intentionally opt-in for fast local smoke runs: Electron and QVAC
   # pull a large native dependency tree. Final candidate evidence must enable
   # it so the documented generated application, not only the CLI, is installed.
-  ( cd "$PROJECTS/smoke-scaffold" && npm install --no-audit --no-fund )
+  # Exercise the exact P2P candidate before its version is on the registry.
+  # --no-save preserves the generated manifest and its published version pin.
+  ( cd "$PROJECTS/smoke-scaffold" && npm install --no-save "$P2P_TGZ" --no-audit --no-fund )
   ( cd "$PROJECTS/smoke-scaffold" && npm ls --depth=0 >/dev/null ) \
     || fail "generated app dependency tree is incomplete"
   pass "installed generated Pear Desktop local-ai dependency tree"

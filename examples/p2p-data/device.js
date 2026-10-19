@@ -18,12 +18,16 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
   process.once('SIGINT', stop)
   process.once('SIGTERM', stop)
   const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
-  let data, input, unwatch
+  let data, input, unwatch, diagnostics
   try {
     data = mode.startsWith('mirror')
       ? await openCollection({ storage, key, nodeOptions })
       : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
     console.log('Opening public discovery; local data stays in', storage)
+    if (process.env.P2P_DEBUG === '1') {
+      diagnostics = setInterval(() => console.error('DATA_STATUS', JSON.stringify({ network: data.network.status(), database: data.state?.() })), 10000)
+      diagnostics.unref()
+    }
     if (mode === 'mirror-host') {
       await data.put('note', { text: 'Hello from another device' })
       await data.network.ready({ signal: controller.signal })
@@ -64,6 +68,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
       process.exitCode = 1
     }
   } finally {
+    clearInterval(diagnostics)
     unwatch?.()
     input?.close()
     await data?.close()

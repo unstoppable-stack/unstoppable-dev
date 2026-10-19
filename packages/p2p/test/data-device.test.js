@@ -17,7 +17,7 @@ it('runs the documented host/reader and founder/joiner commands in separate proc
   function run (...args) {
     const process = spawn(globalThis.process.execPath, ['--input-type=module', '-e', script, 'device.js', ...args], {
       cwd: globalThis.process.env.P2P_CONSUMER_CWD || fileURLToPath(new URL('..', import.meta.url)),
-      env: { ...globalThis.process.env, P2P_BOOTSTRAP: JSON.stringify(env.bootstrap) }, stdio: ['pipe', 'pipe', 'pipe']
+      env: { ...globalThis.process.env, P2P_BOOTSTRAP: JSON.stringify(env.bootstrap), P2P_DEBUG: '1' }, stdio: ['pipe', 'pipe', 'pipe']
     })
     let output = ''
     transcripts.push(() => `${args[0]}:\n${output}`)
