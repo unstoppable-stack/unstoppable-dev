@@ -1,3 +1,4 @@
+import { sharedDataFiles } from './shared-data.js'
 import { manifest } from '../compatibility/index.js'
 import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
@@ -27,6 +28,7 @@ export function generateNodeCli(opts: GeneratorOptions): GeneratedFile[] {
     readme(opts),
     planningReadme(),
     ...projectFiles(opts),
+    ...sharedDataFiles(opts),
     packageJson(opts),
     entryPoint(opts),
     swarmManager(),
@@ -65,6 +67,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
         type: 'module',
         engines: profile.engines,
         scripts: {
+          'share-data': 'node examples/share-data.mjs',
           ...(has(opts, 'multi-writer')
             ? {
                 'build:schema': 'node schema/build.js',

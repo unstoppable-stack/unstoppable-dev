@@ -1,9 +1,12 @@
 ---
-description: "Autobee: multi-writer Hyperbee — the recommended convergent P2P store"
+description: "Autobee: multi-writer Hyperbee — schema-based convergent P2P storage"
 alwaysApply: false
 ---
 
 # Autobee
+
+For a new simple JSON dataset, see `modules/managed-data.mdc`. Preserve Autobee
+for existing schema-based apps; managed Autobase storage is not format-compatible.
 
 ## Overview
 

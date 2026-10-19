@@ -2812,9 +2812,12 @@ exports[`generator snapshots > file paths only > node-cli / bare: path list matc
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
+  "examples/share-data.mjs",
   "package.json",
   "planning/README.md",
   "src/index.ts",
+  "src/shared-data.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -2832,10 +2835,13 @@ exports[`generator snapshots > file paths only > node-cli / local-ai: path list 
   ".unstoppable/runtime-ai/index.d.ts",
   ".unstoppable/runtime-ai/index.js",
   "README.md",
+  "SHARED-DATA.md",
+  "examples/share-data.mjs",
   "package.json",
   "planning/README.md",
   "src/ai-manager.ts",
   "src/index.ts",
+  "src/shared-data.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -2849,10 +2855,13 @@ exports[`generator snapshots > file paths only > node-cli / node-host: path list
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
+  "examples/share-data.mjs",
   "package.json",
   "planning/README.md",
   "src/index.ts",
   "src/node-host.ts",
+  "src/shared-data.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -2866,10 +2875,13 @@ exports[`generator snapshots > file paths only > node-cli / node-sync: path list
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
+  "examples/share-data.mjs",
   "package.json",
   "planning/README.md",
   "src/index.ts",
   "src/node-sync.ts",
+  "src/shared-data.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -2883,9 +2895,12 @@ exports[`generator snapshots > file paths only > node-cli / wallet: path list ma
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
+  "examples/share-data.mjs",
   "package.json",
   "planning/README.md",
   "src/index.ts",
+  "src/shared-data.ts",
   "src/storage-manager.ts",
   "src/swarm-manager.ts",
   "src/types.d.ts",
@@ -2900,13 +2915,16 @@ exports[`generator snapshots > file paths only > pear-desktop / bare: path list 
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
   "electron/main.js",
   "electron/preload.cjs",
+  "examples/share-data.mjs",
   "index.html",
   "package.json",
   "planning/README.md",
+  "shared-data.js",
   "worker.js",
 ]
 `;
@@ -2921,13 +2939,16 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
   ".unstoppable/runtime-ai/index.d.ts",
   ".unstoppable/runtime-ai/index.js",
   "README.md",
+  "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
   "electron/main.js",
   "electron/preload.cjs",
+  "examples/share-data.mjs",
   "index.html",
   "package.json",
   "planning/README.md",
+  "shared-data.js",
   "worker.js",
 ]
 `;
@@ -2942,13 +2963,16 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai: path l
   ".unstoppable/runtime-ai/index.d.ts",
   ".unstoppable/runtime-ai/index.js",
   "README.md",
+  "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
   "electron/main.js",
   "electron/preload.cjs",
+  "examples/share-data.mjs",
   "index.html",
   "package.json",
   "planning/README.md",
+  "shared-data.js",
   "worker.js",
 ]
 `;
@@ -2959,13 +2983,16 @@ exports[`generator snapshots > file paths only > pear-desktop / node-sync: path 
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
   "electron/main.js",
   "electron/preload.cjs",
+  "examples/share-data.mjs",
   "index.html",
   "package.json",
   "planning/README.md",
+  "shared-data.js",
   "worker.js",
 ]
 `;
@@ -2976,13 +3003,16 @@ exports[`generator snapshots > file paths only > pear-desktop / wallet: path lis
   ".unstoppable/APP.md",
   ".unstoppable/project.json",
   "README.md",
+  "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
   "electron/main.js",
   "electron/preload.cjs",
+  "examples/share-data.mjs",
   "index.html",
   "package.json",
   "planning/README.md",
+  "shared-data.js",
   "worker.js",
 ]
 `;
@@ -3009,6 +3039,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -3024,13 +3056,13 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "features": [],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "experimental",
   "featureMaturity": {},
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -3045,7 +3077,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "corestore": "^7.8.0",
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
-      "hypercore-crypto": "^3.7.0"
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -3058,6 +3091,83 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "path": ".unstoppable/project.json",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -3067,6 +3177,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "node": ">=22.17.0"
   },
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -3076,7 +3187,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "corestore": "^7.8.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
-    "hypercore-crypto": "^3.7.0"
+    "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -3108,6 +3220,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Node.js CLI
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -3125,6 +3241,76 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './src/shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "import Corestore from 'corestore'
@@ -3155,6 +3341,13 @@ main().catch((err) => {
 })
 ",
     "path": "src/index.ts",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "src/shared-data.ts",
   },
   {
     "content": "import Hyperbee from 'hyperbee'
@@ -3255,6 +3448,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -3272,7 +3467,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -3280,7 +3475,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": {
     "version": "0.1.0",
@@ -3313,6 +3508,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2",
       "@qvac/sdk": "0.21.0",
       "zod": "^4.3.0"
     },
@@ -3608,6 +3804,83 @@ export function createAISession({ adapter, byteBudget = 2048 }) {
     "path": ".unstoppable/runtime-ai/index.js",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -3617,6 +3890,7 @@ export function createAISession({ adapter, byteBudget = 2048 }) {
     "node": ">=22.17.0"
   },
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -3627,6 +3901,7 @@ export function createAISession({ adapter, byteBudget = 2048 }) {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2",
     "@qvac/sdk": "0.21.0",
     "zod": "^4.3.0"
   },
@@ -3660,6 +3935,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Node.js CLI
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -3678,6 +3957,76 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './src/shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "import { createAISession, createNodeAdapter, createMockAdapter } from '../.unstoppable/runtime-ai/index.js'
@@ -3747,6 +4096,13 @@ main().catch((err) => {
 })
 ",
     "path": "src/index.ts",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "src/shared-data.ts",
   },
   {
     "content": "import Hyperbee from 'hyperbee'
@@ -3847,6 +4203,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -3864,7 +4222,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -3872,7 +4230,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -3901,6 +4259,83 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "path": ".unstoppable/project.json",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -3910,6 +4345,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "node": ">=22.17.0"
   },
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -3952,6 +4388,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Node.js CLI
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -3970,6 +4410,76 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './src/shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "import Corestore from 'corestore'
@@ -4089,6 +4599,13 @@ export async function startNodeHost({ db }: NodeHostOpts) {
     "path": "src/node-host.ts",
   },
   {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "src/shared-data.ts",
+  },
+  {
     "content": "import Hyperbee from 'hyperbee'
 
 export async function createStorage(store: any) {
@@ -4188,6 +4705,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -4205,7 +4724,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4213,7 +4732,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -4242,6 +4761,83 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "path": ".unstoppable/project.json",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -4251,6 +4847,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "node": ">=22.17.0"
   },
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -4293,6 +4890,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Node.js CLI
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -4318,6 +4919,76 @@ locally when it is unavailable.
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './src/shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "import Corestore from 'corestore'
@@ -4426,6 +5097,13 @@ export function setupNodeSync({ db }: NodeSyncOpts) {
     "path": "src/node-sync.ts",
   },
   {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "src/shared-data.ts",
+  },
+  {
     "content": "import Hyperbee from 'hyperbee'
 
 export async function createStorage(store: any) {
@@ -4525,6 +5203,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -4542,7 +5222,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "node-cli-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4550,7 +5230,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -4565,7 +5245,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "corestore": "^7.8.0",
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
-      "hypercore-crypto": "^3.7.0"
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -4578,6 +5259,83 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "path": ".unstoppable/project.json",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "{
   "name": "snap-test",
   "version": "0.1.0",
@@ -4587,6 +5345,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "node": ">=22.17.0"
   },
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js"
@@ -4596,7 +5355,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "corestore": "^7.8.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
-    "hypercore-crypto": "^3.7.0"
+    "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4628,6 +5388,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Node.js CLI
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -4646,6 +5410,76 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './src/shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "import Corestore from 'corestore'
@@ -4679,6 +5513,13 @@ main().catch((err) => {
 })
 ",
     "path": "src/index.ts",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "src/shared-data.ts",
   },
   {
     "content": "import Hyperbee from 'hyperbee'
@@ -4798,6 +5639,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -4813,13 +5656,13 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "features": [],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "preview",
   "featureMaturity": {},
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -4838,7 +5681,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
-      "hypercore-crypto": "^3.7.0"
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -5185,6 +6029,83 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "path": "electron/preload.cjs",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -5222,6 +6143,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "electron .",
     "start": "electron ."
   },
@@ -5234,7 +6156,8 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
-    "hypercore-crypto": "^3.7.0"
+    "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -5264,6 +6187,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Pear Desktop
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -5281,6 +6208,83 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "shared-data.js",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "/* global Bare */
@@ -5393,6 +6397,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -5411,7 +6417,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -5420,7 +6426,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": {
     "version": "0.1.0",
@@ -5457,6 +6463,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2",
       "@qvac/inference": "0.21.0",
       "@qvac/llm-llamacpp": "0.55.0",
       "@qvac/langdetect-text": "^0.1.2",
@@ -6235,6 +7242,83 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "path": "electron/preload.cjs",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -6272,6 +7356,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "electron .",
     "start": "electron ."
   },
@@ -6285,6 +7370,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
@@ -6319,6 +7405,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Pear Desktop
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -6338,6 +7428,83 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "shared-data.js",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "/* global Bare */
@@ -6518,6 +7685,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Local AI uses the vendored runtime-ai/index.js session. The app owns history/prompts/UI; the runtime owns loading, streaming, native Stop, context bounds and shutdown. One model supports one active session request. Keep consuming or return the iterator so cancellation can settle. Native acceptance still requires real model and offline tests.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -6535,7 +7704,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -6543,7 +7712,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": {
     "version": "0.1.0",
@@ -6580,6 +7749,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2",
       "@qvac/inference": "0.21.0",
       "@qvac/llm-llamacpp": "0.55.0",
       "@qvac/langdetect-text": "^0.1.2",
@@ -7349,6 +8519,83 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "path": "electron/preload.cjs",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -7386,6 +8633,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "electron .",
     "start": "electron ."
   },
@@ -7399,6 +8647,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
@@ -7433,6 +8682,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Pear Desktop
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -7451,6 +8704,83 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "shared-data.js",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "/* global Bare */
@@ -7624,6 +8954,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -7641,7 +8973,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -7649,7 +8981,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -8035,6 +9367,83 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "path": "electron/preload.cjs",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -8072,6 +9481,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "electron .",
     "start": "electron ."
   },
@@ -8115,6 +9525,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Pear Desktop
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -8140,6 +9554,83 @@ locally when it is unavailable.
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "shared-data.js",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "/* global Bare */
@@ -8302,6 +9793,8 @@ Desktop native code belongs in worker.js; the renderer uses app/bridge.js and th
 
 Do not assume local AI or Personal Node is installed. Select integrations from this app’s recorded features.
 
+Managed JSON sync is available through shared-data.js (desktop worker) or src/shared-data.ts (Node). Read SHARED-DATA.md and the runnable examples/share-data.mjs. These helpers create separate datasets; never silently migrate the existing store. Collaborative storage requires explicit Autobase opt-in and remains experimental.
+
 Use us compatibility check -o <app> to inspect upgrade differences. Preserve application edits; do not regenerate an edited app with --force. Read installed types and version-matched upstream docs for advanced SDK APIs.
 ",
     "path": ".unstoppable/APP.md",
@@ -8319,7 +9812,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   ],
   "compatibility": {
     "id": "pear-desktop-qvac-0.21",
-    "revision": 2
+    "revision": 3
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -8327,7 +9820,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "runtimeRequirements": {
     "nativeGraphMustBeValidated": true,
-    "bare": ">=1.30.3"
+    "bare": ">=1.32.0"
   },
   "aiRuntime": null,
   "model": null,
@@ -8346,7 +9839,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
-      "hypercore-crypto": "^3.7.0"
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.2"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -8702,6 +10196,83 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "path": "electron/preload.cjs",
   },
   {
+    "content": "import { createInterface } from 'node:readline'
+import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+
+const [mode, storage, key, version] = process.argv.slice(2)
+if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(mode) ||
+    (mode === 'mirror-read' && (!key || !/^\\d+$/.test(version || ''))) || (mode === 'db-join' && !key)) {
+  console.error('Usage: node device.js mirror-host <directory>\\n' +
+    '       node device.js mirror-read <directory> <key> <version>\\n' +
+    '       node device.js db-host <directory>\\n' +
+    '       node device.js db-join <directory> <key>')
+  process.exitCode = 1
+} else {
+  // Optional private-network configuration; ordinary users use public discovery.
+  const nodeOptions = process.env.P2P_BOOTSTRAP
+    ? { swarm: { bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP) } } : undefined
+  const controller = new AbortController()
+  const stop = () => controller.abort(new Error('Stopped'))
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  const hold = () => controller.signal.aborted ? Promise.resolve() : new Promise(resolve => controller.signal.addEventListener('abort', resolve, { once: true }))
+  let data, input, unwatch
+  try {
+    data = mode.startsWith('mirror')
+      ? await openCollection({ storage, key, nodeOptions })
+      : await openCollaborativeDatabase({ storage, key, nodeOptions, signal: controller.signal })
+    console.log('Opening public discovery; local data stays in', storage)
+    if (mode === 'mirror-host') {
+      await data.put('note', { text: 'Hello from another device' })
+      await data.network.ready({ signal: controller.signal })
+      console.log('SHARE', JSON.stringify({ key: data.key, version: data.version }))
+      console.log('Keep this app running until the reader finishes. Ctrl+C closes safely.')
+      await hold()
+    } else if (mode === 'mirror-read') {
+      await data.sync({ version: Number(version), timeoutMs: 60000, signal: controller.signal })
+      console.log('DOWNLOADED', JSON.stringify(await data.get('note')))
+    } else if (mode === 'db-host') {
+      await data.network.ready({ signal: controller.signal })
+      console.log('DATABASE', data.key)
+      console.log('After verifying the joining device, paste its WRITER key here and press Enter.')
+      input = createInterface({ input: process.stdin, output: process.stdout })
+      input.on('line', line => {
+        data.members.add(line.trim()).then(() => console.log('Writer approved'), error => console.error(error.message))
+      })
+      let last
+      unwatch = data.watch(() => {
+        data.get('note').then(value => {
+          const text = JSON.stringify(value)
+          if (value !== null && text !== last) { last = text; console.log('OBSERVED', text) }
+        }).catch(error => { if (!controller.signal.aborted) console.error(error.message) })
+      })
+      await hold()
+    } else {
+      console.log('WRITER', data.writerKey)
+      console.log('Ask the founder to approve this writer key. Waiting up to two minutes.')
+      await data.waitFor(state => state.writable, { timeoutMs: 120000, signal: controller.signal })
+      await data.put('note', { text: 'Written on another device' })
+      console.log('Written locally. Confirm OBSERVED on the founder before closing. Ctrl+C exits.')
+      await hold()
+    }
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(error.code || 'ERROR', error.message)
+      if (error.network) console.error('Network status:', JSON.stringify(error.network))
+      process.exitCode = 1
+    }
+  } finally {
+    unwatch?.()
+    input?.close()
+    await data?.close()
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+",
+    "path": "examples/share-data.mjs",
+  },
+  {
     "content": "<!DOCTYPE html>
 <html>
 <head>
@@ -8739,6 +10310,7 @@ contextBridge.exposeInMainWorld('unstoppable', {
   },
   "upgrade": "pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o",
   "scripts": {
+    "share-data": "node examples/share-data.mjs",
     "dev": "electron .",
     "start": "electron ."
   },
@@ -8751,7 +10323,8 @@ contextBridge.exposeInMainWorld('unstoppable', {
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
-    "hypercore-crypto": "^3.7.0"
+    "hypercore-crypto": "^3.7.0",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.2"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -8781,6 +10354,10 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 
 Pear Desktop
 
+## Simple data sharing
+
+Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run \`npm run share-data -- mirror-host ./shared-writer\` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.
+
 ## Features
 
 - **P2P Networking** — Hyperswarm for peer discovery and connections
@@ -8799,6 +10376,83 @@ npm run dev
 See \`planning/\` for architecture decisions and feature plans.
 ",
     "path": "README.md",
+  },
+  {
+    "content": "// Use in Node or the desktop worker, never the renderer.
+// Each dataset/device needs its own storage directory.
+export { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'
+",
+    "path": "shared-data.js",
+  },
+  {
+    "content": "# Share JSON data between apps
+
+The managed API owns storage, discovery, replication and cleanup. This is an
+opt-in dataset; it does not migrate or automatically share the app's existing
+Hyperbee/Autobee store. Keep private state in its existing separate directory.
+
+\`\`\`js
+import { openCollection } from './shared-data.js'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('welcome', { text: 'Hello!' })
+// Open locally even offline. Before sharing with another device:
+await notes.network.ready()
+console.log({ key: notes.key, version: notes.version })
+// At app shutdown: await notes.close()
+\`\`\`
+
+On another device, open with its own storage directory and the shared key,
+then call \`sync({ version })\` before reading. A key grants reading, not writing.
+Reopening with the same directory remembers the dataset. Keep the writer running
+until the reader confirms downloading. Timeout diagnostics distinguish unreachable
+DHT nodes, missing peers and missing data. Public discovery requires UDP access.
+
+## Run on two devices
+
+From this generated app's directory, Device A runs:
+
+\`\`\`sh
+npm run share-data -- mirror-host ./shared-writer
+\`\`\`
+
+Device B replaces KEY and VERSION with Device A's SHARE output:
+
+\`\`\`sh
+npm run share-data -- mirror-read ./shared-reader KEY VERSION
+\`\`\`
+
+The host stays running; Ctrl+C closes safely and keeps local data. The reader
+prints DOWNLOADED only after retaining the requested version locally.
+
+## Collaborative data (experimental)
+
+Install the optional engine on both devices:
+
+\`\`\`sh
+npm install autobase@7.28.2
+# Device A:
+npm run share-data -- db-host ./shared-alice
+# Device B, using A's DATABASE key:
+npm run share-data -- db-join ./shared-bob KEY
+\`\`\`
+
+Verify B's WRITER key, then paste it into A's terminal to approve writing.
+Wait for OBSERVED on A before closing. In your app use
+\`openCollaborativeDatabase\` from the same module, then
+\`members.add(writerKey)\`, \`put\`, \`get\` and \`del\`. The founder alone manages
+writers. Concurrent replacements use Autobase order, not text merging or
+wall-clock ordering. Stable progress can depend on the founder/indexer.
+
+Desktop code belongs in the worker and reaches the renderer through the existing
+IPC bridge. The standalone example above runs in Node; it does not validate a
+packaged desktop app or a native/mobile runtime. The schema-driven multi-writer
+scaffold remains a separate experimental implementation, not a compatible
+on-disk format. Do not point these helpers at its existing storage directory.
+
+See https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database for the complete API and limits.
+",
+    "path": "SHARED-DATA.md",
   },
   {
     "content": "/* global Bare */

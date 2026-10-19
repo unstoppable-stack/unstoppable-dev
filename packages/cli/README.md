@@ -562,3 +562,17 @@ CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
 The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
 Published setup commands above remain pinned to beta.1 until registry acceptance.
+
+## Managed data in generated apps
+
+The next CLI beta includes `shared-data.js` (desktop worker) or
+`src/shared-data.ts` (Node), `SHARED-DATA.md`, and a runnable
+`npm run share-data -- ...` example. These use the P2P alpha.2 `/data` API for
+JSON replication and explicitly approved collaborative writers. Collaboration
+requires an explicit Autobase installation. The example runs in Node and does
+not establish native desktop/mobile or public-network acceptance.
+
+Existing app stores are preserved: this is an opt-in dataset, not an automatic
+migration or an invitation to expose private app data. Use compatibility check
+for existing apps; do not force-regenerate them. Expo's worklet graph remains
+deferred and does not receive these helpers.

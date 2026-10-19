@@ -59,7 +59,7 @@
       "keywords": ["multi-writer", "collaborative", "autobee", "autobase", "converge", "concurrent writes"],
       "files": ["src/p2p/**", "src/data/**"],
       "skill": "add-multi-writer-sync",
-      "message": "This needs multi-writer sync. Consider /add-multi-writer-sync for Autobee convergent state."
+      "message": "This needs multi-writer sync. Consider /add-multi-writer-sync for managed collaborative JSON or the existing schema-based store."
     },
     {
       "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream", "protomux"],

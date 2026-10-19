@@ -13,10 +13,10 @@ it('runs the documented host/reader and founder/joiner commands in separate proc
     for (const close of cleanup) await close()
     await env.cleanup()
   })
-  const script = await readFile(new URL('../../../examples/p2p-data/device.js', import.meta.url), 'utf8')
+  const script = await readFile(process.env.P2P_DEVICE_EXAMPLE || new URL('../../../examples/p2p-data/device.js', import.meta.url), 'utf8')
   function run (...args) {
     const process = spawn(globalThis.process.execPath, ['--input-type=module', '-e', script, 'device.js', ...args], {
-      cwd: fileURLToPath(new URL('..', import.meta.url)),
+      cwd: globalThis.process.env.P2P_CONSUMER_CWD || fileURLToPath(new URL('..', import.meta.url)),
       env: { ...globalThis.process.env, P2P_BOOTSTRAP: JSON.stringify(env.bootstrap) }, stdio: ['pipe', 'pipe', 'pipe']
     })
     let output = ''

@@ -48,9 +48,11 @@ try {
     import { syncPack } from '@unstoppable-stack/p2p/sync';
     import { ReplicationEngine } from '@unstoppable-stack/p2p/sync/replication';
     import { validateResourceManifest } from '@unstoppable-stack/p2p/sync/resource-manifest';
+    import { openCollection, openCollaborativeDatabase } from '@unstoppable-stack/p2p/data';
+    import { serve, connect } from '@unstoppable-stack/p2p/service';
     import { defineCapability } from '@unstoppable-stack/p2p/rpc';
     import { openDatabase, autobaseAdapter } from '@unstoppable-stack/p2p/db';
-    for (const api of [createNode, syncPack, ReplicationEngine, validateResourceManifest, defineCapability, openDatabase, autobaseAdapter]) assert.equal(typeof api, 'function');
+    for (const api of [createNode, syncPack, ReplicationEngine, validateResourceManifest, defineCapability, openDatabase, autobaseAdapter, openCollection, openCollaborativeDatabase, serve, connect]) assert.equal(typeof api, 'function');
     assert.equal(PROTOCOL_VERSION, 2);
     assert.equal(new NotGrantedError('notes', 'delete').code, 'NOT_GRANTED');
     assert.deepEqual(validateResourceManifest({ schemaVersion: 1, resources: [] }), { schemaVersion: 1, resources: [] });
@@ -73,7 +75,7 @@ try {
   assert.deepEqual(JSON.parse(capture(['scaffold', 'list-features'])).map(f => f.id), ['local-ai'])
   run(process.execPath, [cli, 'init', 'workspace', '--assistant', 'none', '--no-install'])
   run(process.execPath, [cli, 'scaffold', 'app', '-p', 'pear-desktop', '-n', 'notes-app', '-o', join(consumer, 'workspace/notes-app')])
-  for (const file of ['worker.js', 'electron/main.js', 'app/index.js']) {
+  for (const file of ['worker.js', 'electron/main.js', 'app/index.js', 'shared-data.js', 'examples/share-data.mjs']) {
     run(process.execPath, ['--check', join(consumer, 'workspace/notes-app', file)])
   }
   // A data-only consumer must not acquire an AI wrapper, model SDK or Node app.
@@ -93,11 +95,22 @@ try {
   })
   run('npm', ['install', '--no-save', '--package-lock=false', '--no-audit', '--no-fund', 'autobase@7.28.2'], { shell: process.platform === 'win32' })
   run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', join(databaseExample, 'test/database.test.js')])
+  // Verify the exact installed managed APIs and the example emitted by the installed CLI.
+  for (const name of ['helpers.js', 'data.test.js', 'data-network.test.js', 'data-device.test.js', 'rpc-session.test.js']) {
+    cpSync(join(root, 'packages/p2p/test', name), join(installedP2p, 'test', name))
+  }
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=120000',
+    ...['data.test.js', 'data-network.test.js', 'data-device.test.js', 'rpc-session.test.js'].map(name => join(installedP2p, 'test', name))], {
+    env: { ...process.env,
+      P2P_DEVICE_EXAMPLE: join(consumer, 'workspace/notes-app/examples/share-data.mjs'),
+      P2P_CONSUMER_CWD: consumer,
+    },
+  })
   writeFileSync(join(directory, registry ? 'registry-consumer-verification.json' : 'consumer-verification.json'), JSON.stringify({
     installation: registry ? 'public npm registry' : 'local release tarballs',
     checkedAt: new Date().toISOString(), status: 'passed', platform: process.platform, architecture: process.arch, node: process.version,
     artifacts: record.artifacts.map(({ name, sha256 }) => ({ name, sha256 })),
-    checks: ['resource discovery cannot grant capability authority', 'outgoing network approval and grant ceilings', 'replication-only connections survive control deadlines', 'incomplete control handshakes expire', 'all eight public P2P entry points load', 'optional database engine is not installed by default', 'explicit Autobase opt-in: offline writes, restart, conflict convergence and removal', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
+    checks: ['resource discovery cannot grant capability authority', 'outgoing network approval and grant ceilings', 'replication-only connections survive control deadlines', 'incomplete control handshakes expire', 'managed data and service public entry points load', 'installed CLI emits working separate-process data examples', 'optional database engine is not installed by default', 'explicit Autobase opt-in: offline writes, restart, conflict convergence and removal', 'invited RPC and streaming', 'denied uninvited/ungranted access', 'real Hyperbee replication',
       'replica restart while source offline', 'installed CLI minimal catalog', 'workspace and app generation',
       'generated JavaScript syntax', 'no AI, Memory, Search or Personal Node dependency'],
     limits: ['Local DHT only; public-internet discovery not asserted', 'No native model or generated desktop UI ran'],

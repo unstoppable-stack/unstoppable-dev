@@ -44,11 +44,10 @@ already published with identical bytes and run its registry tests.
 
 This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
 published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
-optional `/db` Autobase prototype. It also closes the resource-discovery callback
+optional `/db` Autobase prototype, managed `/service` sessions and `/data` helpers. It also closes the resource-discovery callback
 authorization gap, applies app-network policy in both directions, and preserves
 replication-only connections beyond the control handshake deadline. The installed
-consumer gate runs regressions for these boundaries against the packed bytes. Beta.2 carries the safe scaffold fixes and
-updates generated P2P dependencies to alpha.2. Keep the published setup commands
+consumer gate runs regressions for these boundaries against the packed bytes. Beta.2 carries the safe scaffold fixes, includes opt-in managed data modules and a two-device sharing example in generated Node/desktop apps, and updates generated P2P dependencies to alpha.2. Existing app storage formats are preserved. Keep the published setup commands
 above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
 The plugin installer uses explicit `cliInstallVersion` release metadata so a
 source version bump cannot claim that an unpublished candidate is on npm.
@@ -80,9 +79,9 @@ validator tests. It builds the CLI's minimal profile, packs exactly the two
 allowlisted packages, validates their exports and dependencies, then installs
 the tarballs in a temporary consumer outside the checkout. That consumer runs
 the notes tests, invokes the installed CLI, generates a workspace and desktop
-app, loads all eight P2P entry points, and checks the generated JavaScript. It checks
+app, loads the public P2P entry points, including managed data and service APIs, and checks the generated JavaScript. It checks
 engine isolation before explicitly installing Autobase and running the collaborative
-database example against the installed P2P package.
+database example against the installed P2P package. It also runs the sharing example emitted by the installed CLI in separate processes and verifies managed data persistence and connection lifetime.
 Preparation checks production dependency advisories, performs npm
 publication dry runs, checks registry version availability, and copies the
 website plugin download into `plugins/`.

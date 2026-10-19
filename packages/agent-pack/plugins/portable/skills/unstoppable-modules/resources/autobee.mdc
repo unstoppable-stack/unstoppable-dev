@@ -1,5 +1,8 @@
 # Autobee
 
+For a new simple JSON dataset, see `modules/managed-data.mdc`. Preserve Autobee
+for existing schema-based apps; managed Autobase storage is not format-compatible.
+
 ## Overview
 
 Autobee is a **multi-writer Hyperbee**. Each peer writes to its own local

@@ -1,5 +1,7 @@
 # Collaborative notes database (experimental)
 
+For the simplest JSON sharing API, start with [managed data examples](../p2p-data/README.md). This example retains advanced composition/custom data behavior.
+
 A runnable Node example of `@unstoppable-stack/p2p/db` with Autobase 7.28.2.
 It uses real paired P2P connections over an isolated loopback DHT. No public
 bootstrap, Personal Node, AI, account or model is needed.

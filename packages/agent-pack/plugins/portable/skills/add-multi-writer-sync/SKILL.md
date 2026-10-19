@@ -1,12 +1,12 @@
 ---
 name: add-multi-writer-sync
-description: Multi-writer data sync using Autobee for convergent state.
-when_to_use: Multiple peers or devices need to write to the same database and converge. Requires add-p2p-networking.
+description: Managed collaborative JSON data, or advanced Autobee integration for existing schema-based stores.
+when_to_use: Multiple peers or devices need to write to the same database and converge.
 paths: ["src/p2p/**", "src/data/**"]
 version: "2026-07-29"
 ---
 
-# Add Multi-Writer Sync (Autobee)
+# Add Multi-Writer Sync
 
 ## When to Use
 - User wants multiple peers to write to the same database simultaneously
@@ -17,10 +17,18 @@ version: "2026-07-29"
 > **Not this skill?** If only ONE peer writes and others read, use
 > `add-p2p-sync` instead (single-writer Hypercore replication).
 
-> **Autobee, not Autobase.** Autobee is a multi-writer Hyperbee and is what
-> `reference-apps/qvac-app` runs in production. It is a separate
-> implementation, *not* a wrapper over Autobase — the APIs differ and must not
-> be mixed. For existing Autobase code see `modules/autobase.mdc`.
+## Choose the data model first
+
+For a new JSON key-value dataset, prefer `openCollaborativeDatabase` from
+`@unstoppable-stack/p2p/data` (alpha.2 or later) with explicit `autobase@7.28.2`
+opt-in. Read `modules/managed-data.mdc`. The helper owns discovery and storage;
+only the founder admits verified writer keys. This is experimental and does not
+provide lost-admin recovery, text merging or complete backup. No separate
+networking setup is required for this path.
+
+For an existing generated Autobee/HyperDB schema store, preserve that engine and
+use the advanced instructions below. Autobee and Autobase are different engines;
+do not mix their view APIs, reinterpret old storage, or migrate silently.
 
 ## Prerequisites
 - Hyperswarm and Corestore installed (via `add-p2p-networking`)

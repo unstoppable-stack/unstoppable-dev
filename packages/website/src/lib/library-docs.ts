@@ -115,7 +115,7 @@ const dependencyVersions: Record<string, string> = {
 function exampleBlocks(id: string): DocBlock[] {
   if (id === "pear") return [
     { type: "paragraph", text: "Use Node 22.17+ and npm in a terminal on your desktop. Run this in a parent directory where a new workspace can be created; no existing app is overwritten." },
-    { type: "code", language: "bash", code: `${siteConfig.cli.setupInstallCommand}\nus init pear-demo-workspace --assistant none --no-install\ncd pear-demo-workspace\nus scaffold app -p pear-desktop -n pear-demo\ncd pear-demo\nnpm install\nnpm run dev` },
+    { type: "code", language: "bash", code: `${siteConfig.cli.installCommand}\nus init pear-demo-workspace --assistant none --no-install\ncd pear-demo-workspace\nus scaffold app -p pear-desktop -n pear-demo\ncd pear-demo\nnpm install\nnpm run dev` },
     { type: "heading", text: "Expected result" },
     { type: "paragraph", text: "A desktop window opens using the generated renderer and worker. This base example does not download an AI model. Keep the terminal open for worker errors and close the app when finished." },
   ];
