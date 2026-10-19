@@ -2,7 +2,7 @@
 
 `@unstoppable-stack/p2p/rpc` adds runtime validation and inferred TypeScript
 clients to the existing P2P capability bus. It is an experimental API inside
-the `0.6.0-alpha.2` source candidate; it is absent from published alpha.1. Plain capability packs, `peer.call()`,
+`0.6.0-alpha.2`; it is absent from alpha.1. Plain capability packs, `peer.call()`,
 `peer.stream()` and `peer.api` remain supported.
 
 Run the [notes example](../../../examples/p2p-notes/README.md) for calls and
@@ -16,16 +16,15 @@ storage plumbing. Those belong in transport implementation and isolated tests.
 Import `serve` and `connect` from `@unstoppable-stack/p2p/service` for managed
 service/client sessions. Define shared contracts through the lightweight `/rpc` entry.
 Keep `createNode` for bidirectional services, multiple packs or custom lifecycle.
-These helpers are part of the **unpublished alpha.2 source candidate**.
+These helpers require **0.6.0-alpha.2** or later.
 
-From a source checkout with Node 22.17+:
+With Node 22.17+:
 
 ```sh
-npm ci --prefix packages/p2p
 mkdir rpc-demo
 cd rpc-demo
 npm init -y
-npm install ../packages/p2p
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
 Save these three files in `rpc-demo`:

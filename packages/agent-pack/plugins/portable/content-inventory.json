@@ -1,6 +1,6 @@
 {
   "version": "0.1.5",
-  "sourceDigest": "6cce004d5ae5b2a7811f9e84783110148b8833116a400164dab78bb0155b5781",
+  "sourceDigest": "a3c93b9bcad92d37a09f0698a897b6d3f4d3958aca5d7929582114a06a93e318",
   "sources": {
     "core/architecture.mdc": "3deb8666d92a72e082a0409cb6c3b6a90ca10e69a2de5d6ab1e9e1d1b694f265",
     "core/cheatsheet.mdc": "e91f868012c2c8d61c7943d342eb0d95517af2349c373cd1e7f0ef4ac6a8287e",
@@ -74,7 +74,7 @@
     "skills/add-p2p-sync/resources/full-example.md": "47f2687f528e5cdd7ea33f7e1d7a6f06defa63e18aedc3404532b083a0b6c509",
     "skills/add-p2p-sync/resources/troubleshooting.md": "ff0003d2f266995ecb67f0575b347fa0c842c48524e464da96c57451d436523c",
     "skills/add-p2p-sync/SKILL.md": "832157f75d428e06d2d5fd02c321d51f3a83e0e48001812851ce9e33cba4be0c",
-    "skills/build-with-unstoppable/resources/install-cli.md": "6a05454ed41ad7fe2ef8df8a71675a567d47085aa24dc21010380aa8daac0807",
+    "skills/build-with-unstoppable/resources/install-cli.md": "489754c809ee830903b5e11b70ef8cc5fbcf7277a68fb9f84ab1e07f41e21a73",
     "skills/build-with-unstoppable/SKILL.md": "b0a175673a2361d19759bf3e8a1cbac84a5c141e14c48ea3dc70bebe399e2e5e",
     "skills/diagnose-stack-runtime/SKILL.md": "d6ff7093ee3173cdac49919127727118ab52e08d6b807b3fbb4dd7cd628ea38b",
     "skills/scaffold-project/SKILL.md": "c4d6741362c928a6a16cd3aa4581c4de572648ff2312dad7b12e237916c57a6a",
@@ -119,7 +119,7 @@
     "skills/add-p2p-sync/resources/full-example.md": "47f2687f528e5cdd7ea33f7e1d7a6f06defa63e18aedc3404532b083a0b6c509",
     "skills/add-p2p-sync/resources/troubleshooting.md": "ff0003d2f266995ecb67f0575b347fa0c842c48524e464da96c57451d436523c",
     "skills/add-p2p-sync/SKILL.md": "983c35713b9fdb7755f936ece129b49071c819bc1872ba3904d8fffc3f3fa71d",
-    "skills/build-with-unstoppable/resources/install-cli.md": "6a05454ed41ad7fe2ef8df8a71675a567d47085aa24dc21010380aa8daac0807",
+    "skills/build-with-unstoppable/resources/install-cli.md": "489754c809ee830903b5e11b70ef8cc5fbcf7277a68fb9f84ab1e07f41e21a73",
     "skills/build-with-unstoppable/SKILL.md": "b0a175673a2361d19759bf3e8a1cbac84a5c141e14c48ea3dc70bebe399e2e5e",
     "skills/diagnose-stack-runtime/SKILL.md": "de5a96eb23bfb5222a3e078472307224573a9730d2e0def2b6c61d8d5fefeaee",
     "skills/scaffold-project/SKILL.md": "a717cc3674388deb19e521a05518a682a5e7d2557620958629ceb3d6218e3bc1",

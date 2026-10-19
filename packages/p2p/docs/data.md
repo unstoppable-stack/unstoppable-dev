@@ -3,8 +3,7 @@
 `@unstoppable-stack/p2p/data` owns local storage, peer discovery, replication and
 shutdown. Choose a single-writer collection for read-only mirrors, or the
 experimental collaborative database for approved writers. Both expose JSON
-`put`, `get` and `del`. These helpers are in the alpha.2 source candidate; they
-are not in published alpha.1.
+`put`, `get` and `del`. These helpers require 0.6.0-alpha.2 or later.
 
 ## Run the examples
 
@@ -20,9 +19,7 @@ npm run collaborate --prefix examples/p2p-data
 The [complete examples](../../../examples/p2p-data/README.md) use two separate
 app directories, real public discovery, bounded waits and cleanup. UDP network
 access is needed for first sync. Existing local data works without other peers.
-For an app outside the checkout, install a locally packed alpha.2 candidate:
-`npm pack ./packages/p2p` from the repo, then install the resulting tarball in
-your app. Collaborative users also install `autobase@7.28.2` explicitly.
+For your own app, install `@unstoppable-stack/p2p@0.6.0-alpha.2` with npm. Collaborative users also install `autobase@7.28.2` explicitly.
 
 ## One writer, read-only copies
 

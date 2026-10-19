@@ -20,7 +20,7 @@ this module, although npm installs its storage dependencies.
 For the existing published API:
 
 ```bash
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
 Until then, use a locally packed tarball. The repository's P2P notes example

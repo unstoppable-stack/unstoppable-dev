@@ -2,7 +2,7 @@
 
 > Experimental `0.6.0-alpha.2` source reference. Published `0.6.0-alpha.1`
 > provides the original runtime and `/sync`; typed `/rpc` and the `/db`
-> prototype require alpha.2 source. Release labels checked 19 October 2026.
+> prototype require alpha.2. See the release record for registry availability.
 > Start with the [package quickstart](../README.md) and
 > [documentation index](README.md).
 

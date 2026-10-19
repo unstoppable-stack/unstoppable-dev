@@ -9,15 +9,13 @@ same view after reconnecting. It is an experimental integration, separate from
 the existing Autobee scaffold; it does not migrate that scaffold or replace
 its database format.
 
-This API targets the unpublished `0.6.0-alpha.2` candidate; it is not in
-published alpha.1. Run the [collaborative notes example](../../../examples/p2p-database/README.md)
+This API targets `0.6.0-alpha.2`; it is not in alpha.1. Run the [collaborative notes example](../../../examples/p2p-database/README.md)
 for admission, offline edits, restart, convergence and removal.
 
 The current acceptance runs under Node. Bare, packaged desktop and mobile
 acceptance for this adapter have not been established.
 
-After alpha.2 publication, install the optional engine explicitly. Until then,
-use the source example or a candidate tarball:
+Install the version documented here and its optional engine explicitly:
 
 ```sh
 npm install @unstoppable-stack/p2p@0.6.0-alpha.2 autobase@7.28.2 corestore hyperbee
