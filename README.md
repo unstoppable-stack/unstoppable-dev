@@ -26,7 +26,7 @@ Start with [Claude Code](https://unstoppable-stack.dev/docs/start/claude),
 local-first desktop baseline; the plugin guides include the separate CLI install.
 
 
-> **Release status:** CLI `0.4.0-beta.1` and P2P `0.6.0-alpha.1` are published prereleases, verified through fresh npm installs. Local AI requires separate native/model acceptance. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
+> **Release status:** CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2` are published prereleases, verified through fresh npm installs. Local AI requires separate native/model acceptance. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
 
 Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the same agent-pack source. The recommended Codex path still requires an independent pilot before it becomes a support claim.
 
@@ -61,7 +61,7 @@ packages built from the shared agent pack. Personal Node is an optional applicat
 - Wallets will use the upstream WDK SDK directly. Current wallet scaffolds are stubs.
 - Memory and Search are excluded from this release. Their source is retained.
 
-CLI `0.4.0-beta.1` and P2P `0.6.0-alpha.1` are published on npm under
+CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2` are published on npm under
 `beta` and `alpha`. Personal Node remains deferred, unpublished alpha source.
 Earlier CLI `0.3.0` and Node `0.4.0` retain their existing APIs. See
 [package architecture and migration](docs/package-architecture.md) for status,
@@ -98,12 +98,12 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 | --- | --- | --- |
 | Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Downloadable local preview; marketplace listing pending |
 | Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Downloadable local preview; marketplace listing pending |
-| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Published `0.4.0-beta.1` beta; install that exact version |
+| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Published `0.4.0-beta.2` beta; install that exact version |
 
 For the raw CLI path, install the published beta, then:
 
 ```bash
-npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+npm install -g @unstoppable-stack/cli@0.4.0-beta.2
 us --version
 us init shop-workspace --assistant none --no-install
 cd shop-workspace
@@ -115,7 +115,7 @@ npm run dev
 
 Use `--assistant claude` or `--assistant codex` instead of `none` for generated
 project guidance. Install P2P directly with
-`npm install @unstoppable-stack/p2p@0.6.0-alpha.1`; use version-matched commands. The plugin download adds guidance, not models or
+`npm install @unstoppable-stack/p2p@0.6.0-alpha.2`; use version-matched commands. The plugin download adds guidance, not models or
 native dependencies. See the [package structure](docs/package-architecture.md).
 
 ### Proposed first assistant prompt

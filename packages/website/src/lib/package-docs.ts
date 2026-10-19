@@ -12,7 +12,7 @@ export const packageDocs: DocPage[] = [
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Version-matched source examples", body: "These examples use the 0.6.0-alpha.2 candidate through local source links. Published alpha.1 does not contain /rpc or /db. Run from a checkout until alpha.2 is published. All APIs remain experimental." },
+      { type: "callout", title: "Version-matched examples", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 for these APIs. The repository demos use local source links; the quick starts below use npm. All APIs remain experimental." },
       { type: "cards", items: [
         { title: "Simple data sync", body: "Start here: a JSON collection or collaborative database with managed storage and replication. Complete runnable examples on each page.", href: "/docs/p2p/sync" },
         { title: "Notes: RPC and sync", body: "Start here for schema-validated calls, streams and invitation grants. Then replicate a single-owner Hyperbee and read it after the writer disconnects and the replica restarts.", href: "/docs/examples#replicate-notes-between-peers" },
@@ -43,13 +43,13 @@ npm run demo --prefix examples/p2p-database` },
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Experimental alpha API", body: "The /rpc entry and /service helpers target the 0.6.0-alpha.2 source candidate; it is absent from published alpha.1. Existing plain packs, peer.call, peer.stream and peer.api remain available. No tRPC or validator package is required." },
+      { type: "callout", title: "Experimental alpha API", body: "The /rpc entry and /service helpers are available in published 0.6.0-alpha.2. Existing plain packs, peer.call, peer.stream and peer.api remain available. No tRPC or validator package is required." },
       { type: "lead", text: "Define a capability once and share its runtime contract with clients. Query and mutation methods return ordinary promises; stream methods return async iterables. TypeScript infers inputs and results while runtime schemas check peer data." },
       { type: "heading", text: "When to use RPC" },
       { type: "paragraph", text: "Use RPC when a peer owns data or a service and should return a specific result: a receipt, a note or incremental output. Unlike replication, a call does not give the caller a local copy of the whole dataset. Both peers must be reachable for a fresh call." },
       { type: "heading", text: "Your first peer call" },
-      { type: "paragraph", text: "Use Node 22.17+ and npm. This quick start uses the new serve/connect helpers in the alpha.2 source candidate; published alpha.1 does not include them. The /service entry handles identity, discovery, encryption and pairing; /rpc defines the shared contract. Your app supplies a service, a storage directory and an invitation." },
-      { type: "code", language: "bash", code: "git clone https://github.com/unstoppable-stack/unstoppable-dev.git rpc-source\ncd rpc-source\nnpm ci --prefix packages/p2p\nmkdir rpc-demo\ncd rpc-demo\nnpm init -y\nnpm install ../packages/p2p" },
+      { type: "paragraph", text: "Use Node 22.17+ and npm. This quick start uses serve/connect from published 0.6.0-alpha.2. The /service entry handles identity, discovery, encryption and pairing; /rpc defines the shared contract. Your app supplies a service, a storage directory and an invitation." },
+      { type: "code", language: "bash", code: "mkdir rpc-demo\ncd rpc-demo\nnpm init -y\nnpm install @unstoppable-stack/p2p@0.6.0-alpha.2" },
       { type: "heading", text: "1. Define what the app can do" },
       { type: "paragraph", text: "Save notes.mjs. A capability is a named set of methods. This shared file contains a single query and its contract; it does not start networking when imported." },
       { type: "code", language: "js", code: examples.rpc.files[0].code },
@@ -93,7 +93,7 @@ npm run demo --prefix examples/p2p-database` },
       { type: "paragraph", text: "Sessions do not reconnect automatically. Close a disconnected session and call connect again with the saved public key and same storage, or bind a fresh client when using createNode directly. The runtime does not replay operations. A disconnect after a mutation can leave its outcome unknown, so use application idempotency keys before retrying changes. These bounded streams are not durable event subscriptions." },
       { type: "heading", text: "Troubleshooting" },
       { type: "list", items: [
-        "Package subpath /rpc is not exported: you installed alpha.1 instead of the alpha.2 source used above.",
+        "Package subpath /rpc is not exported: upgrade to @unstoppable-stack/p2p@0.6.0-alpha.2.",
         "NOT_GRANTED: inspect the invitation or peer grants; changing a TypeScript type will not authorize the method.",
         "INVALID_INPUT or INVALID_OUTPUT: check your validator and JSON wire shape; avoid undefined, BigInt, Dates, Maps, cycles and nonfinite numbers.",
         "INCOMPATIBLE_CAPABILITY or METHOD_KIND_MISMATCH: share a version-matched contract between peers.",
@@ -120,11 +120,14 @@ await bob.waitFor(state => state.writable)
 await bob.put('note', { text: 'Hello from Bob!' })
 // At app shutdown: await bob.close(); await alice.close()` },
       { type: "paragraph", text: "In separate apps, share Alice’s database key with Bob, then verify Bob’s writer key before admitting it on Alice’s app. Knowing a database key permits reading but never automatically grants writing. The founder alone manages membership." },
-      { type: "callout", title: "Alpha.2 source candidate", body: "The /data helpers are not in published alpha.1. Use this checkout or a locally packed candidate. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
+      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 to use the /data helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
       { type: "heading", text: "Run it locally" },
-      { type: "code", language: "sh", code: `npm install --prefix packages/p2p
-npm ci --prefix examples/p2p-data
-npm run collaborate --prefix examples/p2p-data` },
+      { type: "code", language: "sh", code: `mkdir database-demo
+cd database-demo
+npm init -y
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2 autobase@7.28.2
+# Save the program below as collaborate.mjs, then run:
+node collaborate.mjs` },
       { type: "paragraph", text: "This complete program waits for Alice to observe Bob’s edit, prints it, and closes both instances. It uses real public discovery, needs UDP access and bounds its waits to 60 seconds." },
       { type: "code", language: "js", code: examples.collaborative.files[0].code },
       { type: "heading", text: "Reads, writes and conflicts" },
@@ -152,7 +155,7 @@ console.log(data.network.status())
         "There is no HTTP/WebSocket fallback and no guarantee of connectivity on every network. Try another permitted network if UDP is blocked. Local tests and separate processes on one machine do not establish cross-device acceptance.",
       ] },
       { type: "heading", text: "Advanced: custom views and reducers" },
-      { type: "callout", title: "Prototype with explicit engine opt-in", body: "The /db prototype targets the alpha.2 source candidate. Install autobase@7.28.2 explicitly to use it. The root P2P import does not load it, and ordinary consumers do not install this optional peer automatically. This prototype is separate from the existing experimental Autobee scaffold." },
+      { type: "callout", title: "Prototype with explicit engine opt-in", body: "The /db prototype is available in published 0.6.0-alpha.2. Install autobase@7.28.2 explicitly to use it. The root P2P import does not load it, and ordinary consumers do not install this optional peer automatically. This prototype is separate from the existing experimental Autobee scaffold." },
       { type: "lead", text: "Applications supply a deterministic reducer and local view. Autobase orders writer logs so devices can converge after offline edits; application rules still decide what conflicting edits or deletes mean." },
       { type: "list", items: [
         "autobaseAdapter({ openView, apply, validate, closeView }) defines application-owned view behavior. openDatabase({ node, store, adapter, key, encryptionKey }) opens a local database and attaches replication to the P2P swarm.",
@@ -174,7 +177,7 @@ console.log(data.network.status())
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Alpha.2 source candidate", body: "This reference describes @unstoppable-stack/p2p 0.6.0-alpha.2 source. Alpha.1 is published; the new /rpc and /db APIs need source or an alpha.2 candidate tarball until publication. Published Personal Node 0.4.0 uses a different API." },
+      { type: "callout", title: "Experimental alpha.2 API", body: "This reference describes published @unstoppable-stack/p2p 0.6.0-alpha.2, including /rpc, /service, /data and /db. Published Personal Node 0.4.0 uses a different API." },
       { type: "lead", text: "Every app can be a node and a client at the same time. createNode owns stable identity, discovery, pairing, grants, capability calls, streaming and shutdown. A Personal Node is optional; two apps can pair and call each other directly." },
       { type: "actions", items: [{ label: "Start with serve and connect", href: "/docs/p2p/rpc" }] },
       { type: "paragraph", text: "For a single typed service, the /service entry owns startup, pairing, binding and cleanup. Use the lower-level createNode API below when composing several capabilities or implementing bidirectional services." },
@@ -244,11 +247,14 @@ const notes = await openCollection({ storage: './notes-copy', key })
 await notes.sync({ version })
 console.log(await notes.get('welcome')) // { text: 'Hello!' }
 await notes.close()` },
-      { type: "callout", title: "Alpha.2 source candidate", body: "The /data helpers are not in published alpha.1. Use this checkout or a locally packed candidate. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
+      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 to use the /data helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
       { type: "heading", text: "Run it locally" },
-      { type: "code", language: "sh", code: `npm install --prefix packages/p2p
-npm ci --prefix examples/p2p-data
-npm run mirror --prefix examples/p2p-data` },
+      { type: "code", language: "sh", code: `mkdir sync-demo
+cd sync-demo
+npm init -y
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
+# Save the program below as mirror.mjs, then run:
+node mirror.mjs` },
       { type: "paragraph", text: "This complete program runs two app instances, prints the copied value and cleans up its temporary data. Public discovery needs UDP network access; the wait fails after 60 seconds if the peer cannot be reached." },
       { type: "code", language: "js", code: examples.collection.files[0].code },
       { type: "heading", text: "Everyday API" },
@@ -262,7 +268,7 @@ npm run mirror --prefix examples/p2p-data` },
       { type: "callout", title: "What sync confirms", body: "A local-downloaded receipt confirms that this device has the requested blocks. It is not proof of remote backup. Dataset-key discovery is separate from RPC pairing and grants; revoking an RPC grant does not revoke already shared data keys." },
       { type: "heading", text: "Run on two devices" },
       { type: "code", language: "sh", code: "# On Device A, from the repository root.\nnpm run device --prefix examples/p2p-data -- mirror-host ./notes-writer\n\n# On Device B, replace KEY and VERSION with Device A’s SHARE values.\nnpm run device --prefix examples/p2p-data -- mirror-read ./notes-reader KEY VERSION" },
-      { type: "paragraph", text: "Install the same candidate and examples on both devices. Device A prints SHARE after announcing and must stay running. Device B prints DOWNLOADED after receiving the note. Ctrl+C closes the host safely; directories are retained for reopening." },
+      { type: "paragraph", text: "Install the same package version and examples on both devices. Device A prints SHARE after announcing and must stay running. Device B prints DOWNLOADED after receiving the note. Ctrl+C closes the host safely; directories are retained for reopening." },
       { type: "heading", text: "Public discovery and troubleshooting" },
       { type: "code", language: "js", code: `await data.network.ready({ timeoutMs: 60_000 })
 console.log(data.network.status())
@@ -275,7 +281,7 @@ console.log(data.network.status())
         "There is no HTTP/WebSocket fallback and no guarantee of connectivity on every network. Try another permitted network if UDP is blocked. Local tests and separate processes on one machine do not establish cross-device acceptance.",
       ] },
       { type: "heading", text: "Advanced: mirror existing cores and files" },
-      { type: "lead", text: "syncPack replicates Hypercores, Hyperbees and Hyperdrives and keeps seeding registered resources after the owner disconnects. It shares the P2P package's connection lifecycle. These reference pages describe the alpha.2 candidate; alpha.1 is already published." },
+      { type: "lead", text: "syncPack replicates Hypercores, Hyperbees and Hyperdrives and keeps seeding registered resources after the owner disconnects. It shares the P2P package's connection lifecycle. These reference pages describe published 0.6.0-alpha.2." },
       { type: "code", language: "js", code: `import { syncPack } from '@unstoppable-stack/p2p/sync'
 
 // Add this pack to createNode({ capabilities: [...] }).

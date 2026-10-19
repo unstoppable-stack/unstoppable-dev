@@ -42,7 +42,7 @@ export const siteConfig = {
     versionCommand: "us --version",
   },
   p2p: {
-    version: "0.6.0-alpha.1",
+    version: "0.6.0-alpha.2",
     sourceVersion: p2pPackage.version,
   },
 } as const;

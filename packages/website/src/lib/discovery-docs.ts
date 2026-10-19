@@ -65,7 +65,7 @@ export const discoveryDocs: DocPage[] = [{
   category: "Get started",
   verifiedOn: siteConfig.docsUpdatedOn,
   blocks: [
-    { type: "lead", text: "Run these examples from a repository checkout with Node 22.17 or later. Each uses the local P2P source; the typed RPC and database examples need the alpha.2 candidate rather than published alpha.1. Commands below start at the repository root." },
+    { type: "lead", text: "Run these examples from a repository checkout with Node 22.17 or later. Each uses the local P2P source; the typed RPC and database APIs are available in published 0.6.0-alpha.2. Commands below start at the repository root." },
     { type: "actions", items: [{ label: "Get the repository", href: siteConfig.publicRepositoryUrl }, { label: "Prefer a fresh scaffold?", href: "/docs/start/cli" }] },
     { type: "heading", text: "Replicate notes between peers" },
     { type: "paragraph", text: "Use openCollection to copy JSON between two app instances. The library owns storage, discovery and replication; the example needs public UDP peer discovery and prints the copied note." },

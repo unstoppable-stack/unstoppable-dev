@@ -52,12 +52,12 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Start through Claude Code, Codex or the raw CLI. The plugins guide your assistant; the CLI configures workspaces and generates apps. Apps use one Unstoppable P2P library and upstream QVAC or wallet SDKs when needed." },
       { type: "heading", text: "Packages we maintain" },
       { type: "list", items: [
-        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.1 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
-        "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.1 is published under alpha; install that exact version.",
+        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.2 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
+        "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.2 is published under alpha; install that exact version.",
         "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Local prototypes exist; public marketplace listings remain pending. Local-install preview downloads are available in the Claude and Codex guides.",
         "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.2 source. It is outside the core preview.",
       ] },
-      { type: "code", language: "bash", code: "npm install @unstoppable-stack/p2p@0.6.0-alpha.1" },
+      { type: "code", language: "bash", code: "npm install @unstoppable-stack/p2p@0.6.0-alpha.2" },
       { type: "code", language: "js", code: "// Published alpha imports.\nimport { createNode } from '@unstoppable-stack/p2p'\nimport { syncPack } from '@unstoppable-stack/p2p/sync'" },
       { type: "heading", text: "Use upstream SDKs directly" },
       { type: "paragraph", text: "QVAC owns inference. Generated apps use its SDK or inference packages for their runtime, with small private lifecycle helpers for cancellation and shutdown. Personal Node's delegated AI adapter is internal application code. Wallet integration will use WDK directly; current wallet scaffolds are stubs." },
@@ -93,7 +93,7 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Unstoppable Stack combines app scaffolding, coding-assistant guidance, and a P2P library. Your app owns its UI and data; Holepunch libraries provide storage and networking, and QVAC provides optional inference on the device running the model." },
       { type: "heading", text: "What you can build" },
       { type: "cards", items: capabilityCards },
-      { type: "callout", title: "Choose a path with the right maturity", body: "Workspace setup and desktop scaffolding are the core preview. P2P is alpha; typed RPC and the collaborative database require the alpha.2 source candidate. Native AI needs model and platform validation. Personal Node, mobile, Memory and wallets remain outside the core preview." },
+      { type: "callout", title: "Choose a path with the right maturity", body: "Workspace setup and desktop scaffolding are the core preview. P2P is alpha; typed RPC and the collaborative database are available in published 0.6.0-alpha.2. Native AI needs model and platform validation. Personal Node, mobile, Memory and wallets remain outside the core preview." },
       { type: "heading", text: "How the pieces fit" },
       { type: "steps", items: [
         { title: "Create your workspace and app", body: "The CLI generates the project. The agent pack gives Claude Code, Cursor, OpenCode or Codex implementation guidance; it is not the AI running inside your app." },
@@ -292,7 +292,7 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: `CLI ${siteConfig.cli.version} is the published beta: init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.latestVersion} also exposes the deferred node command. Install the exact beta for this guide.` },
       { type: "code", language: "bash", code: "us --version\nus --help\nus init [project-name] --assistant <claude|codex|cursor|opencode|none>\nus scaffold app -p pear-desktop -n <name>\nus scaffold list-platforms\nus scaffold list-features\nus doctor -p pear-desktop" },
       { type: "heading", text: "Compatibility commands" },
-      { type: "paragraph", text: "The published 0.4.0-beta.1 adds the read-only commands below. They are absent from earlier 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
+      { type: "paragraph", text: "Published 0.4.0-beta.2 includes the read-only commands below. They are absent from earlier 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
       { type: "code", language: "bash", code: "us compatibility list -o <workspace>\nus compatibility check -o <app>" },
       { type: "heading", text: "Scaffold facts" },
       { type: "list", items: [
