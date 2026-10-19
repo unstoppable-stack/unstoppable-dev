@@ -18,6 +18,16 @@ it('runs the documented host/reader and founder/joiner commands in separate proc
   // example itself remains unchanged, including in installed-consumer checks.
   const script = `
 import { UnstoppableNode } from '@unstoppable-stack/p2p'
+import DHT from 'hyperdht'
+// Keep the isolated test network on loopback. Wildcard sockets can advertise
+// another runner interface and complete discovery without delivering UDP data.
+const originalOpen = UnstoppableNode.prototype._open
+UnstoppableNode.prototype._open = function () {
+  this._swarmOpts.dht = new DHT({
+    bootstrap: JSON.parse(process.env.P2P_BOOTSTRAP), host: '127.0.0.1', firewalled: false
+  })
+  return originalOpen.call(this)
+}
 const originalConnection = UnstoppableNode.prototype._onConnection
 UnstoppableNode.prototype._onConnection = function (socket, info) {
   const result = originalConnection.call(this, socket, info)
