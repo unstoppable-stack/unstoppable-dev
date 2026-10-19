@@ -1,8 +1,8 @@
 import { InvalidOptionError, NodeError } from './errors.js'
+import { contracts } from './rpc-contracts.js'
 
 // Metadata stays local: only kinds/versions are advertised, never handlers or schemas.
 const procedures = new WeakMap()
-const contracts = new WeakSet()
 
 export function procedureMetadata (handler) { return procedures.get(handler) }
 

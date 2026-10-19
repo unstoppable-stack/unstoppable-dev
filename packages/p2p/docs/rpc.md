@@ -9,6 +9,116 @@ Run the [notes example](../../../examples/p2p-notes/README.md) for calls and
 streams, or [Local Goods](../../../examples/ecommerce-assistant/README.md) for
 a desktop worker with scoped receipt queries and private local storage.
 
+## Start here: serve, invite, connect
+
+The application path needs no DHT, swarm, topic, bootstrap port or temporary
+storage plumbing. Those belong in transport implementation and isolated tests.
+Import `serve` and `connect` from `@unstoppable-stack/p2p/service` for managed
+service/client sessions. Define shared contracts through the lightweight `/rpc` entry.
+Keep `createNode` for bidirectional services, multiple packs or custom lifecycle.
+These helpers are part of the **unpublished alpha.2 source candidate**.
+
+From a source checkout with Node 22.17+:
+
+```sh
+npm ci --prefix packages/p2p
+mkdir rpc-demo
+cd rpc-demo
+npm init -y
+npm install ../packages/p2p
+```
+
+Save these three files in `rpc-demo`:
+
+### notes.mjs
+
+```js
+import { defineCapability, procedure } from '@unstoppable-stack/p2p/rpc'
+
+export const notes = defineCapability({
+  name: 'notes',
+  version: 1,
+  methods: {
+    get: procedure.query(() => ({ text: 'Hello RPC' }))
+  }
+})
+```
+
+### host.mjs
+
+```js
+import { serve } from '@unstoppable-stack/p2p/service'
+import { notes } from './notes.mjs'
+
+const service = await serve({ storage: './host-data', capability: notes })
+try {
+  console.log(await service.invite(['get']))
+} catch (error) {
+  await service.close()
+  throw error
+}
+process.once('SIGINT', () => service.close())
+process.once('SIGTERM', () => service.close())
+```
+
+### client.mjs
+
+```js
+import { connect } from '@unstoppable-stack/p2p/service'
+import { notes } from './notes.mjs'
+
+const connection = await connect({
+  storage: './client-data',
+  invite: process.argv[2],
+  contract: notes.contract
+})
+try {
+  console.log((await connection.api.get()).text)
+} finally {
+  await connection.close()
+}
+```
+
+### Run
+
+```sh
+node host.mjs
+# Second terminal, same directory; paste the code printed by the host:
+node client.mjs "PASTE_INVITATION_HERE"
+```
+
+The client prints `Hello RPC` and closes. Keep the host running until done,
+then press Ctrl+C. Public discovery requires network access on both peers.
+No server account is needed. Each invite is single-use and expires in 15 minutes
+by default; share it only with its intended recipient. Restart the host to issue
+a new code. Stored identities and grants survive shutdown.
+
+### Session ownership and permissions
+
+- `serve({ storage, capability, nodeOptions? })` starts a node with one capability.
+  It returns `{ node, contract, invite, close }`.
+- `service.invite(methods, { uses?, expiresIn?, label? })` returns the code.
+  Methods must be a nonempty list of names in this capability; no implicit
+  all-method grants. Advanced invite inspection/revocation remains on `service.node`.
+- `connect({ storage, invite, contract, timeout?, signal?, nodeOptions? })`
+  creates a node, pairs, and binds the typed API. It returns `{ api, peer, node, close }`.
+  Failed setup releases its node; after success the application owns `close()`.
+- Save `connection.peer.publicKey` for future sessions. Reconnect using
+  `connect({ storage, publicKey, contract })` with the same client identity directory.
+  Supply exactly one target. Contract methods are requested automatically, but
+  the host still enforces invitation grants and persisted permission ceilings.
+- Setup lookup defaults to 20 seconds; per-call deadlines are separate. A signal
+  cancels pairing/dialing. It does not become a lifetime signal for later calls.
+- Sessions do not automatically reconnect or replay operations. After a disconnect,
+  close the old session and connect again. Mutations still need app-owned idempotency.
+- `nodeOptions` is an advanced escape hatch for existing profile, transport and
+  limit options. Sessions own storage, capabilities and reconnect policy. Keep
+  native sessions in the worker; importing shared RPC contracts alone does not
+  load the transport.
+- `close()` is idempotent. If contract binding fails after pairing, pairing may
+  already have persisted; cleanup does not revoke trust. Use the host's grant
+  controls or `unpair()` when revocation is intended.
+
 ## Define a capability
 
 A capability names a service and its contract version. Procedures distinguish

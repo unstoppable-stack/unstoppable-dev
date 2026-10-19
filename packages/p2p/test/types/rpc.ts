@@ -75,3 +75,21 @@ procedure.query(() => note)
 procedure.output((value: unknown) => new Date())
 // @ts-expect-error output schemas must accept their own output, input transformations remain supported
 procedure.output(transformed)
+
+async function sessions() {
+  const { serve, connect } = await import('@unstoppable-stack/p2p/service')
+  const service = await serve({ storage: './host', capability: cap })
+  const invite = await service.invite(['get'])
+  // @ts-expect-error invitation methods must exist
+  service.invite(['typo'])
+  const connection = await connect({ storage: './client', invite, contract: cap.contract })
+  const id: string = (await connection.api.get({ id: 'n' })).id
+  // @ts-expect-error typed inputs remain enforced
+  connection.api.get({ id: 42 })
+  // @ts-expect-error choose a single connection target
+  connect({ storage: './client', invite, publicKey: 'a', contract: cap })
+  await connection.close()
+  await service.close()
+  return id
+}
+void sessions

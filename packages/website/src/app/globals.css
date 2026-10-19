@@ -36,6 +36,38 @@ body {
   color: var(--color-background);
 }
 
+/* Editor-style colors, scoped to examples so the rest of the site stays unchanged. */
+.syntax-code {
+  background: #10141c;
+  color: #d6deeb;
+  font-family: "Geist Mono", "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-variant-ligatures: none;
+  tab-size: 2;
+}
+
+.syntax-code code { font-family: inherit; }
+.syntax-code .token.comment,
+.syntax-code .token.prolog,
+.syntax-code .token.doctype { color: #929eaf; font-style: italic; }
+.syntax-code .token.keyword,
+.syntax-code .token.operator { color: #c792ea; }
+.syntax-code .token.string,
+.syntax-code .token.char,
+.syntax-code .token.attr-value { color: #c3e88d; }
+.syntax-code .token.function,
+.syntax-code .token.function-name { color: #82aaff; }
+.syntax-code .token.number,
+.syntax-code .token.boolean,
+.syntax-code .token.constant { color: #f78c6c; }
+.syntax-code .token.class-name,
+.syntax-code .token.builtin { color: #ffcb8b; }
+.syntax-code .token.property,
+.syntax-code .token.parameter,
+.syntax-code .token.variable { color: #addb67; }
+.syntax-code .token.punctuation { color: #b8c7db; }
+.syntax-code .token.tag,
+.syntax-code .token.attr-name { color: #89ddff; }
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;

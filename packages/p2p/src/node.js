@@ -498,8 +498,7 @@ export class UnstoppableNode extends EventEmitter {
       // A plain Hypercore seeder never opens this channel. Its connection
       // remains bounded by maxPeers, but is not a stalled control handshake.
       onopen: () => {
-        peer._handshakeTimer = setTimeout(() => { peer.close() }, this._handshakeTimeout)
-        if (peer._handshakeTimer.unref) peer._handshakeTimer.unref()
+        this._armHandshakeDeadline(peer)
       },
       onclose: () => this._onPeerClose(remotePublicKey)
     })
@@ -579,6 +578,9 @@ export class UnstoppableNode extends EventEmitter {
     }
 
     if (peer.publicKey) { peer.close(); return }
+    // A valid greeting completes the control handshake. Resource-discovery
+    // peers can replicate indefinitely without requesting RPC authority.
+    clearTimeout(peer._handshakeTimer)
     peer.publicKey = msg.publicKey
     peer.profile = msg.profile || {}
     peer.nodeType = msg.nodeType || null
@@ -587,6 +589,12 @@ export class UnstoppableNode extends EventEmitter {
     this.emit('hello', { publicKey: peer.publicKey, profile: peer.profile, capabilities: peer.capabilities })
 
     if (peer.initiator) this._initiatePairing(peer)
+  }
+
+  _armHandshakeDeadline (peer) {
+    clearTimeout(peer._handshakeTimer)
+    peer._handshakeTimer = setTimeout(() => { peer.close() }, this._handshakeTimeout)
+    peer._handshakeTimer.unref?.()
   }
 
   _initiatePairing (peer) {
@@ -598,6 +606,7 @@ export class UnstoppableNode extends EventEmitter {
     // Transport initiation is not consent: replication discovers arbitrary
     // seeders. Only an explicit operation or a matched app network may pair.
     if (!dialing && !redeeming && !discovering && !network) return
+    this._armHandshakeDeadline(peer)
     peer._pairingIntent = dialing || redeeming || discovering
       ? { kind: 'explicit' } : { kind: 'network', network }
     peer.send({
@@ -614,6 +623,7 @@ export class UnstoppableNode extends EventEmitter {
   async _onPairRequest (peer, msg) {
     if (!peer.publicKey || peer.paired || peer._pairRequestPending) return
     peer._pairRequestPending = true
+    this._armHandshakeDeadline(peer)
     const known = this.peerRegistry.get(peer.remotePublicKey)
     if (this.peerRegistry.isDenied(peer.remotePublicKey) ||
         await this._pairing.isDenied?.(peer.remotePublicKey)) {

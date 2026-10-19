@@ -41,6 +41,18 @@ try {
     assert.throws(() => require.resolve('autobase'), { code: 'MODULE_NOT_FOUND' });
   `])
 
+  // Exercise the public session helpers from the installed artifact, not source.
+  const sessionTests = join(consumer, 'session-tests')
+  mkdirSync(sessionTests)
+  for (const name of ['rpc-session.test.js', 'helpers.js']) {
+    const content = readFileSync(join(source, 'test', name), 'utf8')
+      .replaceAll("'../src/rpc.js'", "'@unstoppable-stack/p2p/rpc'")
+      .replaceAll("'../src/service.js'", "'@unstoppable-stack/p2p/service'")
+      .replaceAll("'../src/index.js'", "'@unstoppable-stack/p2p'")
+    writeFileSync(join(sessionTests, name), content)
+  }
+  run(process.execPath, ['--test', '--test-timeout=60000', 'session-tests/rpc-session.test.js'])
+
   for (const name of ['src', 'test']) cpSync(join(root, 'examples/p2p-notes', name), join(consumer, name), { recursive: true })
   run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', 'test/notes.test.js'])
 
@@ -64,6 +76,9 @@ try {
 
   // Installing the experimental engine is an explicit consumer choice.
   npm(['install', '--no-save', '--package-lock=false', '--no-audit', '--no-fund', 'autobase@7.28.2'])
+  cpSync(join(source, 'test/data.test.js'), join(installed, 'test/data.test.js'))
+  cpSync(join(source, 'test/data-network.test.js'), join(installed, 'test/data-network.test.js'))
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', join(installed, 'test/data.test.js'), join(installed, 'test/data-network.test.js')])
   mkdirSync(join(installed, 'test/sync'), { recursive: true })
   cpSync(join(source, 'test/sync/helpers.js'), join(installed, 'test/sync/helpers.js'))
   cpSync(join(source, 'test/db'), join(installed, 'test/db'), { recursive: true })

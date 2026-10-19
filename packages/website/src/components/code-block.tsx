@@ -1,7 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Check, Copy } from "lucide-react";
+import Prism from "prismjs";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-json";
+
+Prism.manual = true;
+
+const languageAliases: Record<string, string> = {
+  js: "javascript",
+  ts: "typescript",
+  sh: "bash",
+  shell: "bash",
+};
+
+function renderTokens(tokens: string | Prism.Token | (string | Prism.Token)[]): ReactNode {
+  if (typeof tokens === "string") return tokens;
+  if (Array.isArray(tokens)) {
+    return tokens.map((token, index) => (
+      <span key={index}>{renderTokens(token)}</span>
+    ));
+  }
+  const aliases = tokens.alias ? [tokens.alias].flat().join(" ") : "";
+  return <span className={`token ${tokens.type} ${aliases}`}>{renderTokens(tokens.content)}</span>;
+}
 
 interface CodeBlockProps {
   code: string;
@@ -10,6 +34,10 @@ interface CodeBlockProps {
 
 export function CodeBlock({ code, language = "bash" }: CodeBlockProps) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  const highlightedCode = useMemo(() => {
+    const grammar = Prism.languages[languageAliases[language] || language];
+    return grammar ? renderTokens(Prism.tokenize(code, grammar)) : code;
+  }, [code, language]);
 
   const handleCopy = async () => {
     try {
@@ -49,11 +77,8 @@ export function CodeBlock({ code, language = "bash" }: CodeBlockProps) {
           {copyState === "copied" ? "Command copied to clipboard." : copyState === "failed" ? "Copy failed. Select the command and copy it manually." : ""}
         </span>
       </div>
-      <pre className="p-4 overflow-x-auto">
-        <code>
-          {language === "bash" || language === "sh" ? <span aria-hidden="true" className="text-text-muted">$ </span> : null}
-          <span className="text-accent">{code}</span>
-        </code>
+      <pre className="syntax-code p-5 overflow-x-auto leading-7" tabIndex={0} aria-label={`${language} code example`}>
+        <code>{highlightedCode}</code>
       </pre>
     </div>
   );

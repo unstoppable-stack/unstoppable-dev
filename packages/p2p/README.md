@@ -1,7 +1,16 @@
 # @unstoppable-stack/p2p
 
+## Sync data in a few lines
+
+Use `openCollection` for single-writer JSON copies or
+`openCollaborativeDatabase` for explicitly approved writers. Both own storage,
+discovery and cleanup; no DHT setup or adapter is needed.
+See the [data quickstart](docs/data.md) and [runnable examples](../../examples/p2p-data/README.md).
+These helpers require the alpha.2 source candidate; collaboration is experimental.
+
+
 > **Release status:** `0.6.0-alpha.1` is published. This source prepares
-> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes, including resource-discovery
+> `0.6.0-alpha.2`, adding `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes, including resource-discovery
 > authorization and replication-only connection lifetime fixes.
 > Those additions are not in alpha.1. Preparation and tests are separate from
 > publication and production acceptance; all P2P APIs remain experimental.
@@ -57,6 +66,18 @@ Node consumers require Node 20 or newer. Fresh npm dependency resolution on Bare
 requires Bare 1.32 or newer; installed-artifact acceptance was run with the desktop
 sidecar's Bare 1.34.1. A locked older source dependency tree working on an older
 global Bare runtime does not establish fresh-install compatibility.
+
+## Fastest path: one service, one invitation
+
+For the alpha.2 source candidate, use `serve()` and `connect()` from
+`@unstoppable-stack/p2p/service`. They own node startup, pairing, typed client binding
+and failure cleanup. Apps specify their service and identity directory; no DHT,
+bootstrap nodes or topics are needed. Permissions remain explicit through
+`service.invite(['method'])`.
+
+[Run the complete three-file quick start](docs/rpc.md#start-here-serve-invite-connect).
+The lower-level API below remains useful for hosting several capabilities or
+calling peers in both directions. These helpers are not in published alpha.1.
 
 ## Usage
 

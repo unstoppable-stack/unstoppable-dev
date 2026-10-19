@@ -21,6 +21,14 @@
     "./db": {
       "types": "./src/db/index.d.ts",
       "default": "./src/db/index.js"
+    },
+    "./service": {
+      "types": "./src/service.d.ts",
+      "default": "./src/service.js"
+    },
+    "./data": {
+      "types": "./src/data.d.ts",
+      "default": "./src/data.js"
     }
   },
   "files": [

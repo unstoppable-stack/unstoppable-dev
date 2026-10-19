@@ -1,5 +1,8 @@
 # Experimental collaborative database adapter
 
+For a simpler JSON API with managed storage and discovery, start with the
+[data guide](data.md). This page covers advanced composition.
+
 `@unstoppable-stack/p2p/db` connects an application-owned database view to
 Autobase. Devices can write locally, exchange their writer logs and derive the
 same view after reconnecting. It is an experimental integration, separate from
