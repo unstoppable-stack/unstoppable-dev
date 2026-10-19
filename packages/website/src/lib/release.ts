@@ -1,9 +1,11 @@
 import pluginDownload from "./plugin-download.json";
 import pluginRelease from "../../../agent-pack/release.json";
+import cliPackage from "../../../cli/package.json";
+import p2pPackage from "../../../p2p/package.json";
 
-const candidateVersion = pluginRelease.cliInstallVersion;
+const installVersion = pluginRelease.cliInstallVersion;
 const setupInstallCommand = pluginRelease.cliRegistryPublished
-  ? `npm install -g @unstoppable-stack/cli@${candidateVersion}`
+  ? `npm install -g @unstoppable-stack/cli@${installVersion}`
   : `git clone https://github.com/unstoppable-stack/unstoppable-dev.git unstoppable-cli-source
 cd unstoppable-cli-source
 git checkout ${pluginRelease.cliSourceRef}
@@ -11,7 +13,7 @@ cd packages/cli
 npm ci --ignore-scripts
 mkdir -p ../../cli-artifacts
 npm pack --pack-destination ../../cli-artifacts
-npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-${candidateVersion}.tgz
+npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-${installVersion}.tgz
 export PATH="$HOME/.local/bin:$PATH"
 cd ~`;
 
@@ -22,7 +24,7 @@ export const siteConfig = {
   publicIssuesUrl: "https://github.com/unstoppable-stack/unstoppable-dev/issues",
   status: "Developer preview",
   verifiedOn: "25 September 2026",
-  docsUpdatedOn: "16 October 2026",
+  docsUpdatedOn: "19 October 2026",
   plugins: {
     version: pluginDownload.version,
     downloadPath: `/downloads/${pluginDownload.filename}`,
@@ -32,12 +34,16 @@ export const siteConfig = {
   },
   cli: {
     packageName: "@unstoppable-stack/cli",
-    publishedVersion: "0.3.0",
-    candidateVersion,
-    candidatePublished: pluginRelease.cliRegistryPublished,
-    setupInstallCommand,
-    installCommand: "npm install -g @unstoppable-stack/cli@0.3.0",
+    version: installVersion,
+    published: pluginRelease.cliRegistryPublished,
+    latestVersion: pluginRelease.registryLatestObserved,
+    sourceVersion: cliPackage.version,
+    installCommand: setupInstallCommand,
     versionCommand: "us --version",
+  },
+  p2p: {
+    version: "0.6.0-alpha.1",
+    sourceVersion: p2pPackage.version,
   },
 } as const;
 

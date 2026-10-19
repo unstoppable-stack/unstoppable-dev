@@ -1,10 +1,10 @@
 # Unstoppable Stack harness plugin
 
-The Unstoppable Stack now builds self-contained skills-only packages for Codex and Claude Code. Version 0.1.1 is being prepared as a public preview. Repository installation becomes available when the public catalog changes are merged; official-directory publication is a separate step. It includes 16 selected workflows and three reference routers; the existing project-pack flow remains available.
+The Unstoppable Stack provides self-contained skills-only preview packages for Codex and Claude Code. Repository catalogs and downloadable local-install archives are available; official-directory listing is a separate step. See [package.json](package.json) for the current plugin version and [website download metadata](../website/src/lib/plugin-download.json) for its archive. The plugin includes 16 selected workflows and three reference routers; the existing project-pack flow remains available.
 
 ## Public installation
 
-After the public catalogs and packages are merged into the GitHub repository:
+Install from the public repository catalog:
 
 ```sh
 claude plugin marketplace add unstoppable-stack/unstoppable-dev
