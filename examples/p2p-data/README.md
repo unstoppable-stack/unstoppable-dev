@@ -72,6 +72,10 @@ A local write message on B alone is not evidence that A received it.
 
 ## Diagnose discovery
 
+Set `P2P_DEBUG=1` when running a device command to print discovery and
+database progress every ten seconds. This helps distinguish an unreachable
+network from a connected peer still waiting for writer approval or history.
+
 `await data.network.ready({ timeoutMs: 60000, signal })` waits for a successful
 DHT announcement before a host advertises its sharing information. This is a
 separate step from local open and does not confirm a peer connection.

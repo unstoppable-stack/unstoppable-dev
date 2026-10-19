@@ -216,9 +216,12 @@ export async function openDatabase ({ node, store, adapter, key = null, encrypti
       aborted(signal)
       if (typeof predicate !== 'function' || !Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 120_000) throw new TypeError('waitFor needs a predicate and a timeout between 0 and 120000 ms')
       return new Promise((resolve, reject) => {
-        let timer
+        let timer, refreshTimer, settled = false
         const finish = (error, value) => {
+          if (settled) return
+          settled = true
           clearTimeout(timer)
+          clearTimeout(refreshTimer)
           signal?.removeEventListener('abort', onAbort)
           watchers.delete(check)
           waiting.delete(cancel)
@@ -232,11 +235,20 @@ export async function openDatabase ({ node, store, adapter, key = null, encrypti
             else if (predicate(current)) finish(null, current)
           } catch (error) { finish(error) }
         }
+        // Membership/history may arrive without a writable/update event until
+        // Autobase advances its view. Drive that work while a caller is waiting,
+        // without overlapping updates or keeping a poll alive after completion.
+        const refresh = async () => {
+          if (settled) return
+          try { await base.update(); if (!settled) check(state()) } catch (error) { finish(error) }
+          if (!settled) refreshTimer = setTimeout(refresh, 100)
+        }
         waiting.add(cancel)
         watchers.add(check)
         signal?.addEventListener('abort', onAbort, { once: true })
         timer = setTimeout(() => finish(new Error('Database wait timed out')), timeoutMs)
         check(state())
+        if (!settled) void refresh()
       })
     },
     close

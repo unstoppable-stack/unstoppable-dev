@@ -492,6 +492,9 @@ export class UnstoppableNode extends EventEmitter {
     const noiseStream = socket.noiseStream || socket
     const mux = Protomux.from(noiseStream)
     if (!noiseStream.userData) noiseStream.userData = mux
+    // Publishing our mux bypasses Hypercore's stream initialization, including
+    // its keep-alive setup. Idle database peers still need transport liveness.
+    if (noiseStream.keepAlive === 0) noiseStream.setKeepAlive(5000)
 
     const channel = mux.createChannel({
       protocol: CONTROL_PROTOCOL,
