@@ -187,7 +187,7 @@
   },
   "collection": {
     "packages": [
-      "@unstoppable-stack/p2p (alpha.2 source candidate)"
+      "@unstoppable-stack/p2p@0.6.0-alpha.2"
     ],
     "files": [
       {
@@ -200,7 +200,7 @@
   },
   "collaborative": {
     "packages": [
-      "@unstoppable-stack/p2p (alpha.2 source candidate)",
+      "@unstoppable-stack/p2p@0.6.0-alpha.2",
       "autobase@7.28.2"
     ],
     "files": [

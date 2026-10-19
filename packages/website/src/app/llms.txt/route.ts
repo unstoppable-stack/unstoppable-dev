@@ -18,7 +18,7 @@ export function GET() {
     `- Plugin preview download: ${siteConfig.plugins.downloadPath}`,
     `- Plugin checksum and source identity: ${siteConfig.plugins.checksumPath}`,
     "",
-    "Package structure: CLI + one P2P capabilities library; Claude/Codex plugins share guidance. QVAC and wallet integrations use upstream SDKs. P2P alpha 0.6.0-alpha.1 is published on npm, wallet scaffolds are stubs, and Memory and Search are excluded from this release.",
+    "Package structure: CLI + one P2P capabilities library; Claude/Codex plugins share guidance. QVAC and wallet integrations use upstream SDKs. P2P alpha 0.6.0-alpha.2 is published on npm, wallet scaffolds are stubs, and Memory and Search are excluded from this release.",
     "",
     "Full text: /llms-full.txt",
     "",
