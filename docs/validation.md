@@ -137,3 +137,27 @@ peer grants. Its desktop regression checks private `_cart` reference rejection
 and retrieval after full host restart. It does not replicate the private store.
 Receipt field allowlisting and malformed stored-record rejection are covered by
 its application tests. These checks do not establish customer identity or payments.
+
+### Managed P2P data: discovery and two-device acceptance
+
+`npm test --prefix packages/p2p` includes data-only connection lifetime beyond
+an RPC handshake deadline, bounded discovery retries, offline open, network
+wait cancellation, and the host/join CLI flow in separate processes. The process
+test uses an isolated loopback DHT; it is not public-internet or two-device proof.
+`node scripts/p2p-artifact-smoke.mjs` also checks managed data against a packed
+installation outside the checkout.
+
+For public-network acceptance, follow the
+[two-device example](../examples/p2p-data/README.md#use-two-devices) on two physical
+devices. Record runtime versions, whether devices are on the same/different
+networks, the writer's successful announcement, the reader's `DOWNLOADED`
+result, and the founder's `OBSERVED` result after explicit writer approval.
+Keep the host alive through transfer. Repeat after restarting with retained
+storage, and after disconnecting/reconnecting the network. Do not publish dataset
+or writer keys from private application data in validation logs.
+
+If `DATA_NETWORK_TIMEOUT` reports zero DHT peers, test bootstrap UDP reachability
+before diagnosing database convergence. DNS and HTTPS success are insufficient.
+A failed public probe must remain a failed/unverified acceptance boundary even
+when local tests pass; changing a timeout or using a private loopback bootstrap
+is not evidence that the public path works.

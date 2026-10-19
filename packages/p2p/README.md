@@ -1,9 +1,18 @@
 # @unstoppable-stack/p2p
 
-> **Release status:** `0.6.0-alpha.1` is published. This source prepares
-> `0.6.0-alpha.2`, adding `/rpc`, `/db`, types and correctness fixes.
-> Those additions are not in alpha.1. Preparation and tests are separate from
-> publication and production acceptance; all P2P APIs remain experimental.
+## Sync data in a few lines
+
+Use `openCollection` for single-writer JSON copies or
+`openCollaborativeDatabase` for explicitly approved writers. Both own storage,
+discovery and cleanup; no DHT setup or adapter is needed.
+See the [data quickstart](docs/data.md) and [runnable examples](../../examples/p2p-data/README.md).
+These helpers require 0.6.0-alpha.2 or later; collaboration is experimental.
+
+
+> **Versioned guide:** This README describes `0.6.0-alpha.2`, including
+> `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes. All P2P APIs
+> remain experimental. See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
+> for registry availability and acceptance limits.
 
 > Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable-stack.dev) —
 > identity, pairing, and a capability bus for apps that act as nodes.
@@ -18,7 +27,7 @@ to enable it. npm installs the storage dependencies with the package either way.
 QVAC and wallet SDKs remain upstream dependencies of the apps that use them.
 
 ```sh
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
 ```js
@@ -40,13 +49,13 @@ and does not remove the collaborative-database backup acceptance gates.
 
 ## Install
 
-For the existing published API, install the explicit preview version:
+Install the exact version documented here:
 
 ```bash
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
-Until then, consume a locally packed tarball. The repository's P2P notes example
+When testing an unreleased change, consume a locally packed tarball. The repository's P2P notes example
 tests invited calls, streaming and replication through an offline replica
 restart, including an isolated install of the release tarball. Release
 preparation records exact hashes and publishes this candidate to `alpha`,
@@ -56,6 +65,18 @@ Node consumers require Node 20 or newer. Fresh npm dependency resolution on Bare
 requires Bare 1.32 or newer; installed-artifact acceptance was run with the desktop
 sidecar's Bare 1.34.1. A locked older source dependency tree working on an older
 global Bare runtime does not establish fresh-install compatibility.
+
+## Fastest path: one service, one invitation
+
+In alpha.2, use `serve()` and `connect()` from
+`@unstoppable-stack/p2p/service`. They own node startup, pairing, typed client binding
+and failure cleanup. Apps specify their service and identity directory; no DHT,
+bootstrap nodes or topics are needed. Permissions remain explicit through
+`service.invite(['method'])`.
+
+[Run the complete three-file quick start](docs/rpc.md#start-here-serve-invite-connect).
+The lower-level API below remains useful for hosting several capabilities or
+calling peers in both directions. These helpers are not in alpha.1.
 
 ## Usage
 
@@ -259,7 +280,7 @@ filesystem error codes; competing runtime ownership reports `STORAGE_LOCKED`.
 
 | Boundary | Default |
 | --- | --- |
-| Live control peers | 128 |
+| Live transport connections (control and replication) | 128 |
 | Encoded JSON control frame | 256 KiB, checked before JSON decoding |
 | Active incoming requests | 8 per peer, 64 per node |
 | Server request lifetime | 120 seconds |
@@ -267,6 +288,19 @@ filesystem error codes; competing runtime ownership reports `STORAGE_LOCKED`.
 | Consumer stream buffer | 64 chunks / 1 MiB |
 
 Excess capacity/output/buffering reports `RESOURCE_LIMIT`; host deadlines report `REQUEST_TIMEOUT`. Streaming respects transport drain. A slow consumer is cancelled when its finite buffer fills rather than receiving an unbounded backlog. Grant removal aborts matching active work. Duplicate active request IDs and unsolicited pairing responses cannot replace controllers or authorize peers. Handlers must honor `ctx.signal`; a handler that ignores cancellation retains its capacity slot until it actually returns. This bounds admission but does not forcibly terminate arbitrary in-process plugin code. Replication binary channels are separate from these capability JSON limits.
+
+## Corrective candidate
+
+Alpha.2 prevents automatically discovered resource seeders from acquiring
+capability grants through reverse-direction pairing. App-network approval and
+grant ceilings apply to outgoing as well as incoming connections. Explicit
+pairing/dialing and scoped invitations retain their existing behavior.
+
+The control handshake deadline starts when the remote opens the control channel;
+plain Hypercore seeders remain connected beyond that deadline. All connections
+still count toward the finite peer limit. Regression checks cover both fixes,
+network policy in both directions, and stalled control handshakes, including
+against installed release tarballs. Alpha.2 remains experimental.
 
 ## Transport
 
@@ -303,7 +337,7 @@ MIT
 | [Collaborative notes](../../examples/p2p-database/README.md) | Optional Autobase, writer admission/removal, offline edits, restart and convergence |
 | [Local Goods](../../examples/ecommerce-assistant/README.md) | Desktop worker RPC, private local cart, validated receipt output and persistent pairing |
 
-These source examples target the `0.6.0-alpha.2` candidate. Use the checkout or
-an installed candidate tarball until it is published. The database adapter's
+These source examples target `0.6.0-alpha.2`. Use a version-matched checkout
+or an installed package. The database adapter's
 acceptance is currently Node-only; the desktop example uses RPC and local
 Hyperbee storage, not `/db`.

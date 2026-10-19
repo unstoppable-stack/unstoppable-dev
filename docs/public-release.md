@@ -44,8 +44,10 @@ already published with identical bytes and run its registry tests.
 
 This branch prepares CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2`. Neither is
 published yet. Alpha.2 adds correctness fixes, typed `/rpc` contracts and the
-optional `/db` Autobase prototype. Beta.2 carries the safe scaffold fixes and
-updates generated P2P dependencies to alpha.2. Keep the published setup commands
+optional `/db` Autobase prototype, managed `/service` sessions and `/data` helpers. It also closes the resource-discovery callback
+authorization gap, applies app-network policy in both directions, and preserves
+replication-only connections beyond the control handshake deadline. The installed
+consumer gate runs regressions for these boundaries against the packed bytes. Beta.2 carries the safe scaffold fixes, includes opt-in managed data modules and a two-device sharing example in generated Node/desktop apps, and updates generated P2P dependencies to alpha.2. Existing app storage formats are preserved. Keep the published setup commands
 above pinned to beta.1/alpha.1 until the new registry artifacts pass acceptance.
 The plugin installer uses explicit `cliInstallVersion` release metadata so a
 source version bump cannot claim that an unpublished candidate is on npm.
@@ -77,9 +79,9 @@ validator tests. It builds the CLI's minimal profile, packs exactly the two
 allowlisted packages, validates their exports and dependencies, then installs
 the tarballs in a temporary consumer outside the checkout. That consumer runs
 the notes tests, invokes the installed CLI, generates a workspace and desktop
-app, loads all eight P2P entry points, and checks the generated JavaScript. It checks
+app, loads the public P2P entry points, including managed data and service APIs, and checks the generated JavaScript. It checks
 engine isolation before explicitly installing Autobase and running the collaborative
-database example against the installed P2P package.
+database example against the installed P2P package. It also runs the sharing example emitted by the installed CLI in separate processes and verifies managed data persistence and connection lifetime.
 Preparation checks production dependency advisories, performs npm
 publication dry runs, checks registry version availability, and copies the
 website plugin download into `plugins/`.
@@ -110,21 +112,26 @@ as clean. The generated directory is ignored by Git.
 
 ## Publication
 
-### First publication of the P2P package
+### Authenticated maintainer publication
 
 npm requires a package to exist before trusted publishing can be configured.
-This historical first-publication procedure was used for alpha.1; subsequent
-releases still need an authenticated maintainer until trusted publishing is configured. Run the
+The packages already exist, but releases still need an authenticated maintainer
+until trusted publishing is configured. Run the
 canonical workflow with `publish: false`, download its validated artifact and
 use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 
 ```sh
 node scripts/public-release.mjs verify release-artifacts/candidate --require-clean
 npm login --registry=https://registry.npmjs.org
-npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.1.tgz --ignore-scripts --access public --tag alpha
+npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.2.tgz --ignore-scripts --access public --tag alpha
+npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.2.tgz --ignore-scripts --access public --tag beta
+node scripts/test-public-artifacts.mjs release-artifacts/candidate --registry
 ```
 
-The publishing account needs permission to create packages in the
+Publish P2P first: generated apps from this CLI depend on that exact candidate.
+Do not publish the CLI if P2P publication or its registry verification fails.
+
+The publishing account needs permission to publish packages in the
 `@unstoppable-stack` organization. Complete npm's interactive authentication
 and 2FA prompts locally; do not put credentials in Git or chat. Then configure
 the P2P trusted publisher, as well as the CLI publisher, before selecting the

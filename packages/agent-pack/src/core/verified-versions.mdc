@@ -11,8 +11,8 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 
 | Platform | Profile | Maturity | AI runtime | Validation |
 | --- | --- | --- | --- | --- |
-| pear-desktop | pear-desktop-qvac-0.21 / revision 2 | preview | 0.1.0 | contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending |
-| node-cli | node-cli-qvac-0.21 / revision 2 | experimental | 0.1.0 | contract-tested; native acceptance pending |
+| pear-desktop | pear-desktop-qvac-0.21 / revision 3 | preview | 0.1.0 | contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending |
+| node-cli | node-cli-qvac-0.21 / revision 3 | experimental | 0.1.0 | contract-tested; native acceptance pending |
 | expo-mobile | expo-54-qvac-0.21 / revision 2 | experimental | separate Expo implementation | separate Expo implementation; physical-device AI and Android acceptance pending |
 
 ## pear-desktop
@@ -28,6 +28,7 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | hyperbee | ^2.27.3 | base |
 | b4a | ^1.8.0 | base |
 | hypercore-crypto | ^3.7.0 | base |
+| @unstoppable-stack/p2p | 0.6.0-alpha.2 | base |
 | electron | ^44.5.1 | development |
 | @qvac/inference | 0.21.0 | local-ai |
 | @qvac/llm-llamacpp | 0.55.0 | local-ai |
@@ -48,6 +49,7 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | hyperbee | ^2.27.3 | base |
 | b4a | ^1.8.0 | base |
 | hypercore-crypto | ^3.7.0 | base |
+| @unstoppable-stack/p2p | 0.6.0-alpha.2 | base |
 | @types/node | ^20.0.0 | development |
 | typescript | ^5.0.0 | development |
 | tsx | ^4.0.0 | development |

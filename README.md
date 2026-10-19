@@ -32,6 +32,22 @@ Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the
 
 **Full CLI reference:** [`packages/cli/README.md`](./packages/cli/README.md) — every command, every flag, troubleshooting, and dev setup.
 
+## What can I build?
+
+| I want to… | Building blocks | Start here | Status |
+| --- | --- | --- | --- |
+| Create an app that saves data locally | CLI, desktop worker, Hyperbee | [Desktop quick start](#quick-start) | Core preview |
+| Call a method on a trusted device | P2P pairing, grants and RPC | [P2P API](packages/p2p/docs/api.md) | Alpha; typed `/rpc` needs alpha.2 source |
+| Keep a replica of notes or files | P2P `/sync`, Hyperbee, Hyperdrive | [Notes example](examples/p2p-notes/README.md) | Alpha; current example needs alpha.2 source |
+| Add an on-device shopping assistant | QVAC, Bare, local storage | [Local Goods example](examples/ecommerce-assistant/README.md) | Native/model acceptance is separate |
+| Merge edits made on offline devices | P2P `/db`, Autobase, app-owned reducer | [Collaborative notes](examples/p2p-database/README.md) | Experimental alpha.2 source |
+| Run an optional peer for storage or AI | Personal Node | [Node guide](packages/node/README.md) | Deferred alpha |
+
+Explore the [library guide](https://unstoppable-stack.dev/docs/modules) for what
+each dependency does, or [runnable examples](https://unstoppable-stack.dev/docs/examples)
+for commands and expected results. Mobile, wallets, Memory and Search remain
+outside the core preview; wallet scaffolds do not process payments.
+
 ## Packages and integrations
 
 The public architecture is the CLI, one P2P library, and Claude/Codex plugin

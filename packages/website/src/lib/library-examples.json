@@ -1,0 +1,215 @@
+{
+  "bare": {
+    "packages": [],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "const task = { id: 'note-1', text: 'Hello from Bare' }\nconst message = JSON.stringify(task)\nconsole.log(JSON.parse(message).text)\nawait new Promise(resolve => setTimeout(resolve, 10))\nconsole.log('Worker task complete')\n"
+      }
+    ],
+    "run": "bare example.mjs",
+    "expected": "Hello from Bare\nWorker task complete"
+  },
+  "hypercore": {
+    "packages": [
+      "hypercore"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Hypercore from 'hypercore'\nconst log = new Hypercore('./data', { valueEncoding: 'json' })\ntry {\n  await log.ready()\n  await log.append({ kind: 'note-created', text: 'Hello log' })\n  const event = await log.get(log.length - 1)\n  console.log(event.text)\n  console.log('Entries:', log.length)\n} finally {\n  await log.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello log\nEntries: 1 (in a fresh directory; increases on each run)"
+  },
+  "hyperbee": {
+    "packages": [
+      "hypercore",
+      "hyperbee"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Hypercore from 'hypercore'\nimport Hyperbee from 'hyperbee'\nconst db = new Hyperbee(new Hypercore('./data'), {\n  keyEncoding: 'utf-8', valueEncoding: 'json'\n})\ntry {\n  await db.ready()\n  await db.put('note:welcome', { text: 'Hello offline' })\n  console.log((await db.get('note:welcome')).value.text)\n  for await (const entry of db.createReadStream({ gte: 'note:', lt: 'note;' })) {\n    console.log(entry.key)\n  }\n} finally {\n  await db.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello offline\nnote:welcome"
+  },
+  "corestore": {
+    "packages": [
+      "corestore"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Corestore from 'corestore'\nconst store = new Corestore('./data')\ntry {\n  const notes = store.get({ name: 'notes', valueEncoding: 'json' })\n  const events = store.get({ name: 'events', valueEncoding: 'json' })\n  await Promise.all([notes.ready(), events.ready()])\n  if (notes.length === 0) await notes.append({ text: 'My first note' })\n  await events.append({ kind: 'opened' })\n  console.log((await notes.get(0)).text)\n  console.log('Open events:', events.length)\n} finally {\n  await store.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "My first note\nOpen events: 1 (increases when you run it again)"
+  },
+  "hyperdrive": {
+    "packages": [
+      "corestore",
+      "hyperdrive"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Corestore from 'corestore'\nimport Hyperdrive from 'hyperdrive'\nconst store = new Corestore('./data')\nconst drive = new Hyperdrive(store)\ntry {\n  await drive.ready()\n  await drive.put('/notes/welcome.txt', Buffer.from('Hello files'))\n  console.log((await drive.get('/notes/welcome.txt')).toString())\n  for await (const entry of drive.list('/notes')) console.log(entry.key)\n} finally {\n  await drive.close()\n  await store.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello files\n/notes/welcome.txt"
+  },
+  "autobase": {
+    "packages": [
+      "autobase",
+      "corestore"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Autobase from 'autobase'\nimport Corestore from 'corestore'\nconst store = new Corestore('./data')\nconst base = new Autobase(store, null, {\n  valueEncoding: 'json',\n  open (store) { return store.get({ name: 'view', valueEncoding: 'json' }) },\n  async apply (nodes, view) {\n    for (const node of nodes) {\n      if (node.value !== null) await view.append(node.value)\n    }\n  },\n  async close (view) { await view.close() }\n})\ntry {\n  await base.ready()\n  await base.append({ text: 'Hello ordered view' })\n  await base.update()\n  console.log((await base.view.get(base.view.length - 1)).text)\n} finally {\n  await base.close()\n  await store.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello ordered view"
+  },
+  "autobee": {
+    "packages": [
+      "autobee",
+      "corestore"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Autobee from 'autobee'\nimport Corestore from 'corestore'\nconst store = new Corestore('./data')\nconst db = new Autobee(store, null, {\n  async apply (nodes, view) {\n    const batch = view.write()\n    for (const node of nodes) {\n      if (node.value === null) continue\n      const op = JSON.parse(node.value.toString())\n      batch.tryPut(Buffer.from(op.key), Buffer.from(op.text))\n    }\n    await batch.flush()\n  }\n})\ntry {\n  await db.ready()\n  await db.append(Buffer.from(JSON.stringify({ key: 'welcome', text: 'Hello merged view' })))\n  await db.update()\n  console.log((await db.view.get(Buffer.from('welcome'))).value.toString())\n} finally {\n  await db.close()\n  await store.close()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello merged view"
+  },
+  "hyperdb": {
+    "packages": [
+      "hyperdb",
+      "hyperschema"
+    ],
+    "files": [
+      {
+        "name": "build.cjs",
+        "code": "const Hyperschema = require('hyperschema')\nconst Builder = require('hyperdb/builder')\nconst schema = Hyperschema.from('./spec/schema')\nschema.namespace('notes').register({\n  name: 'note', compact: true,\n  fields: [\n    { name: 'id', type: 'string', required: true },\n    { name: 'text', type: 'string', required: true }\n  ]\n})\nHyperschema.toDisk(schema)\nconst db = Builder.from('./spec/schema', './spec/db')\ndb.namespace('notes').collections.register({\n  name: 'note', schema: '@notes/note', key: ['id']\n})\nBuilder.toDisk(db)\n"
+      },
+      {
+        "name": "example.mjs",
+        "code": "import HyperDB from 'hyperdb'\nimport definition from './spec/db/index.js'\nconst db = HyperDB.rocks('./data', definition)\ntry {\n  await db.insert('@notes/note', { id: 'welcome', text: 'Hello collection' })\n  await db.flush()\n  console.log((await db.get('@notes/note', { id: 'welcome' })).text)\n} finally {\n  await db.close()\n}\n"
+      }
+    ],
+    "run": "node build.cjs\nnode example.mjs",
+    "expected": "Hello collection"
+  },
+  "hyperdht": {
+    "packages": [
+      "hyperdht"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import DHT from 'hyperdht'\n// An isolated local bootstrap: this example never joins the public DHT.\nconst seed = DHT.bootstrapper(49777, '127.0.0.1')\nawait seed.ready()\nconst bootstrap = [{ host: '127.0.0.1', port: seed.address().port }]\nconst host = new DHT({ bootstrap })\nconst client = new DHT({ bootstrap })\nconst server = host.createServer(socket => {\n  socket.on('error', () => {})\n  socket.end('Hello encrypted peer')\n})\nlet socket\nlet timer\ntry {\n  await server.listen(DHT.keyPair())\n  socket = client.connect(server.publicKey)\n  const message = await new Promise((resolve, reject) => {\n    timer = setTimeout(() => reject(new Error('Connection timed out')), 10000)\n    let text = ''\n    socket.on('data', chunk => { text += chunk.toString() })\n    socket.on('end', () => resolve(text))\n    socket.on('error', reject)\n  })\n  console.log(message)\n} finally {\n  clearTimeout(timer)\n  socket?.destroy()\n  await server.close()\n  await Promise.all([host.destroy(), client.destroy()])\n  await seed.destroy()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello encrypted peer"
+  },
+  "hyperswarm": {
+    "packages": [
+      "hyperswarm",
+      "hyperdht"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import Hyperswarm from 'hyperswarm'\nimport DHT from 'hyperdht'\nimport { randomBytes } from 'node:crypto'\nconst seed = DHT.bootstrapper(49777, '127.0.0.1')\nawait seed.ready()\nconst bootstrap = [{ host: '127.0.0.1', port: seed.address().port }]\nconst host = new Hyperswarm({ bootstrap })\nconst client = new Hyperswarm({ bootstrap })\nconst topic = randomBytes(32)\nlet timer\ntry {\n  host.on('connection', socket => {\n    socket.on('error', () => {})\n    socket.end('Hello topic')\n  })\n  const received = new Promise((resolve, reject) => {\n    timer = setTimeout(() => reject(new Error('Discovery timed out')), 10000)\n    client.on('connection', socket => {\n      let text = ''\n      socket.on('data', chunk => { text += chunk.toString() })\n      socket.on('end', () => resolve(text))\n      socket.on('error', reject)\n    })\n  })\n  // Start discovery and await the message together so failures are observed.\n  const discovery = (async () => {\n    await host.join(topic, { server: true, client: false }).flushed()\n    client.join(topic, { server: false, client: true })\n  })()\n  const [message] = await Promise.all([received, discovery])\n  console.log(message)\n} finally {\n  clearTimeout(timer)\n  await Promise.all([host.destroy(), client.destroy()])\n  await seed.destroy()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "Hello topic"
+  },
+  "qvac": {
+    "packages": [
+      "@qvac/sdk"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import { loadModel, completion, unloadModel, QWEN3_600M_INST_Q4 } from '@qvac/sdk'\nlet modelId\ntry {\n  modelId = await loadModel({ modelSrc: QWEN3_600M_INST_Q4 })\n  const run = completion({\n    modelId,\n    history: [{ role: 'user', content: 'Explain local-first apps in one sentence.' }],\n    stream: true\n  })\n  for await (const event of run.events) {\n    if (event.type === 'contentDelta') process.stdout.write(event.text)\n  }\n  await run.final\n  console.log()\n} finally {\n  if (modelId !== undefined) await unloadModel({ modelId, clearStorage: false })\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "A generated sentence about local-first apps. Text varies by model; the first run downloads model files."
+  },
+  "wdk": {
+    "packages": [
+      "@tetherto/wdk",
+      "@tetherto/wdk-wallet-evm"
+    ],
+    "files": [
+      {
+        "name": "example.mjs",
+        "code": "import WDK from '@tetherto/wdk'\nimport WalletManagerEvm from '@tetherto/wdk-wallet-evm'\n// Disposable demonstration wallet: never use it to receive funds.\nconst wdk = new WDK(WDK.getRandomSeedPhrase()).registerWallet(\n  'ethereum', WalletManagerEvm, { provider: 'https://eth.drpc.org' }\n)\ntry {\n  const account = await wdk.getAccount('ethereum', 0)\n  console.log(await account.getAddress())\n} finally {\n  wdk.dispose()\n}\n"
+      }
+    ],
+    "run": "node example.mjs",
+    "expected": "A new 0x-prefixed address. No seed is printed or saved, and no transaction is sent."
+  },
+  "rpc": {
+    "packages": [
+      "@unstoppable-stack/p2p"
+    ],
+    "files": [
+      {
+        "name": "notes.mjs",
+        "code": "import { defineCapability, procedure } from '@unstoppable-stack/p2p/rpc'\n\nexport const notes = defineCapability({\n  name: 'notes',\n  version: 1,\n  methods: {\n    get: procedure.query(() => ({ text: 'Hello RPC' }))\n  }\n})\n"
+      },
+      {
+        "name": "host.mjs",
+        "code": "import { serve } from '@unstoppable-stack/p2p/service'\nimport { notes } from './notes.mjs'\n\nconst service = await serve({ storage: './host-data', capability: notes })\ntry {\n  console.log(await service.invite(['get']))\n} catch (error) {\n  await service.close()\n  throw error\n}\nprocess.once('SIGINT', () => service.close())\nprocess.once('SIGTERM', () => service.close())\n"
+      },
+      {
+        "name": "client.mjs",
+        "code": "import { connect } from '@unstoppable-stack/p2p/service'\nimport { notes } from './notes.mjs'\n\nconst connection = await connect({\n  storage: './client-data',\n  invite: process.argv[2],\n  contract: notes.contract\n})\ntry {\n  console.log((await connection.api.get()).text)\n} finally {\n  await connection.close()\n}\n"
+      }
+    ],
+    "run": "node host.mjs\n# In a second terminal, in the same directory:\nnode client.mjs \"PASTE_INVITATION_HERE\"",
+    "expected": "Hello RPC"
+  },
+  "collection": {
+    "packages": [
+      "@unstoppable-stack/p2p (alpha.2 source candidate)"
+    ],
+    "files": [
+      {
+        "name": "mirror.js",
+        "code": "import { mkdtemp, rm } from 'node:fs/promises'\nimport { tmpdir } from 'node:os'\nimport { join } from 'node:path'\nimport { openCollection } from '@unstoppable-stack/p2p/data'\n\n// Two app instances. In real apps retain their separate storage directories.\nconst directory = await mkdtemp(join(tmpdir(), 'p2p-mirror-'))\nlet writer, reader\ntry {\n  writer = await openCollection({ storage: join(directory, 'writer') })\n  await writer.network.ready() // Wait for public announcement before sharing.\n  await writer.put('note', { text: 'Hello from another app' })\n\n  // Transfer key + version using your app's trusted sharing channel.\n  reader = await openCollection({ storage: join(directory, 'reader'), key: writer.key })\n  await reader.sync({ version: writer.version, timeoutMs: 60_000 })\n  console.log(await reader.get('note'))\n} catch (error) {\n  console.error(error.code || 'ERROR', error.message)\n  if (error.network) console.error('Network status:', JSON.stringify(error.network))\n  process.exitCode = 1\n} finally {\n  try { await reader?.close() } finally {\n    try { await writer?.close() } finally { await rm(directory, { recursive: true, force: true }) }\n  }\n}\n"
+      }
+    ],
+    "run": "npm run mirror --prefix examples/p2p-data",
+    "expected": "{ text: 'Hello from another app' }"
+  },
+  "collaborative": {
+    "packages": [
+      "@unstoppable-stack/p2p (alpha.2 source candidate)",
+      "autobase@7.28.2"
+    ],
+    "files": [
+      {
+        "name": "collaborate.js",
+        "code": "import { mkdtemp, rm } from 'node:fs/promises'\nimport { tmpdir } from 'node:os'\nimport { join } from 'node:path'\nimport { openCollaborativeDatabase } from '@unstoppable-stack/p2p/data'\n\nconst directory = await mkdtemp(join(tmpdir(), 'p2p-collaborate-'))\nlet alice, bob\ntry {\n  alice = await openCollaborativeDatabase({ storage: join(directory, 'alice') })\n  await alice.network.ready() // Local open remains usable without a network.\n  bob = await openCollaborativeDatabase({ storage: join(directory, 'bob'), key: alice.key })\n  // Verify Bob's writer key through your app's trusted sharing channel.\n  await alice.members.add(bob.writerKey)\n  await bob.waitFor(state => state.writable, { timeoutMs: 60_000 })\n  await bob.put('note', { text: 'Written by Bob' })\n\n  // update() processes available history, not a global synchronization barrier.\n  const deadline = Date.now() + 60_000\n  while (await alice.get('note') === null) {\n    if (Date.now() > deadline) throw new Error('Alice did not receive the edit in time')\n    await new Promise(resolve => setTimeout(resolve, 50))\n    await alice.update()\n  }\n  console.log(await alice.get('note'))\n} catch (error) {\n  console.error(error.code || 'ERROR', error.message)\n  if (error.network) console.error('Network status:', JSON.stringify(error.network))\n  process.exitCode = 1\n} finally {\n  try { await bob?.close() } finally {\n    try { await alice?.close() } finally { await rm(directory, { recursive: true, force: true }) }\n  }\n}\n"
+      }
+    ],
+    "run": "npm run collaborate --prefix examples/p2p-data",
+    "expected": "{ text: 'Written by Bob' }"
+  }
+}

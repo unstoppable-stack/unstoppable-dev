@@ -1,5 +1,7 @@
 # P2P notes consumer
 
+For the simplest JSON sharing API, start with [managed data examples](../p2p-data/README.md). This example retains advanced composition/custom data behavior.
+
 A small application using `@unstoppable-stack/p2p` for identity and scoped invites,
 `@unstoppable-stack/p2p/rpc` for validated calls and streams, and `@unstoppable-stack/p2p/sync` for Hyperbee replication.
 The application owns its notes schema and handlers. It uses no Personal Node,

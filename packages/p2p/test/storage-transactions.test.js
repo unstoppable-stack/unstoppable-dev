@@ -64,3 +64,15 @@ test('advisory storage lock is released when its process exits without cleanup',
   const release = await acquireStorageLock(file, { timeout: 0 })
   await release()
 }))
+
+
+test('storage locks exclude another opener and can be reacquired after close', () => temporary(async dir => {
+  const { acquireStorageLock } = await import('../src/runtime-files.js')
+  const file = join(dir, 'exclusive.lock')
+  const release = await acquireStorageLock(file, { timeout: 0 })
+  try {
+    await assert.rejects(acquireStorageLock(file, { timeout: 0 }), { code: 'STORAGE_LOCKED' })
+  } finally { await release() }
+  const again = await acquireStorageLock(file, { timeout: 0 })
+  await again()
+}))

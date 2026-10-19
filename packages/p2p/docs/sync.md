@@ -1,5 +1,8 @@
 # @unstoppable-stack/p2p/sync
 
+For a simpler JSON API with managed storage and discovery, start with the
+[data guide](data.md). This page covers advanced composition.
+
 > **Release status:** `/sync` is available in published P2P `0.6.0-alpha.1`;
 > this source reference includes the `0.6.0-alpha.2` correctness fixes.
 > Replication is not a complete or independently verified backup.
@@ -17,7 +20,7 @@ this module, although npm installs its storage dependencies.
 For the existing published API:
 
 ```bash
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
 Until then, use a locally packed tarball. The repository's P2P notes example

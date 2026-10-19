@@ -1,3 +1,4 @@
+import { sharedDataFiles } from './shared-data.js'
 import { manifest } from '../compatibility/index.js'
 import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
@@ -13,6 +14,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     readme(opts),
     planningReadme(),
     ...projectFiles(opts),
+    ...sharedDataFiles(opts),
     packageJson(opts),
     indexHtml(opts),
     electronMainJs(opts),
@@ -52,6 +54,7 @@ function packageJson(opts: GeneratorOptions): GeneratedFile {
       // the developer creates their own release line with `pear touch`.
       upgrade: 'pear://qxenz5wmspmryjc13m9yzsqj1conqotn8fb4ocbufwtz9mtbqq5o',
       scripts: {
+        'share-data': 'node examples/share-data.mjs',
         ...(has(opts, 'multi-writer')
           ? {
               'build:schema': 'node schema/build.js',

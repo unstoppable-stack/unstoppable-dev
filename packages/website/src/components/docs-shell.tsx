@@ -112,6 +112,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
 }
 
 export function DocsShell({ page }: { page: DocPage }) {
+  const headings = page.blocks.filter((block) => block.type === "heading");
   const navigation = (
     <nav aria-label="Documentation" className="space-y-6">
       {docsNav.map((section) => (
@@ -152,6 +153,18 @@ export function DocsShell({ page }: { page: DocPage }) {
             </p>
             <p className="mt-3 text-xs text-text-muted">Verified {page.verifiedOn}</p>
           </div>
+          {headings.length > 1 ? (
+            <nav aria-label="On this page" className="mb-10 rounded-2xl border border-border bg-surface p-5">
+              <h2 className="mb-3 text-sm font-semibold">On this page</h2>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {headings.map((heading) => (
+                  <li key={heading.text}>
+                    <a href={`#${headingId(heading.text)}`} className="text-sm text-accent underline-offset-4 hover:underline">{heading.text}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ) : null}
           <div className="space-y-7">{page.blocks.map((block, index) => <DocBlockView key={index} block={block} />)}</div>
           <div className="mt-14 border-t border-border pt-7 text-sm text-text-muted">Need help? <a href={siteConfig.publicIssuesUrl} className="text-accent underline underline-offset-4">Report an issue</a> with your CLI version, platform, command and first relevant error.</div>
         </article>

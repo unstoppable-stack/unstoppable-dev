@@ -1,0 +1,46 @@
+# Managed app data
+
+Prefer `@unstoppable-stack/p2p/data` for new JSON datasets when the installed
+package exports it (alpha.2 or later). Use installed types and the app's recorded
+compatibility profile. Never claim an unpublished candidate is on npm. Generated
+Node/desktop apps include SHARED-DATA.md, a shared-data module and
+examples/share-data.mjs. Expo remains deferred; do not import this native module
+in browser/React renderers or assume mobile bundling is validated.
+
+```js
+import { openCollection } from '@unstoppable-stack/p2p/data'
+const notes = await openCollection({ storage: './shared-notes' })
+await notes.put('hello', { text: 'Hello!' })
+await notes.network.ready() // only before advertising; local open is offline-safe
+console.log({ key: notes.key, version: notes.version })
+// Keep open for peers; at application shutdown: await notes.close()
+```
+
+Another device opens its own directory with `key`, calls `sync({ version,
+signal, timeoutMs })`, then `get('hello')`. One writer owns mutations. Shared
+keys permit reading, not writing; RPC grant revocation does not revoke data keys.
+A local-downloaded checkpoint is not a backup claim or acknowledgement of future
+writes. Discovery retries independently and reports network timeout diagnostics.
+
+For several writers, explicitly install `autobase@7.28.2` and use
+`openCollaborativeDatabase({ storage, key? })`. The founder alone calls
+`members.add(writerKey)` after verifying that key. Joiners wait for `writable`
+before put/del. get processes available incoming history. Same-key replacements
+use the last operation in Autobase order, not wall-clock order or text merging.
+The founder remains the sole indexer; collaborative storage is experimental.
+
+Use a dedicated directory per dataset/device. Saved keys reopen automatically.
+Never silently point a managed API at an existing Hyperbee, Autobee or HyperDB
+store or regenerate edited apps. For existing schema-based storage, keep its
+engine, reducer and replication contracts; plan an explicit migration separately.
+For custom reducers use `/db`; for hosting existing cores/drives use `/sync`.
+Do not add a second swarm or Corestore around a managed dataset.
+
+Test persistence offline, writer admission/removal, cancellation and sustained
+connections. Public-device validation requires real network evidence: local
+loopback tests and Node subprocesses do not prove NAT traversal, packaged Bare
+or mobile acceptance. No reachable DHT peers can indicate blocked UDP; do not
+silently disable security controls or promise an HTTP fallback.
+
+Guides: https://unstoppable-stack.dev/docs/p2p/sync and
+https://unstoppable-stack.dev/docs/p2p/database

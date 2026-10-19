@@ -43,7 +43,8 @@ export async function acquireStorageLock (file, { timeout = 10_000 } = {}) {
   const deadline = Date.now() + timeout
   for (;;) {
     const fd = await new Promise((resolve, reject) => {
-      nativeFs.open(file, 'a', 0o600, (error, fd) => error ? reject(error) : resolve(fd))
+      // LockFileEx on Windows needs read/write access, not append-only access.
+      nativeFs.open(file, 'a+', 0o600, (error, fd) => error ? reject(error) : resolve(fd))
     })
     const lock = new FDLock(fd)
     try {

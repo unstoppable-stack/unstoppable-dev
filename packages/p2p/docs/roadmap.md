@@ -1,6 +1,6 @@
 # Capability inventory and consolidation roadmap
 
-> Reconciled against source on 16 October 2026. P2P alpha.1 is published; `/rpc` and `/db` target the alpha.2 source candidate;
+> Reconciled against source on 16 October 2026. P2P alpha.1 is published; `/rpc` and `/db` require alpha.2;
 > Personal Node and its desktop app are deferred. Planned names below are design
 > vocabulary, not callable methods or release commitments.
 

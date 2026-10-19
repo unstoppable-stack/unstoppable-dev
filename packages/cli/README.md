@@ -2,9 +2,10 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Release status:** `0.4.0-beta.1` is published under `beta`. Install it with
-> `npm install -g @unstoppable-stack/cli@0.4.0-beta.1`. The `latest` tag remains
-> on earlier `0.3.0`, which has a different command surface.
+> **Versioned guide:** This README describes `0.4.0-beta.2`. Use the exact
+> beta version below; `latest` may point to an earlier command surface.
+> See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
+> for registry availability and acceptance limits.
 
 - **Website:** [unstoppable-stack.dev](https://unstoppable-stack.dev)
 - **Repo:** [unstoppable-stack/unstoppable-dev](https://github.com/unstoppable-stack/unstoppable-dev)
@@ -33,10 +34,10 @@
 
 ## Install
 
-Install the exact published beta:
+Install the exact beta documented here:
 
 ```sh
-npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+npm install -g @unstoppable-stack/cli@0.4.0-beta.2
 us --version
 ```
 
@@ -561,4 +562,18 @@ Maintainers edit `packages/runtime-ai/src/` and
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
 The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
-Published setup commands above remain pinned to beta.1 until registry acceptance.
+The release record tracks registry acceptance for each exact version.
+
+## Managed data in generated apps
+
+The next CLI beta includes `shared-data.js` (desktop worker) or
+`src/shared-data.ts` (Node), `SHARED-DATA.md`, and a runnable
+`npm run share-data -- ...` example. These use the P2P alpha.2 `/data` API for
+JSON replication and explicitly approved collaborative writers. Collaboration
+requires an explicit Autobase installation. The example runs in Node and does
+not establish native desktop/mobile or public-network acceptance.
+
+Existing app stores are preserved: this is an opt-in dataset, not an automatic
+migration or an invitation to expose private app data. Use compatibility check
+for existing apps; do not force-regenerate them. Expo's worklet graph remains
+deferred and does not receive these helpers.

@@ -10,11 +10,11 @@ if (typeof installVersion !== 'string' || !/^\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?$/.te
 export function installGuide() {
   return `# Install the Unstoppable Stack CLI
 
-Generated from agent-pack/release.json and cli/package.json. Match this plugin with CLI ${installVersion}; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
+Generated from agent-pack/release.json and cli/package.json. The recorded registry install is CLI ${installVersion}; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
 
 ## Check the installed command
 
-Run us --version, us --help, us compatibility --help, us scaffold list-platforms and us scaffold list-features. Inspect the selected app's .unstoppable/project.json and installed dependencies. A matching version is not a native support certificate.
+Run us --version, us --help, us compatibility --help, us scaffold list-platforms and us scaffold list-features. Inspect the selected app's .unstoppable/project.json and installed dependencies. A matching version is not a native support certificate. If this guide was emitted by a newer installed CLI, keep that CLI and use its catalog; the registry record below is not an instruction to downgrade it. Use compatibility checks before replacing an installed version.
 
 ## Registry status
 

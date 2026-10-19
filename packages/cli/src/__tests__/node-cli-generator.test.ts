@@ -302,7 +302,8 @@ describe('node-cli generator — node-host', () => {
   it('is absent without the flag', () => {
     const files = fileMap(make([]))
     expect(files['src/node-host.ts']).toBeUndefined()
-    expect(JSON.parse(files['package.json']).dependencies['@unstoppable-stack/p2p']).toBeUndefined()
+    expect(JSON.parse(files['package.json']).dependencies['@unstoppable-stack/p2p']).toBeDefined()
+    expect(files['src/shared-data.ts']).toContain('@unstoppable-stack/p2p/data')
   })
 
   // node-sync consumes a node; node-host is one. They compose.

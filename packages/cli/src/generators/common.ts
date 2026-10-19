@@ -445,7 +445,7 @@ Built with the **Unstoppable Stack** — P2P, local-first, no servers.
 ## Platform
 
 ${platformName}
-
+${opts.platform !== 'expo-mobile' ? '\n## Simple data sharing\n\nRead [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collaborative data. Run `npm run share-data -- mirror-host ./shared-writer` to start the two-device example. This uses a separate opt-in dataset and preserves the app’s existing storage.\n' : ''}
 ## Features
 
 ${features}

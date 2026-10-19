@@ -1,8 +1,17 @@
 # P2P documentation
 
-Reviewed against source on 16 October 2026. All APIs here describe the unpublished
-`0.6.0-alpha.2` source candidate. Published P2P `0.6.0-alpha.1` has no `/rpc`
+- [Simple data sync and collaborative JSON databases](data.md): start here for managed storage and replication.
+
+Reviewed against source on 19 October 2026. All APIs here describe
+`0.6.0-alpha.2`. P2P `0.6.0-alpha.1` has no `/rpc`
 or `/db` exports; published Personal Node `0.4.0` uses a different API.
+
+## Start with a service
+
+For your first peer call, use the [serve → invite → connect quick start](rpc.md#start-here-serve-invite-connect).
+The `/service` entry owns node setup, typed client binding and failure cleanup;
+the `/rpc` entry defines shared contracts without loading native networking.
+Both require alpha.2 or later.
 
 | Read | Purpose |
 | --- | --- |

@@ -1,0 +1,17 @@
+{
+  "name": "unstoppable-p2p-data-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "mirror": "node mirror.js",
+    "collaborate": "node collaborate.js",
+    "device": "node device.js"
+  },
+  "dependencies": {
+    "@unstoppable-stack/p2p": "file:../../packages/p2p",
+    "autobase": "7.28.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

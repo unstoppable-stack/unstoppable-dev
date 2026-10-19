@@ -351,10 +351,13 @@ describe('pear-desktop generator', () => {
       expect(worker).toContain('appNode.close()')
     })
 
-    it('bare variant does not include P2P runtime', () => {
+    it('bare variant includes managed data helpers without changing its existing worker store', () => {
       const files = fileMap(make([]))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeUndefined()
+      expect(pkg.dependencies['@unstoppable-stack/p2p']).toBeDefined()
+      expect(pkg.scripts['share-data']).toBe('node examples/share-data.mjs')
+      expect(files['shared-data.js']).toContain('@unstoppable-stack/p2p/data')
+      expect(files['SHARED-DATA.md']).toContain('not migrate')
       expect(files['worker.js']).not.toContain('@unstoppable-stack/p2p')
     })
   })

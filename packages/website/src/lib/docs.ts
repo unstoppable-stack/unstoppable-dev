@@ -1,5 +1,7 @@
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
 import { gettingStartedGuides, gettingStartedPaths } from "@/lib/getting-started";
+import { discoveryDocs, capabilityCards, moduleBlocks } from "@/lib/discovery-docs";
+import { libraryPages, libraryNav } from "@/lib/library-docs";
 import { packageDocs } from "@/lib/package-docs";
 
 export type DocBlock =
@@ -24,11 +26,12 @@ export type DocPage = {
 };
 
 export const docsNav = [
-  { title: "Get started", pages: [{ title: "Overview", slug: "" }, { title: "Choose your path", slug: "quickstart" }, { title: "Claude Code", slug: "start/claude" }, { title: "Codex", slug: "start/codex" }, { title: "Raw CLI", slug: "start/cli" }] },
+  { title: "Get started", pages: [{ title: "What you can build", slug: "" }, { title: "Examples", slug: "examples" }, { title: "Choose your path", slug: "quickstart" }, { title: "Claude Code", slug: "start/claude" }, { title: "Codex", slug: "start/codex" }, { title: "Raw CLI", slug: "start/cli" }] },
   { title: "Build", pages: [{ title: "Project architecture", slug: "architecture" }, { title: "Assistant workflow", slug: "agent-pack" }, { title: "Local AI", slug: "local-ai" }] },
   { title: "Connect", pages: [{ title: "P2P and pairing", slug: "connect" }, { title: "Personal Node", slug: "node" }] },
-  { title: "Package APIs", pages: [{ title: "P2P runtime", slug: "p2p" }, { title: "Runnable examples", slug: "p2p/examples" }, { title: "Typed RPC", slug: "p2p/rpc" }, { title: "Replication", slug: "p2p/sync" }, { title: "Database prototype", slug: "p2p/database" }, { title: "Capability roadmap", slug: "p2p/roadmap" }, { title: "AI lifecycle", slug: "runtime-ai" }, { title: "Node Desktop", slug: "node-desktop" }, { title: "Deferred packages", slug: "experiments" }] },
+  { title: "Package APIs", pages: [{ title: "P2P runtime", slug: "p2p" }, { title: "Runnable examples", slug: "p2p/examples" }, { title: "Typed RPC", slug: "p2p/rpc" }, { title: "Replication", slug: "p2p/sync" }, { title: "Collaborative databases", slug: "p2p/database" }, { title: "Capability roadmap", slug: "p2p/roadmap" }, { title: "AI lifecycle", slug: "runtime-ai" }, { title: "Node Desktop", slug: "node-desktop" }, { title: "Deferred packages", slug: "experiments" }] },
   { title: "Reference", pages: [{ title: "Packages & integrations", slug: "packages" }, { title: "CLI commands", slug: "cli" }, { title: "Modules", slug: "modules" }] },
+  ...libraryNav,
   { title: "Operate", pages: [{ title: "Compatibility", slug: "compatibility" }, { title: "Troubleshooting", slug: "troubleshooting" }, { title: "Support & limitations", slug: "support" }, { title: "Upgrades", slug: "upgrades" }] },
 ];
 
@@ -37,6 +40,8 @@ const verifiedOn = siteConfig.verifiedOn;
 export const docsPages: DocPage[] = [
   ...gettingStartedGuides,
   ...packageDocs,
+  ...discoveryDocs,
+  ...libraryPages,
   {
     slug: "packages",
     title: "Packages and integrations",
@@ -80,24 +85,29 @@ export const docsPages: DocPage[] = [
   },
   {
     slug: "",
-    title: "Documentation",
-    description: "Task-based guidance for the Unstoppable Stack developer preview.",
-    category: "Start",
+    title: "Build apps that work locally",
+    description: "Create desktop apps, store data on-device, connect trusted peers, and add local AI.",
+    category: "Overview",
     verifiedOn,
     blocks: [
-      { type: "lead", text: "Unstoppable Stack helps developers create local-first applications with direct peer communication and optional on-device AI. Choose Claude Code, Codex or the raw CLI to build the Pear Desktop baseline. Capabilities outside that baseline carry an explicit maturity label." },
-      { type: "start-paths" },
-      { type: "cards", items: [
-        { title: "Packages and integrations", body: "One P2P library, direct upstream SDKs and optional applications.", href: "/docs/packages" },
-        { title: "Understand the boundaries", body: "Learn what is local, what needs a reachable peer, and what the project does and does not retain.", href: "/docs/support" },
-        { title: "Check compatibility", body: "Use one support table for platforms, features, and combinations instead of relying on promotional copy.", href: "/docs/compatibility" },
+      { type: "lead", text: "Unstoppable Stack combines app scaffolding, coding-assistant guidance, and a P2P library. Your app owns its UI and data; Holepunch libraries provide storage and networking, and QVAC provides optional inference on the device running the model." },
+      { type: "heading", text: "What you can build" },
+      { type: "cards", items: capabilityCards },
+      { type: "callout", title: "Choose a path with the right maturity", body: "Workspace setup and desktop scaffolding are the core preview. P2P is alpha; typed RPC and the collaborative database require the alpha.2 source candidate. Native AI needs model and platform validation. Personal Node, mobile, Memory and wallets remain outside the core preview." },
+      { type: "heading", text: "How the pieces fit" },
+      { type: "steps", items: [
+        { title: "Create your workspace and app", body: "The CLI generates the project. The agent pack gives Claude Code, Cursor, OpenCode or Codex implementation guidance; it is not the AI running inside your app." },
+        { title: "Keep work on the device", body: "The renderer displays the UI. A worker owns persistent storage, native models and networking. Local reads and writes should keep working when peers disconnect." },
+        { title: "Add only the capabilities you need", body: "Use the P2P library for permissioned calls and replication. Use QVAC for inference. Your application supplies schemas, prompts, conflict rules and user controls." },
       ] },
-      { type: "heading", text: "Preview principles" },
-      { type: "list", items: [
-        "Local-first: useful reads and writes should not depend on a central application API.",
-        "Peer availability is optional: show disconnected state and resume cleanly.",
-        "Runtime boundaries matter: renderer UI calls a worker that owns networking, storage, and native AI resources.",
-        "Planned features are not default benefits: wallet payments are not part of the supported preview path.",
+      { type: "heading", text: "Start building" },
+      { type: "start-paths" },
+      { type: "heading", text: "Find the right reference" },
+      { type: "cards", items: [
+        { title: "Try an example", body: "See expected results, prerequisites and commands for real repository examples.", href: "/docs/examples" },
+        { title: "Choose a library", body: "Understand what each runtime, networking and storage library does, with practical use cases.", href: "/docs/modules" },
+        { title: "Packages and APIs", body: "Find maintained packages, install versions and API contracts.", href: "/docs/packages" },
+        { title: "Compatibility and support", body: "Check feature maturity and supported combinations before choosing a target.", href: "/docs/compatibility" },
       ] },
     ],
   },
@@ -197,6 +207,18 @@ export const docsPages: DocPage[] = [
     verifiedOn,
     blocks: [
       { type: "lead", text: "QVAC-backed inference is optional in the preview. A local model avoids sending prompts to a hosted inference provider, but it still requires compatible hardware, disk space, and an initial model download." },
+      { type: "heading", text: "What you can add" },
+      { type: "cards", items: [
+        { title: "Streaming chat", body: "Display a response as it arrives, keep bounded conversation history and provide a Stop control. Native cancellation must settle before another request starts.", href: "/docs/runtime-ai" },
+        { title: "An assistant for your app", body: "Provide your own catalog, prompts and validated tools. Local Goods demonstrates shopping advice alongside persistent cart and order controls.", href: "/docs/examples#build-a-local-shopping-assistant" },
+      ] },
+      { type: "heading", text: "Create a desktop app with local AI" },
+      { type: "paragraph", text: "With the published CLI beta installed and inside your initialized workspace, generate a new app with the local-ai feature. This creates the integration code; a model still needs to download and load on compatible hardware." },
+      { type: "code", language: "bash", code: "us scaffold app -p pear-desktop -n local-assistant -f local-ai\ncd local-assistant\nnpm install\nnpm run dev" },
+      { type: "paragraph", text: "Expected result: a desktop app with an AI integration path. Verify model loading, a streamed response, Stop, another request after cancellation, and cached startup without external networking. Mock responses only verify the UI and protocol." },
+      { type: "heading", text: "Who owns what" },
+      { type: "paragraph", text: "QVAC owns inference. Private runtime helpers copied into .unstoppable/runtime-ai/ manage loading, bounded history, cancellation and cleanup. Your app owns prompts, tool schemas, conversation UI and domain actions. Renderer code talks to the worker through IPC." },
+      { type: "heading", text: "Integration checklist" },
       { type: "list", items: [
         "Keep model initialization in the worker, never the renderer.",
         "Report download, loading, ready, and error states separately.",
@@ -204,6 +226,12 @@ export const docsPages: DocPage[] = [
         "After a successful model install, test local inference without internet access.",
         "Do not publish a universal RAM or download-size claim until the chosen model is pinned and measured.",
       ] },
+      { type: "heading", text: "Go deeper" },
+      { type: "actions", items: [
+        { label: "AI session and adapter contract", href: "/docs/runtime-ai" },
+        { label: "QVAC upstream capabilities", href: "https://docs.qvac.tether.io/ecosystem/" },
+      ] },
+      { type: "paragraph", text: "The upstream QVAC ecosystem includes capabilities beyond this project's text-generation integration. An upstream feature listing does not mean the scaffold implements it. Use the dependency versions recorded by your app and check API compatibility before adopting upstream examples." },
     ],
   },
   {
@@ -282,17 +310,7 @@ export const docsPages: DocPage[] = [
     description: "The runtime modules used by generated applications.",
     category: "Reference",
     verifiedOn,
-    blocks: [
-      { type: "cards", items: [
-        { title: "Pear and Bare", body: "Application and minimal JavaScript runtimes from Holepunch." },
-        { title: "Hyperswarm", body: "Peer discovery and encrypted connections over the DHT." },
-        { title: "Hypercore and Corestore", body: "Append-only logs and lifecycle management for collections of cores." },
-        { title: "Hyperbee / HyperDB", body: "Local key-value storage and the validated multi-writer collection pattern." },
-        { title: "Hyperdrive", body: "Versioned P2P file storage built on Hypercore." },
-        { title: "QVAC", body: "Optional local model management and inference." },
-        { title: "WDK", body: "Planned wallet integration; not a supported preview capability." },
-      ] },
-    ],
+    blocks: moduleBlocks,
   },
   {
     slug: "support",
