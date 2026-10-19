@@ -6,14 +6,13 @@ Use `openCollection` for single-writer JSON copies or
 `openCollaborativeDatabase` for explicitly approved writers. Both own storage,
 discovery and cleanup; no DHT setup or adapter is needed.
 See the [data quickstart](docs/data.md) and [runnable examples](../../examples/p2p-data/README.md).
-These helpers require the alpha.2 source candidate; collaboration is experimental.
+These helpers require 0.6.0-alpha.2 or later; collaboration is experimental.
 
 
-> **Release status:** `0.6.0-alpha.1` is published. This source prepares
-> `0.6.0-alpha.2`, adding `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes, including resource-discovery
-> authorization and replication-only connection lifetime fixes.
-> Those additions are not in alpha.1. Preparation and tests are separate from
-> publication and production acceptance; all P2P APIs remain experimental.
+> **Versioned guide:** This README describes `0.6.0-alpha.2`, including
+> `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes. All P2P APIs
+> remain experimental. See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
+> for registry availability and acceptance limits.
 
 > Symmetric P2P node runtime for the [Unstoppable Stack](https://unstoppable-stack.dev) —
 > identity, pairing, and a capability bus for apps that act as nodes.
@@ -28,7 +27,7 @@ to enable it. npm installs the storage dependencies with the package either way.
 QVAC and wallet SDKs remain upstream dependencies of the apps that use them.
 
 ```sh
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
 ```js
@@ -50,13 +49,13 @@ and does not remove the collaborative-database backup acceptance gates.
 
 ## Install
 
-For the existing published API, install the explicit preview version:
+Install the exact version documented here:
 
 ```bash
-npm install @unstoppable-stack/p2p@0.6.0-alpha.1
+npm install @unstoppable-stack/p2p@0.6.0-alpha.2
 ```
 
-Until then, consume a locally packed tarball. The repository's P2P notes example
+When testing an unreleased change, consume a locally packed tarball. The repository's P2P notes example
 tests invited calls, streaming and replication through an offline replica
 restart, including an isolated install of the release tarball. Release
 preparation records exact hashes and publishes this candidate to `alpha`,
@@ -69,7 +68,7 @@ global Bare runtime does not establish fresh-install compatibility.
 
 ## Fastest path: one service, one invitation
 
-For the alpha.2 source candidate, use `serve()` and `connect()` from
+In alpha.2, use `serve()` and `connect()` from
 `@unstoppable-stack/p2p/service`. They own node startup, pairing, typed client binding
 and failure cleanup. Apps specify their service and identity directory; no DHT,
 bootstrap nodes or topics are needed. Permissions remain explicit through
@@ -77,7 +76,7 @@ bootstrap nodes or topics are needed. Permissions remain explicit through
 
 [Run the complete three-file quick start](docs/rpc.md#start-here-serve-invite-connect).
 The lower-level API below remains useful for hosting several capabilities or
-calling peers in both directions. These helpers are not in published alpha.1.
+calling peers in both directions. These helpers are not in alpha.1.
 
 ## Usage
 
@@ -301,7 +300,7 @@ The control handshake deadline starts when the remote opens the control channel;
 plain Hypercore seeders remain connected beyond that deadline. All connections
 still count toward the finite peer limit. Regression checks cover both fixes,
 network policy in both directions, and stalled control handshakes, including
-against installed release tarballs. Alpha.2 remains unpublished and experimental.
+against installed release tarballs. Alpha.2 remains experimental.
 
 ## Transport
 
@@ -338,7 +337,7 @@ MIT
 | [Collaborative notes](../../examples/p2p-database/README.md) | Optional Autobase, writer admission/removal, offline edits, restart and convergence |
 | [Local Goods](../../examples/ecommerce-assistant/README.md) | Desktop worker RPC, private local cart, validated receipt output and persistent pairing |
 
-These source examples target the `0.6.0-alpha.2` candidate. Use the checkout or
-an installed candidate tarball until it is published. The database adapter's
+These source examples target `0.6.0-alpha.2`. Use a version-matched checkout
+or an installed package. The database adapter's
 acceptance is currently Node-only; the desktop example uses RPC and local
 Hyperbee storage, not `/db`.

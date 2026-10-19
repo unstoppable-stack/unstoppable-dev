@@ -2,9 +2,10 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Release status:** `0.4.0-beta.1` is published under `beta`. Install it with
-> `npm install -g @unstoppable-stack/cli@0.4.0-beta.1`. The `latest` tag remains
-> on earlier `0.3.0`, which has a different command surface.
+> **Versioned guide:** This README describes `0.4.0-beta.2`. Use the exact
+> beta version below; `latest` may point to an earlier command surface.
+> See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
+> for registry availability and acceptance limits.
 
 - **Website:** [unstoppable-stack.dev](https://unstoppable-stack.dev)
 - **Repo:** [unstoppable-stack/unstoppable-dev](https://github.com/unstoppable-stack/unstoppable-dev)
@@ -33,10 +34,10 @@
 
 ## Install
 
-Install the exact published beta:
+Install the exact beta documented here:
 
 ```sh
-npm install -g @unstoppable-stack/cli@0.4.0-beta.1
+npm install -g @unstoppable-stack/cli@0.4.0-beta.2
 us --version
 ```
 
@@ -561,7 +562,7 @@ Maintainers edit `packages/runtime-ai/src/` and
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
 The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
-Published setup commands above remain pinned to beta.1 until registry acceptance.
+The release record tracks registry acceptance for each exact version.
 
 ## Managed data in generated apps
 
