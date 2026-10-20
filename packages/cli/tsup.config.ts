@@ -35,7 +35,7 @@ type Flag =
 type ProfileName = 'minimal' | 'full'
 
 const PROFILES: Record<ProfileName, Record<Flag, boolean>> = {
-  // Ships by default. The three commands every user needs.
+  // Ships the core preview. Plugin management is registered in both profiles.
   minimal: {
     US_FEAT_INIT: true,
     US_FEAT_SCAFFOLD: true,

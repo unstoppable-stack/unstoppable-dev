@@ -4,6 +4,15 @@ The Unstoppable Stack provides self-contained skills-only preview packages for C
 
 ## Public installation
 
+CLI source builds provide `us plugin install claude`, `us plugin install codex`,
+and `us plugin status [claude|codex]` (also with `--json`). These commands are
+pending publication and are not included in the published `0.4.0-beta.2`.
+They wrap the native public-catalog workflow below, preserve existing plugins
+and workspace instructions, and remain separate from `us init`. See the
+[CLI plugin reference](../cli/README.md#us-plugin) for prerequisites, version
+fallbacks, exit codes and coexistence. Installation is separate from session
+activation and does not certify the model-driven workflows below.
+
 Install from the public repository catalog:
 
 ```sh
@@ -99,7 +108,7 @@ The PR's **CLI / Unit tests** job also uploads a `harness-plugin-prototype` arti
 
 Edit `src/`, then run the sync/build commands. The builder includes only the selected source skills and core/module/recipe references. It preserves recursive resources and fails on symlinks or broken bundled Markdown links. Historical root agents, commands, hooks and the mutating conversion script are excluded.
 
-Bundled references resolve from the installed skill. App paths resolve from the selected app directory. The plugin can guide an empty workspace without `.unstoppable/guidance`; the project-pack routers continue to use their generated guidance. Keep existing workspace instructions and edited app files. If a project already has CLI-generated skills, inspect overlap before migrating; automatic deduplication and a CLI plugin mode are still planned.
+Bundled references resolve from the installed skill. App paths resolve from the selected app directory. The plugin can guide an empty workspace without `.unstoppable/guidance`; the project-pack routers continue to use their generated guidance. Keep existing workspace instructions and edited app files. If a project already has CLI-generated skills, inspect overlap before migrating; automatic deduplication and an init plugin mode are still planned.
 
 An updated plugin does not change `.unstoppable/runtime-ai/` or migrate app profiles. Installed contracts/types take precedence over examples. Experimental platform labels and wallet stubs remain as recorded in the app profile. MCP, lifecycle hooks and automatic permissions are absent from this prototype.
 
@@ -107,7 +116,7 @@ An updated plugin does not change `.unstoppable/runtime-ai/` or migrate app prof
 
 Native parsing was checked with Codex CLI 0.160.1 and Claude Code 2.0.76. Codex resolves the catalog and enumerates all 19 namespaced skills; Claude validates both its plugin manifest and catalog. Package relocation, reference links, recursive resources, repeatability and drift detection have automated checks. Existing CLI agent-pack generation has regression coverage, including the entry skill in a target without AI.
 
-Full chat activation/automatic selection, empty/existing/multi-app model-driven workflows, native app acceptance and desktop installation/reload remain unverified. Cursor/OpenCode adapters, shared CLI/plugin assembly extraction, CLI coexistence mode, release publication and pilot work remain planned. These parser checks do not complete every P0 exit gate.
+A [real CLI install check on 20 October 2026](../../release/plugin-cli-2026-10-20.json) installed public plugin 0.1.6 through both new CLI wrappers. Codex 0.163.0-alpha.10.2 activated the skill in a fresh read-only session and read its bundled CLI-install resource. After user reauthentication, Claude 2.0.76 listed the public plugin and all 19 namespaced skills in a fresh session, invoked the entry skill through its Skill tool, and read the bundled CLI-install resource. The pre-existing development plugin was disabled only for that test session to verify the public namespace independently. Automatic selection, empty/existing/multi-app model-driven workflows, native app acceptance and desktop installation/reload remain unverified. Cursor/OpenCode adapters, shared CLI/plugin assembly extraction, CLI coexistence mode, release publication and pilot work remain planned. These parser checks do not complete every P0 exit gate.
 
 See [validation and release checks](../../docs/validation.md) for public checks and acceptance boundaries.
 
