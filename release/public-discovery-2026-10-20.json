@@ -1,0 +1,23 @@
+{
+  "checkedOn": "2026-10-20",
+  "status": "passed",
+  "scope": "Public discovery between separate app processes on one Mac on a home network",
+  "package": "@unstoppable-stack/p2p@0.6.0-alpha.2",
+  "databaseEngine": "autobase@7.28.2",
+  "installation": "Fresh npm installation outside the repository",
+  "example": "examples/p2p-data/device.js",
+  "bootstrap": "Default public discovery; P2P_BOOTSTRAP unset",
+  "results": {
+    "replication": "DOWNLOADED {\"text\":\"Hello from another device\"}",
+    "collaborativeDatabase": "OBSERVED {\"text\":\"Written on another device\"}",
+    "writerAdmission": "Founder explicitly approved the joining process writer key before its write",
+    "observedDhtPeers": "75–100"
+  },
+  "limits": [
+    "One physical device; cross-device and cross-network connectivity not tested",
+    "No assertion that application traffic traversed the public internet",
+    "Restart and offline persistence not repeated in this manual session",
+    "No all-network connectivity guarantee"
+  ],
+  "evidence": "Manual terminal observations from the published-package test session; not a CI run"
+}

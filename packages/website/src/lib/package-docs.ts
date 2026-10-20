@@ -144,6 +144,7 @@ node collaborate.mjs` },
       { type: "code", language: "sh", code: "# On Device A, from the repository root.\nnpm run device --prefix examples/p2p-data -- db-host ./alice\n\n# On Device B, replace KEY with Device A’s DATABASE key.\nnpm run device --prefix examples/p2p-data -- db-join ./bob KEY" },
       { type: "paragraph", text: "Device A prints DATABASE. Device B joins and prints WRITER. Verify that writer key, then paste it into Device A\u2019s terminal and press Enter to approve. Keep both apps running until Device A prints OBSERVED. Ctrl+C closes safely without deleting data." },
       { type: "heading", text: "Public discovery and troubleshooting" },
+      { type: "paragraph", text: "Validation update, 20 October 2026: published 0.6.0-alpha.2 passed replication and collaborative writer approval between separate processes on one Mac using default public discovery on a home network. The reader downloaded its note and the founder observed the collaborator’s edit. Two physical devices and different networks remain unverified." },
       { type: "code", language: "js", code: `await data.network.ready({ timeoutMs: 60_000 })
 console.log(data.network.status())
 // { closed, announced, connections, dhtPeers }` },
@@ -270,6 +271,7 @@ node mirror.mjs` },
       { type: "code", language: "sh", code: "# On Device A, from the repository root.\nnpm run device --prefix examples/p2p-data -- mirror-host ./notes-writer\n\n# On Device B, replace KEY and VERSION with Device A’s SHARE values.\nnpm run device --prefix examples/p2p-data -- mirror-read ./notes-reader KEY VERSION" },
       { type: "paragraph", text: "Install the same package version and examples on both devices. Device A prints SHARE after announcing and must stay running. Device B prints DOWNLOADED after receiving the note. Ctrl+C closes the host safely; directories are retained for reopening." },
       { type: "heading", text: "Public discovery and troubleshooting" },
+      { type: "paragraph", text: "Validation update, 20 October 2026: published 0.6.0-alpha.2 passed replication and collaborative writer approval between separate processes on one Mac using default public discovery on a home network. The reader downloaded its note and the founder observed the collaborator’s edit. Two physical devices and different networks remain unverified." },
       { type: "code", language: "js", code: `await data.network.ready({ timeoutMs: 60_000 })
 console.log(data.network.status())
 // { closed, announced, connections, dhtPeers }` },
