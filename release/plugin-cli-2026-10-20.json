@@ -1,0 +1,77 @@
+{
+  "date": "2026-10-20",
+  "scope": "Real user-scope host CLI installation and fresh-session plugin discovery/invocation; no app scaffolding or native inference acceptance.",
+  "cli": {
+    "version": "0.4.0-beta.2",
+    "artifact": "Local minimal source build with uncommitted plugin commands; not a published npm release",
+    "pluginCommandSha256": "8ea97231d42ca5402daf3c881e68655362f8813850565f6d856d41175af277d6"
+  },
+  "source": "unstoppable-stack/unstoppable-dev",
+  "plugin": "unstoppable-stack@unstoppable-stack",
+  "pluginVersion": "0.1.6",
+  "claude": {
+    "hostVersion": "2.0.76",
+    "install": "passed",
+    "repeatInstall": "passed via native installer; legacy host cannot query installed status",
+    "freshSession": {
+      "workspace": "Empty temporary directory outside the repository",
+      "sessionPersistence": false,
+      "publicPluginInStartupManifest": true,
+      "namespacedSkills": [
+        "unstoppable-stack:add-ai-chat",
+        "unstoppable-stack:add-database",
+        "unstoppable-stack:add-encrypted-channels",
+        "unstoppable-stack:add-file-storage",
+        "unstoppable-stack:add-kv-storage",
+        "unstoppable-stack:add-multi-writer-sync",
+        "unstoppable-stack:add-p2p-networking",
+        "unstoppable-stack:add-p2p-rpc",
+        "unstoppable-stack:add-p2p-sync",
+        "unstoppable-stack:build-with-unstoppable",
+        "unstoppable-stack:diagnose-stack-runtime",
+        "unstoppable-stack:scaffold-project",
+        "unstoppable-stack:setup-local-testing",
+        "unstoppable-stack:setup-node-cli",
+        "unstoppable-stack:setup-pear-desktop",
+        "unstoppable-stack:unstoppable-foundations",
+        "unstoppable-stack:unstoppable-modules",
+        "unstoppable-stack:unstoppable-recipes",
+        "unstoppable-stack:upgrade-stack"
+      ],
+      "skillInvocation": "passed",
+      "developmentPlugin": "Disabled only through per-session --settings; no existing global plugin was disabled or removed.",
+      "installedSkill": "~/.claude/plugins/cache/unstoppable-stack/unstoppable-stack/0.1.6/skills/build-with-unstoppable/SKILL.md",
+      "bundledResourceRead": "resources/install-cli.md",
+      "pinnedCliVersionReported": "0.4.0-beta.2",
+      "coexistenceRuleReported": "Never regenerate an edited app with --force to upgrade it; use compatibility inspection and a deliberate migration.",
+      "toolsObserved": [
+        "Skill(unstoppable-stack:build-with-unstoppable)",
+        "Read(installed resources/install-cli.md)"
+      ],
+      "modelTurnResult": "success",
+      "permissionDenials": []
+    },
+    "initialIssue": "The first fresh-session attempt reached plugin discovery but failed with expired OAuth. After the user reauthenticated, a new session invoked the public skill successfully."
+  },
+  "codex": {
+    "hostVersion": "0.163.0-alpha.10.2",
+    "install": "installed",
+    "repeatInstall": "already-installed",
+    "enabled": true,
+    "freshSession": {
+      "workspace": "Empty temporary directory outside the repository",
+      "ephemeral": true,
+      "sandbox": "read-only",
+      "skillInvocation": "passed",
+      "installedSkill": "~/.codex/plugins/cache/unstoppable-stack/unstoppable-stack/0.1.6/skills/build-with-unstoppable/SKILL.md",
+      "bundledResourceRead": "resources/install-cli.md",
+      "pinnedCliVersionReported": "0.4.0-beta.2",
+      "coexistenceRuleReported": "Preserve project-local instructions and edited files; prefer recorded app contracts and installed types."
+    },
+    "issueFound": "An unfiltered plugin list queried the unrelated remote directory and exceeded the inspection timeout. Inspection now uses the native --marketplace filter when supported; real installation and session verification then passed."
+  },
+  "acceptanceLimits": [
+    "No empty-app build, existing-app modification, automatic skill selection, native model inference, offline acceptance, or desktop GUI reload was tested.",
+    "Raw transcripts remain local; this report contains only selected non-secret evidence."
+  ]
+}

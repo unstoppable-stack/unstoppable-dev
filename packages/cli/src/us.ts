@@ -21,6 +21,9 @@ async function main() {
     .description('The Unstoppable Stack CLI')
     .version(`${__US_VERSION__} (${__US_BUILD_PROFILE__})`)
 
+  const { registerPluginCommand } = await import('./commands/plugin.js')
+  registerPluginCommand(program)
+
   if (US_FEAT_INIT) {
     const { registerInitCommand } = await import('./commands/init.js')
     registerInitCommand(program)

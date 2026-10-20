@@ -19,6 +19,7 @@
 - [Quick start](#quick-start)
 - [Commands](#commands)
   - [`us init`](#us-init)
+  - [`us plugin`](#us-plugin) *(source builds; pending publication)*
   - [`us scaffold`](#us-scaffold)
   - [`us doctor`](#us-doctor)
   - [`us remote`](#us-remote) *(opt-in, `full` profile only)*
@@ -83,6 +84,65 @@ us doctor --json          # machine-readable
 ---
 
 ## Commands
+
+### `us plugin`
+
+Source builds include standalone installation and status commands for the
+Unstoppable Stack skills-only plugin preview. These commands are pending
+publication; the published `0.4.0-beta.2` does not include them. They are
+available in both minimal and full builds and are separate from `us init`.
+
+```sh
+us plugin install claude
+us plugin install codex
+us plugin status             # inspect both hosts
+us plugin status claude
+us plugin status codex --json
+```
+
+Install the chosen assistant first and make its `claude` or `codex` executable
+available on PATH. The installer registers the public repository catalog
+`unstoppable-stack/unstoppable-dev`, then invokes the host's native installer
+for `unstoppable-stack@unstoppable-stack`. Claude uses **user scope**; Codex uses
+its native install settings. Downloads require network access. Each host command
+has a timeout (15 seconds for inspection, two minutes for installation).
+
+An existing public catalog is reused. A catalog with the same name pointing
+elsewhere is reported and left untouched. An existing user-scope Claude install
+or Codex install is kept, including its enabled/disabled setting. Installation
+is not an update command. Host failures return exit code 1 and report whether
+catalog registration completed before failure; there is no automatic rollback
+that could remove other installed plugins.
+
+Status invokes host list commands and does not install, enable, or refresh
+catalogs. Codex queries are restricted to this marketplace when supported,
+avoiding unrelated public-directory requests. Hosts may contact their services
+while listing. It reports catalog
+registration separately from installation, versions, scopes, enabled state and
+any host-reported load errors. An uninstalled plugin is a successful status
+query (exit 0); missing hosts, unreadable output and unavailable installation
+status return exit 1. Both commands accept `--json`; status always returns an
+array (one entry for a named assistant, two when omitted). Unknown installation
+state is `null`, never `false`.
+
+Capabilities are detected from the installed host's help. Older Claude versions
+without `plugin list` can install, but status remains unavailable: inspect
+`/plugin` or upgrade Claude Code. Older Codex versions without `plugin add`
+receive desktop installation instructions and exit 1 without changing anything.
+Use the desktop plugin browser or upgrade if marketplace JSON listing is also
+unavailable. See the native [Claude command reference](https://code.claude.com/docs/en/plugins/cli-reference)
+and [Codex plugin documentation](https://developers.openai.com/plugins/build/plugins).
+
+After installation, start a new session/chat in your target workspace and select
+`unstoppable-stack:build-with-unstoppable`. For Claude Desktop, reopen
+Code → Local. A successful installation does not verify skill activation or an
+assistant-driven app build. These commands leave project instructions,
+generated skills, app files, runtimes and models unchanged. If a workspace
+already has `us init` guidance, review overlapping skills before using both;
+automatic deduplication and integration with `init` are deferred.
+
+See [plugin setup and acceptance limits](../agent-pack/PLUGIN.md) for manual
+installation, updates and workflow checks.
 
 ### `us init`
 

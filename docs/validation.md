@@ -84,6 +84,23 @@ the internal reports or claim those runs have been repeated for a new checkout.
 
 ## Assistant plugins
 
+Source builds expose `us plugin install claude|codex` and
+`us plugin status [claude|codex]`; these are pending publication. CLI tests cover
+native command arguments, repeat installs, disabled plugins, catalog conflicts,
+legacy-host fallback, malformed output and partial failures through host
+fixtures. They do not change real user plugin installations. Status is read-only:
+
+```bash
+node packages/cli/dist/us.js plugin status
+node packages/cli/dist/us.js plugin status codex --json
+```
+
+Missing hosts or unavailable status return exit 1; a verified absent plugin
+returns exit 0. Before release, use isolated assistant configurations to install
+from a built CLI, repeat the install, inspect enabled/disabled status, then
+start a new session in a separate workspace and invoke the entry skill. Record
+host/plugin/CLI versions and results. The [20 October 2026 live CLI check](../release/plugin-cli-2026-10-20.json) records real installation and explicit skill invocation in fresh Codex and Claude sessions, including reads of the installed CLI-install resource. A passing command fixture or native list is not evidence of session activation or successful app building.
+
 ```bash
 node packages/agent-pack/scripts/build-plugin.mjs
 node --test packages/agent-pack/scripts/build-plugin.test.mjs
