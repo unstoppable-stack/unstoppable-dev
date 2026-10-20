@@ -50,7 +50,11 @@ CLI beta.2 includes opt-in managed data modules and a two-device sharing example
 in generated Node/desktop apps, and pins their P2P dependency to alpha.2.
 Existing app storage formats are preserved. The installed consumer checks run
 the exact sharing example emitted by the published CLI in separate processes
-on an isolated loopback DHT. Cross-device public discovery remains pending.
+on an isolated loopback DHT. A separate [20 October manual test](../release/public-discovery-2026-10-20.json)
+passed public discovery, replication and collaborative writer admission between
+separate processes on one Mac using the published npm package. Cross-device
+and cross-network connectivity remain unverified; this does not block the
+current preview release.
 
 The plugin installer uses explicit `cliInstallVersion` release metadata so a
 source version bump cannot claim that an unpublished candidate is on npm.

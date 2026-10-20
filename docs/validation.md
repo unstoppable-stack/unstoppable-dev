@@ -147,7 +147,14 @@ test uses an isolated loopback DHT; it is not public-internet or two-device proo
 `node scripts/p2p-artifact-smoke.mjs` also checks managed data against a packed
 installation outside the checkout.
 
-For public-network acceptance, follow the
+On 20 October 2026, a [manual published-package test](../release/public-discovery-2026-10-20.json)
+on one Mac on a home network passed both examples using default public discovery
+with no private bootstrap. The reader printed `DOWNLOADED`; after explicit writer
+approval, the founder printed `OBSERVED`. Discovery reported 75–100 DHT peers.
+This demonstrates public DHT reachability and data exchange between separate
+processes; it does not establish cross-device or cross-network connectivity.
+
+For cross-device public-network acceptance, follow the
 [two-device example](../examples/p2p-data/README.md#use-two-devices) on two physical
 devices. Record runtime versions, whether devices are on the same/different
 networks, the writer's successful announcement, the reader's `DOWNLOADED`
