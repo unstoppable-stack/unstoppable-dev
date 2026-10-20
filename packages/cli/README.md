@@ -622,12 +622,13 @@ Maintainers edit `packages/runtime-ai/src/` and
 `node scripts/sync-stack-assets.mjs` from the repository root. Builds generate
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
-The next source candidate is `0.4.0-beta.2`, with P2P alpha.2 scaffold fixes.
+The next source candidate is `0.4.0-beta.3`, adding standalone assistant plugin
+installation and status. Published beta.2 introduced P2P alpha.2 scaffold fixes.
 The release record tracks registry acceptance for each exact version.
 
 ## Managed data in generated apps
 
-The next CLI beta includes `shared-data.js` (desktop worker) or
+CLI beta.2 and this candidate include `shared-data.js` (desktop worker) or
 `src/shared-data.ts` (Node), `SHARED-DATA.md`, and a runnable
 `npm run share-data -- ...` example. These use the P2P alpha.2 `/data` API for
 JSON replication and explicitly approved collaborative writers. Collaboration

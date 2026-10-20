@@ -26,6 +26,8 @@ Start with [Claude Code](https://unstoppable-stack.dev/docs/start/claude),
 local-first desktop baseline; the plugin guides include the separate CLI install.
 
 
+> **Next CLI candidate:** `0.4.0-beta.3` adds standalone Claude/Codex plugin installation and status. It is not published yet; the website uses a pinned source build until registry acceptance. See [release preparation](docs/public-release.md#next-cli-candidate-040-beta3-not-published).
+
 > **Release status:** CLI `0.4.0-beta.2` and P2P `0.6.0-alpha.2` are published prereleases, verified through fresh npm installs. Local AI requires separate native/model acceptance. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
 
 Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the same agent-pack source. The recommended Codex path still requires an independent pilot before it becomes a support claim.

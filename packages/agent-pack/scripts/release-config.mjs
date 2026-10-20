@@ -10,7 +10,7 @@ if (typeof installVersion !== 'string' || !/^\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?$/.te
 export function installGuide() {
   return `# Install the Unstoppable Stack CLI
 
-Generated from agent-pack/release.json and cli/package.json. The recorded registry install is CLI ${installVersion}; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
+Generated from agent-pack/release.json and cli/package.json. The matching CLI install target is CLI ${installVersion}; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
 
 ## Check the installed command
 

@@ -68,9 +68,13 @@ try {
   const cli = join(consumer, 'node_modules/@unstoppable-stack/cli/dist/us.js')
   const capture = args => execFileSync(process.execPath, [cli, ...args], { cwd: consumer, encoding: 'utf8' })
   const help = capture(['--help'])
-  for (const name of ['init', 'scaffold', 'doctor', 'compatibility']) assert(help.includes(`  ${name}`), `Missing ${name}`)
+  for (const name of ['init', 'scaffold', 'doctor', 'compatibility', 'plugin']) assert(help.includes(`  ${name}`), `Missing ${name}`)
   for (const name of ['node', 'memory', 'search', 'remote', 'research']) assert(!help.includes(`  ${name}`), `Excluded ${name} command shipped`)
   assert(capture(['--version']).includes(`${record.artifacts.find(a => a.name === '@unstoppable-stack/cli').version} (minimal)`))
+  for (const command of ['install', 'status']) {
+    const pluginHelp = capture(['plugin', command, '--help'])
+    assert(pluginHelp.includes('claude') && pluginHelp.includes('codex') && pluginHelp.includes('--json'), `Missing plugin ${command} options in installed artifact`)
+  }
   assert.deepEqual(JSON.parse(capture(['scaffold', 'list-platforms'])).map(p => p.id), ['pear-desktop'])
   assert.deepEqual(JSON.parse(capture(['scaffold', 'list-features'])).map(f => f.id), ['local-ai'])
   run(process.execPath, [cli, 'init', 'workspace', '--assistant', 'none', '--no-install'])
