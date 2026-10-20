@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "node scripts/prepare-plugin-download.mjs && next dev --turbopack",
-    "build": "node scripts/prepare-plugin-download.mjs && next build",
+    "build": "node scripts/prepare-plugin-download.mjs && next build && node scripts/check-release-guides.mjs",
     "docs:build": "npm run build",
     "docs:check": "npm run build",
     "start": "next start",

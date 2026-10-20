@@ -11,7 +11,7 @@ export const gettingStartedPaths = [
     description: "Add the stack’s workflows to Claude. Describe your app and build with guided P2P, storage and local AI patterns.",
     action: "Install Claude plugin",
     href: "/docs/start/claude",
-    detail: "Download, install locally, then start a new session.",
+    detail: "Install the CLI, run us plugin install claude, then start a new session.",
   },
   {
     id: "codex",
@@ -21,7 +21,7 @@ export const gettingStartedPaths = [
     description: "Give Codex the same stack knowledge. Build, extend and diagnose apps from your chosen workspace.",
     action: "Install Codex plugin",
     href: "/docs/start/codex",
-    detail: "Download, register the local catalog, then install.",
+    detail: "Install the CLI, run us plugin install codex, then start a new chat.",
   },
   {
     id: "cli",

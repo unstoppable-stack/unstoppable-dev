@@ -13,6 +13,34 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
+## Next CLI candidate: 0.4.0-beta.3 (not published)
+
+This candidate adds `us plugin install claude|codex` and
+`us plugin status [claude|codex]` to the minimal and full profiles, independently
+of `init`. It preserves existing plugins and disabled settings, reports catalog
+conflicts/partial failures, and scopes Codex status queries to the stack catalog.
+The [live install record](../release/plugin-cli-2026-10-20.json) covers the command
+implementation with plugin 0.1.6; beta.3 artifact and plugin 0.1.7 checks are
+separate from that earlier source-build evidence.
+
+The CLI manifest and npm lockfile advance to beta.3; P2P stays at published
+`0.6.0-alpha.2`. The canonical release workflow still validates both artifacts
+and skips an already-published P2P artifact only when its integrity and alpha tag
+match exactly. Do not bump or republish P2P merely for this CLI release.
+
+Plugin preview `0.1.7` refreshes the bundled install guide. Release metadata pins
+an immutable beta.3 source commit with `cliRegistryPublished: false`; the website
+uses that source build followed by the new plugin commands until publication.
+No beta.3 npm install is presented as currently available.
+
+Prepare with the canonical commands below and review the artifacts before
+publication. After publishing CLI beta.3 under `beta`, run registry acceptance,
+then set `cliRegistryPublished: true`, refresh the registry check date, bump the
+plugin preview for the changed bundled guide, and regenerate public catalogs
+and website downloads. This changes the website setup to the exact beta.3 npm
+install without a second rewrite of the Claude and Codex guides. Keep `latest`
+on 0.3.0 unless a separate promotion is approved.
+
 ## Published preview (19 October 2026)
 
 Install the tested versions explicitly:

@@ -1,6 +1,6 @@
 {
   "name": "@unstoppable/agent-pack",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Unstoppable Stack skills for Codex and Claude Code",
   "type": "module",
   "scripts": {

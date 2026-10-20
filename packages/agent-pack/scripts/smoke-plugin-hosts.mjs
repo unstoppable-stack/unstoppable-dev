@@ -17,10 +17,15 @@ if (args.length && (reportIndex !== 0 || args.length !== 2 || !reportPath)) {
   throw new Error('Usage: node scripts/smoke-plugin-hosts.mjs [--public] [--report <file>]')
 }
 const temporary = mkdtempSync(join(tmpdir(), 'us-plugin-hosts-'))
+// A globally installed copy can hide the candidate in `list --available`.
+// Native discovery checks must not inherit or change user plugin state.
+const codexHome = join(temporary, 'codex-home')
+mkdirSync(codexHome)
+const codexEnv = { ...process.env, CODEX_HOME: codexHome }
 let child
 const report = { timestamp: new Date().toISOString(), scope: 'Native package/catalog parsing only; no model turn, global installation or app acceptance', hosts: {} }
 function run(command, params, cwd = temporary) {
-  const result = spawnSync(command, params, { cwd, encoding: 'utf8', timeout: 20000 })
+  const result = spawnSync(command, params, { cwd, encoding: 'utf8', timeout: 20000, env: command === 'codex' ? codexEnv : process.env })
   if (result.error) throw result.error
   if (result.status !== 0) throw new Error(`${command} failed: ${result.stderr || result.stdout}`)
   return result.stdout.trim()
@@ -51,7 +56,7 @@ try {
   assert.equal(list.available.find(plugin => plugin.name === 'unstoppable-stack')?.version, version)
 
   child = spawn('codex', ['app-server', '-c', `sqlite_home=${JSON.stringify(join(temporary, 'state'))}`,
-    '-c', `log_dir=${JSON.stringify(join(temporary, 'logs'))}`], { cwd: temporary, stdio: ['pipe', 'pipe', 'pipe'] })
+    '-c', `log_dir=${JSON.stringify(join(temporary, 'logs'))}`], { cwd: temporary, env: codexEnv, stdio: ['pipe', 'pipe', 'pipe'] })
   let stderr = ''
   child.stderr.on('data', bytes => { stderr = (stderr + bytes.toString()).slice(-2000) })
   const pending = new Map()

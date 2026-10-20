@@ -114,7 +114,7 @@ test('public catalogs resolve tracked packages and CLI instructions match the ca
   }
   const { portable } = assemblePlugin()
   const guide = portable.get('skills/build-with-unstoppable/resources/install-cli.md').toString()
-  assert(guide.includes(`The recorded registry install is CLI ${release.cliInstallVersion}`))
+  assert(guide.includes(`The matching CLI install target is CLI ${release.cliInstallVersion}`))
   if (release.cliRegistryPublished) {
     assert(guide.includes('candidate is published'))
     assert(guide.includes(`npm install --global @unstoppable-stack/cli@${release.cliInstallVersion}`))

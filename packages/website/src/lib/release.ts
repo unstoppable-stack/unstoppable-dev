@@ -11,6 +11,7 @@ cd unstoppable-cli-source
 git checkout ${pluginRelease.cliSourceRef}
 cd packages/cli
 npm ci --ignore-scripts
+npm run build
 mkdir -p ../../cli-artifacts
 npm pack --pack-destination ../../cli-artifacts
 npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-${installVersion}.tgz
@@ -24,7 +25,7 @@ export const siteConfig = {
   publicIssuesUrl: "https://github.com/unstoppable-stack/unstoppable-dev/issues",
   status: "Developer preview",
   verifiedOn: "25 September 2026",
-  docsUpdatedOn: "19 October 2026",
+  docsUpdatedOn: "20 October 2026",
   plugins: {
     version: pluginDownload.version,
     downloadPath: `/downloads/${pluginDownload.filename}`,

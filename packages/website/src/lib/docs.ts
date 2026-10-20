@@ -54,7 +54,7 @@ export const docsPages: DocPage[] = [
       { type: "list", items: [
         "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.2 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
         "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.2 is published under alpha; install that exact version.",
-        "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Local prototypes exist; public marketplace listings remain pending. Local-install preview downloads are available in the Claude and Codex guides.",
+        "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Use the CLI plugin installer with the public repository catalog; official directory listings remain pending. Downloads remain available as a local-catalog fallback.",
         "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.2 source. It is outside the core preview.",
       ] },
       { type: "code", language: "bash", code: "npm install @unstoppable-stack/p2p@0.6.0-alpha.2" },
@@ -289,8 +289,11 @@ export const docsPages: DocPage[] = [
     category: "Reference",
     verifiedOn,
     blocks: [
-      { type: "lead", text: `CLI ${siteConfig.cli.version} is the published beta: init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.latestVersion} also exposes the deferred node command. Install the exact beta for this guide.` },
+      { type: "lead", text: `CLI ${siteConfig.cli.version} ${siteConfig.cli.published ? "is the published beta" : "is an unpublished release candidate"}: plugin installation/status, init, scaffold, doctor and compatibility checks. Earlier latest ${siteConfig.cli.latestVersion} also exposes the deferred node command. Follow the setup guide for the matching ${siteConfig.cli.published ? "npm install" : "pinned source build"}.` },
       { type: "code", language: "bash", code: "us --version\nus --help\nus init [project-name] --assistant <claude|codex|cursor|opencode|none>\nus scaffold app -p pear-desktop -n <name>\nus scaffold list-platforms\nus scaffold list-features\nus doctor -p pear-desktop" },
+      { type: "heading", text: "Assistant plugin commands" },
+      { type: "paragraph", text: `Available in ${siteConfig.cli.version}; absent from published beta.2 and earlier releases. Install an assistant first and sign in. Installation uses its native public-repository catalog flow and is separate from us init. Status distinguishes registration, installation and enabled state. Older hosts may require a desktop installation step or report status unavailable. Neither command updates app runtimes or models.` },
+      { type: "code", language: "bash", code: "us plugin install claude\nus plugin install codex\nus plugin status\nus plugin status codex --json" },
       { type: "heading", text: "Compatibility commands" },
       { type: "paragraph", text: "Published 0.4.0-beta.2 includes the read-only commands below. They are absent from earlier 0.3.0. Remote, Research, Search and Memory are not shipped in the minimal release artifact; Personal Node is an optional separate app." },
       { type: "code", language: "bash", code: "us compatibility list -o <workspace>\nus compatibility check -o <app>" },
