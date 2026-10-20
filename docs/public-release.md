@@ -5,7 +5,7 @@ npm release allowlist. The published preview consists of:
 
 | Package | Version | npm tag |
 | --- | --- | --- |
-| `@unstoppable-stack/cli` | `0.4.0-beta.2` | `beta` |
+| `@unstoppable-stack/cli` | `0.4.0-beta.3` | `beta` |
 | `@unstoppable-stack/p2p` | `0.6.0-alpha.2` | `alpha` |
 
 Claude and Codex plugins share a separately built website download. They remain
@@ -13,33 +13,35 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
-## Next CLI candidate: 0.4.0-beta.3 (not published)
+## CLI beta.3 publication (20 October 2026)
 
-This candidate adds `us plugin install claude|codex` and
-`us plugin status [claude|codex]` to the minimal and full profiles, independently
-of `init`. It preserves existing plugins and disabled settings, reports catalog
-conflicts/partial failures, and scopes Codex status queries to the stack catalog.
-The [live install record](../release/plugin-cli-2026-10-20.json) covers the command
-implementation with plugin 0.1.6; beta.3 artifact and plugin 0.1.7 checks are
-separate from that earlier source-build evidence.
+CLI `0.4.0-beta.3` is published under `beta`. It adds
+`us plugin install claude|codex` and `us plugin status [claude|codex]` to both
+build profiles, independently of `init`. Existing plugins and disabled settings
+are preserved; catalog conflicts and partial failures are reported.
 
-The CLI manifest and npm lockfile advance to beta.3; P2P stays at published
-`0.6.0-alpha.2`. The canonical release workflow still validates both artifacts
-and skips an already-published P2P artifact only when its integrity and alpha tag
-match exactly. Do not bump or republish P2P merely for this CLI release.
+```sh
+npm install -g @unstoppable-stack/cli@0.4.0-beta.3
+us --version
+us plugin install claude
+# or: us plugin install codex
+```
 
-Plugin preview `0.1.7` refreshes the bundled install guide. Release metadata pins
-an immutable beta.3 source commit with `cliRegistryPublished: false`; the website
-uses that source build followed by the new plugin commands until publication.
-No beta.3 npm install is presented as currently available.
+The published tarball came from merged commit
+`8cfe4017e0754429b9cc207ace0ff55559fa1fd2` ([PR #24](https://github.com/unstoppable-stack/unstoppable-dev/pull/24)).
+The [canonical build](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/39440369504)
+passed before publication. Fresh npm acceptance verified registry/lockfile
+integrity against that exact tarball, the temporary global `us` binary, plugin
+command help and real Codex status, and the canonical installed-consumer tests
+([registry record](../release/registry-acceptance-2026-10-20-beta3.json)).
 
-Prepare with the canonical commands below and review the artifacts before
-publication. After publishing CLI beta.3 under `beta`, run registry acceptance,
-then set `cliRegistryPublished: true`, refresh the registry check date, bump the
-plugin preview for the changed bundled guide, and regenerate public catalogs
-and website downloads. This changes the website setup to the exact beta.3 npm
-install without a second rewrite of the Claude and Codex guides. Keep `latest`
-on 0.3.0 unless a separate promotion is approved.
+P2P remains `0.6.0-alpha.2`; its published bytes and alpha tag were verified and
+it was not republished. CLI `latest` remains `0.3.0`. Plugin preview `0.1.8`
+refreshes bundled guidance and the website to the exact published beta.3 npm
+install, retaining the immutable published-source commit as a fallback.
+The [earlier live session record](../release/plugin-cli-2026-10-20.json) used
+plugin 0.1.6; publication acceptance does not claim new assistant-driven app,
+native inference, offline-model or desktop GUI checks.
 
 ## Published preview (19 October 2026)
 
@@ -158,13 +160,14 @@ use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 ```sh
 node scripts/public-release.mjs verify release-artifacts/candidate --require-clean
 npm login --registry=https://registry.npmjs.org
-npm publish release-artifacts/candidate/unstoppable-stack-p2p-0.6.0-alpha.2.tgz --ignore-scripts --access public --tag alpha
-npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.2.tgz --ignore-scripts --access public --tag beta
+npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.3.tgz --ignore-scripts --access public --tag beta
 node scripts/test-public-artifacts.mjs release-artifacts/candidate --registry
 ```
 
-Publish P2P first: generated apps from this CLI depend on that exact candidate.
-Do not publish the CLI if P2P publication or its registry verification fails.
+The example above is a CLI-only release: registry preflight must confirm the
+existing P2P alpha.2 integrity and tag first. Do not republish unchanged P2P.
+For a future new P2P version, publish and registry-verify it before publishing
+the CLI that depends on it. Do not publish the CLI if that verification fails.
 
 The publishing account needs permission to publish packages in the
 `@unstoppable-stack` organization. Complete npm's interactive authentication
