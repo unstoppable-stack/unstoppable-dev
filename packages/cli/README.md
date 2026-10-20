@@ -2,8 +2,9 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Versioned guide:** This README describes `0.4.0-beta.2`. Use the exact
-> beta version below; `latest` may point to an earlier command surface.
+> **Versioned guide:** This README describes the `0.4.0-beta.3` source candidate.
+> It is pending publication. The published `0.4.0-beta.2` does not include plugin
+> management; `latest` may point to an earlier command surface.
 > See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
 > for registry availability and acceptance limits.
 
@@ -35,10 +36,10 @@
 
 ## Install
 
-Install the exact beta documented here:
+After `0.4.0-beta.3` is published, install that exact beta:
 
 ```sh
-npm install -g @unstoppable-stack/cli@0.4.0-beta.2
+npm install -g @unstoppable-stack/cli@0.4.0-beta.3
 us --version
 ```
 
@@ -87,7 +88,7 @@ us doctor --json          # machine-readable
 
 ### `us plugin`
 
-Source builds include standalone installation and status commands for the
+The `0.4.0-beta.3` candidate includes standalone installation and status commands for the
 Unstoppable Stack skills-only plugin preview. These commands are pending
 publication; the published `0.4.0-beta.2` does not include them. They are
 available in both minimal and full builds and are separate from `us init`.
