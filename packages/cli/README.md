@@ -2,9 +2,8 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Versioned guide:** This README describes the `0.4.0-beta.3` source candidate.
-> It is pending publication. The published `0.4.0-beta.2` does not include plugin
-> management; `latest` may point to an earlier command surface.
+> **Versioned guide:** This README describes published CLI `0.4.0-beta.3`.
+> Install the exact beta below; `latest` points to an earlier command surface.
 > See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
 > for registry availability and acceptance limits.
 
@@ -20,7 +19,7 @@
 - [Quick start](#quick-start)
 - [Commands](#commands)
   - [`us init`](#us-init)
-  - [`us plugin`](#us-plugin) *(source builds; pending publication)*
+  - [`us plugin`](#us-plugin) *(published beta)*
   - [`us scaffold`](#us-scaffold)
   - [`us doctor`](#us-doctor)
   - [`us remote`](#us-remote) *(opt-in, `full` profile only)*
@@ -36,7 +35,7 @@
 
 ## Install
 
-After `0.4.0-beta.3` is published, install that exact beta:
+Install the exact published beta:
 
 ```sh
 npm install -g @unstoppable-stack/cli@0.4.0-beta.3
@@ -88,10 +87,10 @@ us doctor --json          # machine-readable
 
 ### `us plugin`
 
-The `0.4.0-beta.3` candidate includes standalone installation and status commands for the
-Unstoppable Stack skills-only plugin preview. These commands are pending
-publication; the published `0.4.0-beta.2` does not include them. They are
-available in both minimal and full builds and are separate from `us init`.
+Published `0.4.0-beta.3` includes standalone installation and status commands for
+the Unstoppable Stack skills-only plugin preview. Earlier `0.4.0-beta.2` does
+not include these commands. They are available in both minimal and full builds
+and are separate from `us init`.
 
 ```sh
 us plugin install claude
@@ -622,13 +621,12 @@ Maintainers edit `packages/runtime-ai/src/` and
 `node scripts/sync-stack-assets.mjs` from the repository root. Builds generate
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
-The next source candidate is `0.4.0-beta.3`, adding standalone assistant plugin
-installation and status. Published beta.2 introduced P2P alpha.2 scaffold fixes.
+CLI `0.4.0-beta.3` adds standalone assistant plugin installation and status. Published beta.2 introduced P2P alpha.2 scaffold fixes.
 The release record tracks registry acceptance for each exact version.
 
 ## Managed data in generated apps
 
-CLI beta.2 and this candidate include `shared-data.js` (desktop worker) or
+CLI beta.2 and later include `shared-data.js` (desktop worker) or
 `src/shared-data.ts` (Node), `SHARED-DATA.md`, and a runnable
 `npm run share-data -- ...` example. These use the P2P alpha.2 `/data` API for
 JSON replication and explicitly approved collaborative writers. Collaboration

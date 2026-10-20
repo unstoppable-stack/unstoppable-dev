@@ -84,8 +84,8 @@ the internal reports or claim those runs have been repeated for a new checkout.
 
 ## Assistant plugins
 
-Source builds expose `us plugin install claude|codex` and
-`us plugin status [claude|codex]`; these are pending publication. CLI tests cover
+Published CLI beta.3 exposes `us plugin install claude|codex` and
+`us plugin status [claude|codex]`. The [registry acceptance record](../release/registry-acceptance-2026-10-20-beta3.json) binds the fresh npm install to the tested CI tarball. CLI tests cover
 native command arguments, repeat installs, disabled plugins, catalog conflicts,
 legacy-host fallback, malformed output and partial failures through host
 fixtures. They do not change real user plugin installations. Status is read-only:
