@@ -1,6 +1,6 @@
 # Install the Unstoppable Stack CLI
 
-Generated from agent-pack/release.json and cli/package.json. The matching CLI install target is CLI 0.4.0-beta.3; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
+Generated from agent-pack/release.json and cli/package.json. The matching CLI install target is CLI 0.4.0-beta.4; Node 22.17+ is required for the candidate tooling. Plugin installation supplies workflows, not the CLI, Pear/Electron, native inference libraries or model weights.
 
 ## Check the installed command
 
@@ -8,12 +8,12 @@ Run us --version, us --help, us compatibility --help, us scaffold list-platforms
 
 ## Registry status
 
-As checked on 2026-10-20, npm latest is 0.3.0. The matching 0.4.0-beta.3 candidate is published. Do not use npm install -g @unstoppable-stack/cli@latest for this workflow.
+As checked on 2026-10-21, npm latest is 0.3.0. The matching 0.4.0-beta.4 candidate is published. Do not use npm install -g @unstoppable-stack/cli@latest for this workflow.
 
 Install the exact version:
 
 ```sh
-npm install --global @unstoppable-stack/cli@0.4.0-beta.3
+npm install --global @unstoppable-stack/cli@0.4.0-beta.4
 ```
 
 ## Pinned source install
@@ -23,13 +23,13 @@ This public repository revision contains the matching maintained CLI/runtime con
 ```sh
 git clone https://github.com/unstoppable-stack/unstoppable-dev.git unstoppable-cli-source
 cd unstoppable-cli-source
-git checkout 8cfe4017e0754429b9cc207ace0ff55559fa1fd2
+git checkout 28adb47efd97dd33c9929ac9ac1409766e9216bd
 cd packages/cli
 npm ci --ignore-scripts
 npm run build
 mkdir -p ../../cli-artifacts
 npm pack --pack-destination ../../cli-artifacts
-npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-0.4.0-beta.3.tgz
+npm install --global --prefix "$HOME/.local" ../../cli-artifacts/unstoppable-stack-cli-0.4.0-beta.4.tgz
 export PATH="$HOME/.local/bin:$PATH"
 us --version
 us doctor
@@ -55,5 +55,5 @@ Use the installed catalog for other features. If the harness plugin is already e
 
 Initial package/native/model downloads require connectivity. Desktop native code runs in the Bare worker through the maintained runtime; renderer code uses IPC. For advanced SDK details use installed types and the version-matched official QVAC documentation: https://docs.qvac.tether.io/sdk/js-ts-sdk/. Node native AI and Expo require separate acceptance; wallets are stubs and Personal Node remains deferred. Report build/mock/native/cached-offline evidence separately.
 
-Source: https://github.com/unstoppable-stack/unstoppable-dev/tree/8cfe4017e0754429b9cc207ace0ff55559fa1fd2/packages/cli
-CLI guide: https://github.com/unstoppable-stack/unstoppable-dev/blob/8cfe4017e0754429b9cc207ace0ff55559fa1fd2/packages/cli/README.md
+Source: https://github.com/unstoppable-stack/unstoppable-dev/tree/28adb47efd97dd33c9929ac9ac1409766e9216bd/packages/cli
+CLI guide: https://github.com/unstoppable-stack/unstoppable-dev/blob/28adb47efd97dd33c9929ac9ac1409766e9216bd/packages/cli/README.md

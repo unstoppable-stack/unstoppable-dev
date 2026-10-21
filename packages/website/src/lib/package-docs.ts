@@ -12,7 +12,7 @@ export const packageDocs: DocPage[] = [
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "callout", title: "Version-matched examples", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 for these APIs. The repository demos use local source links; the quick starts below use npm. All APIs remain experimental." },
+      { type: "callout", title: "Version-matched examples", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.3 for these APIs. The repository demos use local source links; the quick starts below use npm. All APIs remain experimental." },
       { type: "cards", items: [
         { title: "Notebook + Briefing + Personal Node", body: "Two independent command-line apps share a versioned service and read notes from a restarted node while the writer is stopped. Experimental source example with actual desktop pairing, friendly data browsing, and source-offline retrieval on one computer.", href: "/getting-started/personal-node" },
         { title: "Simple data sync", body: "Start here: a JSON collection or collaborative database with managed storage and replication. Complete runnable examples on each page.", href: "/docs/p2p/sync" },
@@ -50,7 +50,7 @@ npm run demo --prefix examples/p2p-database` },
       { type: "paragraph", text: "Use RPC when a peer owns data or a service and should return a specific result: a receipt, a note or incremental output. Unlike replication, a call does not give the caller a local copy of the whole dataset. **Both peers must be reachable for a fresh call.**" },
       { type: "heading", text: "Your first peer call" },
       { type: "paragraph", text: "Use Node 22.17+ and npm. This quick start uses serve/connect from published 0.6.0-alpha.2. The `/service` entry handles identity, discovery, encryption and pairing; `/rpc` defines the shared contract. Your app supplies a service, a storage directory and an invitation." },
-      { type: "code", language: "bash", code: "mkdir rpc-demo\ncd rpc-demo\nnpm init -y\nnpm install @unstoppable-stack/p2p@0.6.0-alpha.2" },
+      { type: "code", language: "bash", code: "mkdir rpc-demo\ncd rpc-demo\nnpm init -y\nnpm install @unstoppable-stack/p2p@0.6.0-alpha.3" },
       { type: "heading", text: "1. Define what the app can do" },
       { type: "paragraph", text: "Save `notes.mjs`. A capability is a named set of methods. This shared file contains a single query and its contract; it does not start networking when imported." },
       { type: "code", language: "js", code: examples.rpc.files[0].code },
@@ -94,7 +94,7 @@ npm run demo --prefix examples/p2p-database` },
       { type: "paragraph", text: "Sessions do not reconnect automatically. Close a disconnected session and call connect again with the saved public key and same storage, or bind a fresh client when using `createNode` directly. The runtime does not replay operations. A disconnect after a mutation can leave its outcome unknown, so use application idempotency keys before retrying changes. These bounded streams are not durable event subscriptions." },
       { type: "heading", text: "Troubleshooting" },
       { type: "list", items: [
-        "Package subpath `/rpc` is not exported: upgrade to @unstoppable-stack/p2p@0.6.0-alpha.2.",
+        "Package subpath `/rpc` is not exported: upgrade to @unstoppable-stack/p2p@0.6.0-alpha.3.",
         "`NOT_GRANTED`: inspect the invitation or peer grants; changing a TypeScript type will not authorize the method.",
         "`INVALID_INPUT` or INVALID_OUTPUT: check your validator and JSON wire shape; avoid undefined, BigInt, Dates, Maps, cycles and nonfinite numbers.",
         "INCOMPATIBLE_CAPABILITY or METHOD_KIND_MISMATCH: share a version-matched contract between peers.",
@@ -121,12 +121,12 @@ await bob.waitFor(state => state.writable)
 await bob.put('note', { text: 'Hello from Bob!' })
 // At app shutdown: await bob.close(); await alice.close()` },
       { type: "paragraph", text: "In separate apps, share Alice’s database key with Bob, then verify Bob’s writer key before admitting it on Alice’s app. Knowing a database key permits reading but never automatically grants writing. The founder alone manages membership." },
-      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 to use the `/data` helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
+      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.3 to use the `/data` helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
       { type: "heading", text: "Run it locally" },
       { type: "code", language: "sh", code: `mkdir database-demo
 cd database-demo
 npm init -y
-npm install @unstoppable-stack/p2p@0.6.0-alpha.2 autobase@7.28.2
+npm install @unstoppable-stack/p2p@0.6.0-alpha.3 autobase@7.28.2
 # Save the program below as collaborate.mjs, then run:
 node collaborate.mjs` },
       { type: "paragraph", text: "This complete program waits for Alice to observe Bob’s edit, prints it, and closes both instances. It uses real public discovery, needs UDP access and bounds its waits to 60 seconds." },
@@ -249,12 +249,12 @@ const notes = await openCollection({ storage: './notes-copy', key })
 await notes.sync({ version })
 console.log(await notes.get('welcome')) // { text: 'Hello!' }
 await notes.close()` },
-      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 to use the `/data` helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
+      { type: "callout", title: "Experimental alpha.2 API", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.3 to use the `/data` helpers. Node 20+ is required for these examples; collaborative storage also needs autobase@7.28.2. P2P remains experimental." },
       { type: "heading", text: "Run it locally" },
       { type: "code", language: "sh", code: `mkdir sync-demo
 cd sync-demo
 npm init -y
-npm install @unstoppable-stack/p2p@0.6.0-alpha.2
+npm install @unstoppable-stack/p2p@0.6.0-alpha.3
 # Save the program below as mirror.mjs, then run:
 node mirror.mjs` },
       { type: "paragraph", text: "This complete program runs two app instances, prints the copied value and cleans up its temporary data. Public discovery needs UDP network access; the wait fails after 60 seconds if the peer cannot be reached." },

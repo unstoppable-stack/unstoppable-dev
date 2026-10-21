@@ -1,0 +1,124 @@
+{
+  "installation": "public npm registry",
+  "checkedAt": "2026-10-21T13:02:57.965Z",
+  "status": "passed",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "node": "v22.21.1",
+  "artifacts": [
+    {
+      "name": "@unstoppable-stack/p2p",
+      "sha256": "fc6b4ddf8b19429ed0b555228eaa441fca3e1ded405c0e052aa4e975f1d42515"
+    },
+    {
+      "name": "@unstoppable-stack/cli",
+      "sha256": "327fb09cb51c8628f5816f5ca18f6b3fbd359c51f86ce518382d1c2432aa1bdb"
+    }
+  ],
+  "checks": [
+    "resource discovery cannot grant capability authority",
+    "outgoing network approval and grant ceilings",
+    "replication-only connections survive control deadlines",
+    "incomplete control handshakes expire",
+    "managed data and service public entry points load",
+    "installed CLI emits working separate-process data examples",
+    "optional database engine is not installed by default",
+    "explicit Autobase opt-in: offline writes, restart, conflict convergence and removal",
+    "invited RPC and streaming",
+    "denied uninvited/ungranted access",
+    "real Hyperbee replication",
+    "replica restart while source offline",
+    "installed CLI minimal catalog",
+    "workspace and app generation",
+    "generated JavaScript syntax",
+    "no AI, Memory, Search or Personal Node dependency"
+  ],
+  "limits": [
+    "Local DHT only; public-internet discovery not asserted",
+    "No native model or generated desktop UI ran"
+  ],
+  "commit": "28adb47efd97dd33c9929ac9ac1409766e9216bd",
+  "canonicalBuild": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/39600488823",
+  "releaseWorkflow": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/39602646768",
+  "publication": "Authenticated maintainer publication of the verified workflow tarballs after browser confirmation. The initial GitHub publisher was rejected; the rerun skipped identical published versions and passed fresh registry verification.",
+  "publishedArtifacts": [
+    {
+      "name": "@unstoppable-stack/p2p",
+      "version": "0.6.0-alpha.3",
+      "tag": "alpha",
+      "file": "unstoppable-stack-p2p-0.6.0-alpha.3.tgz",
+      "bytes": 84785,
+      "sha256": "fc6b4ddf8b19429ed0b555228eaa441fca3e1ded405c0e052aa4e975f1d42515",
+      "integrity": "sha512-AJeuZdqOJr6F8RD+LEvQGiPVuIl/mhQKGw9+RHOcKQl/gzkX6xUN0xIvP9pJ4CrtdXvE0NyrgcSqIuDwUVFzug=="
+    },
+    {
+      "name": "@unstoppable-stack/cli",
+      "version": "0.4.0-beta.4",
+      "tag": "beta",
+      "file": "unstoppable-stack-cli-0.4.0-beta.4.tgz",
+      "bytes": 154098,
+      "sha256": "327fb09cb51c8628f5816f5ca18f6b3fbd359c51f86ce518382d1c2432aa1bdb",
+      "integrity": "sha512-X4NsV0zUABD+zH2wcoz14BaImsSyKdLyK8xzRv/aecmcEQS3ptjC3LU/t1IMbDUhX2CZ8Obd0YVjZhxmN7z9VQ=="
+    }
+  ],
+  "registry": [
+    {
+      "name": "@unstoppable-stack/p2p",
+      "version": "0.6.0-alpha.3",
+      "integrity": "sha512-AJeuZdqOJr6F8RD+LEvQGiPVuIl/mhQKGw9+RHOcKQl/gzkX6xUN0xIvP9pJ4CrtdXvE0NyrgcSqIuDwUVFzug==",
+      "distTags": {
+        "latest": "0.6.0-alpha.1",
+        "alpha": "0.6.0-alpha.3"
+      }
+    },
+    {
+      "name": "@unstoppable-stack/cli",
+      "version": "0.4.0-beta.4",
+      "integrity": "sha512-X4NsV0zUABD+zH2wcoz14BaImsSyKdLyK8xzRv/aecmcEQS3ptjC3LU/t1IMbDUhX2CZ8Obd0YVjZhxmN7z9VQ==",
+      "distTags": {
+        "latest": "0.3.0",
+        "beta": "0.4.0-beta.4"
+      }
+    }
+  ],
+  "ciRegistryVerification": {
+    "installation": "public npm registry",
+    "checkedAt": "2026-10-21T13:03:20.950Z",
+    "status": "passed",
+    "platform": "linux",
+    "architecture": "x64",
+    "node": "v24.22.0",
+    "artifacts": [
+      {
+        "name": "@unstoppable-stack/p2p",
+        "sha256": "fc6b4ddf8b19429ed0b555228eaa441fca3e1ded405c0e052aa4e975f1d42515"
+      },
+      {
+        "name": "@unstoppable-stack/cli",
+        "sha256": "327fb09cb51c8628f5816f5ca18f6b3fbd359c51f86ce518382d1c2432aa1bdb"
+      }
+    ],
+    "checks": [
+      "resource discovery cannot grant capability authority",
+      "outgoing network approval and grant ceilings",
+      "replication-only connections survive control deadlines",
+      "incomplete control handshakes expire",
+      "managed data and service public entry points load",
+      "installed CLI emits working separate-process data examples",
+      "optional database engine is not installed by default",
+      "explicit Autobase opt-in: offline writes, restart, conflict convergence and removal",
+      "invited RPC and streaming",
+      "denied uninvited/ungranted access",
+      "real Hyperbee replication",
+      "replica restart while source offline",
+      "installed CLI minimal catalog",
+      "workspace and app generation",
+      "generated JavaScript syntax",
+      "no AI, Memory, Search or Personal Node dependency"
+    ],
+    "limits": [
+      "Local DHT only; public-internet discovery not asserted",
+      "No native model or generated desktop UI ran"
+    ]
+  }
+}

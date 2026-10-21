@@ -26,7 +26,7 @@ Start with [Claude Code](https://unstoppable-stack.dev/docs/start/claude),
 local-first desktop baseline; the plugin guides include the separate CLI install.
 
 
-> **Release status:** CLI `0.4.0-beta.3` and P2P `0.6.0-alpha.2` are published prereleases, verified through fresh npm installs. Local AI requires separate native/model acceptance. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
+> **Release status:** CLI `0.4.0-beta.4` and P2P `0.6.0-alpha.3` are published prereleases, verified through fresh npm installs. Local AI requires separate native/model acceptance. Personal Node/runtime 0.6, mobile, wallets, Search, Memory, Remote Coder, Flow, and the standalone Agent are outside the core preview.
 
 Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the same agent-pack source. The recommended Codex path still requires an independent pilot before it becomes a support claim.
 
@@ -37,10 +37,10 @@ Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the
 | I want to… | Building blocks | Start here | Status |
 | --- | --- | --- | --- |
 | Create an app that saves data locally | CLI, desktop worker, Hyperbee | [Desktop quick start](#quick-start) | Core preview |
-| Call a method on a trusted device | P2P pairing, grants and RPC | [P2P API](packages/p2p/docs/api.md) | Experimental; published alpha.2 |
-| Keep a replica of notes or files | P2P `/sync`, Hyperbee, Hyperdrive | [Notes example](examples/p2p-notes/README.md) | Experimental; published alpha.2 |
+| Call a method on a trusted device | P2P pairing, grants and RPC | [P2P API](packages/p2p/docs/api.md) | Experimental; published alpha.3 |
+| Keep a replica of notes or files | P2P `/sync`, Hyperbee, Hyperdrive | [Notes example](examples/p2p-notes/README.md) | Experimental; published alpha.3 |
 | Add an on-device shopping assistant | QVAC, Bare, local storage | [Local Goods example](examples/ecommerce-assistant/README.md) | Native/model acceptance is separate |
-| Merge edits made on offline devices | P2P `/db`, Autobase, app-owned reducer | [Collaborative notes](examples/p2p-database/README.md) | Experimental; published alpha.2 |
+| Merge edits made on offline devices | P2P `/db`, Autobase, app-owned reducer | [Collaborative notes](examples/p2p-database/README.md) | Experimental; published alpha.3 |
 | Run an optional peer for storage or AI | Personal Node | [Node guide](packages/node/README.md) | Deferred alpha |
 
 Explore the [library guide](https://unstoppable-stack.dev/docs/modules) for what
@@ -62,7 +62,7 @@ packages built from the shared agent pack. Personal Node is an optional applicat
 - Memory is preserved on `codex/deferred-package-development`; Search remains deferred.
   See the [package inventory](docs/package-inventory.md) for what stays on main.
 
-CLI `0.4.0-beta.3` and P2P `0.6.0-alpha.2` are published on npm under
+CLI `0.4.0-beta.4` and P2P `0.6.0-alpha.3` are published on npm under
 `beta` and `alpha`. Personal Node remains deferred, unpublished alpha source.
 Earlier CLI `0.3.0` and Node `0.4.0` retain their existing APIs. See
 [package architecture and migration](docs/package-architecture.md) for status,
@@ -99,13 +99,13 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 | --- | --- | --- |
 | Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Repository catalog; official directory listing pending |
 | Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Repository catalog; official directory listing pending |
-| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Published `0.4.0-beta.3` beta; install that exact version |
+| Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Published `0.4.0-beta.4` beta; install that exact version |
 
 For the raw CLI path, use Node.js **22.17+** and npm. Start in a directory
 where you can create a new workspace, then:
 
 ```bash
-npm install -g @unstoppable-stack/cli@0.4.0-beta.3
+npm install -g @unstoppable-stack/cli@0.4.0-beta.4
 us --version
 us init shop-workspace --assistant none --no-install
 cd shop-workspace
@@ -127,7 +127,7 @@ replicate its private store to another app.
 
 Use `--assistant claude` or `--assistant codex` instead of `none` for generated
 project guidance. Install P2P directly with
-`npm install @unstoppable-stack/p2p@0.6.0-alpha.2`; use version-matched commands. The plugin download adds guidance, not models or
+`npm install @unstoppable-stack/p2p@0.6.0-alpha.3`; use version-matched commands. The plugin download adds guidance, not models or
 native dependencies. See the [package structure](docs/package-architecture.md).
 
 ### Proposed first assistant prompt
