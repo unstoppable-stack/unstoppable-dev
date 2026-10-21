@@ -1,6 +1,6 @@
 {
   "version": "0.1.9",
-  "sourceDigest": "da9537ae804c53411873b1aa9950eda5b11cedc6933148b6c13b55fec2ab05bd",
+  "sourceDigest": "b97951c5e23e560253941680ed853f0707f783f93dd1e632e79a3eb825425bb5",
   "sources": {
     "core/architecture.mdc": "8561110ed2ca65315b0f7226399a0e33f1a3f853a619d5d3110ac8f55ac9580a",
     "core/cheatsheet.mdc": "9f974680c38e683dd8cc8c8f9f502b39ea109544f45580d1c1b55db01dcae9ce",
@@ -24,7 +24,7 @@
     "modules/managed-data.mdc": "4cd1c85d4fd474e924313d470ce16ccb3edc59c9d33d6a4c6e765be8703c8211",
     "modules/p2p.mdc": "bf25a4cdc4c2c3daeedf5957bfe51666fb79ebc19e9163054b17aa328da44cfc",
     "modules/pear.mdc": "295020faa2165ff1705d646a0130301707b1aaa2e7e026b2008ca328d29863bd",
-    "modules/qvac.mdc": "b39b749a6ca16e09168fc80847150b63aa78690950edf84df2aadc101232f158",
+    "modules/qvac.mdc": "f461be37b9ebe293107e36a1206eb71119a658aeb926cff8fd9655197fa94048",
     "modules/wdk.mdc": "d47f32495855e502c1c0c7868d7f23abd064bd2d6d18734f423f0932495c73f5",
     "recipes/file-sharing.mdc": "b2327d23389ece8f7aa89c6156fff603cedf66b89727102c26a4d79e2631c5db",
     "recipes/local-inference.mdc": "400c72aa2485165ef45998f539a60ba8f7d27f30f803a47fdbf457ce5c03fc38",
@@ -158,7 +158,7 @@
     "skills/unstoppable-modules/resources/managed-data.mdc": "a7cfaeec20736754d296eea6700ceaff4236176c39bfd2941f02126bb115b7ee",
     "skills/unstoppable-modules/resources/p2p.mdc": "6b9eec2edb946625111f8098dbc5da00c9c1fda52408508019e9e66d292ff0ea",
     "skills/unstoppable-modules/resources/pear.mdc": "c108def62ecd33a21a094d98a12a83637ab7b7c23279b743df7c6204c6e642fe",
-    "skills/unstoppable-modules/resources/qvac.mdc": "addb8ee5ed784f8e0b5db83a59777b7c3f5b2a22e9d904e41cd3370fa434f51d",
+    "skills/unstoppable-modules/resources/qvac.mdc": "2d1301e89b5de3ababac8cd899282558b5d5bf272693642de21bc3f3e7310487",
     "skills/unstoppable-modules/resources/wdk.mdc": "6c5b24983ec2c02eb47542b9747b2c7e3009667401f943f1c084e6d91464ac3d",
     "skills/unstoppable-modules/SKILL.md": "5a8548029d980e4645afe468eac9564166d852fdcf64a1032b9e490fd3564a35",
     "skills/unstoppable-recipes/resources/file-sharing.mdc": "9bfde851f59cad83be149b7924eb8b97abfd9801ebf5f630704732beca1c75e7",
