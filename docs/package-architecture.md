@@ -12,7 +12,11 @@ come from upstream SDKs, not separately published Unstoppable wrapper packages.
 | `unstoppable-node` | Personal Node daemon, local administration, replication and optional delegated QVAC inference | `0.4.0` published; reorganized `0.6.0-alpha.2` source unpublished and deferred |
 | `runtime-ai` | Tested lifecycle helpers copied into generated desktop/Node apps | Private implementation, not a public dependency |
 | Website, agent-pack source, desktop applications | Documentation, shared guidance/builds and app shells | Private npm packages |
-| Memory and Search | Retained experimental implementations | Excluded from this release |
+| Memory | Experimental implementations preserved on `codex/deferred-package-development` | Removed from main; excluded from releases |
+| Search | Deferred local experiment | Not tracked on main; excluded from releases |
+
+See the [package inventory](package-inventory.md) for the retained source, archived
+packages and recovery instructions.
 
 Claude, Codex and the raw CLI remain the three intended starting paths. A plugin
 provides guidance and uses the CLI for scaffolding. Installing it does not install

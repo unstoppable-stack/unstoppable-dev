@@ -18,6 +18,8 @@ keep their experimental status explicit. See README.md and SUPPORT.md.
 - `packages/website/`: Next.js App Router site, Tailwind, shadcn/ui.
 - `packages/p2p/`, `packages/node/`, `packages/node-desktop/`: experimental P2P
   library, Personal Node composition, and desktop shell.
+- Deferred Memory source is preserved on `codex/deferred-package-development`,
+  outside main. See `docs/package-inventory.md` before restoring experiments.
 - `examples/`: first-party examples and CI fixtures.
 - `docs/validation.md`: public validation commands and acceptance boundaries.
 

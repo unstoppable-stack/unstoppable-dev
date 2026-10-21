@@ -87,7 +87,7 @@ function resolveServerPath(): string {
     join(__dirname, '..', '..', '..', 'packages', 'memory-mcp', 'src', 'index.js'),
   ]
   for (const c of candidates) if (existsSync(c)) return c
-  throw new Error('Could not locate @unstoppable/memory-mcp. Install it next to this CLI, or run inside the monorepo.')
+  throw new Error('Memory is deferred and its source is preserved on codex/deferred-package-development. Install @unstoppable/memory-mcp from that branch next to this CLI for experimental use.')
 }
 
 export function registerMemoryCommand(program: Command) {

@@ -418,7 +418,7 @@ try {
     category: "Packages",
     verifiedOn,
     blocks: [
-      { type: "lead", text: "Source availability does not make a package a supported part of the core preview. These implementations are retained for development and are excluded from the canonical CLI/P2P release." },
+      { type: "lead", text: "Source availability does not make a package a supported part of the core preview. Memory implementations are preserved on the codex/deferred-package-development branch and removed from main. Other deferred areas remain outside the canonical CLI/P2P release." },
       { type: "list", items: [
         "memory: experimental memory storage and indexing implementation.",
         "memory-client: experimental app integration, including optional Node synchronization.",
@@ -427,6 +427,7 @@ try {
         "Search, Remote Coder, Flow and the standalone Agent: deferred feature areas, not built-in P2P service packs.",
         "**Expo mobile and wallet scaffolds:** experimental mobile path and wallet stubs; neither establishes a supported remote capability API.",
       ] },
+      { type: "actions", items: [{ label: "Browse archived Memory source", href: "https://github.com/unstoppable-stack/unstoppable-dev/tree/codex/deferred-package-development/packages/memory" }] },
       { type: "paragraph", text: "Do not merge these into the P2P dependency merely to expose their names. A reusable service needs a defined contract, authenticated ownership, limits, lifecycle and an executable consumer first. Shared transport already exists." },
       { type: "cards", items: [{ title: "Capability roadmap", body: "Missing services and proposed sequence.", href: "/docs/p2p/roadmap" }, { title: "Support boundaries", body: "Current preview scope and limitations.", href: "/docs/support" }] },
     ],

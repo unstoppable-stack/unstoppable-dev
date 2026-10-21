@@ -66,7 +66,7 @@ for (const profile of Object.values(profiles.profiles)) {
     check(deps['@unstoppable-stack/p2p'] === `^${packages.p2p.version}`, `${profile.id} has a stale P2P version`)
   }
 }
-for (const directory of ['memory', 'memory-client', 'memory-mcp', 'agent-pack', 'runtime-ai']) {
+for (const directory of ['agent-pack', 'runtime-ai']) {
   const pkg = JSON.parse(await readFile(resolve(root, `packages/${directory}/package.json`), 'utf8'))
   check(pkg.private === true, `${directory} must stay private and outside npm release publishing`)
 }
