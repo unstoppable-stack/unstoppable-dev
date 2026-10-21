@@ -7,6 +7,7 @@ const links = [
   { label: "Get started", href: "/getting-started" },
   { label: "Documentation", href: "/docs" },
   { label: "Packages & integrations", href: "/docs/packages" },
+  { label: "Technology stack", href: "/#technology" },
   { label: "Examples", href: "/showcase" },
   { label: "Personal Node", href: "/personal-node" },
   { label: "Roadmap", href: "/roadmap" },
