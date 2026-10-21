@@ -52,7 +52,7 @@ export const docsPages: DocPage[] = [
       { type: "lead", text: "Start through Claude Code, Codex or the raw CLI. The plugins guide your assistant; the CLI configures workspaces and generates apps. Apps use one Unstoppable P2P library and upstream QVAC or wallet SDKs when needed." },
       { type: "heading", text: "Packages we maintain" },
       { type: "list", items: [
-        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.2 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
+        "@unstoppable-stack/cli: workspace setup, scaffolding and environment checks. Version 0.4.0-beta.3 is published under beta; install that exact version. Version 0.3.0 remains the earlier latest release.",
         "@unstoppable-stack/p2p: identity, pairing, permissions, capability calls and streaming. Replication is the /sync entry of the same package. The consolidated 0.6.0-alpha.2 is published under alpha; install that exact version.",
         "unstoppable-stack plugins for Claude Code and Codex: two host distributions from shared guidance. Use the CLI plugin installer with the public repository catalog; official directory listings remain pending. Downloads remain available as a local-catalog fallback.",
         "unstoppable-node: optional Personal Node application. Published 0.4.0 has a different API from the reorganized, unpublished 0.6.0-alpha.2 source. It is outside the core preview.",
