@@ -4,7 +4,7 @@ let sendMessage
 let destroy
 
 function dispatch (message) {
-  if (message?.type === 'workerReady') lastWorkerReady = message
+  if (['workerReady', 'ready', 'status'].includes(message?.type)) lastWorkerReady = message
   for (const handler of handlers) handler(message)
 }
 
@@ -66,7 +66,7 @@ export const workerReady = new Promise((resolve, reject) => {
   if (lastWorkerReady) return resolve(lastWorkerReady)
   const timeout = setTimeout(() => reject(new Error('Worker init timeout (30s)')), 30000)
   const unsub = onWorkerMessage((msg) => {
-    if (msg.type === 'workerReady') {
+    if (['workerReady', 'ready', 'status'].includes(msg.type)) {
       clearTimeout(timeout)
       unsub()
       resolve(msg)

@@ -39,6 +39,15 @@ export default function GettingStartedPage() {
           </div>
         </div>
       </section>
+      <section className="section border-b border-border" aria-labelledby="node-next-title">
+        <div className="section-inner max-w-4xl">
+          <p className="eyebrow">Next: plan your app’s data copies · Experimental</p>
+          <h2 id="node-next-title" className="section-title">Does your app need a Personal Node?</h2>
+          <p className="section-copy mb-6">Once local saving works, consider a node if users want another copy of selected data or need compatible apps to read it while the original app is closed. Apps stay usable without it. Direct peer calls alone do not require a Personal Node.</p>
+          <Link href="/getting-started/personal-node" className="button-primary">Connect an app to Personal Node <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+          <p className="mt-5 text-sm leading-6 text-text-muted">Follow Notebook + Briefing first, then adapt the integration to your own app. Pairing and resource registration are explicit; scaffolds do not connect automatically. Synced copies are not a complete backup and recovery service.</p>
+        </div>
+      </section>
       <section className="section">
         <div className="section-inner flex flex-col justify-between gap-6 rounded-2xl md:flex-row md:items-center">
           <div><h2 className="text-2xl font-semibold">Already have a project?</h2><p className="mt-2 text-text-secondary">Keep your app and its instructions. Review the assistant workflow before adding a plugin.</p></div>

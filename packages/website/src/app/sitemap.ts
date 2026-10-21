@@ -5,7 +5,7 @@ import { siteConfig } from "@/lib/release";
 export const dynamic = "force-static";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/getting-started", "/docs", "/showcase", "/roadmap", "/llms.txt", "/llms-full.txt"];
+  const routes = ["", "/getting-started", "/getting-started/personal-node", "/docs", "/showcase", "/personal-node", "/roadmap", "/llms.txt", "/llms-full.txt"];
   const docs = docsPages.filter((page) => page.slug).map((page) => `/docs/${page.slug}`);
 
   return [...routes, ...docs].map((route) => ({

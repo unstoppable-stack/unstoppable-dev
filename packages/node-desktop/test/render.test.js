@@ -123,7 +123,7 @@ describe('peer rows', () => {
         }
       ]
     }))
-    assert.equal(connected.state, 'connected')
+    assert.equal(connected.state, 'empty')
     assert.equal(paused.state, 'paused')
     assert.equal(paused.allPaused, true)
     assert.equal(isProtected.state, 'protected')
@@ -147,6 +147,25 @@ describe('peer rows', () => {
     }))
 
     assert.deepEqual(rows.map((row) => row.state), ['pending', 'copying', 'pending', 'error'])
+  })
+
+  it('keeps connection state, verified replicas and invitation authorization distinct', () => {
+    const [online, offline] = peerRows(status({
+      peers: [
+        { publicKey: KEY_A, online: true, pairingMethod: 'invite' },
+        { publicKey: KEY_B, online: false }
+      ],
+      cores: [
+        { owner: KEY_A, protection: { mode: 'mirror', state: 'protected' } },
+        { owner: KEY_B, protection: { mode: 'mirror', state: 'protected' } }
+      ]
+    }))
+    assert.equal(online.online, true)
+    assert.equal(online.invited, true)
+    assert.equal(online.trusted, false, 'a code does not create a broader dashboard approval')
+    assert.equal(offline.online, false)
+    assert.equal(offline.invited, false)
+    assert.equal(offline.state, 'protected', 'an offline source does not invalidate its verified replica')
   })
 
   it('surfaces the per-peer quota and its default', () => {

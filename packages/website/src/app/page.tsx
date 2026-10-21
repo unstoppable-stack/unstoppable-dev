@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, BrainCircuit, CheckCircle2, Database, Network, Plug, Terminal } from "lucide-react";
+import { NodeArchitecture } from "@/components/node-architecture";
 import { SetupChooser } from "@/components/setup-chooser";
 import { CodeBlock } from "@/components/code-block";
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
@@ -21,7 +22,7 @@ const faqs = [
   { question: "Does an app work offline?", answer: "Local UI and storage can keep working offline. Peer discovery, replication, and delegated inference need reachable peers; local inference works after its model is installed." },
   { question: "What does local AI require?", answer: "A compatible machine, disk space for the selected model, and an initial model download. Exact memory and disk guidance is model-specific and still being measured for the preview." },
   { question: "Which coding assistants are supported?", answer: "Claude Code and Codex have downloadable plugin previews and dedicated setup guides. The raw CLI also generates project guidance for Cursor and OpenCode, or works without an assistant." },
-  { question: "Do I need a Personal Node?", answer: "No. The recommended app runs without it, and the current Personal Node alpha is deferred from the core preview while its release gates are completed." },
+  { question: "Do I need a Personal Node?", answer: "No. Apps work independently. The optional Personal Node desktop app can replicate declared data and serve permitted AI requests. You can also reuse its components for your own desktop app; this integration remains experimental." },
   { question: "Are payments available?", answer: "Not as a supported preview path. WDK integration is planned and the current generator surface is a stub, so this site does not present payments as shipped." },
   { question: "Does this eliminate every infrastructure cost?", answer: "No. It removes the mandatory application backend from the core architecture. Devices, model downloads, peer availability, website hosting, and any optional services still have real costs." },
 ];
@@ -39,6 +40,25 @@ export default function Home() {
           <p className="mx-auto mb-10 max-w-3xl text-base leading-relaxed text-text-secondary sm:text-lg md:text-xl">Start with your coding assistant or work directly from the terminal. Choose the workflow that fits you, with local-first app starters, P2P capabilities and direct QVAC integration underneath.</p>
           <SetupChooser />
           <p className="mt-6 text-sm text-text-muted">Your workflow. The same stack. Switch paths as your project grows.</p>
+        </div>
+      </section>
+
+      <section className="section border-t border-border bg-surface/40" aria-labelledby="desktop-title">
+        <div className="section-inner">
+          <div className="mb-10 grid items-center gap-8 lg:grid-cols-2">
+            <div>
+              <p className="eyebrow">Personal Node · Experimental alpha</p>
+              <h2 id="desktop-title" className="section-title">Your apps work locally. Your node keeps another copy.</h2>
+              <p className="section-copy mb-6">For apps that need their shared data available beyond the original app, we recommend designing in a Personal Node connection. Users choose what to share, see what has synced, and browse saved content from one desktop home.</p>
+              <Link href="/personal-node" className="button-primary">Explore Personal Node <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+              <p className="mt-4 text-sm leading-6 text-text-muted">Available as experimental source. Verified synced copies work today; full backup, retention, and recovery are still unfinished.</p>
+            </div>
+            <figure className="rounded-2xl border border-border bg-background p-3">
+              <Image unoptimized src="/examples/personal-node-home.png" alt="Personal Node Simple Home showing Notebook and Briefing connected with their latest shared data copied" width={2200} height={1376} className="h-auto w-full rounded-xl" />
+              <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual desktop alpha: Notebook and Briefing tested on one computer.</figcaption>
+            </figure>
+          </div>
+          <NodeArchitecture />
         </div>
       </section>
 
@@ -73,6 +93,8 @@ export default function Home() {
           <div className="min-w-0 self-center"><CodeBlock code={defaultScaffoldCommand} /><p className="mt-3 text-xs leading-5 text-text-muted">This creates the base desktop app. Local AI is an optional follow-on; Personal Node remains outside the core preview.</p></div>
         </div>
       </section>
+
+
 
       <section className="section border-t border-border" aria-labelledby="included-title">
         <div className="section-inner"><p className="eyebrow">What is included</p><h2 id="included-title" className="section-title">A small toolkit. Clear boundaries.</h2>

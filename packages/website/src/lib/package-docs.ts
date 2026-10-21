@@ -14,6 +14,7 @@ export const packageDocs: DocPage[] = [
     blocks: [
       { type: "callout", title: "Version-matched examples", body: "Install @unstoppable-stack/p2p@0.6.0-alpha.2 for these APIs. The repository demos use local source links; the quick starts below use npm. All APIs remain experimental." },
       { type: "cards", items: [
+        { title: "Notebook + Briefing + Personal Node", body: "Two independent command-line apps share a versioned service and read notes from a restarted node while the writer is stopped. Experimental source example with actual desktop pairing, friendly data browsing, and source-offline retrieval on one computer.", href: "/getting-started/personal-node" },
         { title: "Simple data sync", body: "Start here: a JSON collection or collaborative database with managed storage and replication. Complete runnable examples on each page.", href: "/docs/p2p/sync" },
         { title: "Notes: RPC and sync", body: "Start here for schema-validated calls, streams and invitation grants. Then replicate a single-owner Hyperbee and read it after the writer disconnects and the replica restarts.", href: "/docs/examples#replicate-notes-between-peers" },
         { title: "Collaborative notes: Autobase", body: "Approve a writer, edit while both transports are closed, restart and converge conflicting notes, then remove the writer. Node-only prototype with an explicitly installed engine.", href: "/docs/examples#merge-offline-edits" },
@@ -374,6 +375,11 @@ const { bytes } = await peer.call('sync', 'usage')` },
     verifiedOn,
     blocks: [
       { type: "lead", text: "The desktop app embeds Personal Node in a Bare sidecar and gives its owner local controls. It consumes the same P2P library as other apps; it does not define a second node/client network API." },
+      { type: "heading", text: "Connect an app or build your own desktop" },
+      { type: "paragraph", text: "The Notebook + Briefing source example demonstrates scoped summary calls and separate datasets mirrored by Personal Node. A fresh reader retrieves notes after the writer stops and the desktop Bare daemon restarts. A separate same-computer Electron test pairs both apps through the dashboard, checks verified copies and live connections, and syncs an offline edit. Signed installers and physical-device acceptance remain separate gates." },
+      { type: "actions", items: [{ label: "Run the two-app example", href: "/getting-started/personal-node" }] },
+      { type: "paragraph", text: "Personal Node remains an optional first-party app. Integrate your app through granted capabilities and declared replication resources, or use the desktop source as a reference for your own Electron interface and Bare worker. Apps own their schemas, UI and business logic. Shared transport does not automatically make data interchangeable: agree on versioned schemas, service contracts, encryption access and writer rules. The source is not yet a supported white-label scaffold." },
+      { type: "actions", items: [{ label: "Personal Node and the app ecosystem", href: "/personal-node" }, { label: "Desktop review and improvement priorities", href: `${source}/docs/personal-node-review.md` }] },
       { type: "list", items: [
         "Home and storage: inspect paired apps, declared resources, verified protection states and storage use; set per-peer/global quota policy and pause/resume replication.",
         "Trust: approve requests, grant or revoke methods, create invitations and remove peers. Removal revokes access; existing blocks may remain on disk.",

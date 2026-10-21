@@ -1,0 +1,21 @@
+{
+  "name": "unstoppable-personal-node-ecosystem-example",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Notebook and Briefing: independent apps sharing a contract and Personal Node replicas",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 --test-timeout=60000 test/*.test.js",
+    "demo": "node demo.js",
+    "notebook": "node notebook.js",
+    "briefing": "node briefing.js"
+  },
+  "dependencies": {
+    "@unstoppable-stack/p2p": "file:../../packages/p2p",
+    "unstoppable-node": "file:../../packages/node",
+    "corestore": "^7.13.0",
+    "hyperbee": "^2.27.3"
+  },
+  "devDependencies": { "hyperdht": "^6.34.1" },
+  "engines": { "node": ">=22.17.0" }
+}

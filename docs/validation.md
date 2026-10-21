@@ -82,6 +82,47 @@ Compatibility profile validation strings may summarize historical maintainer
 runs. This page documents their public reproduction paths; it does not publish
 the internal reports or claim those runs have been repeated for a new checkout.
 
+## Personal Node ecosystem example
+
+The [Notebook + Briefing example](../examples/personal-node-ecosystem/README.md)
+tests two different app implementations using a shared versioned contract and
+separate stores. After installing P2P and Personal Node dependencies:
+
+```bash
+npm ci --prefix examples/personal-node-ecosystem
+npm run demo --prefix examples/personal-node-ecosystem
+npm test --prefix examples/personal-node-ecosystem
+# After installing packages/node-desktop dependencies:
+RUN_ELECTRON_SIDECAR_E2E=1 npm test --prefix examples/personal-node-ecosystem
+```
+
+Tests use an isolated local DHT, real RPC and Hyperbee replication. They cover a
+fresh reader retrieving a checkpoint from the restarted node with the writer
+stopped, app-owned reports, offline local reopen/edits, explicit reconnect grants,
+permission denial, version rejection, cancellation and persistent revocation.
+The optional native case runs the actual desktop daemon in a Bare sidecar.
+No AI, Electron UI, signed artifact, public-network, physical-device or
+operating-system-wide offline acceptance is implied. Personal Node remains alpha.
+
+For a separate actual-dashboard acceptance run, also install desktop and CLI
+development dependencies (the CLI supplies Playwright), then run:
+
+```bash
+node scripts/personal-node-dashboard-e2e.mjs --output /tmp/personal-node-dashboard-results
+```
+
+This opens Electron with an isolated profile and launches the two CLI apps as
+separate processes. It clicks dashboard pairing controls, verifies both replicas,
+checks source-offline retrieval, connection/authorization labels, Simple-to-Advanced
+pause/resume, storage-limit validation, unchanged grants across view switches,
+saved view selection and dismissed onboarding after reload, and propagation of
+an offline edit. It captures both views, resource inspectors, and a result file.
+The Simple browser must also display the updated Notebook note and Briefing
+report as readable content without switching to Advanced.
+Public discovery must be reachable; this is a same-computer acceptance flow,
+not a signed-installer or physical-device gate. Add `--keep-open` to inspect
+both connected apps after success; Ctrl+C performs cleanup.
+
 ## Assistant plugins
 
 Source builds expose `us plugin install claude|codex` and

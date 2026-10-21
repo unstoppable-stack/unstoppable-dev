@@ -34,7 +34,7 @@ export class ReplicationEngine {
   getDriveStats(): ResourceStats[]
   getDrive(key: string): any | null
   getCore(key: string): any | null
-  peekCore(key: string, options?: { limit?: number }): Promise<any>
+  peekCore(key: string, options?: { limit?: number; readable?: boolean }): Promise<any>
   peekDrive(key: string, options?: { dir?: string; limit?: number }): Promise<any>
   getReplicatedBytes(): { totalCores: number; totalDrives: number; total: number; perOwner: Record<string, number> }
   close(): Promise<void>

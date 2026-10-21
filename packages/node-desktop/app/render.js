@@ -101,6 +101,7 @@ export function peerRows (status, now = Date.now()) {
       deviceName: peer.deviceName || null,
       online: !!peer.online,
       trusted: !!approved[peer.publicKey],
+      invited: peer.pairingMethod === 'invite',
       cores,
       drives,
       entries: cores.reduce((sum, c) => sum + (c.length || 0), 0),
@@ -125,7 +126,7 @@ export function peerRows (status, now = Date.now()) {
 }
 
 function peerReplicationState (units) {
-  if (units.length === 0) return 'connected'
+  if (units.length === 0) return 'empty'
   if (units.every((unit) => unit.paused)) return 'paused'
 
   const active = units.filter((unit) => !unit.paused)

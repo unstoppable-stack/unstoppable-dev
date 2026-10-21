@@ -245,7 +245,7 @@ export function createDaemonHost ({ storagePath, args = [], send, approvalMode =
         break
 
       case 'peek-core': {
-        const result = await node.peekCore(msg.key, { limit: msg.limit })
+        const result = await node.peekCore(msg.key, { limit: msg.limit, readable: msg.readable === true })
         send({ type: 'peek-core-result', requestId: msg.requestId, result })
         break
       }
