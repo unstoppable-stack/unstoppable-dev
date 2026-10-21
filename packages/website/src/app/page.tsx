@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, BrainCircuit, CheckCircle2, Database, Network, Plug, Terminal } from "lucide-react";
 import { NodeArchitecture } from "@/components/node-architecture";
 import { SetupChooser } from "@/components/setup-chooser";
+import { TechnologyStack } from "@/components/technology-stack";
 import { CodeBlock } from "@/components/code-block";
 import { defaultScaffoldCommand, siteConfig, supportMatrix } from "@/lib/release";
 
@@ -61,6 +62,8 @@ export default function Home() {
           <NodeArchitecture />
         </div>
       </section>
+
+      <TechnologyStack />
 
       <section className="section border-t border-border bg-surface/40" aria-labelledby="example-title">
         <div className="section-inner grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
