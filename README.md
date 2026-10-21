@@ -59,7 +59,8 @@ packages built from the shared agent pack. Personal Node is an optional applicat
 - QVAC is used directly through its upstream SDK/inference packages. Small tested
   lifecycle helpers remain internal to generated apps; there is no public AI wrapper.
 - Wallets will use the upstream WDK SDK directly. Current wallet scaffolds are stubs.
-- Memory and Search are excluded from this release. Their source is retained.
+- Memory is preserved on `codex/deferred-package-development`; Search remains deferred.
+  See the [package inventory](docs/package-inventory.md) for what stays on main.
 
 CLI `0.4.0-beta.3` and P2P `0.6.0-alpha.2` are published on npm under
 `beta` and `alpha`. Personal Node remains deferred, unpublished alpha source.
@@ -185,8 +186,7 @@ unstoppable-stack/
 │   ├── node/             # Optional Personal Node app; internal QVAC adapter
 │   ├── runtime-ai/       # Private lifecycle helpers copied into generated apps
 │   ├── website/          # unstoppable-stack.dev — Next.js site
-│   ├── node-desktop/     # Personal Node desktop shell (alpha)
-│   └── memory*/          # Deferred Memory experiments
+│   └── node-desktop/     # Personal Node desktop shell (alpha)
 ├── examples/             # First-party examples and smoke fixtures
 ├── docs/                 # Public engineering documentation
 └── scripts/              # Asset synchronization and release checks
