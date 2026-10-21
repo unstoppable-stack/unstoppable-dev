@@ -9,6 +9,19 @@ function headingId(text: string) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+// The docs support only explicit inline code and emphasis; prose stays plain text.
+function DocText({ text }: { text: string }) {
+  return text.split(/(`[^`]+`|\*\*[^*]+\*\*)/g).map((part, index) => {
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return <code key={index} className="doc-inline-code">{part.slice(1, -1)}</code>;
+    }
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={index} className="font-semibold text-text-primary"><DocText text={part.slice(2, -2)} /></strong>;
+    }
+    return part;
+  });
+}
+
 function DocBlockView({ block }: { block: DocBlock }) {
   if (block.type === "start-paths") return <GettingStartedCards />;
 
@@ -17,7 +30,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
   }
 
   if (block.type === "lead") {
-    return <p className="text-lg leading-8 text-text-secondary">{block.text}</p>;
+    return <p className="border-l-2 border-accent/60 pl-5 text-lg leading-8 text-slate-200"><DocText text={block.text} /></p>;
   }
 
   if (block.type === "heading") {
@@ -30,16 +43,16 @@ function DocBlockView({ block }: { block: DocBlock }) {
   }
 
   if (block.type === "paragraph") {
-    return <p className="leading-7 text-text-secondary">{block.text}</p>;
+    return <p className="doc-copy leading-8"><DocText text={block.text} /></p>;
   }
 
   if (block.type === "list") {
     return (
       <ul className="space-y-3">
         {block.items.map((item) => (
-          <li key={item} className="flex gap-3 text-text-secondary">
+          <li key={item} className="doc-copy flex gap-3 leading-7">
             <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-            <span>{item}</span>
+            <span className="min-w-0"><DocText text={item} /></span>
           </li>
         ))}
       </ul>
@@ -57,7 +70,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
               </span>
               <h3 className="font-semibold">{item.title}</h3>
             </div>
-            <p className="text-sm leading-6 text-text-secondary">{item.body}</p>
+            <p className="doc-copy text-sm leading-7"><DocText text={item.body} /></p>
             {item.code ? (
               <div className="mt-4"><CodeBlock code={item.code} language={item.language || "bash"} /></div>
             ) : null}
@@ -77,7 +90,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
     return (
       <div className="rounded-2xl border border-accent/20 bg-accent/10 p-5">
         <h3 className="mb-2 font-semibold text-accent">{block.title}</h3>
-        <p className="text-sm leading-6 text-text-secondary">{block.body}</p>
+        <p className="doc-copy text-sm leading-7"><DocText text={block.body} /></p>
       </div>
     );
   }
@@ -89,7 +102,7 @@ function DocBlockView({ block }: { block: DocBlock }) {
           const card = (
             <div className="h-full rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-border-light hover:bg-surface-light">
               <h3 className="mb-2 font-semibold">{item.title}</h3>
-              <p className="text-sm leading-6 text-text-secondary">{item.body}</p>
+              <p className="doc-copy text-sm leading-7"><DocText text={item.body} /></p>
               {item.href ? (
                 <span className="mt-4 inline-flex items-center gap-2 text-sm font-medium text-accent">
                   Read more <ArrowRight className="h-4 w-4" />
@@ -115,17 +128,23 @@ export function DocsShell({ page }: { page: DocPage }) {
   const headings = page.blocks.filter((block) => block.type === "heading");
   const navigation = (
     <nav aria-label="Documentation" className="space-y-6">
-      {docsNav.map((section) => (
-        <div key={section.title}>
-          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{section.title}</h2>
+      {docsNav.map((section) => {
+        const links = (
           <div className="space-y-1">
             {section.pages.map((item) => {
               const active = item.slug === page.slug;
               return <Link key={item.slug || "overview"} href={item.slug ? `/docs/${item.slug}` : "/docs"} aria-current={active ? "page" : undefined} className={`block rounded-lg px-3 py-2 text-sm transition-colors ${active ? "bg-accent/10 text-accent" : "text-text-secondary hover:bg-surface hover:text-text-primary"}`}>{item.title}</Link>;
             })}
           </div>
-        </div>
-      ))}
+        );
+        if (section.title === "Library reference") {
+          return <details key={section.title} open={section.pages.some((item) => item.slug === page.slug)} className="rounded-lg border border-border p-3"><summary className="cursor-pointer text-xs font-semibold uppercase tracking-wider text-text-muted">Library reference</summary><div className="mt-3">{links}</div></details>;
+        }
+        return <div key={section.title}>
+          <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">{section.title}</h2>
+          {links}
+        </div>;
+      })}
     </nav>
   );
 
@@ -151,7 +170,7 @@ export function DocsShell({ page }: { page: DocPage }) {
             <p className="text-lg leading-8 text-text-secondary">
               {page.description}
             </p>
-            <p className="mt-3 text-xs text-text-muted">Verified {page.verifiedOn}</p>
+            <p className="mt-3 text-xs text-text-muted">Content reviewed {page.verifiedOn}</p>
           </div>
           {headings.length > 1 ? (
             <nav aria-label="On this page" className="mb-10 rounded-2xl border border-border bg-surface p-5">

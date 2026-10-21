@@ -37,10 +37,10 @@ Claude Code, Cursor, OpenCode, and Codex configuration can be generated from the
 | I want to… | Building blocks | Start here | Status |
 | --- | --- | --- | --- |
 | Create an app that saves data locally | CLI, desktop worker, Hyperbee | [Desktop quick start](#quick-start) | Core preview |
-| Call a method on a trusted device | P2P pairing, grants and RPC | [P2P API](packages/p2p/docs/api.md) | Alpha; typed `/rpc` needs alpha.2 source |
-| Keep a replica of notes or files | P2P `/sync`, Hyperbee, Hyperdrive | [Notes example](examples/p2p-notes/README.md) | Alpha; current example needs alpha.2 source |
+| Call a method on a trusted device | P2P pairing, grants and RPC | [P2P API](packages/p2p/docs/api.md) | Experimental; published alpha.2 |
+| Keep a replica of notes or files | P2P `/sync`, Hyperbee, Hyperdrive | [Notes example](examples/p2p-notes/README.md) | Experimental; published alpha.2 |
 | Add an on-device shopping assistant | QVAC, Bare, local storage | [Local Goods example](examples/ecommerce-assistant/README.md) | Native/model acceptance is separate |
-| Merge edits made on offline devices | P2P `/db`, Autobase, app-owned reducer | [Collaborative notes](examples/p2p-database/README.md) | Experimental alpha.2 source |
+| Merge edits made on offline devices | P2P `/db`, Autobase, app-owned reducer | [Collaborative notes](examples/p2p-database/README.md) | Experimental; published alpha.2 |
 | Run an optional peer for storage or AI | Personal Node | [Node guide](packages/node/README.md) | Deferred alpha |
 
 Explore the [library guide](https://unstoppable-stack.dev/docs/modules) for what
@@ -96,11 +96,12 @@ Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://te
 
 | Start with | Install action | Availability |
 | --- | --- | --- |
-| Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Downloadable local preview; marketplace listing pending |
-| Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Downloadable local preview; marketplace listing pending |
+| Claude Code | [Install Claude plugin](https://unstoppable-stack.dev/docs/start/claude) | Repository catalog; official directory listing pending |
+| Codex | [Install Codex plugin](https://unstoppable-stack.dev/docs/start/codex) | Repository catalog; official directory listing pending |
 | Raw CLI | [Install the CLI](https://unstoppable-stack.dev/docs/start/cli) | Published `0.4.0-beta.3` beta; install that exact version |
 
-For the raw CLI path, install the published beta, then:
+For the raw CLI path, use Node.js **22.17+** and npm. Start in a directory
+where you can create a new workspace, then:
 
 ```bash
 npm install -g @unstoppable-stack/cli@0.4.0-beta.3
@@ -112,6 +113,16 @@ cd shop-starter
 npm install
 npm run dev
 ```
+
+In the window's **KV Storage** section, enter `note:welcome` as Key and `Hello`
+as Value. Click **Save**, then **Fetch**. Close the app normally, run `npm run dev`
+again from `shop-starter`, enter the same key and Fetch: `Hello` should remain.
+The empty inputs after a restart do not mean the database is empty.
+
+Continue with [your first app tutorial](https://unstoppable-stack.dev/docs/tutorial)
+to change the saved data, or [run two local peers](https://unstoppable-stack.dev/docs/connect)
+to try scoped calls and replication. The base scaffold does not automatically
+replicate its private store to another app.
 
 Use `--assistant claude` or `--assistant codex` instead of `none` for generated
 project guidance. Install P2P directly with
@@ -223,7 +234,7 @@ These patterns have implementation evidence in the repository. Release support s
 - **Local Storage** — Hyperbee key-value persistence
 - **Local AI** — QVAC streaming chat, kv-cache, Zod v4 tool calling
 - **Bare Runtime** — API compatibility (no TextEncoder/Buffer/crypto), bare-* as npm deps
-- **Worker Bridge** — `Pear.worker.pipe()` for renderer↔worker communication
+- **Worker Bridge** — Electron preload IPC to a `pear-runtime` Bare worker; worker code uses `Bare.IPC`
 
 See [validation and release checks](./docs/validation.md) for test scope and remaining acceptance gates.
 

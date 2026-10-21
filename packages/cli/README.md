@@ -52,7 +52,7 @@ the rest of your environment.
 ### 1. Configure an assistant workspace
 
 ```bash
-us init my-workspace --assistant codex
+us init my-workspace --assistant codex --no-install
 cd my-workspace
 ```
 
@@ -60,18 +60,23 @@ This creates a workspace with generated instructions for your chosen assistant.
 It does **not** create a running app. Open the workspace in your assistant and
 ask it to scaffold the app below, or run the command yourself.
 
-### 2. Scaffold the proposed preview app
+### 2. Scaffold and run the base app
 
 ```bash
-us scaffold app -p pear-desktop -n coffee-assistant -f local-ai
-cd coffee-assistant
+us scaffold app -p pear-desktop -n notes-app
+cd notes-app
 npm install
 npm run dev
 ```
 
-The command is source-accurate but is not a public support claim until the
-clean-machine package and real-model gates pass. Expo Mobile, wallets, and
-Personal Node integration are outside the default preview journey.
+In **KV Storage**, save Key `note:welcome` with Value `Hello`, then Fetch the
+same key. Close the app normally and restart with `npm run dev` from `notes-app`.
+Enter `note:welcome` and Fetch again; the value should remain.
+
+Follow the [first-app tutorial](https://unstoppable-stack.dev/docs/tutorial) to
+change the saved JSON. For optional AI, generate a separate app with
+`-f local-ai`; model loading, native cancellation and cached offline startup need
+separate acceptance. Mobile, wallets and Personal Node remain outside the core preview.
 
 ### 3. Check your environment before you start
 
@@ -248,26 +253,15 @@ Options:
   --json                     Output as JSON (for scripting / CI)
 ```
 
-**Example:**
+**Example (published desktop preview):**
 
 ```bash
-$ us doctor -p expo-mobile
-
-  Environment Check
-
-  + Node.js (22.17)
-  + npm (10.8)
-  + git (2.47)
-  + Xcode command-line tools (72)
-  + iOS Simulator
-  + CocoaPods (1.15)
-  + Maestro (mobile E2E) (2.3)
-  - Unstoppable Node optional
-      Optional. Install with `npm i -g unstoppable-node` to enable `node-sync`.
-  + TypeScript (5.9)
-
-  All required tools found
+us doctor -p pear-desktop
+us doctor -p pear-desktop --json
 ```
+
+Check the reported required tools before launching. Optional tools do not block
+the base scaffold. `expo-mobile` diagnostics require the full source build.
 
 `--json` emits a structured report you can pipe into `jq` or consume from a
 CI step. It includes the CLI version, operating-system platform, architecture,
@@ -424,7 +418,8 @@ catalog in the build you are running.
 | `node-host` | Node Host  | Full internal build only                       | Personal Node deferred from preview |
 | `multi-writer` | Multi-Writer Sync | Full internal build only              | Advanced workflow; excluded from preview |
 
-Combine features with commas: `-f local-ai,wallet`.
+The published minimal build exposes `-f local-ai`. In full source builds,
+combine compatible experimental features with commas; wallet remains a stub.
 
 ---
 
@@ -440,18 +435,17 @@ elimination — not just runtime-hidden).
 
 | Profile   | Commands included                            | `us --version` suffix | Use                                                           |
 |-----------|----------------------------------------------|-----------------------|---------------------------------------------------------------|
-| `minimal` | `init`, `scaffold`, `doctor`                 | `(minimal)`           | **Default. This is what ships on npm.**                       |
+| `minimal` | `init`, `plugin`, `scaffold`, `doctor`, `compatibility`                 | `(minimal)`           | **Default. This is what ships on npm.**                       |
 | `full`    | minimal + `remote`, `research`, `search`, `node`, `memory` | `(full)` | Local dev, integration tests, and deferred capability work. |
 
-Current published tarball (`minimal`) is ~120 KB of JS across four
-chunks. The `full` build adds ~155 KB for the three opt-in commands.
+Inspect `npm pack --dry-run` for the current artifact contents and size.
 
 ### Building a profile
 
 ```bash
 pnpm build             # = build:minimal  (ships on npm)
 pnpm build:minimal     # explicit
-pnpm build:full        # all six commands
+pnpm build:full        # include experimental commands
 
 # Run tests against a full dist (needed for us remote e2e coverage):
 pnpm test:full
@@ -522,7 +516,7 @@ development dependencies and are not installed for public CLI consumers.
 
 **`us: command not found` after `npm install -g`**
 Your global npm `bin` isn't on `$PATH`. Run `npm config get prefix` — add
-`<prefix>/bin` to `$PATH`, or use `npx @unstoppable-stack/cli`.
+`<prefix>/bin` to `$PATH`, or use `npx --yes @unstoppable-stack/cli@0.4.0-beta.3 --help`.
 
 **Pear Desktop app dependencies are missing**
 Current desktop scaffolds install `pear-runtime` and Electron inside the
@@ -554,10 +548,8 @@ This package lives inside the
 
 ```bash
 git clone https://github.com/unstoppable-stack/unstoppable-dev.git
-cd unstoppable-dev
-pnpm install
-
-cd packages/cli
+cd unstoppable-dev/packages/cli
+pnpm install --frozen-lockfile
 
 # Build
 pnpm build          # tsup → dist/

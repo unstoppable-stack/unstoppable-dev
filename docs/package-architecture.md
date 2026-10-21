@@ -6,7 +6,7 @@ come from upstream SDKs, not separately published Unstoppable wrapper packages.
 
 | Component | Responsibility | Status |
 | --- | --- | --- |
-| `@unstoppable-stack/cli` | Workspace setup, app scaffolding, diagnostics and compatibility checks | `0.4.0-beta.2` published under `beta`; `latest` remains `0.3.0` |
+| `@unstoppable-stack/cli` | Workspace setup, app scaffolding, diagnostics and compatibility checks | `0.4.0-beta.3` published under `beta`; `latest` remains `0.3.0` |
 | `@unstoppable-stack/p2p` | Identity, discovery, pairing, permissions, RPC, streaming and optional replication | `0.6.0-alpha.2` published under `alpha` |
 | Claude and Codex `unstoppable-stack` plugins | Shared workflows and integration guidance | Public repository catalogs and downloadable previews; no official host directory listing |
 | `unstoppable-node` | Personal Node daemon, local administration, replication and optional delegated QVAC inference | `0.4.0` published; reorganized `0.6.0-alpha.2` source unpublished and deferred |
@@ -79,8 +79,8 @@ Generated profiles increment their revisions for the dependency change. Existing
 apps retain their recorded profiles and vendored runtime. Use `us compatibility
 check -o <app>` to inspect differences; update imports, dependency and lockfile
 explicitly. Preserve app edits and do not regenerate an existing app with
-`--force`. The new npm dependency cannot be installed from the registry until
-the P2P alpha is published.
+`--force`. For external apps, install the published `@unstoppable-stack/p2p@0.6.0-alpha.2`
+explicitly; repository examples use local source links.
 
 ## Development and release assembly
 

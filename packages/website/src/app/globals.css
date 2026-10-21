@@ -68,6 +68,24 @@ body {
 .syntax-code .token.tag,
 .syntax-code .token.attr-name { color: #89ddff; }
 
+/* Documentation prose: brighter reading text, with distinct API/file references. */
+.doc-copy {
+  color: #bac4d2;
+}
+
+.doc-inline-code {
+  border: 1px solid rgb(130 170 255 / 18%);
+  border-radius: 0.3rem;
+  background: rgb(130 170 255 / 8%);
+  padding: 0.1em 0.3em;
+  color: #a9c9ff;
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
 :focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
