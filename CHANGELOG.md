@@ -7,7 +7,14 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
-## Unreleased — CLI 0.4.0-beta.4 / P2P 0.6.0-alpha.3 / plugin preview 0.1.9
+## Plugin preview 0.1.10 — installer refresh
+
+- Pin plugin and website setup to published CLI 0.4.0-beta.4 and its immutable
+  source fallback after fresh registry acceptance.
+- Record [CLI beta.4 / P2P alpha.3 publication](release/registry-acceptance-2026-10-21-beta4-alpha3.json).
+  This changes guidance only; existing app files and native acceptance are unchanged.
+
+## CLI 0.4.0-beta.4 / P2P 0.6.0-alpha.3 / plugin preview 0.1.9 — 21 October 2026
 
 - Route new app networking, RPC, shared JSON and resource mirroring through
   `@unstoppable-stack/p2p` managed APIs instead of raw Holepunch setup.
@@ -19,9 +26,10 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   as P2P 0.6.0-alpha.3; advance scaffold profiles without regenerating edited apps.
 - Allow P2P and the optional Personal Node app to version independently in the
   Node release gate; keep Node/desktop versions and lockfiles coupled.
-- Keep the installer pinned to published CLI beta.3 until beta.4 publication
-  and registry acceptance are recorded; allow the website guide checker to
-  validate that published target independently of the next source version.
+- Verify public-registry installs against the exact merged CI tarballs; record
+  macOS and Linux acceptance. Keep npm latest tags unchanged.
+- Allow the website guide checker to validate the published installer target
+  independently of the next source package version.
 
 ## Unreleased — Personal Node experience
 

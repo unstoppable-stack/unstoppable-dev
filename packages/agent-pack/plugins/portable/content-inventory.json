@@ -1,6 +1,6 @@
 {
-  "version": "0.1.9",
-  "sourceDigest": "b97951c5e23e560253941680ed853f0707f783f93dd1e632e79a3eb825425bb5",
+  "version": "0.1.10",
+  "sourceDigest": "d765536e251f0e9abf4bb509d68492cfde232f1d850e4c6515b5682b48f8b3f6",
   "sources": {
     "core/architecture.mdc": "8561110ed2ca65315b0f7226399a0e33f1a3f853a619d5d3110ac8f55ac9580a",
     "core/cheatsheet.mdc": "9f974680c38e683dd8cc8c8f9f502b39ea109544f45580d1c1b55db01dcae9ce",
@@ -75,7 +75,7 @@
     "skills/add-p2p-sync/resources/full-example.md": "1b1a46c3d3824bf29872fdac33a0b9e7db0146b8cc4e31bc938f07b8b9b80e00",
     "skills/add-p2p-sync/resources/troubleshooting.md": "079592a8f1c74ad59d85385d07c8b0931ffe9a4193a354410e2711d089496821",
     "skills/add-p2p-sync/SKILL.md": "dbf71a0cd472b8665e01f2d250586ac7b3ca8622a2d7b199e20710783652cb87",
-    "skills/build-with-unstoppable/resources/install-cli.md": "f40d664303bba9c5e94da16264b20790dbb9bfa21de2a342ce208668addae4be",
+    "skills/build-with-unstoppable/resources/install-cli.md": "6450af5c899688d13f4139ddb299b1d5c22d9e9cc8103a5d8bdb28acac712363",
     "skills/build-with-unstoppable/SKILL.md": "0eaf25a1ee4aa1758493295d1ded67bb200b94cbf62b793ff40aeae39ea8a73f",
     "skills/diagnose-stack-runtime/SKILL.md": "d6ff7093ee3173cdac49919127727118ab52e08d6b807b3fbb4dd7cd628ea38b",
     "skills/scaffold-project/SKILL.md": "c4d6741362c928a6a16cd3aa4581c4de572648ff2312dad7b12e237916c57a6a",
@@ -93,8 +93,8 @@
   "files": {
     "assets/icon.svg": "58408bee1cfd581d6c8496658c48a88766bb684bf213bc656f22154f538a4cb2",
     "LICENSE": "b000d2ccef3368d29a4e7bfd0871ceb3725a03c1d98f0dd8ad08b06ec8df787f",
-    "plugin.json": "78c56e1f7300da5310c01a803be5b933c39523ca0083d64287f9022d90fd9878",
-    "README.md": "2067ac7d46873d8bfbae47b1c33da85ae035683a288ee353b9cdd1ef37dc0569",
+    "plugin.json": "4eebb0924abc23e90dd43b60c48c5c769904c884b7ec41500e2d873cc6f54da5",
+    "README.md": "a9ac3ecd135ac4849a43e7efcb02b721b64f341f57591f1892cbec401e4e3984",
     "skills/add-ai-chat/resources/chat-example.md": "f0c9d6402de56b20798156fc6d17f2fa5c006fdf36dbc54571820ca6b035d3b6",
     "skills/add-ai-chat/resources/model-guide.md": "2c8a283348092cb338de90de624ebf04b615d52233a4aa3f4c8da768ad1b0f92",
     "skills/add-ai-chat/resources/schema-guide.md": "cafc502f266cdfe54ea1762a1e218448d7e07ecc5435f50af1c0c3852169b008",
@@ -120,7 +120,7 @@
     "skills/add-p2p-sync/resources/full-example.md": "1b1a46c3d3824bf29872fdac33a0b9e7db0146b8cc4e31bc938f07b8b9b80e00",
     "skills/add-p2p-sync/resources/troubleshooting.md": "079592a8f1c74ad59d85385d07c8b0931ffe9a4193a354410e2711d089496821",
     "skills/add-p2p-sync/SKILL.md": "62a8e355a24828746f3c65d5c5de7c5cf5637ce234adb193bf84207d90a6bd8b",
-    "skills/build-with-unstoppable/resources/install-cli.md": "f40d664303bba9c5e94da16264b20790dbb9bfa21de2a342ce208668addae4be",
+    "skills/build-with-unstoppable/resources/install-cli.md": "6450af5c899688d13f4139ddb299b1d5c22d9e9cc8103a5d8bdb28acac712363",
     "skills/build-with-unstoppable/SKILL.md": "0eaf25a1ee4aa1758493295d1ded67bb200b94cbf62b793ff40aeae39ea8a73f",
     "skills/diagnose-stack-runtime/SKILL.md": "de5a96eb23bfb5222a3e078472307224573a9730d2e0def2b6c61d8d5fefeaee",
     "skills/scaffold-project/SKILL.md": "a717cc3674388deb19e521a05518a682a5e7d2557620958629ceb3d6218e3bc1",
