@@ -1,6 +1,6 @@
 {
   "version": "0.1.9",
-  "sourceDigest": "d9ebdf6c6bff96875abb3367f127ec9f9c3dbdd23247b0d3c6ddfbcbb6f21125",
+  "sourceDigest": "da9537ae804c53411873b1aa9950eda5b11cedc6933148b6c13b55fec2ab05bd",
   "sources": {
     "core/architecture.mdc": "8561110ed2ca65315b0f7226399a0e33f1a3f853a619d5d3110ac8f55ac9580a",
     "core/cheatsheet.mdc": "9f974680c38e683dd8cc8c8f9f502b39ea109544f45580d1c1b55db01dcae9ce",
@@ -9,7 +9,7 @@
     "core/principles.mdc": "4bb0dfa775d0d1516cb7cad82886cdefcdd167368500fa84c3e7d969c545c930",
     "core/production-readiness.mdc": "02a4e166cf2f3841cf254647ce37a511499b80f2c884faba6d87e7cb3e689d56",
     "core/scenarios.mdc": "4219668d57141a360bb16e31e01a37317bc80dc513a4591c813b6ced49b5bf1f",
-    "core/verified-versions.mdc": "eedb168079165b2c729c75f8ecf3dadb20c458b7817a33b1bc4a4699c0890d67",
+    "core/verified-versions.mdc": "6c848aaacd2678ea26415e513af0fc67d6b84fbc27c3cd6f33d881493ffe4d1c",
     "modules/autobase.mdc": "44916bc3cadd8e269af08a2617aa13a296a05f6c398f5fb5a2a6fdfb4b8b2128",
     "modules/autobee.mdc": "7d24ee052264004e5ac76e962eabd44c7f1e6798102fa92947a07ced480b6947",
     "modules/bare.mdc": "1340d14fe055d063d0a8befb7b4dbb7233cae346110a6314734f33356b0c7602",
@@ -141,7 +141,7 @@
     "skills/unstoppable-foundations/resources/principles.mdc": "692183af740d0167dd34ce6efcb0639761419f66afdc1287271494133ddc7484",
     "skills/unstoppable-foundations/resources/production-readiness.mdc": "52fefa4ca6a50426b4404c1bf12207a8277dcb8674a7bc55093120790b540548",
     "skills/unstoppable-foundations/resources/scenarios.mdc": "a9ff72798df03daafd4663a7e7e461f1f9f557c85ed8ef92df8cdde233381f0a",
-    "skills/unstoppable-foundations/resources/verified-versions.mdc": "4427786a74996e5ab8f17cf0ed8f4fe64169acc990d2a855207cde57ce1f7480",
+    "skills/unstoppable-foundations/resources/verified-versions.mdc": "0719afb5ea9cb3ee54bb9e84f0ee625eee898bcba0358968cab2ca1c5e25e498",
     "skills/unstoppable-foundations/SKILL.md": "4de84ec4b92c898ea5903b96d7fa90512f4d6ed1139c48e05e1c4bed02430762",
     "skills/unstoppable-modules/resources/autobase.mdc": "2c58da236b1f1dd398f1369ac7d89b2eded088599ad3e15b1e86764ae1011599",
     "skills/unstoppable-modules/resources/autobee.mdc": "4989d7ed092ebafc08cde1283c22f3f416114ab8a2cbc407b392c023daf16bed",

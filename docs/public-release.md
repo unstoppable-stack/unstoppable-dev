@@ -13,18 +13,20 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
-## Next candidate: CLI beta.4 and plugin preview 0.1.9
+## Next candidate: CLI beta.4, P2P alpha.3 and plugin preview 0.1.9
 
-The source candidate advances CLI to `0.4.0-beta.4` and the assistant plugin to
-`0.1.9`. Both distribute the corrected app-building guidance: `/data` for shared
+The source candidate advances CLI to `0.4.0-beta.4`, P2P to `0.6.0-alpha.3`,
+and the assistant plugin to `0.1.9`. The CLI and plugin distribute the corrected app-building guidance: `/data` for shared
 JSON, `/rpc` with `/service` for remote methods, and `/sync` for existing resource
 mirroring. Direct Holepunch examples remain advanced existing-store/custom
 protocol references. Existing generated apps retain their storage and profiles.
 
-P2P remains `0.6.0-alpha.2`; it has no source change in this candidate. Reuse the
-published package and verify its existing integrity/tag through registry
-preflight. Do not republish it. The next npm publication is CLI-only under
-`beta`; plugin archives and the website download have their own version.
+P2P alpha.3 versions the bounded readable Hyperbee sync inspection already
+merged into main for Personal Node. Those source bytes differ from published
+alpha.2, so canonical registry preflight correctly rejects an alpha.2 repack.
+Publish and registry-verify alpha.3 under `alpha` before CLI beta.4 under `beta`;
+scaffold profiles now select alpha.3. Plugin archives and the website download
+have their own version. No publication is performed by this source update.
 
 Before publication, merge the reviewed PR and run canonical preparation on a
 clean checkout of that commit. Keep the tested tarballs and consumer evidence.

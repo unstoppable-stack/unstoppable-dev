@@ -7,7 +7,7 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
-## Unreleased — CLI 0.4.0-beta.4 / plugin preview 0.1.9
+## Unreleased — CLI 0.4.0-beta.4 / P2P 0.6.0-alpha.3 / plugin preview 0.1.9
 
 - Route new app networking, RPC, shared JSON and resource mirroring through
   `@unstoppable-stack/p2p` managed APIs instead of raw Holepunch setup.
@@ -15,9 +15,11 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   and socket-wrapper references as advanced or legacy existing-app material.
 - Synchronize the CLI pack and both Claude/Codex plugin distributions and
   advance the website plugin download metadata to 0.1.9.
-- Keep P2P at 0.6.0-alpha.2. No library API change or P2P republication is needed.
-  The installer remains pinned to published CLI beta.3 until beta.4 publication
-  and registry acceptance are recorded.
+- Version the existing bounded readable Hyperbee sync inspection changes on main
+  as P2P 0.6.0-alpha.3; advance scaffold profiles without regenerating edited apps.
+- Keep the installer pinned to published CLI beta.3 until beta.4 publication
+  and registry acceptance are recorded; allow the website guide checker to
+  validate that published target independently of the next source version.
 
 ## Unreleased — Personal Node experience
 

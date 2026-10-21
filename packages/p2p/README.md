@@ -9,7 +9,7 @@ See the [data quickstart](docs/data.md) and [runnable examples](../../examples/p
 These helpers require 0.6.0-alpha.2 or later; collaboration is experimental.
 
 
-> **Versioned guide:** This README describes `0.6.0-alpha.2`, including
+> **Source candidate:** This README describes `0.6.0-alpha.3`, including
 > `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes. All P2P APIs
 > remain experimental. See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
 > for registry availability and acceptance limits.
@@ -46,6 +46,15 @@ The optional [typed RPC layer](docs/rpc.md) adds schema-backed procedures and
 inferred clients over the same transport. The [database prototype](docs/db.md)
 integrates a separately installed, pinned Autobase engine; it is experimental
 and does not remove the collaborative-database backup acceptance gates.
+
+## Alpha.3 source candidate
+
+Alpha.3 versions the bounded readable Hyperbee inspection used by Personal Node.
+It adds no new managed data or service API. It is not yet published; install
+published alpha.2 below for existing APIs, or consume an alpha.3 local tarball
+when validating this source candidate. Scaffold profiles target alpha.3 and
+require its publication before the next CLI release. All P2P APIs remain
+experimental. Registry preflight must never overwrite published alpha.2 bytes.
 
 ## Install
 
