@@ -1,5 +1,11 @@
 # File Sharing — Troubleshooting
 
+> **Legacy custom transport/storage reference only.** New apps use
+> `@unstoppable-stack/p2p` through `/service`, `/rpc`, `/data` or `/sync`.
+> Read the parent skill first. These snippets do not implement the library
+> protocol or its pairing/grants; do not layer them around managed helpers.
+
+
 ## Mirror doesn't update
 - Ensure the writer keeps seeding the drive (don't close the process)
 - Use `drive.watch()` for live updates on the reader side

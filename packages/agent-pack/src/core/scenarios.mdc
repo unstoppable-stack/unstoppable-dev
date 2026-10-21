@@ -6,9 +6,9 @@ alwaysApply: false
 # App composition
 
 - Local AI assistant: keep UI/history/prompts in the app, request IDs in the bridge, and lifecycle in the AI session. Load once, stream, Stop, reuse, and close through the contract.
-- Collaborative notes: use the multi-writer app store and edit its schema/deterministic merge policy. Device promotion and replicated/private namespaces must stay explicit.
-- File sharing: add Hyperdrive at the worker/data boundary; preserve core replication and reader/writer ownership. Use the upstream filesystem API for details.
-- App-to-app capabilities: use `@unstoppable-stack/p2p` pairing/grants and a domain capability pack. Expensive methods should require explicit grants; a topic name is not a trust boundary.
+- Collaborative notes: new JSON datasets use `/data` openCollaborativeDatabase with explicit founder-approved writers. Keep an existing schema store and its deterministic merge policy intact. Device admission and replicated/private namespaces stay explicit.
+- File sharing: keep app-owned Hyperdrive operations at the worker/data boundary and use `/sync` for resource mirroring on the existing node/store. Preserve reader/writer ownership; the sync capability is not a file download API.
+- App-to-app capabilities: use `/rpc` typed procedures and `/service` sessions, or root `createNode` for multiple domain packs and bidirectional calls. Expensive methods should require explicit grants; a topic name is not a trust boundary.
 - Delegated AI: an experimental capability transport can expose a local session after validation. Current QVAC native RPC is a separate distributed-GPU feature; legacy provider/delegate recipes do not apply.
 - Mobile inference: preserve the React Native SDK host and separate networking worklet. Validate the entire native profile on physical devices before claiming support.
 - Wallets: the scaffold remains a stub. Implement against version-matched WDK docs and secure local storage only when this feature is requested and validated.

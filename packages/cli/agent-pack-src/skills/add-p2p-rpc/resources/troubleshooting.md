@@ -1,5 +1,11 @@
 # P2P RPC — Troubleshooting
 
+> **Legacy custom transport/storage reference only.** New apps use
+> `@unstoppable-stack/p2p` through `/service`, `/rpc`, `/data` or `/sync`.
+> Read the parent skill first. These snippets do not implement the library
+> protocol or its pairing/grants; do not layer them around managed helpers.
+
+
 ## `TypeError: rpc.register is not a function`
 - `bare-rpc` does NOT have a `register()` method — that API does not exist
 - Use the `createRPCServer` / `createRPCClient` wrapper pattern instead

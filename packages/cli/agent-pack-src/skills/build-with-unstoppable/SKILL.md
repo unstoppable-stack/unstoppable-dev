@@ -20,6 +20,7 @@ If project-local skills/guidance already exist, identify overlap with this insta
 - New target: [scaffold-project](../scaffold-project/SKILL.md). Scaffold into a new directory with the installed CLI, then read the generated README, scripts and app manifest.
 - Architecture: [foundations](../unstoppable-foundations/SKILL.md); runtime/API boundaries: [modules](../unstoppable-modules/SKILL.md); composition examples: [recipes](../unstoppable-recipes/SKILL.md). Load only the matching reference.
 - Desktop or Node work: [setup-pear-desktop](../setup-pear-desktop/SKILL.md) or [setup-node-cli](../setup-node-cli/SKILL.md). Extend existing managers; desktop native work stays in the Bare worker behind IPC.
+- P2P API selection: start with the bundled `modules/p2p.mdc` reference. New shared JSON uses `/data`; remote business calls use `/rpc` with `/service`; existing cores/drives use `/sync`. Do not rebuild these with raw Holepunch packages. Preserve existing app storage and profiles.
 - Peer features: [networking](../add-p2p-networking/SKILL.md), [sync](../add-p2p-sync/SKILL.md), [RPC](../add-p2p-rpc/SKILL.md), or [multi-writer sync](../add-multi-writer-sync/SKILL.md).
 - Storage: [KV](../add-kv-storage/SKILL.md), [database](../add-database/SKILL.md), or [files](../add-file-storage/SKILL.md).
 - Local chat: load `add-ai-chat` when `local-ai` is selected. Extend the installed AI session contract; the app owns prompts, UI, history and business logic.

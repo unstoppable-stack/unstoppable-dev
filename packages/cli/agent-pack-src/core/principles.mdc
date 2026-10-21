@@ -9,6 +9,7 @@ Discover the target app through `.unstoppable/project.json`, its package.json an
 
 - App code owns screens, domain data, prompts, and business rules.
 - The local AI runtime owns model/session lifecycle and cancellation; adapters own QVAC imports and schema differences.
+- The P2P library owns discovery, identity, pairing, permissions, capability transport and managed shared-data lifecycle. Default to `/data`, `/service` and `/rpc`; use `/sync` for existing resource mirroring. Direct primitives are advanced existing-store/custom-protocol work.
 - The CLI owns project assembly and compatibility profiles. Installed types and version-matched upstream documentation own detailed SDK APIs.
 - Desktop native networking, storage and inference live in the Bare worker; browser UI talks through preload/IPC. Expo has a distinct native configuration and remains experimental.
 - Write locally first. Peer availability must not block reading local data or starting the UI.

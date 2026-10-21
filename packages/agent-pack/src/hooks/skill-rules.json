@@ -35,13 +35,13 @@
       "keywords": ["p2p", "peer", "swarm", "discovery", "connect", "networking"],
       "files": ["src/p2p/**"],
       "skill": "add-p2p-networking",
-      "message": "This involves P2P networking. Consider /add-p2p-networking for Hyperswarm setup."
+      "message": "Use /add-p2p-networking for Unstoppable P2P sessions, pairing and API selection."
     },
     {
       "keywords": ["rpc", "remote procedure", "request response", "api between peers"],
       "files": ["src/p2p/**", "src/rpc/**"],
       "skill": "add-p2p-rpc",
-      "message": "This involves P2P RPC. Consider /add-p2p-rpc for bare-rpc patterns."
+      "message": "Use /add-p2p-rpc for typed @unstoppable-stack/p2p/rpc procedures and /service sessions."
     },
     {
       "keywords": ["pairing code", "invite", "app to app", "app-to-app", "expose capability", "capability pack", "act as a node"],
@@ -53,7 +53,7 @@
       "keywords": ["sync", "replicate", "multi-device", "offline sync", "shared state", "append-only"],
       "files": ["src/p2p/**", "src/data/**"],
       "skill": "add-p2p-sync",
-      "message": "This looks like a data sync task. Consider /add-p2p-sync for Hypercore replication."
+      "message": "Use /add-p2p-sync for managed JSON data or /sync resource mirroring."
     },
     {
       "keywords": ["multi-writer", "collaborative", "autobee", "autobase", "converge", "concurrent writes"],
@@ -65,25 +65,25 @@
       "keywords": ["encrypt", "secure", "messaging", "chat protocol", "secret stream", "protomux"],
       "files": ["src/p2p/**", "src/messaging/**"],
       "skill": "add-encrypted-channels",
-      "message": "This involves secure messaging. Consider /add-encrypted-channels for encrypted Protomux channels."
+      "message": "Use /add-encrypted-channels for encrypted P2P transport with pairing and grants."
     },
     {
       "keywords": ["offline", "local-first", "persist", "key-value", "hyperbee", "kv store"],
       "files": ["src/data/**", "src/store/**"],
       "skill": "add-kv-storage",
-      "message": "This is a storage pattern. Consider /add-kv-storage for Hyperbee offline-first storage."
+      "message": "Use /add-kv-storage for managed shared JSON while preserving private local stores."
     },
     {
       "keywords": ["database", "schema", "index", "hyperdb", "structured data", "queries"],
       "files": ["src/data/**", "src/db/**"],
       "skill": "add-database",
-      "message": "This involves structured data. Consider /add-database for HyperDB with schema and indexes."
+      "message": "Use /add-database to choose managed collaboration or preserve an existing schema store."
     },
     {
       "keywords": ["file", "share", "upload", "download", "drive", "mirror"],
       "files": ["src/files/**", "src/storage/**"],
       "skill": "add-file-storage",
-      "message": "This involves file storage. Consider /add-file-storage for Hyperdrive."
+      "message": "Use /add-file-storage for app-owned drives with P2P sync resource manifests."
     },
     {
       "keywords": ["inference", "llm", "model", "ai", "chat", "completion", "qvac", "tool calling"],

@@ -1,5 +1,11 @@
 # Offline-First App — Full Example
 
+> **Legacy custom transport/storage reference only.** New apps use
+> `@unstoppable-stack/p2p` through `/service`, `/rpc`, `/data` or `/sync`.
+> Read the parent skill first. These snippets do not implement the library
+> protocol or its pairing/grants; do not layer them around managed helpers.
+
+
 ```js
 import Hypercore from 'hypercore'
 import Hyperbee from 'hyperbee'

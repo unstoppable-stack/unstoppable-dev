@@ -5,6 +5,12 @@ alwaysApply: false
 
 # Hyperdrive
 
+> **Advanced primitive reference.** For new app features start with
+> `@unstoppable-stack/p2p` and `modules/p2p.mdc`. Direct engine use is for
+> existing storage, app-owned file operations, custom protocols or isolated
+> tests. Reuse existing owners; do not rebuild managed transport/storage.
+
+
 ## Overview
 Hyperdrive is a secure, real-time distributed filesystem built on Hyperbee + Hypercore. It stores file metadata in a Hyperbee and file contents in a Hyperblobs-backed Hypercore, making it ideal for P2P file sharing and app distribution.
 

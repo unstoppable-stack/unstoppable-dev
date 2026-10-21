@@ -1,75 +1,23 @@
 ---
-description: Recipe: P2P file sharing with Hyperdrive and Hyperswarm
+description: Recipe: app-owned Hyperdrives mirrored through P2P sync resources
 alwaysApply: false
 ---
 
-# Recipe: File Sharing
+# Recipe: file sharing
 
-## Problem
+Use app-owned Hyperdrive operations for file storage and
+`@unstoppable-stack/p2p/sync` for resource mirroring. Read `modules/p2p.mdc`,
+the `add-file-storage` skill and installed P2P `docs/sync.md`.
 
-Share a folder peer-to-peer and keep it mirrored across devices.
+Attach `syncPack({ store })` to the existing node on the source and replica
+host. Pair with explicit grants. Send the replica's `sync` capability a complete
+`manifest.replace` request with `schemaVersion: 1` and resources containing
+id, kind `hyperdrive`, actual core key, name and protection mode `mirror`.
+Inspect peer-scoped status before claiming a local checkpoint is available.
 
-## Prerequisites
-
-- Hyperdrive, Corestore, and Hyperswarm installed.
-- `localdrive` and `mirror-drive` installed for filesystem mirroring.
-
-## Solution
-
-Use Hyperdrive for the shared filesystem and mirror to/from local directories
-with `localdrive` and `mirror-drive`.
-
-## Full Example
-
-```js
-// writer.js
-import Hyperdrive from "hyperdrive";
-import Corestore from "corestore";
-import Hyperswarm from "hyperswarm";
-import Localdrive from "localdrive";
-
-const store = new Corestore("./storage");
-const drive = new Hyperdrive(store);
-await drive.ready();
-
-const swarm = new Hyperswarm();
-swarm.on("connection", (conn) => store.replicate(conn));
-swarm.join(drive.discoveryKey);
-
-const local = new Localdrive("./shared");
-await local.mirror(drive).done();
-
-console.log("drive key:", drive.key.toString("hex"));
-```
-
-```js
-// reader.js
-import Hyperdrive from "hyperdrive";
-import Corestore from "corestore";
-import Hyperswarm from "hyperswarm";
-import Localdrive from "localdrive";
-import b4a from "b4a";
-
-const key = b4a.from(process.argv[2], "hex");
-const store = new Corestore("./storage");
-const drive = new Hyperdrive(store, key);
-await drive.ready();
-
-const swarm = new Hyperswarm();
-swarm.on("connection", (conn) => store.replicate(conn));
-swarm.join(drive.discoveryKey);
-
-const local = new Localdrive("./received");
-await drive.mirror(local).done();
-```
-
-## Variations
-
-- Use `drive.watch()` to update mirrors on change.
-- Use `drive.download("/")` to prefetch files for offline use.
-
-## Troubleshooting
-
-- If a mirror does not update, ensure the writer keeps seeding the drive.
-- If reads return null, wait for `drive.ready()` and confirm the drive key is
-  correct.
+Do not create another swarm/store around the sync pack. Apps own drive reads,
+writes, large-file streams and any filesystem import/export. `/sync` is not a
+file download/range RPC or selective path ACL API. Keep private files separate;
+key sharing permits replication and revocation does not erase downloaded copies.
+Replicate before reads. Test transfer and source-offline replica restart;
+mirroring is not complete backup acceptance.

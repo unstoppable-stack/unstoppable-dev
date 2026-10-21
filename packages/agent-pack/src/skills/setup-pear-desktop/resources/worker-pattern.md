@@ -58,7 +58,9 @@ send({ type: 'workerReady' })
 ```
 
 Keep resources in module scope so shutdown can close them in reverse order:
-network clients, swarm, database, then Corestore. Finish with `Bare.exit()`.
+managed P2P sessions/datasets via their `close()` methods, then any separately
+owned database/store. Managed helpers close their own resources; do not add a
+second swarm owner. Finish with `Bare.exit()`.
 
 ## Renderer
 

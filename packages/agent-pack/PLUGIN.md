@@ -121,3 +121,12 @@ A [real CLI install check on 20 October 2026](../../release/plugin-cli-2026-10-2
 See [validation and release checks](../../docs/validation.md) for public checks and acceptance boundaries.
 
 See [publication runbook](PUBLICATION.md) for archives, review gates and the matching CLI release dependency.
+
+## Next preview: 0.1.9
+
+Source preview 0.1.9 aligns app-building workflows with the existing P2P library:
+managed shared data, typed service calls and resource mirroring. Raw transport
+and storage snippets are advanced or legacy references for existing apps.
+CLI source beta.4 includes the matching project-local pack. Neither this version
+bump nor a plugin refresh migrates an existing app. The CLI installer remains
+pinned to published beta.3 until beta.4 publication and registry acceptance.

@@ -13,6 +13,31 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
+## Next candidate: CLI beta.4, P2P alpha.3 and plugin preview 0.1.9
+
+The source candidate advances CLI to `0.4.0-beta.4`, P2P to `0.6.0-alpha.3`,
+and the assistant plugin to `0.1.9`. The CLI and plugin distribute the corrected app-building guidance: `/data` for shared
+JSON, `/rpc` with `/service` for remote methods, and `/sync` for existing resource
+mirroring. Direct Holepunch examples remain advanced existing-store/custom
+protocol references. Existing generated apps retain their storage and profiles.
+
+P2P alpha.3 versions the bounded readable Hyperbee sync inspection already
+merged into main for Personal Node. Those source bytes differ from published
+alpha.2, so canonical registry preflight correctly rejects an alpha.2 repack.
+Publish and registry-verify alpha.3 under `alpha` before CLI beta.4 under `beta`;
+scaffold profiles now select alpha.3. Plugin archives and the website download
+have their own version. No publication is performed by this source update.
+
+Before publication, merge the reviewed PR and run canonical preparation on a
+clean checkout of that commit. Keep the tested tarballs and consumer evidence.
+After CLI beta.4 is published and fresh registry acceptance passes, update
+`packages/agent-pack/release.json` with the published version, immutable source
+commit and registry-check date, then regenerate installer references. Until
+then, its beta.3 pin describes the existing published install and must not claim
+beta.4 is available. Native, public-network and live assistant-session acceptance
+remain separate from source/build checks. The version table above records the
+currently published packages, not this unreleased candidate.
+
 ## CLI beta.3 publication (20 October 2026)
 
 CLI `0.4.0-beta.3` is published under `beta`. It adds

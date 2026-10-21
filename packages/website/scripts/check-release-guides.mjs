@@ -4,9 +4,9 @@ import { fileURLToPath } from 'node:url'
 
 const root = new URL('../', import.meta.url)
 const release = JSON.parse(readFileSync(new URL('../agent-pack/release.json', root)))
-const cli = JSON.parse(readFileSync(new URL('../cli/package.json', root)))
 const download = JSON.parse(readFileSync(new URL('src/lib/plugin-download.json', root)))
-assert.equal(release.cliInstallVersion, cli.version, 'Setup must target the prepared CLI version')
+// Published setup stays pinned while the source package advances to a candidate.
+assert.match(release.cliInstallVersion, /^\d+\.\d+\.\d+(?:-[a-z]+\.\d+)?$/, 'Setup must target an explicit CLI install version')
 
 function decode(text) {
   return text.replace(/<[^>]*>/g, '').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'")

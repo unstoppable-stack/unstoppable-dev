@@ -1,72 +1,39 @@
-# Recipe: P2P Data Sync
+# Recipe: shared JSON data
 
-## Problem
-
-Synchronize a shared data log between peers so messages persist while peers are
-offline.
-
-## Prerequisites
-
-- Hypercore and Hyperswarm installed.
-- Node.js or Bare runtime set up for ESM modules.
-
-## Solution
-
-Use Hypercore for the append-only log and Hyperswarm for discovery and
-replication.
-
-## Full Example
+Use `openCollection` from `@unstoppable-stack/p2p/data` (alpha.2 or later).
+It owns local storage, discovery and cleanup; no swarm or DHT setup is needed.
+Read `modules/managed-data.mdc` for lifecycle and permission details.
 
 ```js
-// writer.js
-import Hypercore from "hypercore";
-import Hyperswarm from "hyperswarm";
-import b4a from "b4a";
-
-const core = new Hypercore("./writer-storage");
-await core.ready();
-
-const swarm = new Hyperswarm();
-swarm.on("connection", (conn) => core.replicate(conn));
-swarm.join(core.discoveryKey);
-
-console.log("share key:", b4a.toString(core.key, "hex"));
-
-process.stdin.on("data", (data) => core.append(data));
+import { openCollection } from '@unstoppable-stack/p2p/data'
+const writer = await openCollection({ storage: './writer-data' })
+try {
+  await writer.put('hello', { text: 'Hello!' })
+  await writer.network.ready({ timeoutMs: 60000 })
+  console.log({ key: writer.key, version: writer.version })
+  // Keep writer open while the reader downloads.
+} catch (error) {
+  await writer.close()
+  throw error
+}
+// On app shutdown: await writer.close().
 ```
 
+The reader opens a separate directory with the shared key:
+
 ```js
-// reader.js
-import Hypercore from "hypercore";
-import Hyperswarm from "hyperswarm";
-import b4a from "b4a";
-
-const keyHex = process.argv[2];
-const core = new Hypercore("./reader-storage", b4a.from(keyHex, "hex"));
-await core.ready();
-
-const swarm = new Hyperswarm();
-swarm.on("connection", (conn) => core.replicate(conn));
-const discovery = swarm.join(core.discoveryKey, { server: true, client: true });
-await discovery.flushed();
-
-await core.update();
-for await (const block of core.createReadStream({
-  start: core.length,
-  live: true,
-})) {
-  console.log(block.toString());
+const reader = await openCollection({ storage: './reader-data', key })
+try {
+  await reader.sync({ version, timeoutMs: 10000 })
+  console.log(await reader.get('hello'))
+} finally {
+  await reader.close()
 }
 ```
 
-## Variations
-
-- Replace Hypercore with Hyperbee to store key-value state.
-- Use a shared topic (Hyperswarm) instead of direct keys if you need many
-  writers.
-
-## Troubleshooting
-
-- If peers never connect, ensure both sides join with `{ server: true, client: true }`
-  and wait for `discovery.flushed()` (NOT `swarm.flush()`).
-- If reads hang, call `await core.update({ wait: true })` after connecting.
+`key` and `version` come from the writer's output. A key grants reads, not
+writes. Local open/use stays offline-safe; only network waits require peers.
+For approved writers use `openCollaborativeDatabase`, not a shared topic on a
+single-writer core. Preserve existing stores; `/sync` mirrors existing resources
+but does not mirror an Autobase graph. Test persistence, reconnect and bounded
+cancellation; a downloaded checkpoint is not complete backup acceptance.

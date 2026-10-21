@@ -9,6 +9,11 @@ Read the generated src/index.ts, src/swarm-manager.ts and src/storage-manager.ts
 
 Read app metadata first. New targets use the CLI, while upgrades use `us compatibility check -o <app>` and explicit migrations that preserve application files.
 
+For new shared JSON use `@unstoppable-stack/p2p/data`; for remote business
+calls use `/rpc` and `/service`, or reuse an existing root node. Read
+`modules/p2p.mdc`. Preserve existing storage/managers and avoid a second swarm
+or store around managed helpers.
+
 ## Bundled integration references
 
 For app ownership and runtime boundaries, load only the relevant [foundation](../unstoppable-foundations/SKILL.md), [module](../unstoppable-modules/SKILL.md), or [recipe](../unstoppable-recipes/SKILL.md) reference. Bundled links resolve from this skill; app paths resolve from the selected target.

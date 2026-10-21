@@ -16,6 +16,9 @@ alwaysApply: false
 | Node local AI | `src/ai-manager.ts` |
 | Maintained local AI contract | `.unstoppable/runtime-ai/index.js` |
 | Experimental Expo UI/worklet | `app/index.tsx`, `bare/index.js` |
+| New shared JSON / collaboration | `@unstoppable-stack/p2p/data`; `modules/managed-data.mdc` |
+| New remote services | `@unstoppable-stack/p2p/service` and `/rpc`; `modules/p2p.mdc` |
+| Existing resource mirroring | `@unstoppable-stack/p2p/sync` on the existing node/store |
 | Installed dependency versions | lockfile and package metadata |
 
 Do not assume legacy `src/p2p/` component classes exist. Read the generated files before importing helpers. The compatibility table is generated from the same manifest as package declarations; use the installed app's recorded profile instead of a universal latest-version table.
