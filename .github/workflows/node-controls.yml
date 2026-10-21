@@ -2,10 +2,10 @@ name: Node Trust and Resource Controls
 
 on:
   pull_request:
-    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
+    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', 'examples/personal-node-ecosystem/**', '.github/workflows/node-controls.yml']
   push:
     branches: [main]
-    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', '.github/workflows/node-controls.yml']
+    paths: ['packages/node/**', 'packages/p2p/**', 'packages/node-desktop/**', 'examples/personal-node-ecosystem/**', '.github/workflows/node-controls.yml']
   workflow_dispatch:
 
 permissions:
@@ -40,6 +40,10 @@ jobs:
       - name: Exercise trust, grants, admission, cancellation and quotas
         # Serialize suites: their local DHT bootstrappers select ephemeral ports.
         run: node --test --test-force-exit --test-concurrency=1 --test-timeout=120000 packages/p2p/test/*.test.js packages/p2p/test/sync/*.test.js packages/node/test/*.test.js > node-controls.log 2>&1
+      - name: Verify the two-app Personal Node example
+        run: |
+          npm ci --prefix examples/personal-node-ecosystem
+          npm test --prefix examples/personal-node-ecosystem
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -9,6 +9,7 @@ const navLinks = [
   { href: "/getting-started", label: "Get started" },
   { href: "/docs", label: "Docs" },
   { href: "/showcase", label: "Examples" },
+  { href: "/personal-node", label: "Personal Node" },
 ];
 
 export function Navbar() {

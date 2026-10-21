@@ -34,7 +34,7 @@ us node status -n 20       # check it, tail recent log lines
 us node stop               # SIGTERM the daemon
 ```
 
-Or run the [Pear Desktop dashboard](../node-desktop) for a UI.
+Or run the [Personal Node desktop dashboard](../node-desktop) for a UI.
 
 ## Install
 
@@ -61,7 +61,7 @@ import { PersonalNode } from 'unstoppable-node/personal-node'
 
 const node = new PersonalNode('./storage', {
   ai: { mock: true },               // or { modelSrc: '...' } for QVAC
-  approvePairing: async (req) => {  // omit to auto-approve every pair
+  approvePairing: async (req) => {  // unknown peers require approval or an invitation
     return 'approve-remember'
   }
 })
@@ -214,7 +214,7 @@ accepted by QVAC:
 
 ```bash
 cd ../node
-npm install --no-save @qvac/sdk@0.15.0
+npm install --no-save @qvac/sdk@0.21.0
 QVAC_MODEL_SRC=/path/or/url/to/model npm run test:qvac
 ```
 

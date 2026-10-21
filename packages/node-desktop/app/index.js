@@ -1,5 +1,7 @@
 import { sendToWorker, onWorkerMessage, selectSettingsPath, workerReady } from './bridge.js'
 import ui from './platform.js'
+import { createSimpleHome } from './simple-home.js'
+import { savedDataHtml } from './saved-data.js'
 import {
   capabilityPills,
   commands,
@@ -13,6 +15,8 @@ import {
   storageRows,
   summaryCounts
 } from './render.js'
+
+const WELCOME_KEY = 'unstoppable-node-welcome-seen'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -31,10 +35,18 @@ document.getElementById('app').innerHTML = `
       </div>
       <div class="services" id="services"></div>
       <div class="header-actions">
+        <label class="view-picker">View
+          <select id="dashboard-view" aria-label="Dashboard view">
+            <option value="simple">Simple</option>
+            <option value="advanced">Advanced</option>
+          </select>
+        </label>
         <button class="btn-ghost" id="help-btn" title="Show the welcome guide">?</button>
       </div>
     </header>
     <main class="content">
+      <div id="simple-home"></div>
+      <div id="advanced-dashboard" hidden>
       <nav class="tabs" aria-label="Dashboard sections">
         <button class="tab active" data-tab="overview">Home</button>
         <button class="tab" data-tab="storage">Storage</button>
@@ -203,6 +215,7 @@ document.getElementById('app').innerHTML = `
           <div id="log" class="log"></div>
         </section>
       </section>
+      </div>
     </main>
   </div>
   <div class="modal-backdrop" id="approval-modal" hidden>
@@ -244,7 +257,7 @@ document.getElementById('app').innerHTML = `
   </div>
 
   <div class="modal-backdrop" id="peek-modal" hidden>
-    <div class="modal modal-wide">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="peek-title">
       <h2 class="modal-title" id="peek-title">Peek data</h2>
       <p class="modal-text dim">A live, read-only view of the data this app is protecting on this computer.</p>
       <div class="peek-tabs" id="peek-tabs"></div>
@@ -289,6 +302,28 @@ let currentConfig = null
 const logEntries = loadLogEntries()
 let logFilter = 'all'
 let pendingImportPath = null
+let workerFailed = false
+const simpleHome = createSimpleHome({
+  element: document.getElementById('simple-home'),
+  send: sendToWorker,
+  browse: (label, targets) => openPeekModal(label, targets, true),
+  advanced: (tab) => {
+    setDashboardView('advanced')
+    document.querySelector(`[data-tab="${tab}"]`)?.click()
+  }
+})
+function setDashboardView(view) {
+  const advanced = view === 'advanced'
+  document.getElementById('dashboard-view').value = advanced ? 'advanced' : 'simple'
+  document.getElementById('simple-home').hidden = advanced
+  document.getElementById('advanced-dashboard').hidden = !advanced
+  document.body.classList.toggle('simple-view', !advanced)
+  try { localStorage.setItem('personal-node-dashboard-view', advanced ? 'advanced' : 'simple') } catch {}
+}
+let savedView = 'simple'
+try { savedView = localStorage.getItem('personal-node-dashboard-view') || 'simple' } catch {}
+setDashboardView(savedView)
+document.getElementById('dashboard-view').addEventListener('change', event => setDashboardView(event.target.value))
 
 // Queue of pair requests. Only the head request is shown in the
 // modal; subsequent requests stack and are revealed one at a time
@@ -299,6 +334,8 @@ let approvalCurrent = null
 onWorkerMessage((msg) => {
   switch (msg.type) {
     case 'ready':
+      workerFailed = false
+      simpleHome.ready()
       setText('node-status', '✅ Node is running')
       setText('config-status', 'Node is running')
       renderCapabilities({ capabilities: msg.capabilities || {}, ai: lastStatus?.ai })
@@ -308,7 +345,13 @@ onWorkerMessage((msg) => {
       pushLog(`Node ready (topic ${short(msg.topic)})`, 'ok')
       break
     case 'status':
+      if (!workerFailed) {
+        setText('node-status', '✅ Node is running')
+        setText('config-status', 'Node is running')
+      }
+      if (msg.nodePublicKey) setNodePublicKey(msg.nodePublicKey)
       lastStatus = msg
+      simpleHome.update(msg)
       renderSummary(msg)
       renderApps(msg)
       renderStorage(msg)
@@ -377,6 +420,7 @@ onWorkerMessage((msg) => {
       pushLog(`Promoted ${msg.appName || msg.appId} to trusted`, 'ok')
       break
     case 'invite-result': {
+      simpleHome.invite(msg)
       const box = document.getElementById('invite-current')
       const code = document.getElementById('invite-code')
       if (box && code) {
@@ -387,9 +431,11 @@ onWorkerMessage((msg) => {
       break
     }
     case 'invite-error':
+      simpleHome.invite(msg)
       pushLog(`Pairing code failed: ${msg.error}`, 'err')
       break
     case 'inviteRedeemed':
+      simpleHome.redeemed(msg)
       pushLog(`Pairing code used by ${short(msg.publicKey)}${msg.remaining === null ? '' : ` (${msg.remaining} use(s) left)`}`, 'ok')
       break
     case 'inviteRevoked':
@@ -459,6 +505,8 @@ onWorkerMessage((msg) => {
       pushLog(`Error (${msg.type ?? 'unknown'}): ${msg.error}`, 'err')
       break
     case 'fatal':
+      workerFailed = true
+      simpleHome.fail(msg.error)
       setText('node-status', '❌ Node failed to start')
       setText('config-status', 'Node failed to start')
       pushLog(`Fatal: ${msg.error}`, 'err')
@@ -489,6 +537,8 @@ const peekState = {
 let peekRequestSeq = 0
 
 workerReady.catch((err) => {
+  workerFailed = true
+  simpleHome.fail(err.message)
   setText('node-status', '❌ Worker failed to start')
   pushLog(`Worker error: ${err.message}`, 'err')
 })
@@ -618,8 +668,13 @@ function renderApps (status) {
   el.innerHTML = rows.map((row) => {
     const trustBadge = row.trusted
       ? '<span class="badge badge-ok">allowed</span>'
-      : '<span class="badge badge-neutral" title="This app was connected before remembered approvals were introduced.">review access</span>'
-    const promoteBtn = row.trusted
+      : row.invited
+        ? '<span class="badge badge-ok" title="Access was authorized by a pairing code and remains limited to its granted methods.">paired by code</span>'
+        : '<span class="badge badge-neutral" title="This app has no remembered dashboard approval or pairing-code authorization.">review access</span>'
+    const connectionBadge = row.online
+      ? '<span class="badge badge-ok" data-connection="online">connected</span>'
+      : '<span class="badge badge-neutral" data-connection="offline">offline</span>'
+    const promoteBtn = row.trusted || row.invited
       ? ''
       : `<button class="btn-ghost btn-ghost-neutral" data-promote="${escape(row.publicKey)}" data-appname="${escape(row.label)}">Mark allowed</button>`
     const pauseBtn = row.hasData
@@ -635,7 +690,7 @@ function renderApps (status) {
     const deviceLine = row.deviceName ? `<span title="Device">${escape(row.deviceName)}</span>` : ''
     const grantsMeta = row.grantSummary ? `<span>${escape(row.grantSummary)}</span>` : ''
     const stateBadges = {
-      connected: '<span class="badge badge-neutral">connected</span>',
+      empty: '<span class="badge badge-neutral">no data shared</span>',
       paused: '<span class="badge badge-warn">paused</span>',
       pending: '<span class="badge badge-warn">pending copy</span>',
       copying: '<span class="badge badge-neutral">copying</span>',
@@ -647,7 +702,7 @@ function renderApps (status) {
     return `
       <div class="app-row" data-peer-key="${escape(row.publicKey)}">
         <div class="app-info">
-          <div class="app-name">${escape(row.label)} ${stateBadge} ${trustBadge}</div>
+          <div class="app-name">${escape(row.label)} ${connectionBadge} ${stateBadge} ${trustBadge}</div>
           <div class="app-meta">
             ${deviceLine}
             <span>${row.cores.length} data source${row.cores.length === 1 ? '' : 's'}</span>
@@ -655,6 +710,7 @@ function renderApps (status) {
             <span>${escape(row.activity)}</span>
             <span>${formatBytes(row.bytes)}</span>
           </div>
+          <div class="app-meta">${row.peekTargets.map((target) => `<span>${escape(target.name || 'Unnamed resource')}</span>`).join('')}</div>
           <details class="technical-details">
             <summary>Technical details</summary>
             <div class="app-meta">
@@ -920,26 +976,34 @@ function updatePendingCount () {
   el.textContent = `${n} more pending after this one.`
 }
 
-function openPeekModal (appId, targets) {
+function openPeekModal (appId, targets, simple = false) {
+  peekState.simple = simple
+  peekState.returnFocus = document.activeElement
   peekState.appId = appId
   peekState.targets = Array.isArray(targets) ? targets : []
   peekState.activeIndex = 0
-  document.getElementById('peek-title').textContent = `Peek data — ${appId}`
+  document.getElementById('peek-title').textContent = `${simple ? 'Saved data' : 'Peek data'} — ${appId}`
+  document.querySelector('#peek-modal .modal-text').textContent = simple
+    ? 'Browse the copy saved on this computer. To make changes, open the original app.'
+    : 'Read-only technical records and resource details saved on this computer.'
+  document.getElementById('peek-body').classList.toggle('saved-data', simple)
   renderPeekTabs()
   loadCurrentPeek()
   document.getElementById('peek-modal').hidden = false
+  document.getElementById('peek-close').focus()
 }
 
 function closePeekModal () {
   document.getElementById('peek-modal').hidden = true
   peekState.pendingRequests.clear()
+  peekState.returnFocus?.focus()
 }
 
 function renderPeekTabs () {
   const tabs = document.getElementById('peek-tabs')
   tabs.innerHTML = peekState.targets.map((t, i) => `
     <button data-peek-tab="${i}" class="${i === peekState.activeIndex ? 'active' : ''}">
-      ${escape(t.kind === 'drive' ? '📁 ' : '📦 ')}${escape(t.name || short(t.key))}
+      ${escape(t.kind === 'drive' ? '📁 ' : '📦 ')}${escape(t.name || (peekState.simple ? 'Saved collection' : short(t.key)))}
     </button>
   `).join('')
   tabs.querySelectorAll('[data-peek-tab]').forEach((btn) => {
@@ -952,6 +1016,7 @@ function renderPeekTabs () {
 }
 
 function loadCurrentPeek () {
+  peekState.pendingRequests.clear()
   const target = peekState.targets[peekState.activeIndex]
   const body = document.getElementById('peek-body')
   if (!target) {
@@ -964,12 +1029,16 @@ function loadCurrentPeek () {
   if (target.kind === 'drive') {
     sendToWorker({ type: 'peek-drive', requestId, key: target.key, limit: 50 })
   } else {
-    sendToWorker({ type: 'peek-core', requestId, key: target.key, limit: 10 })
+    sendToWorker({ type: 'peek-core', requestId, key: target.key, limit: peekState.simple ? 50 : 10, readable: true })
   }
 }
 
 function renderPeekResult (target, result, kind) {
   const body = document.getElementById('peek-body')
+  if (peekState.simple) {
+    body.innerHTML = savedDataHtml(result, kind)
+    return
+  }
   if (!result) {
     body.innerHTML = `<p class="dim">Node isn't replicating this key yet (key=${escape(short(target.key))}).</p>`
     return
@@ -993,6 +1062,14 @@ function renderPeekResult (target, result, kind) {
       `).join('')
     return
   }
+  if (result.error) {
+    body.innerHTML = `<p>${escape(result.error)}</p>`
+    return
+  }
+  if (result.entries) {
+    body.innerHTML = `<p>${result.entries.length} saved records · Core key: ${escape(target.key)}</p>` + result.entries.map(entry => `<div class="peek-row"><strong>${escape(entry.key)}</strong><pre>${escape(JSON.stringify(entry.value, null, 2))}</pre></div>`).join('') + (result.more ? '<p>Limited preview.</p>' : '')
+    return
+  }
   if (result.length === 0) {
     body.innerHTML = `<p class="dim">Core is empty (key=${escape(short(target.key))}).</p>`
     return
@@ -1008,6 +1085,15 @@ function renderPeekResult (target, result, kind) {
 }
 
 function wirePeekModal () {
+  document.getElementById('peek-modal').addEventListener('keydown', event => {
+    if (event.key === 'Escape') closePeekModal()
+    if (event.key === 'Tab') {
+      const controls = [...document.getElementById('peek-modal').querySelectorAll('button, summary')]
+      const first = controls[0], last = controls.at(-1)
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+    }
+  })
   const refresh = document.getElementById('peek-refresh')
   const close = document.getElementById('peek-close')
   if (refresh) refresh.addEventListener('click', loadCurrentPeek)
@@ -1016,8 +1102,6 @@ function wirePeekModal () {
 
 // First-run welcome modal. Uses localStorage so subsequent launches skip the
 // modal by default. The header `?` button always re-opens it.
-const WELCOME_KEY = 'unstoppable-node-welcome-seen'
-
 function showWelcome () {
   const m = document.getElementById('welcome-modal')
   if (m) m.hidden = false
@@ -1439,6 +1523,31 @@ function parseOptionalBytes (id) {
 function injectStyles () {
   const style = document.createElement('style')
   style.textContent = `
+    #simple-home, #advanced-dashboard { display: flex; flex-direction: column; gap: 16px; }
+    #simple-home[hidden], #advanced-dashboard[hidden], #simple-pairing[hidden], #simple-limit-form[hidden] { display: none; }
+    .simple-view #node-key, .simple-view #services { display: none; }
+    .view-picker { display: flex; align-items: center; gap: 8px; color: #c9d1d9; font-size: 0.85rem; }
+    .view-picker select { background: #161b22; color: #e6edf3; border: 1px solid #484f58; padding: 7px 10px; border-radius: 8px; }
+    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #58a6ff; outline-offset: 3px; }
+    .simple-intro { border-color: #2c5548 !important; }
+    .simple-intro h2 { font-size: 1.5rem; margin: 8px 0 12px; }
+    .simple-intro p { line-height: 1.6; margin-bottom: 14px; color: #c9d1d9; }
+    .simple-eyebrow { color: #56d8aa !important; font-size: 0.8rem; }
+    .simple-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .simple-overview p { margin: 8px 0; line-height: 1.5; }
+    .simple-overview h3, .simple-app h3 { font-size: 1rem; }
+    #simple-apps-title { font-size: 1.15rem; margin: 6px 0 14px; }
+    .simple-apps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .simple-app-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .simple-app p { line-height: 1.6; margin-top: 7px; font-size: 0.9rem; }
+    .simple-copy-state { font-weight: 600; color: #e6edf3; }
+    .simple-copy-state[data-copy-state="copied"] { color: #56d8aa; }
+    .simple-copy-state[data-copy-state="attention"] { color: #f2c36b; }
+    .simple-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    .simple-permissions, .simple-note { color: #9ba7b4; line-height: 1.6; font-size: 0.8rem !important; }
+    #simple-pairing { margin-top: 16px; border-top: 1px solid #30363d; padding-top: 16px; }
+    #simple-code { width: 100%; }
+    @media (max-width: 850px) { .simple-overview, .simple-apps { grid-template-columns: 1fr; } }
     .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
     .hdr {
       display: flex; align-items: center; justify-content: space-between;
@@ -1646,6 +1755,21 @@ function injectStyles () {
     .peek-body { max-height: 360px; overflow: auto; background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: ui-monospace, monospace; font-size: 12px; }
     .peek-row { padding: 4px 0; border-bottom: 1px dashed #21262d; }
     .peek-row:last-child { border-bottom: 0; }
+    .peek-body.saved-data { font-family: inherit; font-size: 14px; }
+    .saved-item { padding: 12px; margin: 8px 0; border: 1px solid #30363d; border-radius: 8px; }
+    .saved-field > strong { text-transform: capitalize; color: #8b949e; }
+    .saved-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 12px; }
+    .saved-cards { display: grid; gap: 14px; }
+    .saved-cards > .saved-item { margin: 0; padding: 20px; background: #161b22; }
+    .saved-item h3 { margin: 4px 0 14px; font-size: 20px; overflow-wrap: anywhere; }
+    .saved-kind { color: #79c0ff; font-size: 12px; margin: 0 0 8px; }
+    .saved-note { border-left: 3px solid #58a6ff; }
+    .saved-report { border-left: 3px solid #3fb950; }
+    .saved-excerpt { padding: 14px 0 0; border-top: 1px solid #30363d; margin-top: 14px; }
+    .saved-excerpt h4 { font-size: 16px; margin: 0 0 8px; overflow-wrap: anywhere; }
+    .saved-text { line-height: 1.65; }
+    .saved-intro { color: #8b949e; margin: 0 0 18px; }
+    .peek-row pre { white-space: pre-wrap; overflow-wrap: anywhere; }
     .header-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
     .welcome-list { padding-left: 18px; margin: 6px 0 14px; color: #c9d1d9; line-height: 1.5; }
     .welcome-list li { margin: 6px 0; }

@@ -2,6 +2,16 @@
 
 A first-party desktop developer-preview example with a searchable product catalog, persistent cart, local demo checkout, order lookup, a QVAC shopping assistant, and scoped peer order retrieval. Electron renders the UI; a Bare worker owns Hyperbee storage, the P2P runtime, and inference. The app derives from the former Coffee Assistant example and uses the maintained desktop AI runtime.
 
+## Choosing a Personal Node integration
+
+Local Goods currently demonstrates direct peer receipt queries, not Personal
+Node replication. If your app needs copied data available while its writer is
+closed, start with the [Notebook + Briefing example](../personal-node-ecosystem/README.md).
+It demonstrates explicit pairing, resource manifests, verified copies, and the
+actual desktop dashboard. Integrating that pattern requires choosing shareable
+resources and permissions; it does not happen automatically. Keep private cart
+and order data local unless the user explicitly chooses to share it.
+
 ## Run
 
 macOS Apple Silicon with Node.js 22.17+ and npm is the maintainer validation platform. Other platforms remain unverified. From this directory:

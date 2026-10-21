@@ -1,5 +1,6 @@
 import b4a from 'b4a'
 import Hyperdrive from 'hyperdrive'
+import Hyperbee from 'hyperbee'
 
 // How long close() waits for an in-flight mirror pass before giving up on it.
 const CLOSE_DRAIN_MS = 2_000
@@ -288,9 +289,36 @@ export class ReplicationEngine {
   // not the same as the last `limit` entries (Hyperbee buckets multiple
   // keys per block) but it's enough for the dashboard's "is data flowing?"
   // sanity check.
-  async peekCore (keyHex, { limit = 5 } = {}) {
+  async peekCore (keyHex, { limit = 5, readable = false } = {}) {
     const core = this.getCore(keyHex)
     if (!core) return null
+    limit = Math.max(1, Math.min(50, Number.isInteger(limit) ? limit : 5))
+    if (readable && this.replicating.get(keyHex)?.type === 'hyperbee') {
+      const bee = new Hyperbee(core.session(), { keyEncoding: 'utf-8', valueEncoding: 'binary' })
+      let snapshot
+      try {
+        await bee.ready()
+        snapshot = bee.checkout(core.length)
+        const entries = []
+        let bytes = 0
+        for await (const entry of snapshot.createReadStream({ limit: limit + 1, wait: false })) {
+          if (entries.length === limit || bytes + entry.value.length > 256 * 1024) {
+            return { entries, more: true }
+          }
+          bytes += entry.value.length
+          const text = b4a.toString(entry.value, 'utf8')
+          let value = text
+          try { value = JSON.parse(text) } catch {}
+          entries.push({ key: entry.key, value })
+        }
+        return { entries, more: false }
+      } catch {
+        return { error: 'Some saved data is not available on this computer yet. Try again after copying finishes.' }
+      } finally {
+        await snapshot?.close()
+        await bee.close()
+      }
+    }
     const length = core.length
     if (length === 0) {
       return { key: keyHex, length: 0, byteLength: core.byteLength, blocks: [] }

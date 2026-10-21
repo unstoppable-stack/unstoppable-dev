@@ -15,6 +15,27 @@ AI understandable without requiring protocol knowledge:
 - Remove apps that should no longer connect
 - Use the system tray menu to show or quit the dashboard
 
+The dashboard opens in **Simple** view: a Home screen with connected apps,
+plain-language copy status, storage use, and AI availability. Connect an app,
+pause or resume its sharing, change its storage limit, or disconnect it from
+its card. An offline app can still have a verified copy here; the screen reports
+these states separately and does not promise a backup or recovery service.
+
+Use the **View** switch to open **Advanced**, which retains the existing
+dashboard, resource inspectors, permissions, AI controls, and settings. The
+selection is remembered on this device. Both views use the same node and grants;
+switching views does not change permissions. Simple pairing codes allow data
+sharing only. AI access can be managed explicitly in Advanced.
+
+Each app card has **Browse saved data**, a read-only view of copied content.
+Hyperbee collections with text keys and JSON/text values show current records as
+readable fields, with dedicated cards for Notebook notes and Briefing reports.
+Simple hides record IDs, schema versions, and source metadata; Advanced's
+inspector shows complete records and resource keys. File libraries
+show a file listing; other encodings may require opening the original app.
+Previews are bounded to 50 records and 256 KiB per collection. They do not edit
+app data or imply that an incomplete copy is complete.
+
 ## Running
 
 ```bash
@@ -162,6 +183,19 @@ main process contains no P2P or inference implementation; it owns only window,
 tray, IPC, and worker lifecycle.
 
 ## Status
+
+See the [20 October desktop review](../../docs/personal-node-review.md) for the
+product role, interoperability requirements, and prioritized improvements.
+Personal Node remains an optional desktop home for compatible apps; its shared
+components can also underpin an app-specific desktop product.
+The [Notebook + Briefing example](../../examples/personal-node-ecosystem/README.md)
+demonstrates two apps sharing a versioned service contract and keeping separate
+datasets mirrored by this daemon, with a native Bare-sidecar regression and
+manual dashboard instructions.
+The [dashboard acceptance runner](../../scripts/personal-node-dashboard-e2e.mjs)
+also drives real Electron pairing and protection controls with both example
+apps in separate processes. It uses an isolated profile and can leave both
+apps visibly connected with `--keep-open`; see the example's run instructions.
 
 - Phase 1 (the basics) ✓
   - Paired-app list with plain-language replication state and expandable technical details

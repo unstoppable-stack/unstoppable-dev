@@ -6,8 +6,8 @@ import { CodeBlock } from "@/components/code-block";
 import { siteConfig } from "@/lib/release";
 
 export const metadata: Metadata = {
-  title: "Local Goods ecommerce example",
-  description: "Local Goods ecommerce: a first-party desktop example with a product catalog, persistent cart, demo checkout, local AI, and trusted peer order sharing.",
+  title: "App examples: Local Goods and Personal Node",
+  description: "Explore Notebook + Briefing with Personal Node, and Local Goods ecommerce: a first-party desktop example with a product catalog, persistent cart, demo checkout, local AI, and trusted peer order sharing.",
   alternates: { canonical: "/showcase" },
 };
 
@@ -24,12 +24,25 @@ const capabilities = [
 export default function ShowcasePage() {
   return (
     <div>
+      <header className="section-inner pt-16"><p className="eyebrow">Build from working examples</p><h1 className="text-4xl font-bold tracking-tight md:text-5xl">Apps built with the stack</h1></header>
+      <section className="section border-b border-border bg-surface/40" aria-labelledby="node-example-title">
+        <div className="section-inner grid items-center gap-8 lg:grid-cols-2">
+          <div>
+            <p className="eyebrow">Notebook + Briefing · Experimental source example</p>
+            <h2 id="node-example-title" className="section-title">Two apps. Shared data. Your desktop node.</h2>
+            <p className="section-copy mb-6">Notebook shares notes. Personal Node keeps verified copies. Briefing reads those notes while Notebook is stopped, then saves its own report. A separate service contract demonstrates permitted calls while Notebook is running.</p>
+            <Link href="/getting-started/personal-node" className="button-primary">Run the Personal Node example <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
+            <p className="mt-5 text-sm leading-6 text-text-muted">Independent command-line apps with a real desktop dashboard. Tested on one computer; cross-device acceptance and full backup/recovery remain unfinished.</p>
+          </div>
+          <Image unoptimized src="/examples/personal-node-report.png" alt="Briefing report displayed as a readable card in Personal Node" width={2200} height={1376} className="h-auto w-full rounded-xl border border-border" />
+        </div>
+      </section>
       <section className="border-b border-border">
         <div className="mx-auto max-w-4xl px-4 py-20 text-center sm:px-6 md:py-28">
           <p className="eyebrow">First-party developer-preview example</p>
-          <h1 className="mb-5 text-4xl font-bold tracking-tight md:text-6xl">Local Goods</h1>
+          <h2 className="mb-5 text-4xl font-bold tracking-tight md:text-6xl">Local Goods</h2>
           <p className="mx-auto max-w-2xl text-lg leading-8 text-text-secondary">A local-first ecommerce example. Browse everyday products, keep a cart on your device, and save a demo order. An on-device shopping assistant and trusted peer retrieval show how local AI, storage, and networking fit together.</p>
-          <p className="mt-5 text-sm text-text-muted">Demo checkout saves a local receipt. No payment or fulfillment is connected.</p>
+          <p className="mt-5 text-sm text-text-muted">Demo checkout saves a local receipt. No payment or fulfillment is connected. Local Goods demonstrates direct peer RPC; it does not currently integrate Personal Node. Use Notebook + Briefing above for node replication.</p>
           <div className="mt-8 flex flex-wrap justify-center gap-3"><a href={exampleSource} className="button-primary">View example source <ArrowRight aria-hidden="true" className="h-4 w-4" /></a><a href="#reproduce-title" className="button-secondary">Run the example</a></div>
         </div>
       </section>
