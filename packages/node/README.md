@@ -36,11 +36,22 @@ us node stop               # SIGTERM the daemon
 
 Or run the [Personal Node desktop dashboard](../node-desktop) for a UI.
 
-## Install
+## Run the current source
+
+This README describes unpublished `0.6.0-alpha.2` source. The registry's
+`unstoppable-node@0.4.0` has a different API; installing it does not provide the
+programmatic examples below. Use Node 22.17+ and start at the repository root:
 
 ```bash
-npm install -g unstoppable-node
+npm ci --prefix packages/p2p
+npm ci --prefix packages/node
+npm start --prefix packages/node -- --help
 ```
+
+For a complete runnable workflow, use the
+[Notebook + Briefing walkthrough](../../examples/personal-node-ecosystem/README.md).
+It includes source setup, scoped pairing and expected results with the optional
+node. The daemon and desktop remain deferred alpha experiments.
 
 The Personal Node desktop app bundles pinned QVAC inference 0.21.0 inside its Bare sidecar. When
 running the daemon from this source checkout, install the same SDK beside the

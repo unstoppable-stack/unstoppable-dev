@@ -25,3 +25,33 @@ on its separate experimental profile and does not consume this runtime yet.
 Run `npm test` here for contract tests. Real inference, cancellation/reuse, and
 network-isolated cached startup must also pass the generated-app acceptance gates
 before claiming native support. The compatibility manifest records that distinction.
+
+## Run a session without a model
+
+Use Node 22.17+ from the repository root. Save this as `runtime-smoke.mjs` there;
+it imports only the maintained helper and mock adapter, with no model download.
+In a generated app, use `./.unstoppable/runtime-ai/index.js` instead and keep the
+session in the worker.
+
+```js
+import { createAISession, createMockAdapter } from './packages/runtime-ai/src/index.js'
+
+const ai = createAISession({ adapter: createMockAdapter(), byteBudget: 4096 })
+try {
+  await ai.load()
+  let result = ''
+  for await (const token of ai.stream(
+    [{ role: 'user', content: 'Hello' }],
+    { requestId: 'first-message' }
+  )) result += token
+  console.log(result)
+} finally {
+  await ai.close()
+}
+```
+
+Run `node runtime-smoke.mjs`. Expected output: `Mock: Hello`. The `finally` block
+closes the session if consumption fails. This checks the mock session contract;
+it does not verify native loading, Stop, reuse after cancellation or offline
+inference. Continue with the [Local AI guide](https://unstoppable-stack.dev/docs/local-ai)
+for the desktop workflow.
