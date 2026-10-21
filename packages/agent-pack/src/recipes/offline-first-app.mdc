@@ -1,63 +1,22 @@
 ---
-description: Recipe: offline-first app with Hypercore storage and automatic sync
+description: Recipe: offline-safe local storage with managed background P2P sync
 alwaysApply: false
 ---
 
-# Recipe: Offline-First App
+# Recipe: offline-first app
 
-## Problem
+Use `/data` `openCollection` for new single-writer shared JSON, or
+`openCollaborativeDatabase` with explicit writer approval for collaboration.
+Read `modules/managed-data.mdc` and the `p2p-data-sync` recipe.
 
-Keep the app functional offline and sync state when peers are available.
+Local open and data access must not wait for announcement or remote peers.
+Show locally available data immediately. Run bounded sync/network waits as an
+explicit background or sharing action; report timeouts and honor cancellation.
+Reopen the same dataset directory after restart to retain keys and local data.
 
-## Prerequisites
-
-- Hypercore, Hyperbee, and Hyperswarm installed.
-- Basic understanding of replication and discovery keys.
-
-## Solution
-
-Store state locally in Hyperbee and use Hyperswarm to replicate in the
-background. Use `core.findingPeers()` and `swarm.flush()` to coordinate sync.
-
-## Full Example
-
-```js
-import Hypercore from "hypercore";
-import Hyperbee from "hyperbee";
-import Hyperswarm from "hyperswarm";
-
-const core = new Hypercore("./db");
-const db = new Hyperbee(core, { keyEncoding: "utf-8", valueEncoding: "json" });
-await db.ready();
-
-// Local-first write
-await db.put("profile", { name: "Ava", updatedAt: Date.now() });
-
-// Background sync
-const swarm = new Hyperswarm();
-swarm.on("connection", (conn) => core.replicate(conn));
-swarm.join(core.discoveryKey);
-
-// Coordinate initial sync
-const done = core.findingPeers();
-await swarm.flush().then(done, done);
-await core.update({ wait: true });
-
-// Live updates
-for await (const [current] of db.watch()) {
-  console.log("synced version:", current.version);
-}
-```
-
-## Variations
-
-- Use Hyperdrive to cache files for offline reading and download blobs on
-  demand.
-- Use `core.download({ start: 0, end: -1 })` for full replication when online.
-
-## Troubleshooting
-
-- If updates do not appear, ensure both peers replicate the same Hypercore and
-  call `core.update({ wait: true })`.
-- If sync is slow, confirm your swarm has at least one connection and consider
-  prefetching with `core.download()`.
+Keep credentials/device-private state outside replicated storage. Preserve an
+existing local database and its replication manager instead of silently opening
+it with a managed helper. Do not add manual Hyperswarm replication around `/data`.
+Test startup with no peers, offline edits for authorized writers, restart,
+reconnect/convergence and clean shutdown. Collaboration remains experimental;
+local receipts do not prove remote durability.

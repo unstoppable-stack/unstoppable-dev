@@ -11,8 +11,8 @@ Desktop: Electron main embeds Pear Runtime; sandboxed renderer uses preload/IPC;
 
 The runtime is shipped at `.unstoppable/runtime-ai/` with a recorded version. Generated apps own their copy until migrated; edit prompts/UI in app code. Avoid copying new engine setup into each feature. Use direct advanced SDK access inside a runtime boundary only after checking installed types and native support.
 
-Storage: Corestore manages Hypercores; Hyperbee supplies the default KV view. Multi-writer apps use Autobee with HyperDB and deterministic domain merge policy. Schemas and domain policy belong to the app. Keep the local namespace outside replication.
+Storage: prefer `@unstoppable-stack/p2p/data` for new shared JSON: `openCollection` for one writer, `openCollaborativeDatabase` for approved writers. Read `modules/p2p.mdc` and `modules/managed-data.mdc`. Preserve existing generated Corestore/Hyperbee or Autobee/HyperDB stores and deterministic merge policy. Schemas and domain policy belong to the app. Keep private state outside replication.
 
-Use `@unstoppable-stack/p2p` for identity, pairing, grants and capability transport when those features are installed. Simple core/database replication does not require a Personal Node. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
+Use `@unstoppable-stack/p2p/service` and `/rpc` for new remote services; root `createNode` handles multiple packs or bidirectional calls. The library owns discovery, identity, pairing, grants and transport; do not rebuild them with raw Hyperswarm/bare-rpc wrappers. `/sync` hosts existing cores/drives. No Personal Node is required. The deferred AI capability pack is a separate P2P exposure and is not the local inference session.
 
 The app manifest and local compatibility profiles distinguish preview, experimental and deferred combinations. A scaffold does not certify support. Select guidance for the installed profile before reading upstream docs.

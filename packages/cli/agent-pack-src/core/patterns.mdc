@@ -17,7 +17,9 @@ Desktop and Node apps vendor the maintained session contract in `.unstoppable/ru
 
 ## Peer messages and replicated data
 
-Follow the framing already used by the app. Streams deliver arbitrary chunks: buffer and decode complete messages before parsing, bound message size, and validate payloads before acting. Correlate replies with request IDs; settle pending requests when peers disconnect. For replicated data, establish replication before reads and retain deterministic application merge rules.
+For new app messages use `@unstoppable-stack/p2p/rpc` and managed `/service` sessions, or root capabilities on the existing node. For new shared JSON use `/data`; for existing resource mirroring use `/sync`. Do not add a separate swarm, bare-rpc wrapper or SecretStream around the library.
+
+For an existing custom protocol, follow the framing already used by the app. Streams deliver arbitrary chunks: buffer and decode complete messages before parsing, bound message size, and validate payloads before acting. Correlate replies with request IDs; settle pending requests when peers disconnect. For replicated data, establish replication before reads and retain deterministic application merge rules.
 
 Use the generated storage and swarm resources before introducing another owner. Close listeners, peer streams, swarm and storage on shutdown. Keep domain records and access policy in app code. Consult only the relevant module/recipe when changing an integration.
 

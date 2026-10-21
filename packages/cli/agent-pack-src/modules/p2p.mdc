@@ -1,0 +1,50 @@
+---
+description: Default app-facing P2P APIs, ownership and permissions in @unstoppable-stack/p2p.
+alwaysApply: false
+---
+
+# App-facing P2P library
+
+Use `@unstoppable-stack/p2p` for new app networking, RPC and shared data.
+Inspect the target's installed exports/types and compatibility profile first.
+The `/service`, `/rpc`, `/data` and `/db` APIs require alpha.2 or later. Preserve
+older generated apps and migrate explicitly; plugin updates do not migrate apps.
+All P2P APIs remain experimental. Personal Node is optional and deferred, not a
+prerequisite for apps communicating directly.
+
+| App need | API |
+| --- | --- |
+| Single-writer shared JSON | `/data`: `openCollection` |
+| Collaborative JSON with approved writers | `/data`: `openCollaborativeDatabase` |
+| One remote service | `/rpc`: `defineCapability`, `procedure`; `/service`: `serve`, `connect` |
+| Several capabilities or bidirectional calls | Root: `createNode`, pairing, grants, `peer.client` / `call` / `stream` |
+| Host existing cores, Hyperbees or drives | `/sync`: `syncPack` and resource manifests |
+| Custom deterministic collaborative reducer/view | `/db`, with explicit Autobase opt-in |
+
+Read `managed-data.mdc` for data semantics. New service/data apps do not need
+manual DHT bootstraps, Hyperswarm, bare-rpc wrappers, SecretStream or Protomux
+setup. The library owns transport, identity, permissions and cleanup. Do not
+add a second swarm/store around a managed helper. Root imports avoid loading
+replication; storage dependencies are still installed with the package.
+
+Apps own UI, domain handlers, validation, schemas and private state. Keep native
+sessions in Node or the desktop Bare worker, behind the existing IPC bridge.
+Shared RPC contracts are lightweight but contain functions: do not serialize
+them through JSON IPC. Expo needs its own native acceptance; do not assume these
+helpers work in a browser or mobile worklet.
+
+Permissions differ: scoped RPC invites grant methods, dataset keys grant reads,
+and collaborative writer keys require explicit founder admission. Discovering a
+peer or binding a typed contract grants no access. Revoking RPC grants does not
+revoke data already shared. Keep private stores outside replication.
+
+Use one owner per identity directory and close sessions/nodes/datasets on app
+shutdown. A disconnected service session must be closed and explicitly connected
+again; calls and mutations are not automatically retried. Honor handler signals,
+use bounded waits and app-owned idempotency for mutations.
+
+Direct Holepunch imports remain appropriate for existing storage formats,
+app-owned Hyperdrive operations, custom protocols and isolated transport tests.
+They are implementation/advanced references, not the default app recipe. Reuse
+the existing owner; never silently replace an edited store or its merge policy.
+Use installed P2P docs/types before upstream primitive documentation.

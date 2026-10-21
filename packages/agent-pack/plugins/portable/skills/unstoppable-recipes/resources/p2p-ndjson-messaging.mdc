@@ -1,5 +1,11 @@
 # Recipe: NDJSON Messaging Over Hyperswarm
 
+> **Legacy standalone protocol only.** New app messaging uses
+> `@unstoppable-stack/p2p/rpc` with `/service` or an existing root node.
+> Do not send raw NDJSON into the library-owned multiplexed connection.
+> This example does not supply pairing/grants or production message bounds.
+
+
 ## Problem
 
 Send lightweight JSON messages between peers without Protomux or RPC framing.

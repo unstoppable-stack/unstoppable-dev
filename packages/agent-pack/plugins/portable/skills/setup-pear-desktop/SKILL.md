@@ -13,7 +13,7 @@ are legacy APIs removed by Pear v3. Never add them to a new desktop app.
 ## Architecture
 
 1. **Electron main process** owns the native window and embeds `pear-runtime`.
-2. **Bare worker** owns Hyperswarm, Corestore, Hyperbee/HyperDB, and QVAC.
+2. **Bare worker** owns P2P library sessions, native storage and QVAC.
    Start it with `pear.run(workerPath, [pear.storage])`.
 3. **Preload bridge** exposes a narrow, context-isolated IPC API.
 4. **Renderer** contains browser-safe UI code only.
@@ -55,6 +55,10 @@ See [resources/build-setup.md](resources/build-setup.md) for a complete host
 and preload pattern.
 
 ## Bare worker
+
+For new P2P features use `@unstoppable-stack/p2p/data` for shared JSON and
+`/rpc` with `/service` for remote calls. Read `modules/p2p.mdc`. Reuse existing
+node/store owners; raw Holepunch modules are advanced existing-store references.
 
 The worker receives its channel and storage from Pear OTA:
 

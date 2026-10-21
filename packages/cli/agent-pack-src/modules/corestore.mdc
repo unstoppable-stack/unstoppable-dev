@@ -5,6 +5,12 @@ alwaysApply: false
 
 # Corestore
 
+> **Advanced primitive reference.** For new app features start with
+> `@unstoppable-stack/p2p` and `modules/p2p.mdc`. Direct engine use is for
+> existing storage, app-owned file operations, custom protocols or isolated
+> tests. Reuse existing owners; do not rebuild managed transport/storage.
+
+
 ## Overview
 Corestore manages multiple Hypercores with shared storage and key derivation. It is commonly used to back Hyperdrive and other multi-core apps, simplifying replication and storage layout.
 

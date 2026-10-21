@@ -5,6 +5,12 @@ alwaysApply: false
 
 # Hypercore
 
+> **Advanced primitive reference.** For new app features start with
+> `@unstoppable-stack/p2p` and `modules/p2p.mdc`. Direct engine use is for
+> existing storage, app-owned file operations, custom protocols or isolated
+> tests. Reuse existing owners; do not rebuild managed transport/storage.
+
+
 ## Overview
 Hypercore is a secure, distributed append-only log used to replicate data streams between peers. It supports sparse replication (download only needed blocks) and integrity via signed Merkle trees, making it the base for Hyperbee and Hyperdrive.
 

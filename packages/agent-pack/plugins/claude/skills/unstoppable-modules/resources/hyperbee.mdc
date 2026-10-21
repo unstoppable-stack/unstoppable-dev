@@ -1,5 +1,11 @@
 # Hyperbee
 
+> **Advanced primitive reference.** For new app features start with
+> `@unstoppable-stack/p2p` and `modules/p2p.mdc`. Direct engine use is for
+> existing storage, app-owned file operations, custom protocols or isolated
+> tests. Reuse existing owners; do not rebuild managed transport/storage.
+
+
 ## Overview
 Hyperbee is a key-value database built on Hypercore. It provides ordered key ranges, prefix scans, and transactional batches on top of an append-only log, making it a common building block for local-first state and indexes.
 

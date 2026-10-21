@@ -1,28 +1,38 @@
 ---
 name: add-p2p-sync
-description: Extend replication in an existing generated app while preserving its storage and runtime boundaries.
+description: Managed JSON replication or P2P sync capabilities for existing resources, preserving app storage.
 ---
 
 # Extend P2P replication
 
-## Start with managed JSON data
+Inspect the target app manifest, installed exports and actual entrypoints. Read
+`modules/p2p.mdc` and `modules/managed-data.mdc`.
 
-For a new single-writer JSON dataset, prefer `openCollection` from
-`@unstoppable-stack/p2p/data` when the installed package supports it. Read
-`modules/managed-data.mdc` and the generated SHARED-DATA.md. It owns storage,
-discovery and close; do not ask users to construct DHT/Corestore primitives.
-Use its network diagnostics and bounded sync. Keep startup and local use offline.
-The following composition guidance is for existing/custom storage, not a reason
-to replace an application's data format or automatically share private state.
+For a new single-writer JSON dataset use `openCollection` from
+`@unstoppable-stack/p2p/data` (alpha.2 or later). It owns storage, discovery and
+cleanup; no separate DHT, Corestore or swarm setup is needed. Use a dedicated
+directory, write/read locally offline, share the dataset key and version, and
+let readers use bounded `sync({ version, signal, timeoutMs })` before reading.
+Network announcement is not evidence of remote download. Use network diagnostics
+and cancellation; never block local startup on peers.
 
+For several writers follow [multi-writer sync](../add-multi-writer-sync/SKILL.md).
+For mirroring existing Hypercores, Hyperbees or Hyperdrives use `/sync`:
+attach `syncPack` to the existing node and share the existing store. Pair with
+explicit grants and declare the complete resource manifest with protection
+modes. Read the installed docs for status and ownership semantics. `/sync`
+does not mirror an Autobase graph and is not a complete backup service.
 
-Read the target app manifest and entrypoints. Node apps expose `src/swarm-manager.ts` and storage managers; desktop apps initialize networking/storage in `worker.js`; Expo uses `bare/index.js`. Do not assume old `SwarmManager` or `CorestoreManager` classes are included.
+Keep existing generated Autobee/HyperDB stores, deterministic reducers, private
+namespaces and replication managers intact. Direct replication instructions
+are advanced existing-store references, not the default for new apps. Do not
+silently convert storage or add a second swarm/store around managed helpers.
+Personal Node is not required for peer-to-peer sharing.
 
-Reuse the existing swarm/store and replicate the appropriate store or Autobee on each connection. Keep peer errors/disconnections harmless to local reads. Await core/database readiness before using it; do not block app startup waiting for peers. Discovery announces availability and is not evidence that remote data has arrived.
-
-For multi-writer data, use the app’s generated store, writer promotion and deterministic schema/apply policy. Replicated data and device-private state remain separate. For identity/pairing/grants, use `@unstoppable-stack/p2p` only when installed; it is not required for simple database replication.
-
-Use installed APIs and https://docs.holepunch.to/ for detailed replication calls. Validate two real peers, reconnect, local reads offline, and convergence rather than merely matching generated code strings.
+Native resources stay in Node or the desktop Bare worker behind IPC. Test two
+real peers, disconnect/reconnect, bounded cancellation, offline reads after
+restart and convergence. Local loopback evidence does not prove public-network,
+packaged Bare, mobile or backup acceptance.
 
 ## Bundled integration references
 

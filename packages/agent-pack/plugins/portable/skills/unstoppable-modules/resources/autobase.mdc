@@ -1,5 +1,11 @@
 # Autobase
 
+> **Advanced primitive reference.** For new app features start with
+> `@unstoppable-stack/p2p` and `modules/p2p.mdc`. Direct engine use is for
+> existing storage, app-owned file operations, custom protocols or isolated
+> tests. Reuse existing owners; do not rebuild managed transport/storage.
+
+
 > For simple new JSON datasets, start with `modules/managed-data.mdc`. Existing
 > schema-based Autobee apps retain their current engine and data format.
 

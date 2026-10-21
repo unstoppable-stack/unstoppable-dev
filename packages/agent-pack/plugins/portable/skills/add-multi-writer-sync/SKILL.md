@@ -12,7 +12,7 @@ version: "2026-07-29"
 - User wants multiple peers to write to the same database simultaneously
 - User mentions "collaborative", "multi-writer", "multi-device sync", or "shared editing"
 - User needs offline-first writes that merge when peers reconnect
-- User is building a server cluster with failover
+- Availability requirements need separate validation; managed collaboration has one founder/indexer and is not automatic failover
 
 > **Not this skill?** If only ONE peer writes and others read, use
 > `add-p2p-sync` instead (single-writer Hypercore replication).
@@ -30,8 +30,14 @@ For an existing generated Autobee/HyperDB schema store, preserve that engine and
 use the advanced instructions below. Autobee and Autobase are different engines;
 do not mix their view APIs, reinterpret old storage, or migrate silently.
 
+## Advanced existing Autobee stores only
+
+The rest of this document applies only to an existing/custom Autobee store, not
+the managed `/data` or `/db` APIs. Do not install a second transport or migrate
+an existing format implicitly.
+
 ## Prerequisites
-- Hyperswarm and Corestore installed (via `add-p2p-networking`)
+- Existing Hyperswarm and Corestore owners (reuse them)
 - Node.js or Bare runtime
 - Understanding of append-only logs (Hypercore)
 
@@ -280,12 +286,12 @@ replicate adds its wakeup session on top of store replication.
 - Schema'd collections and indexes: `recipes/p2p-hyperdb-autobee-sync.mdc`
 - Which write wins: `recipes/p2p-conflict-resolution.mdc`
 
-## Reference Apps
+## Runtime boundaries
 
-- `reference-apps/qvac-app/core/src/services/networking/worker/` — Autobee in
-  production: mesh setup, writer exchange over Protomux, HyperDB view via
-  `HyperDB.bee2()`, and the apply-level guards that stop terminal records being
-  resurrected.
+The runnable `examples/p2p-database` in the source repository exercises the P2P
+Autobase adapter, not this legacy Autobee API. Do not use that evidence to claim
+Autobee, packaged Bare or mobile acceptance. Read the installed app's tests and
+version-matched engine docs for its actual contract.
 
 > **Status**: Verified against `autobee@1.0.10` (2026-07-29) with a live
 > two-writer convergence test. Upstream marks Autobee experimental.
