@@ -7,7 +7,21 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
-## Unreleased — CLI 0.4.0-beta.2 / P2P 0.6.0-alpha.2
+## Unreleased — Personal Node experience
+
+- Add Simple Home, an Advanced view switch, readable saved-data cards, and the
+  Notebook + Briefing ecosystem source example with desktop acceptance checks.
+- Add Personal Node architecture, integration guidance, and examples to the
+  website. Personal Node remains experimental; full backup/recovery is unfinished.
+
+## CLI 0.4.0-beta.3 — 20 October 2026
+
+- Publish assistant plugin setup commands and matching website guides.
+- Record fresh registry acceptance for CLI beta.3 and P2P 0.6.0-alpha.2 in
+  [the publication evidence](release/registry-acceptance-2026-10-20-beta3.json).
+  Personal Node packages remain outside the publication allowlist.
+
+## CLI 0.4.0-beta.2 / P2P 0.6.0-alpha.2 — prior changes
 
 - Fix concurrent identity/invite updates, runtime ownership, startup/close races,
   bounded handshakes, RPC execution/cancellation and sync manifest replacement.
@@ -24,8 +38,8 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   0.6.0-alpha.2 for their existing release gate. They remain deferred and excluded
   from the canonical CLI/P2P publication allowlist.
 
-No alpha.2/beta.2 artifacts have been published. Published CLI beta.1 and P2P
-alpha.1 remain the current preview; see [the release guide](docs/public-release.md).
+The current published preview is CLI beta.3 and P2P alpha.2; see
+[the release guide](docs/public-release.md) for the verified install path.
 
 ## Unreleased — package consolidation (16 October 2026)
 
