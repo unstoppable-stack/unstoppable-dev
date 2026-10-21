@@ -24,9 +24,9 @@ const check = (condition, message) => { if (!condition) failures.push(message) }
 // semver replacement and rejects all remaining local production dependencies.
 const baseVersion = (version) => version.split('-')[0]
 
-for (const name of nodeLine) {
-  check(packages.node.version === packages[name].version, `Node and ${name} versions must match`)
-}
+// P2P and the optional Personal Node application release independently. The
+// staged packer selects the current P2P dependency; Node/desktop stay coupled.
+check(baseVersion(packages.p2p.version) === '0.6.0', 'P2P release line must be 0.6.0')
 check(packages.node.version === packages.desktop.version, 'Node and desktop versions must match')
 check(baseVersion(packages.node.version) === '0.6.0', 'Node release line must be 0.6.0')
 check(baseVersion(packages.cli.version) === '0.4.0', 'CLI release line must be 0.4.0')

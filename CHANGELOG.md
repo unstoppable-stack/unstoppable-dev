@@ -17,6 +17,8 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   advance the website plugin download metadata to 0.1.9.
 - Version the existing bounded readable Hyperbee sync inspection changes on main
   as P2P 0.6.0-alpha.3; advance scaffold profiles without regenerating edited apps.
+- Allow P2P and the optional Personal Node app to version independently in the
+  Node release gate; keep Node/desktop versions and lockfiles coupled.
 - Keep the installer pinned to published CLI beta.3 until beta.4 publication
   and registry acceptance are recorded; allow the website guide checker to
   validate that published target independently of the next source version.
