@@ -1,0 +1,110 @@
+<!-- Generated from packages/agent-pack/src/core/design-guide.mdc. -->
+# Unstoppable UI design
+
+Use **Unstoppable Control**, the Personal Node desktop app's visual system, as
+the default for new Unstoppable Stack (US) apps, first-party examples, and
+scaffolded interfaces. Apply it when adding UI to an existing US-related app,
+while preserving its behavior, data, and established product identity. Explicit
+user design choices take precedence. A UI refresh does not authorize a runtime
+migration or regeneration of an edited app.
+
+## Identity and visual hierarchy
+
+- Build a functional local-first workspace: compact navigation, clear content
+  headings, data lists, and controls beside the data they affect.
+- Use graphite surfaces, cyan for primary actions and selection, restrained
+  borders, small corner radii, and system sans-serif type. Use monospace for
+  keys, quantities, timestamps, and technical identifiers.
+- On desktop, use a compact top bar, a 170–185 px sidebar when there are several
+  destinations, and a scrolling content area. Use a selected-item inspector
+  when it reduces repetition. A small single-purpose tool can omit the sidebar.
+- On mobile, retain the palette and hierarchy with native navigation, safe
+  areas, readable text, keyboard handling, and at least 44 px touch targets.
+  Do not compress a desktop sidebar onto a phone.
+- Keep app-specific names, content, and domain workflows. The `u//` mark and an
+  understated Unstoppable label identify the scaffold; they should not dominate
+  the app's own title or imply release approval.
+- Avoid decorative dashboard metrics, giant marketing headings, gradients,
+  glass effects, oversized icons, and repeated nested cards. Give each actual
+  status or numeric measure a clear purpose.
+
+## Shared tokens
+
+The repository source of truth is `packages/agent-pack/src/ui/tokens.json`.
+`scripts/sync-stack-assets.mjs` distributes the palette into the CLI, desktop
+app, ecommerce example, and public design reference. Edit canonical assets,
+then synchronize; do not hand-edit generated copies.
+
+Scaffolded desktop apps own `app/theme.css`, `app/styles.css`, and
+`app/shell.js`. Experimental Expo apps own `src/theme.ts` and native styles.
+Assistant-enabled workspaces also receive the token reference at
+`.unstoppable/guidance/core/ui-tokens.json`. Extend these existing assets rather
+than introducing another theme or a component dependency for a visual refresh.
+
+| Role | Light | Dark |
+| --- | --- | --- |
+| Canvas | `#f4f7f9` | `#11171b` |
+| Surface | `#ffffff` | `#182126` |
+| Navigation | `#e8eef2` | `#0c1216` |
+| Text | `#152c35` | `#e1edf0` |
+| Secondary text | `#526a75` | `#9aafb8` |
+| Border | `#d3dfe4` | `#2b3940` |
+| Primary action / selection | `#00778a` | `#58d9e9` |
+| Text on primary action | `#ffffff` | `#092129` |
+| Selected surface | `#e0f3f5` | `#17343c` |
+| Success | `#237349` | `#82cea2` |
+| Attention | `#805b0e` | `#ebc274` |
+| Error / destructive action | `#b33037` | `#ff999c` |
+
+Use the operating system's appearance by default. Browser CSS uses semantic
+variables and `light-dark()`; React Native uses `useColorScheme()` and the same
+light/dark color roles. Primary buttons use the dedicated contrasting text
+color; secondary buttons and user message bubbles retain readable body text.
+Use a 4/8/12/16/24/32 px spacing scale, roughly 7 px panels and 5 px controls.
+Desktop body text is around 13 px, secondary text 12 px, page headings 25 px;
+mobile body text is at least 14 px and inputs remain comfortable to edit.
+
+## Truthful, functional states
+
+- Local data stays usable without peers. Distinguish app availability, network
+  initialization, active peer connections, replication progress, verified
+  copies, storage limits, and optional AI readiness.
+- An offline app can still have a verified last shared copy. A connection or a
+  registered resource alone is not proof of sync or a backup. Never invent a
+  percentage, rate, activity entry, or completion timestamp to fill the layout.
+- Show loading, empty, partial, paused, failed, and retry states explicitly.
+  Identify contract/mock AI responses as simulated. Experimental features retain
+  their alpha/deferred labels.
+- Put pause/resume, limits, permissions, and relevant details beside the
+  selected app or resource. Preserve confirmation before disconnecting or
+  deleting. Keep technical identifiers in an inspector or Advanced view.
+- Reuse the existing IPC commands and feature handlers. Keep app data, prompts,
+  model lifecycle, cancellation, and permission semantics intact during restyling.
+
+## Accessibility and resilience
+
+Use semantic headings, labels, buttons, and real navigation links. Every
+navigation target must exist in the selected feature combination. Use
+`aria-current` or pressed states for selection, visible keyboard focus, text
+alongside status colors, `role="status"` for results, and `role="alert"` for
+errors. Render user/peer content as text, never interpolated executable markup.
+
+Preserve keyboard focus, entered forms, chat history, and app selection during
+status snapshots. Reflow at smaller widths; wrap long names and identifiers.
+Respect reduced motion and use bundled icons/system fonts so basic UI works
+without external assets or a network connection.
+
+## Runtime boundaries
+
+Desktop renderers use the context-isolated preload/IPC bridge. P2P, native
+storage, and maintained desktop/Node AI remain in their existing owners and
+workers. Experimental Expo keeps React Native UI and its separate networking
+worklet. Follow the target's recorded compatibility profile; matching this
+visual system does not establish native or mobile acceptance.
+
+## Validate a UI change
+
+Check feature variants, navigation, forms, errors, Stop/retry, existing data
+flows, and keyboard focus. Inspect light/dark screenshots at normal and narrow
+widths. Run the target's tests and relevant native acceptance checks separately.
+Report simulated UI checks, real transport, and real inference distinctly.

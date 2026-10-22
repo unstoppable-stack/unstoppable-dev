@@ -1,5 +1,6 @@
 import { sendToWorker, onWorkerMessage, selectSettingsPath, workerReady } from './bridge.js'
 import ui from './platform.js'
+import { icon } from './icons.js'
 import { createSimpleHome } from './simple-home.js'
 import { savedDataHtml } from './saved-data.js'
 import {
@@ -25,14 +26,7 @@ const WELCOME_KEY = 'unstoppable-node-welcome-seen'
 document.getElementById('app').innerHTML = `
   <div class="layout">
     <header class="hdr">
-      <div class="hdr-main">
-        <h1 class="title">Personal Node</h1>
-        <p class="subtitle" id="node-status">⏳ Starting...</p>
-        <div class="hdr-key" id="node-key" title="Copy this Personal Node's technical device ID">
-          <span class="hdr-key-label">device ID:</span>
-          <span class="hdr-key-value" id="node-key-value">…</span>
-        </div>
-      </div>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">u//</span><span class="brand-name">unstoppable</span><span class="brand-product">/ personal cloud</span></div>
       <div class="services" id="services"></div>
       <div class="header-actions">
         <label class="view-picker">View
@@ -41,18 +35,27 @@ document.getElementById('app').innerHTML = `
             <option value="advanced">Advanced</option>
           </select>
         </label>
-        <button class="btn-ghost" id="help-btn" title="Show the welcome guide">?</button>
+        <button class="btn-ghost" id="help-btn" title="Show the welcome guide" aria-label="Show welcome guide">?</button>
       </div>
     </header>
+    <div class="workbench">
+    <aside class="sidebar">
+      <div class="host-card"><p class="eyebrow">Cloud host</p>${icon('laptop')}<strong>This computer</strong><p class="subtitle" id="node-status" role="status">Starting…</p></div>
+      <nav class="sidebar-nav" aria-label="Personal cloud sections">
+        <button class="nav-item" data-section="overview" aria-pressed="true">${icon('overview')}Overview</button>
+        <button class="nav-item" data-section="apps" aria-pressed="false">${icon('apps')}Apps<span class="nav-count" id="nav-app-count">0</span></button>
+        <button class="nav-item" data-section="saved" aria-pressed="false">${icon('data')}Saved data</button>
+        <button class="tab active" data-tab="overview" aria-pressed="false">${icon('overview')}App permissions</button>
+        <button class="tab" data-tab="storage" aria-pressed="false">${icon('data')}Storage</button>
+        <button class="tab" data-tab="ai" aria-pressed="false">${icon('ai')}Local AI</button>
+        <button class="tab" data-tab="config" aria-pressed="false">${icon('settings')}Settings</button>
+      </nav>
+      <div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Keep this computer awake and Personal Node running to receive updates.</p><button type="button" class="hdr-key" id="node-key" title="Copy this Personal Node's technical device ID"><span class="hdr-key-label">Device ID</span><span class="hdr-key-value" id="node-key-value">…</span></button><p class="alpha-label">PERSONAL NODE / ALPHA</p></div>
+    </aside>
     <main class="content">
       <div id="simple-home"></div>
       <div id="advanced-dashboard" hidden>
-      <nav class="tabs" aria-label="Dashboard sections">
-        <button class="tab active" data-tab="overview">Home</button>
-        <button class="tab" data-tab="storage">Storage</button>
-        <button class="tab" data-tab="ai">AI</button>
-        <button class="tab" data-tab="config">Advanced</button>
-      </nav>
+      <div class="page-heading"><div><p class="eyebrow">Personal cloud / Advanced</p><h1 id="advanced-title">App permissions</h1><p class="dim" id="advanced-description">Inspect paired apps, shared resources, and access.</p></div></div>
 
       <section class="tab-panel" id="tab-overview">
         <section class="card" id="summary-card">
@@ -217,6 +220,7 @@ document.getElementById('app').innerHTML = `
       </section>
       </div>
     </main>
+    </div>
   </div>
   <div class="modal-backdrop" id="approval-modal" hidden>
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="approval-title">
@@ -290,7 +294,6 @@ document.getElementById('app').innerHTML = `
   </div>
 `
 
-injectStyles()
 
 // ---------------------------------------------------------------------------
 // State + wire up
@@ -303,6 +306,7 @@ const logEntries = loadLogEntries()
 let logFilter = 'all'
 let pendingImportPath = null
 let workerFailed = false
+let simpleSection = 'overview'
 const simpleHome = createSimpleHome({
   element: document.getElementById('simple-home'),
   send: sendToWorker,
@@ -318,12 +322,20 @@ function setDashboardView(view) {
   document.getElementById('simple-home').hidden = advanced
   document.getElementById('advanced-dashboard').hidden = !advanced
   document.body.classList.toggle('simple-view', !advanced)
+  document.querySelectorAll('[data-section]').forEach(button => button.setAttribute('aria-pressed', String(!advanced && button.dataset.section === simpleSection)))
+  document.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-pressed', String(advanced && button.classList.contains('active'))))
+  if (!advanced) simpleHome.section(simpleSection)
+  document.querySelector('.content').scrollTop = 0
   try { localStorage.setItem('personal-node-dashboard-view', advanced ? 'advanced' : 'simple') } catch {}
 }
 let savedView = 'simple'
 try { savedView = localStorage.getItem('personal-node-dashboard-view') || 'simple' } catch {}
 setDashboardView(savedView)
 document.getElementById('dashboard-view').addEventListener('change', event => setDashboardView(event.target.value))
+document.querySelectorAll('[data-section]').forEach(button => button.addEventListener('click', () => {
+  simpleSection = button.dataset.section
+  setDashboardView('simple')
+}))
 
 // Queue of pair requests. Only the head request is shown in the
 // modal; subsequent requests stack and are revealed one at a time
@@ -336,7 +348,8 @@ onWorkerMessage((msg) => {
     case 'ready':
       workerFailed = false
       simpleHome.ready()
-      setText('node-status', '✅ Node is running')
+      document.getElementById('node-status').dataset.state = 'running'
+      setText('node-status', 'Node is running')
       setText('config-status', 'Node is running')
       renderCapabilities({ capabilities: msg.capabilities || {}, ai: lastStatus?.ai })
       if (msg.publicKey) setNodePublicKey(msg.publicKey)
@@ -346,12 +359,13 @@ onWorkerMessage((msg) => {
       break
     case 'status':
       if (!workerFailed) {
-        setText('node-status', '✅ Node is running')
+        setText('node-status', 'Node is running')
         setText('config-status', 'Node is running')
       }
       if (msg.nodePublicKey) setNodePublicKey(msg.nodePublicKey)
       lastStatus = msg
       simpleHome.update(msg)
+      document.getElementById('node-status').dataset.state = workerFailed ? 'error' : 'running'
       renderSummary(msg)
       renderApps(msg)
       renderStorage(msg)
@@ -507,7 +521,8 @@ onWorkerMessage((msg) => {
     case 'fatal':
       workerFailed = true
       simpleHome.fail(msg.error)
-      setText('node-status', '❌ Node failed to start')
+      document.getElementById('node-status').dataset.state = 'error'
+      setText('node-status', 'Node failed to start')
       setText('config-status', 'Node failed to start')
       pushLog(`Fatal: ${msg.error}`, 'err')
       break
@@ -539,7 +554,8 @@ let peekRequestSeq = 0
 workerReady.catch((err) => {
   workerFailed = true
   simpleHome.fail(err.message)
-  setText('node-status', '❌ Worker failed to start')
+  document.getElementById('node-status').dataset.state = 'error'
+  setText('node-status', 'Worker failed to start')
   pushLog(`Worker error: ${err.message}`, 'err')
 })
 
@@ -572,6 +588,7 @@ function renderAiToggle (aiReady) {
 function renderSummary (status) {
   const counts = summaryCounts(status)
   setText('m-apps', String(counts.peers))
+  setText('nav-app-count', String(counts.peers))
   setText('m-cores', String(counts.cores))
   setText('m-drives', String(counts.drives))
   setText('m-peers', String(counts.connected))
@@ -922,10 +939,23 @@ function wireTabs () {
   document.querySelectorAll('[data-tab]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const tab = btn.getAttribute('data-tab')
-      document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('active', b === btn))
+      setDashboardView('advanced')
+      const descriptions = {
+        overview: ['App permissions', 'Inspect paired apps, shared resources, and access.'],
+        storage: ['Storage', 'Manage the app data held on this computer.'],
+        ai: ['Local AI', 'Run optional inference for apps you allow.'],
+        config: ['Settings', 'Configure your node, pairing, trust, notifications, and event log.']
+      }
+      setText('advanced-title', descriptions[tab][0])
+      setText('advanced-description', descriptions[tab][1])
+      document.querySelectorAll('[data-tab]').forEach((b) => {
+        b.classList.toggle('active', b === btn)
+        b.setAttribute('aria-pressed', String(b === btn))
+      })
       document.querySelectorAll('.tab-panel').forEach((panel) => {
         panel.hidden = panel.id !== `tab-${tab}`
       })
+      document.querySelector('.content').scrollTop = 0
     })
   })
 }
@@ -1441,6 +1471,7 @@ function pushLog (text, kind = 'info') {
 }
 
 function renderLog () {
+  simpleHome.activity(logEntries)
   const el = document.getElementById('log')
   if (!el) return
   el.innerHTML = ''
@@ -1516,335 +1547,4 @@ function parseOptionalBytes (id) {
   const parsed = Number(value)
   if (!Number.isSafeInteger(parsed) || parsed < 0) throw new Error(`${id} must be a non-negative integer`)
   return parsed
-}
-
-
-
-function injectStyles () {
-  const style = document.createElement('style')
-  style.textContent = `
-    #simple-home, #advanced-dashboard { display: flex; flex-direction: column; gap: 16px; }
-    #simple-home[hidden], #advanced-dashboard[hidden], #simple-pairing[hidden], #simple-limit-form[hidden] { display: none; }
-    .simple-view #node-key, .simple-view #services { display: none; }
-    .view-picker { display: flex; align-items: center; gap: 8px; color: #c9d1d9; font-size: 0.85rem; }
-    .view-picker select { background: #161b22; color: #e6edf3; border: 1px solid #484f58; padding: 7px 10px; border-radius: 8px; }
-    button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #58a6ff; outline-offset: 3px; }
-    .simple-intro { border-color: #2c5548 !important; }
-    .simple-intro h2 { font-size: 1.5rem; margin: 8px 0 12px; }
-    .simple-intro p { line-height: 1.6; margin-bottom: 14px; color: #c9d1d9; }
-    .simple-eyebrow { color: #56d8aa !important; font-size: 0.8rem; }
-    .simple-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .simple-overview p { margin: 8px 0; line-height: 1.5; }
-    .simple-overview h3, .simple-app h3 { font-size: 1rem; }
-    #simple-apps-title { font-size: 1.15rem; margin: 6px 0 14px; }
-    .simple-apps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-    .simple-app-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .simple-app p { line-height: 1.6; margin-top: 7px; font-size: 0.9rem; }
-    .simple-copy-state { font-weight: 600; color: #e6edf3; }
-    .simple-copy-state[data-copy-state="copied"] { color: #56d8aa; }
-    .simple-copy-state[data-copy-state="attention"] { color: #f2c36b; }
-    .simple-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
-    .simple-permissions, .simple-note { color: #9ba7b4; line-height: 1.6; font-size: 0.8rem !important; }
-    #simple-pairing { margin-top: 16px; border-top: 1px solid #30363d; padding-top: 16px; }
-    #simple-code { width: 100%; }
-    @media (max-width: 850px) { .simple-overview, .simple-apps { grid-template-columns: 1fr; } }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px 12px;
-      border-bottom: 1px solid #30363d;
-      flex-shrink: 0;
-    }
-    .hdr-main { display: flex; flex-direction: column; gap: 2px; }
-    .title { font-size: 1.4rem; font-weight: 700; color: #58a6ff; }
-    .subtitle { font-size: 0.85rem; color: #8b949e; }
-    .services { display: flex; gap: 6px; flex-wrap: wrap; }
-    .pill {
-      display: inline-block;
-      font-family: monospace;
-      font-size: 0.75rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      border: 1px solid #30363d;
-    }
-    .pill-on { color: #3fb950; border-color: #3fb950; }
-    .pill-off { color: #484f58; }
-
-    .content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px 20px 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    .tabs {
-      display: flex;
-      gap: 8px;
-      border-bottom: 1px solid #30363d;
-      padding-bottom: 10px;
-      position: sticky;
-      top: 0;
-      background: #0d1117;
-      z-index: 2;
-    }
-    .tab {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 999px;
-      color: #8b949e;
-      cursor: pointer;
-      font-size: 0.85rem;
-      padding: 7px 14px;
-    }
-    .tab:hover { border-color: #58a6ff; color: #c9d1d9; }
-    .tab.active { background: rgba(56, 139, 253, 0.15); border-color: #58a6ff; color: #58a6ff; }
-    .tab-panel[hidden] { display: none; }
-    .tab-panel { display: flex; flex-direction: column; gap: 16px; }
-    .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 10px;
-      padding: 16px 18px;
-    }
-    .card-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #e6edf3;
-      margin-bottom: 12px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 12px;
-    }
-    .metric {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .metric-label { font-size: 0.75rem; color: #8b949e; }
-    .metric-value { font-size: 1.3rem; font-weight: 600; color: #58a6ff; }
-    .storage-grid { grid-template-columns: repeat(3, 1fr); margin: 12px 0; }
-    .storage-apps { margin-top: 12px; }
-    .storage-value { color: #58a6ff; font-weight: 600; font-family: 'SFMono-Regular', monospace; }
-    .ai-panel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 12px;
-    }
-    .ai-state { color: #e6edf3; font-weight: 700; margin-bottom: 4px; }
-    .ai-controls { margin-top: 12px; display: grid; grid-template-columns: 160px 1fr; gap: 10px; }
-    .config-list {
-      display: grid;
-      grid-template-columns: 120px 1fr;
-      gap: 8px 14px;
-      margin: 0;
-      font-size: 0.85rem;
-    }
-    .config-list dt { color: #6e7681; }
-    .config-list dd { color: #e6edf3; margin: 0; }
-    .config-form { margin-top: 16px; display: grid; gap: 10px; }
-    .section-title { font-size: 0.85rem; color: #e6edf3; margin: 2px 0 4px; }
-    .field { display: grid; gap: 4px; color: #8b949e; font-size: 0.8rem; }
-    .field input, .field select {
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      color: #e6edf3;
-      padding: 7px 9px;
-    }
-    .field-check { display: flex; align-items: center; gap: 8px; color: #c9d1d9; font-size: 0.85rem; }
-    .config-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
-
-    .apps { display: flex; flex-direction: column; gap: 8px; }
-    .app-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-      padding: 10px 12px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-    }
-    .app-name { font-weight: 600; color: #e6edf3; }
-    .app-meta {
-      display: flex; gap: 10px; flex-wrap: wrap;
-      margin-top: 2px;
-      font-size: 0.75rem;
-      color: #8b949e;
-    }
-    .app-info { min-width: min(100%, 320px); flex: 1; }
-    .app-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-    .technical-details { margin-top: 7px; color: #8b949e; font-size: 0.75rem; }
-    .technical-details summary { cursor: pointer; color: #58a6ff; }
-    .btn-ghost {
-      background: transparent;
-      color: #f85149;
-      border: 1px solid #30363d;
-      border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-    .btn-ghost:hover { border-color: #f85149; }
-
-    .log {
-      height: 180px;
-      overflow-y: auto;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 8px;
-      font-family: 'SFMono-Regular', monospace;
-      font-size: 0.8rem;
-      display: flex;
-      flex-direction: column;
-    }
-    .log-line { padding: 2px 0; white-space: pre-wrap; word-break: break-word; }
-    .log-controls { display: flex; align-items: end; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-    .log-controls .field { min-width: 140px; }
-    .log-ok { color: #3fb950; }
-    .log-info { color: #d2a8ff; }
-    .log-dim { color: #8b949e; }
-    .log-err { color: #f85149; }
-
-    .dim { color: #8b949e; font-size: 0.85rem; }
-
-    .hdr-key {
-      margin-top: 4px;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.72rem;
-      cursor: pointer;
-      color: #8b949e;
-      user-select: none;
-    }
-    .hdr-key:hover { color: #58a6ff; }
-    .hdr-key-label { color: #6e7681; }
-    .hdr-key-value { font-family: 'SFMono-Regular', monospace; }
-
-    .badge {
-      display: inline-block;
-      font-size: 0.65rem;
-      font-weight: 600;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-left: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .badge-ok { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
-    .badge-warn { background: rgba(187, 128, 9, 0.18); color: #d29922; }
-    .badge-neutral { background: rgba(110, 118, 129, 0.25); color: #8b949e; }
-    .app-actions { display: flex; gap: 6px; align-items: center; }
-    .modal-wide { max-width: 720px; }
-    .peek-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
-    .peek-tabs button { background: transparent; border: 1px solid #30363d; color: #c9d1d9; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-    .peek-tabs button.active { background: rgba(56, 139, 253, 0.15); border-color: #58a6ff; color: #58a6ff; }
-    .peek-body { max-height: 360px; overflow: auto; background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-family: ui-monospace, monospace; font-size: 12px; }
-    .peek-row { padding: 4px 0; border-bottom: 1px dashed #21262d; }
-    .peek-row:last-child { border-bottom: 0; }
-    .peek-body.saved-data { font-family: inherit; font-size: 14px; }
-    .saved-item { padding: 12px; margin: 8px 0; border: 1px solid #30363d; border-radius: 8px; }
-    .saved-field > strong { text-transform: capitalize; color: #8b949e; }
-    .saved-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0 12px; }
-    .saved-cards { display: grid; gap: 14px; }
-    .saved-cards > .saved-item { margin: 0; padding: 20px; background: #161b22; }
-    .saved-item h3 { margin: 4px 0 14px; font-size: 20px; overflow-wrap: anywhere; }
-    .saved-kind { color: #79c0ff; font-size: 12px; margin: 0 0 8px; }
-    .saved-note { border-left: 3px solid #58a6ff; }
-    .saved-report { border-left: 3px solid #3fb950; }
-    .saved-excerpt { padding: 14px 0 0; border-top: 1px solid #30363d; margin-top: 14px; }
-    .saved-excerpt h4 { font-size: 16px; margin: 0 0 8px; overflow-wrap: anywhere; }
-    .saved-text { line-height: 1.65; }
-    .saved-intro { color: #8b949e; margin: 0 0 18px; }
-    .peek-row pre { white-space: pre-wrap; overflow-wrap: anywhere; }
-    .header-actions { display: flex; gap: 6px; align-items: center; margin-left: auto; }
-    .welcome-list { padding-left: 18px; margin: 6px 0 14px; color: #c9d1d9; line-height: 1.5; }
-    .welcome-list li { margin: 6px 0; }
-    .welcome-list code, .modal-text code { background: rgba(110, 118, 129, 0.2); padding: 1px 5px; border-radius: 3px; font-size: 12px; font-family: ui-monospace, monospace; }
-
-    .mono { font-family: 'SFMono-Regular', monospace; }
-    .mono-wrap { word-break: break-all; }
-
-    .btn-ghost-neutral { color: #d2a8ff; }
-    .btn-ghost-neutral:hover { border-color: #d2a8ff; }
-
-    .modal-backdrop[hidden] { display: none; }
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-    .modal {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 12px;
-      padding: 22px 24px;
-      max-width: 520px;
-      width: calc(100% - 48px);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
-    }
-    .modal-title { font-size: 1.05rem; font-weight: 700; color: #e6edf3; margin-bottom: 4px; }
-    .modal-text { font-size: 0.85rem; color: #8b949e; margin-bottom: 14px; }
-    .modal-info {
-      display: grid;
-      grid-template-columns: 90px 1fr;
-      row-gap: 6px;
-      column-gap: 12px;
-      font-size: 0.82rem;
-      margin-bottom: 14px;
-    }
-    .modal-info dt { color: #6e7681; }
-    .modal-info dd { color: #e6edf3; margin: 0; }
-    .modal-warn {
-      font-size: 0.8rem;
-      color: #d29922;
-      background: rgba(187, 128, 9, 0.1);
-      border: 1px solid rgba(187, 128, 9, 0.4);
-      padding: 8px 10px;
-      border-radius: 6px;
-      margin-bottom: 14px;
-    }
-    .modal-actions {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-    .btn {
-      padding: 8px 14px;
-      border-radius: 6px;
-      border: 1px solid #30363d;
-      background: #21262d;
-      color: #e6edf3;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-    .btn:hover { border-color: #58a6ff; }
-    .btn-deny { color: #f85149; }
-    .btn-deny:hover { border-color: #f85149; background: rgba(248, 81, 73, 0.08); }
-    .btn-approve-once { color: #d2a8ff; }
-    .btn-approve {
-      background: #238636; border-color: #2ea043; color: #fff;
-    }
-    .btn-approve:hover { background: #2ea043; border-color: #3fb950; }
-    .modal-pending { margin-top: 10px; text-align: right; }
-  `
-  document.head.appendChild(style)
 }

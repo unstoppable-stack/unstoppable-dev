@@ -55,7 +55,7 @@ export default function Home() {
               <p className="mt-4 text-sm leading-6 text-text-muted">Available as experimental source. Verified synced copies work today; full backup, retention, and recovery are still unfinished.</p>
             </div>
             <figure className="rounded-2xl border border-border bg-background p-3">
-              <Image unoptimized src="/examples/personal-node-home.png" alt="Personal Node Simple Home showing Notebook and Briefing connected with their latest shared data copied" width={2200} height={1376} className="h-auto w-full rounded-xl" />
+              <Image unoptimized src="/examples/personal-node-home.png" alt="Personal Node personal cloud console showing Notebook and Briefing connected, verified copies, and the selected Briefing app inspector" width={1944} height={1174} className="h-auto w-full rounded-xl" />
               <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual desktop alpha: Notebook and Briefing tested on one computer.</figcaption>
             </figure>
           </div>

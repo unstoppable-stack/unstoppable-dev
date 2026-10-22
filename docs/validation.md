@@ -27,6 +27,31 @@ See [CLI testing](../packages/cli/README.md#development) for platform-specific
 E2E commands. Mock runs verify wiring and UI flows; they do not validate model
 loading, native cancellation/reuse, or offline inference.
 
+## UI design acceptance
+
+The [Unstoppable UI guide](ui-design.md) defines the shared visual system.
+Canonical tokens and desktop primitives live in `packages/agent-pack/src/ui/`;
+`sync-stack-assets.mjs --check` detects drift in the CLI, Personal Node, and
+commerce copies. Generated app copies remain app-owned.
+
+After installing CLI development dependencies and Google Chrome:
+
+```bash
+pnpm --dir packages/cli test:ui
+```
+
+This serves freshly generated base and feature-rich desktop screens plus the
+commerce example with a simulated worker bridge. It checks section navigation,
+KV controls, AI cancellation wiring, and screenshots in light/dark appearances
+at 1100, 780, and 390 px. It does not exercise native transport or inference.
+The CLI suite also checks palette contrast, assistant design guidance for all
+four supported tools, and generated mobile theme syntax. Mobile remains
+experimental; these checks do not establish physical-device acceptance.
+
+For the commerce example's real Electron, offline cart/order persistence, and
+peer receipt sharing, run `node scripts/ecommerce-example-e2e.mjs`. Its default
+uses an isolated local DHT and does not validate native AI.
+
 ## Release artifacts and native acceptance
 
 The P2P correctness/API work has a standalone installed-consumer gate:
@@ -122,6 +147,22 @@ report as readable content without switching to Advanced.
 Public discovery must be reachable; this is a same-computer acceptance flow,
 not a signed-installer or physical-device gate. Add `--keep-open` to inspect
 both connected apps after success; Ctrl+C performs cleanup.
+
+The renderer's interaction and layout checks can also run independently of
+public discovery or the daemon:
+
+```bash
+node scripts/personal-node-desktop-ui.mjs /tmp/personal-node-desktop-ui
+```
+
+This uses installed Google Chrome (`DESKTOP_UI_BROWSER` can select another
+installed Playwright browser channel) and a simulated worker. It verifies
+sidebar navigation, selected-app controls, bulk pause/resume payloads, pairing,
+Advanced AI grants, settings save, import/export confirmations, approvals,
+storage-limit validation, preserved keyboard focus and edits during snapshots,
+escaped app names, failure handling, and light/dark layouts at 1100, 780, and
+390 pixels. It saves screenshots. It does not prove native transport or inference.
+
 
 ## Assistant plugins
 

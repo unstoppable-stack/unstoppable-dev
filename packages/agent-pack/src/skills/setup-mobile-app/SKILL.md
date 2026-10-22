@@ -5,6 +5,12 @@ description: Extend an experimental Expo app while preserving its React Native S
 
 # Extend an Expo target
 
+For UI work, read the workspace's `.unstoppable/guidance/core/design-guide.md`
+and `ui-tokens.json`. US-related apps use the Personal Node desktop visual
+system by default: graphite/cyan tokens, compact functional layouts, truthful
+status, and accessible light/dark appearance. Preserve explicit user design
+choices and existing workflows; use native controls and touch spacing on mobile.
+
 Read .unstoppable/project.json, app.json, metro.config.js, package scripts, app/index.tsx and bare/index.js. The internal CLI can scaffold Expo; inspect its catalog first. The public desktop preview does not imply mobile support.
 
 Extend UI/domain code in React Native and networking/storage in the separate Bare worklet. QVAC belongs in its React Native host, not inside the app networking worklet. Use the installed SDK types rather than desktop session APIs; Expo does not consume the common local AI runtime yet.

@@ -47,7 +47,8 @@
     "test:e2e:ci:mobile": "QVAC_MOCK=1 tsx e2e/test-scaffold.ts --platform expo-mobile --level 2 --skip-variant expo-mobile/local-ai",
     "test:e2e:ci:cli": "QVAC_MOCK=1 tsx e2e/test-scaffold.ts --platform node-cli --level 3",
     "test:runtime": "node --test ../runtime-ai/test/*.test.js",
-    "assets:check": "node ../../scripts/sync-stack-assets.mjs --check && node ../../scripts/check-agent-pack.mjs"
+    "assets:check": "node ../../scripts/sync-stack-assets.mjs --check && node ../../scripts/check-agent-pack.mjs",
+    "test:ui": "tsx e2e/test-ui-design.ts"
   },
   "dependencies": {
     "chalk": "^5.3.0",

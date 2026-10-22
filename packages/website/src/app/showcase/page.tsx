@@ -34,7 +34,7 @@ export default function ShowcasePage() {
             <Link href="/getting-started/personal-node" className="button-primary">Run the Personal Node example <ArrowRight aria-hidden="true" className="h-4 w-4" /></Link>
             <p className="mt-5 text-sm leading-6 text-text-muted">Independent command-line apps with a real desktop dashboard. Tested on one computer; cross-device acceptance and full backup/recovery remain unfinished.</p>
           </div>
-          <Image unoptimized src="/examples/personal-node-report.png" alt="Briefing report displayed as a readable card in Personal Node" width={2200} height={1376} className="h-auto w-full rounded-xl border border-border" />
+          <Image unoptimized src="/examples/personal-node-report.png" alt="Synced Briefing report displayed in the redesigned Personal Node saved-data browser" width={1944} height={1174} className="h-auto w-full rounded-xl border border-border" />
         </div>
       </section>
       <section className="border-b border-border">
@@ -49,7 +49,7 @@ export default function ShowcasePage() {
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
         <figure className="mx-auto max-w-2xl">
           <Image unoptimized src="/examples/ecommerce-assistant.png" alt="Actual Local Goods desktop window showing products, cart, and a saved demo order" width={1100} height={1600} className="h-auto w-full rounded-xl border border-border" />
-          <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual Local Goods capture from the scoped-RPC desktop regression on 16 October 2026. This run did not load an AI model. See the README for validation scope and remaining acceptance checks.</figcaption>
+          <figcaption className="mt-3 text-xs leading-5 text-text-muted">Actual Local Goods capture with the updated interface from the scoped-RPC desktop regression on 22 October 2026. This run did not load an AI model. See the README for validation scope and remaining acceptance checks.</figcaption>
         </figure>
         <section className="section" aria-labelledby="outcome-title">
           <h2 id="outcome-title" className="section-title">Example capabilities</h2>

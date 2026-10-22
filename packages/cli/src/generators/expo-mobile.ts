@@ -1,3 +1,4 @@
+import { mobileThemeFile } from './ui.js'
 import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
 import type { GeneratedFile, GeneratorOptions } from './types.js'
 import {
@@ -19,6 +20,7 @@ export function generateExpoMobile(opts: GeneratorOptions): GeneratedFile[] {
     assetsKeep(),
     appLayout(opts),
     appIndex(opts),
+    mobileThemeFile(),
     appNotFound(opts),
     pluginNdkVersion(),
     pluginArchitecture(),
@@ -122,6 +124,7 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
           slug: opts.projectName,
           version: '1.0.0',
           orientation: 'portrait',
+          userInterfaceStyle: 'automatic',
           icon: './assets/icon.png',
           scheme: opts.projectName,
           newArchEnabled: true,
@@ -136,7 +139,7 @@ function appJson(opts: GeneratorOptions): GeneratedFile {
             package: `com.unstoppable.${opts.projectName.replace(/-/g, '')}`,
             adaptiveIcon: {
               foregroundImage: './assets/icon.png',
-              backgroundColor: '#0a1628',
+              backgroundColor: '#11171b',
             },
             edgeToEdgeEnabled: true,
           },
@@ -339,12 +342,15 @@ function appLayout(_opts: GeneratorOptions): GeneratedFile {
   return {
     path: 'app/_layout.tsx',
     content: `import { Stack } from 'expo-router'
+import { useColorScheme } from 'react-native'
+import { darkTheme, lightTheme } from '../src/theme'
 import { WorkletProvider } from '../src/contexts/WorkletContext'
 
 export default function Layout() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
   return (
     <WorkletProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
     </WorkletProvider>
   )
 }
@@ -384,6 +390,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     'Text',
     'View',
     'StyleSheet',
+    'useColorScheme',
     'SafeAreaView',
     'ScrollView',
     'Keyboard',
@@ -396,7 +403,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     rnComponents.push('Switch')
   }
 
-  const reactImports = ['useState']
+  const reactImports = ['useState', 'useMemo']
   if (hasNodeSync) reactImports.push('useEffect')
   if (hasQvac) reactImports.push('useRef')
 
@@ -404,6 +411,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     `import React, { ${reactImports.join(', ')} } from 'react'`,
     `import { ${rnComponents.join(', ')} } from 'react-native'`,
     `import { useWorklet } from '../src/contexts/WorkletContext'`,
+    `import { lightTheme, darkTheme, type ThemeColors } from '../src/theme'`,
   ]
   if (hasQvac) {
     // QVAC inference imports MUST live in the React Native runtime — the
@@ -662,7 +670,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           <TextInput
             style={styles.input}
             placeholder="Key"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvKey}
             onChangeText={setKvKey}
             testID="kv-key-input"
@@ -670,7 +678,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           <TextInput
             style={styles.input}
             placeholder="Value"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvValue}
             onChangeText={setKvValue}
             testID="kv-value-input"
@@ -680,7 +688,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
               <Text style={styles.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={kvFetch} testID="kv-fetch-btn">
-              <Text style={styles.btnText}>Fetch</Text>
+              <Text style={styles.btnOutlineText}>Fetch</Text>
             </TouchableOpacity>
           </View>
           {kvResult !== null && (
@@ -721,7 +729,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           <Text style={styles.sectionTitle}>AI Assistant</Text>
           <Text style={styles.hint}>
             ${DEFAULT_LLM_LABEL} · ~${DEFAULT_LLM_SIZE_MB}MB download on first run, cached after.{'\\n'}
-            <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
+            <Text style={{ color: colors.amber }}>Physical device required</Text>{' '}
             — QVAC inference does not run on the iOS Simulator or Android
             Emulator. Set{' '}
             <Text style={{ fontFamily: 'monospace' }}>EXPO_PUBLIC_QVAC_MOCK=1</Text>{' '}
@@ -743,8 +751,8 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
                 <Switch
                   value={aiDevice === 'gpu'}
                   onValueChange={(on) => setAiDevice(on ? 'gpu' : 'cpu')}
-                  trackColor={{ false: '#3a3a3a', true: '#1f6feb' }}
-                  thumbColor={aiDevice === 'gpu' ? '#58a6ff' : '#888'}
+                  trackColor={{ false: colors.line, true: colors.accent }}
+                  thumbColor={aiDevice === 'gpu' ? colors.accent : colors.muted}
                   testID="ai-device-switch"
                   accessibilityLabel="Toggle GPU inference"
                 />
@@ -761,7 +769,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
           )}
           {aiStatus === 'loading' && (
             <View style={styles.row}>
-              <ActivityIndicator color="#58a6ff" />
+              <ActivityIndicator color={colors.accent} />
               <Text style={[styles.mono, { marginLeft: 8 }]}>
                 {aiProgress ?? 'Loading model...'}
               </Text>
@@ -794,7 +802,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
                   ))}
                 {thinking && (
                   <View style={[styles.bubble, styles.bubbleBot]}>
-                    <ActivityIndicator size="small" color="#58a6ff" />
+                    <ActivityIndicator size="small" color={colors.accent} />
                   </View>
                 )}
               </ScrollView>
@@ -802,7 +810,7 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
                   placeholder="Type a message..."
-                  placeholderTextColor="#555"
+                  placeholderTextColor={colors.muted}
                   value={chatInput}
                   onChangeText={setChatInput}
                   onSubmitEditing={sendMessage}
@@ -844,6 +852,8 @@ function appIndex(opts: GeneratorOptions): GeneratedFile {
     content: `${topImports.join('\n')}
 
 export default function Home() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
+  const styles = useMemo(() => createStyles(colors), [colors])
   ${hooks.join('\n  ')}
   ${handlers.join('\n')}
 
@@ -851,8 +861,9 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
+          <View style={styles.brandRow}><Text style={styles.brandMark}>u//</Text><Text style={styles.eyebrow}>UNSTOPPABLE / MOBILE ALPHA</Text></View>
           <Text style={styles.title}>${opts.projectName}</Text>
-          <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
+          <Text style={styles.subtitle}>Local data. Optional peer sync.</Text>
         </View>
         ${sections.join('\n        ')}
         ${docsSection}
@@ -861,50 +872,55 @@ export default function Home() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d1117' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  title: { fontSize: 26, fontWeight: '700', color: '#58a6ff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#8b949e', marginBottom: 4 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  brandMark: { color: colors.accent, borderWidth: 1, borderColor: colors.accent, borderRadius: 3, padding: 6, fontSize: 14, fontWeight: '700' },
+  eyebrow: { fontSize: 10, letterSpacing: 1, color: colors.muted, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: colors.muted, marginBottom: 4 },
   section: {
-    backgroundColor: '#161b22',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 7,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
-  mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
-  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  mono: { fontSize: 13, color: colors.muted, fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: colors.muted, marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: colors.red, lineHeight: 18 },
   input: {
-    backgroundColor: '#0d1117',
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: 5,
     padding: 10,
-    color: '#e6edf3',
+    color: colors.text,
     marginBottom: 8,
     fontSize: 14,
   },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btn: {
     flex: 1,
-    backgroundColor: '#1f6feb',
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 5,
     padding: 12,
     alignItems: 'center',
   },
-  btnOutline: { backgroundColor: '#21262d', borderWidth: 1, borderColor: '#30363d' },
+  btnOutline: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   btnFull: { flex: 0, paddingHorizontal: 24, alignSelf: 'flex-start' },
   btnSend: { flex: 0, paddingHorizontal: 16, paddingVertical: 10 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
-  result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
+  btnOutlineText: { color: colors.text, fontWeight: '600', fontSize: 14 },
+  btnText: { color: colors.accentText, fontWeight: '600', fontSize: 14 },
+  result: { marginTop: 8, fontSize: 13, color: colors.green, fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
-  chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  chatHint: { color: colors.muted, fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
   deviceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -913,22 +929,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: colors.line,
     gap: 8,
   },
-  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
-  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
-  bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
-  bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
+  deviceLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  bubble: { borderRadius: 7, padding: 10, marginBottom: 6, maxWidth: '85%' },
+  bubbleUser: { backgroundColor: colors.tint, alignSelf: 'flex-end' },
   bubbleBot: {
-    backgroundColor: '#21262d',
+    backgroundColor: colors.surface,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  bubbleText: { color: '#e6edf3', fontSize: 14 },
-  link: { color: '#58a6ff', fontSize: 14, marginBottom: 8 },
-})
+  bubbleText: { color: colors.text, fontSize: 14 },
+  link: { color: colors.accent, fontSize: 14, marginBottom: 8 },
+  })
+}
 `,
   }
 }

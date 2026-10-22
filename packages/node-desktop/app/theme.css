@@ -1,0 +1,17 @@
+/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}

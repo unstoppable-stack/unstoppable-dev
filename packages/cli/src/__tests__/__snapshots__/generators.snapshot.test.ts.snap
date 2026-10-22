@@ -88,6 +88,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "slug": "snap-test",
     "version": "1.0.0",
     "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
     "newArchEnabled": true,
@@ -124,7 +125,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "package": "com.unstoppable.snaptest",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0a1628"
+        "backgroundColor": "#11171b"
       },
       "edgeToEdgeEnabled": true
     }
@@ -134,12 +135,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   {
     "content": "import { Stack } from 'expo-router'
+import { useColorScheme } from 'react-native'
+import { darkTheme, lightTheme } from '../src/theme'
 import { WorkletProvider } from '../src/contexts/WorkletContext'
 
 export default function Layout() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
   return (
     <WorkletProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
     </WorkletProvider>
   )
 }
@@ -156,11 +160,14 @@ export default function NotFound() {
     "path": "app/+not-found.tsx",
   },
   {
-    "content": "import React, { useState } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
+    "content": "import React, { useState, useMemo } from 'react'
+import { Text, View, StyleSheet, useColorScheme, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
+import { lightTheme, darkTheme, type ThemeColors } from '../src/theme'
 
 export default function Home() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
+  const styles = useMemo(() => createStyles(colors), [colors])
   const { ready, rpcRequest } = useWorklet()
   const [kvKey, setKvKey] = useState('')
   const [kvValue, setKvValue] = useState('')
@@ -199,8 +206,9 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
+          <View style={styles.brandRow}><Text style={styles.brandMark}>u//</Text><Text style={styles.eyebrow}>UNSTOPPABLE / MOBILE ALPHA</Text></View>
           <Text style={styles.title}>snap-test</Text>
-          <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
+          <Text style={styles.subtitle}>Local data. Optional peer sync.</Text>
         </View>
         
         <View style={styles.section} testID="p2p-section">
@@ -216,7 +224,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Key"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvKey}
             onChangeText={setKvKey}
             testID="kv-key-input"
@@ -224,7 +232,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Value"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvValue}
             onChangeText={setKvValue}
             testID="kv-value-input"
@@ -234,7 +242,7 @@ export default function Home() {
               <Text style={styles.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={kvFetch} testID="kv-fetch-btn">
-              <Text style={styles.btnText}>Fetch</Text>
+              <Text style={styles.btnOutlineText}>Fetch</Text>
             </TouchableOpacity>
           </View>
           {kvResult !== null && (
@@ -256,50 +264,55 @@ export default function Home() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d1117' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  title: { fontSize: 26, fontWeight: '700', color: '#58a6ff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#8b949e', marginBottom: 4 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  brandMark: { color: colors.accent, borderWidth: 1, borderColor: colors.accent, borderRadius: 3, padding: 6, fontSize: 14, fontWeight: '700' },
+  eyebrow: { fontSize: 10, letterSpacing: 1, color: colors.muted, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: colors.muted, marginBottom: 4 },
   section: {
-    backgroundColor: '#161b22',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 7,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
-  mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
-  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  mono: { fontSize: 13, color: colors.muted, fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: colors.muted, marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: colors.red, lineHeight: 18 },
   input: {
-    backgroundColor: '#0d1117',
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: 5,
     padding: 10,
-    color: '#e6edf3',
+    color: colors.text,
     marginBottom: 8,
     fontSize: 14,
   },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btn: {
     flex: 1,
-    backgroundColor: '#1f6feb',
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 5,
     padding: 12,
     alignItems: 'center',
   },
-  btnOutline: { backgroundColor: '#21262d', borderWidth: 1, borderColor: '#30363d' },
+  btnOutline: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   btnFull: { flex: 0, paddingHorizontal: 24, alignSelf: 'flex-start' },
   btnSend: { flex: 0, paddingHorizontal: 16, paddingVertical: 10 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
-  result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
+  btnOutlineText: { color: colors.text, fontWeight: '600', fontSize: 14 },
+  btnText: { color: colors.accentText, fontWeight: '600', fontSize: 14 },
+  result: { marginTop: 8, fontSize: 13, color: colors.green, fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
-  chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  chatHint: { color: colors.muted, fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
   deviceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,22 +321,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: colors.line,
     gap: 8,
   },
-  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
-  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
-  bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
-  bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
+  deviceLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  bubble: { borderRadius: 7, padding: 10, marginBottom: 6, maxWidth: '85%' },
+  bubbleUser: { backgroundColor: colors.tint, alignSelf: 'flex-end' },
   bubbleBot: {
-    backgroundColor: '#21262d',
+    backgroundColor: colors.surface,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  bubbleText: { color: '#e6edf3', fontSize: 14 },
-  link: { color: '#58a6ff', fontSize: 14, marginBottom: 8 },
-})
+  bubbleText: { color: colors.text, fontSize: 14 },
+  link: { color: colors.accent, fontSize: 14, marginBottom: 8 },
+  })
+}
 ",
     "path": "app/index.tsx",
   },
@@ -683,6 +697,14 @@ will load on simulators but \`Load Assistant\` blocks GPU mode there.
 Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
 test the chat UI flow without real inference.
 
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`src/theme.ts\` and the native screen styles; mobile remains experimental.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
+
 ## Project Structure
 
 See \`planning/\` for architecture decisions and feature plans.
@@ -781,6 +803,40 @@ export function useWorklet() {
 }
 ",
     "path": "src/contexts/WorkletContext.tsx",
+  },
+  {
+    "content": "// Unstoppable Control palette. App-owned; keep light/dark roles aligned.
+export const lightTheme = {
+  "bg": "#f4f7f9",
+  "surface": "#ffffff",
+  "sidebar": "#e8eef2",
+  "text": "#152c35",
+  "muted": "#526a75",
+  "line": "#d3dfe4",
+  "accent": "#00778a",
+  "accentText": "#ffffff",
+  "tint": "#e0f3f5",
+  "green": "#237349",
+  "amber": "#805b0e",
+  "red": "#b33037"
+}
+export const darkTheme = {
+  "bg": "#11171b",
+  "surface": "#182126",
+  "sidebar": "#0c1216",
+  "text": "#e1edf0",
+  "muted": "#9aafb8",
+  "line": "#2b3940",
+  "accent": "#58d9e9",
+  "accentText": "#092129",
+  "tint": "#17343c",
+  "green": "#82cea2",
+  "amber": "#ebc274",
+  "red": "#ff999c"
+}
+export type ThemeColors = typeof lightTheme
+",
+    "path": "src/theme.ts",
   },
 ]
 `;
@@ -893,6 +949,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "slug": "snap-test",
     "version": "1.0.0",
     "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
     "newArchEnabled": true,
@@ -935,7 +992,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "package": "com.unstoppable.snaptest",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0a1628"
+        "backgroundColor": "#11171b"
       },
       "edgeToEdgeEnabled": true
     }
@@ -945,12 +1002,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   {
     "content": "import { Stack } from 'expo-router'
+import { useColorScheme } from 'react-native'
+import { darkTheme, lightTheme } from '../src/theme'
 import { WorkletProvider } from '../src/contexts/WorkletContext'
 
 export default function Layout() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
   return (
     <WorkletProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
     </WorkletProvider>
   )
 }
@@ -967,13 +1027,16 @@ export default function NotFound() {
     "path": "app/+not-found.tsx",
   },
   {
-    "content": "import React, { useState, useRef } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
+    "content": "import React, { useState, useMemo, useRef } from 'react'
+import { Text, View, StyleSheet, useColorScheme, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput, ActivityIndicator, Switch } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
+import { lightTheme, darkTheme, type ThemeColors } from '../src/theme'
 import { downloadAsset, loadModel, completion, unloadModel, QWEN3_5_0_8B_MULTIMODAL_Q4_K_M, VERBOSITY } from '@qvac/sdk'
 import * as Device from 'expo-device'
 
 export default function Home() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
+  const styles = useMemo(() => createStyles(colors), [colors])
   const { ready, rpcRequest } = useWorklet()
   const [kvKey, setKvKey] = useState('')
   const [kvValue, setKvValue] = useState('')
@@ -1138,8 +1201,9 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
+          <View style={styles.brandRow}><Text style={styles.brandMark}>u//</Text><Text style={styles.eyebrow}>UNSTOPPABLE / MOBILE ALPHA</Text></View>
           <Text style={styles.title}>snap-test</Text>
-          <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
+          <Text style={styles.subtitle}>Local data. Optional peer sync.</Text>
         </View>
         
         <View style={styles.section} testID="p2p-section">
@@ -1155,7 +1219,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Key"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvKey}
             onChangeText={setKvKey}
             testID="kv-key-input"
@@ -1163,7 +1227,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Value"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvValue}
             onChangeText={setKvValue}
             testID="kv-value-input"
@@ -1173,7 +1237,7 @@ export default function Home() {
               <Text style={styles.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={kvFetch} testID="kv-fetch-btn">
-              <Text style={styles.btnText}>Fetch</Text>
+              <Text style={styles.btnOutlineText}>Fetch</Text>
             </TouchableOpacity>
           </View>
           {kvResult !== null && (
@@ -1185,7 +1249,7 @@ export default function Home() {
           <Text style={styles.sectionTitle}>AI Assistant</Text>
           <Text style={styles.hint}>
             Qwen 3.5 0.8B · ~532MB download on first run, cached after.{'\\n'}
-            <Text style={{ color: '#f0883e' }}>Physical device required</Text>{' '}
+            <Text style={{ color: colors.amber }}>Physical device required</Text>{' '}
             — QVAC inference does not run on the iOS Simulator or Android
             Emulator. Set{' '}
             <Text style={{ fontFamily: 'monospace' }}>EXPO_PUBLIC_QVAC_MOCK=1</Text>{' '}
@@ -1207,8 +1271,8 @@ export default function Home() {
                 <Switch
                   value={aiDevice === 'gpu'}
                   onValueChange={(on) => setAiDevice(on ? 'gpu' : 'cpu')}
-                  trackColor={{ false: '#3a3a3a', true: '#1f6feb' }}
-                  thumbColor={aiDevice === 'gpu' ? '#58a6ff' : '#888'}
+                  trackColor={{ false: colors.line, true: colors.accent }}
+                  thumbColor={aiDevice === 'gpu' ? colors.accent : colors.muted}
                   testID="ai-device-switch"
                   accessibilityLabel="Toggle GPU inference"
                 />
@@ -1225,7 +1289,7 @@ export default function Home() {
           )}
           {aiStatus === 'loading' && (
             <View style={styles.row}>
-              <ActivityIndicator color="#58a6ff" />
+              <ActivityIndicator color={colors.accent} />
               <Text style={[styles.mono, { marginLeft: 8 }]}>
                 {aiProgress ?? 'Loading model...'}
               </Text>
@@ -1258,7 +1322,7 @@ export default function Home() {
                   ))}
                 {thinking && (
                   <View style={[styles.bubble, styles.bubbleBot]}>
-                    <ActivityIndicator size="small" color="#58a6ff" />
+                    <ActivityIndicator size="small" color={colors.accent} />
                   </View>
                 )}
               </ScrollView>
@@ -1266,7 +1330,7 @@ export default function Home() {
                 <TextInput
                   style={[styles.input, { flex: 1, marginBottom: 0 }]}
                   placeholder="Type a message..."
-                  placeholderTextColor="#555"
+                  placeholderTextColor={colors.muted}
                   value={chatInput}
                   onChangeText={setChatInput}
                   onSubmitEditing={sendMessage}
@@ -1305,50 +1369,55 @@ export default function Home() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d1117' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  title: { fontSize: 26, fontWeight: '700', color: '#58a6ff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#8b949e', marginBottom: 4 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  brandMark: { color: colors.accent, borderWidth: 1, borderColor: colors.accent, borderRadius: 3, padding: 6, fontSize: 14, fontWeight: '700' },
+  eyebrow: { fontSize: 10, letterSpacing: 1, color: colors.muted, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: colors.muted, marginBottom: 4 },
   section: {
-    backgroundColor: '#161b22',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 7,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
-  mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
-  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  mono: { fontSize: 13, color: colors.muted, fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: colors.muted, marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: colors.red, lineHeight: 18 },
   input: {
-    backgroundColor: '#0d1117',
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: 5,
     padding: 10,
-    color: '#e6edf3',
+    color: colors.text,
     marginBottom: 8,
     fontSize: 14,
   },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btn: {
     flex: 1,
-    backgroundColor: '#1f6feb',
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 5,
     padding: 12,
     alignItems: 'center',
   },
-  btnOutline: { backgroundColor: '#21262d', borderWidth: 1, borderColor: '#30363d' },
+  btnOutline: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   btnFull: { flex: 0, paddingHorizontal: 24, alignSelf: 'flex-start' },
   btnSend: { flex: 0, paddingHorizontal: 16, paddingVertical: 10 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
-  result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
+  btnOutlineText: { color: colors.text, fontWeight: '600', fontSize: 14 },
+  btnText: { color: colors.accentText, fontWeight: '600', fontSize: 14 },
+  result: { marginTop: 8, fontSize: 13, color: colors.green, fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
-  chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  chatHint: { color: colors.muted, fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
   deviceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1357,22 +1426,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: colors.line,
     gap: 8,
   },
-  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
-  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
-  bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
-  bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
+  deviceLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  bubble: { borderRadius: 7, padding: 10, marginBottom: 6, maxWidth: '85%' },
+  bubbleUser: { backgroundColor: colors.tint, alignSelf: 'flex-end' },
   bubbleBot: {
-    backgroundColor: '#21262d',
+    backgroundColor: colors.surface,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  bubbleText: { color: '#e6edf3', fontSize: 14 },
-  link: { color: '#58a6ff', fontSize: 14, marginBottom: 8 },
-})
+  bubbleText: { color: colors.text, fontSize: 14 },
+  link: { color: colors.accent, fontSize: 14, marginBottom: 8 },
+  })
+}
 ",
     "path": "app/index.tsx",
   },
@@ -1744,6 +1814,14 @@ will load on simulators but \`Load Assistant\` blocks GPU mode there.
 Toggle to CPU mode to experiment, or set \`EXPO_PUBLIC_QVAC_MOCK=1\` to
 test the chat UI flow without real inference.
 
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`src/theme.ts\` and the native screen styles; mobile remains experimental.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
+
 ## Project Structure
 
 See \`planning/\` for architecture decisions and feature plans.
@@ -1842,6 +1920,40 @@ export function useWorklet() {
 }
 ",
     "path": "src/contexts/WorkletContext.tsx",
+  },
+  {
+    "content": "// Unstoppable Control palette. App-owned; keep light/dark roles aligned.
+export const lightTheme = {
+  "bg": "#f4f7f9",
+  "surface": "#ffffff",
+  "sidebar": "#e8eef2",
+  "text": "#152c35",
+  "muted": "#526a75",
+  "line": "#d3dfe4",
+  "accent": "#00778a",
+  "accentText": "#ffffff",
+  "tint": "#e0f3f5",
+  "green": "#237349",
+  "amber": "#805b0e",
+  "red": "#b33037"
+}
+export const darkTheme = {
+  "bg": "#11171b",
+  "surface": "#182126",
+  "sidebar": "#0c1216",
+  "text": "#e1edf0",
+  "muted": "#9aafb8",
+  "line": "#2b3940",
+  "accent": "#58d9e9",
+  "accentText": "#092129",
+  "tint": "#17343c",
+  "green": "#82cea2",
+  "amber": "#ebc274",
+  "red": "#ff999c"
+}
+export type ThemeColors = typeof lightTheme
+",
+    "path": "src/theme.ts",
   },
 ]
 `;
@@ -1942,6 +2054,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "slug": "snap-test",
     "version": "1.0.0",
     "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
     "newArchEnabled": true,
@@ -1978,7 +2091,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "package": "com.unstoppable.snaptest",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
-        "backgroundColor": "#0a1628"
+        "backgroundColor": "#11171b"
       },
       "edgeToEdgeEnabled": true
     }
@@ -1988,12 +2101,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   {
     "content": "import { Stack } from 'expo-router'
+import { useColorScheme } from 'react-native'
+import { darkTheme, lightTheme } from '../src/theme'
 import { WorkletProvider } from '../src/contexts/WorkletContext'
 
 export default function Layout() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
   return (
     <WorkletProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }} />
     </WorkletProvider>
   )
 }
@@ -2010,11 +2126,14 @@ export default function NotFound() {
     "path": "app/+not-found.tsx",
   },
   {
-    "content": "import React, { useState, useEffect } from 'react'
-import { Text, View, StyleSheet, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
+    "content": "import React, { useState, useMemo, useEffect } from 'react'
+import { Text, View, StyleSheet, useColorScheme, SafeAreaView, ScrollView, Keyboard, TouchableOpacity, Linking, TextInput } from 'react-native'
 import { useWorklet } from '../src/contexts/WorkletContext'
+import { lightTheme, darkTheme, type ThemeColors } from '../src/theme'
 
 export default function Home() {
+  const colors = useColorScheme() === 'dark' ? darkTheme : lightTheme
+  const styles = useMemo(() => createStyles(colors), [colors])
   const { ready, rpcRequest } = useWorklet()
   const [kvKey, setKvKey] = useState('')
   const [kvValue, setKvValue] = useState('')
@@ -2071,8 +2190,9 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="home-screen">
         <View style={styles.header} testID="app-header">
+          <View style={styles.brandRow}><Text style={styles.brandMark}>u//</Text><Text style={styles.eyebrow}>UNSTOPPABLE / MOBILE ALPHA</Text></View>
           <Text style={styles.title}>snap-test</Text>
-          <Text style={styles.subtitle}>Unstoppable Stack · Expo Mobile</Text>
+          <Text style={styles.subtitle}>Local data. Optional peer sync.</Text>
         </View>
         
         <View style={styles.section} testID="p2p-section">
@@ -2088,7 +2208,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Key"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvKey}
             onChangeText={setKvKey}
             testID="kv-key-input"
@@ -2096,7 +2216,7 @@ export default function Home() {
           <TextInput
             style={styles.input}
             placeholder="Value"
-            placeholderTextColor="#555"
+            placeholderTextColor={colors.muted}
             value={kvValue}
             onChangeText={setKvValue}
             testID="kv-value-input"
@@ -2106,7 +2226,7 @@ export default function Home() {
               <Text style={styles.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={kvFetch} testID="kv-fetch-btn">
-              <Text style={styles.btnText}>Fetch</Text>
+              <Text style={styles.btnOutlineText}>Fetch</Text>
             </TouchableOpacity>
           </View>
           {kvResult !== null && (
@@ -2144,50 +2264,55 @@ export default function Home() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0d1117' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   scroll: { padding: 20, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  title: { fontSize: 26, fontWeight: '700', color: '#58a6ff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#8b949e', marginBottom: 4 },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  brandMark: { color: colors.accent, borderWidth: 1, borderColor: colors.accent, borderRadius: 3, padding: 6, fontSize: 14, fontWeight: '700' },
+  eyebrow: { fontSize: 10, letterSpacing: 1, color: colors.muted, fontWeight: '600' },
+  title: { fontSize: 24, fontWeight: '600', color: colors.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: colors.muted, marginBottom: 4 },
   section: {
-    backgroundColor: '#161b22',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 7,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#e6edf3', marginBottom: 12 },
-  mono: { fontSize: 13, color: '#8b949e', fontFamily: 'monospace', marginBottom: 4 },
-  hint: { fontSize: 12, color: '#8b949e', marginBottom: 10, lineHeight: 16 },
-  error: { fontSize: 13, color: '#f85149', lineHeight: 18 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+  mono: { fontSize: 13, color: colors.muted, fontFamily: 'monospace', marginBottom: 4 },
+  hint: { fontSize: 12, color: colors.muted, marginBottom: 10, lineHeight: 16 },
+  error: { fontSize: 13, color: colors.red, lineHeight: 18 },
   input: {
-    backgroundColor: '#0d1117',
+    backgroundColor: colors.bg,
     borderWidth: 1,
-    borderColor: '#30363d',
-    borderRadius: 8,
+    borderColor: colors.line,
+    borderRadius: 5,
     padding: 10,
-    color: '#e6edf3',
+    color: colors.text,
     marginBottom: 8,
     fontSize: 14,
   },
   row: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   btn: {
     flex: 1,
-    backgroundColor: '#1f6feb',
-    borderRadius: 8,
+    backgroundColor: colors.accent,
+    borderRadius: 5,
     padding: 12,
     alignItems: 'center',
   },
-  btnOutline: { backgroundColor: '#21262d', borderWidth: 1, borderColor: '#30363d' },
+  btnOutline: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
   btnFull: { flex: 0, paddingHorizontal: 24, alignSelf: 'flex-start' },
   btnSend: { flex: 0, paddingHorizontal: 16, paddingVertical: 10 },
   btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
-  result: { marginTop: 8, fontSize: 13, color: '#3fb950', fontFamily: 'monospace' },
+  btnOutlineText: { color: colors.text, fontWeight: '600', fontSize: 14 },
+  btnText: { color: colors.accentText, fontWeight: '600', fontSize: 14 },
+  result: { marginTop: 8, fontSize: 13, color: colors.green, fontFamily: 'monospace' },
   chatList: { maxHeight: 220, marginBottom: 10 },
-  chatHint: { color: '#555', fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
+  chatHint: { color: colors.muted, fontSize: 14, fontStyle: 'italic', textAlign: 'center', padding: 16 },
   deviceRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2196,22 +2321,23 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#1f2937',
+    borderColor: colors.line,
     gap: 8,
   },
-  deviceLabel: { color: '#e6edf3', fontSize: 14, fontWeight: '600' },
-  deviceHint: { color: '#7a8896', fontSize: 12, marginTop: 2 },
-  bubble: { borderRadius: 10, padding: 10, marginBottom: 6, maxWidth: '85%' },
-  bubbleUser: { backgroundColor: '#1f6feb', alignSelf: 'flex-end' },
+  deviceLabel: { color: colors.text, fontSize: 14, fontWeight: '600' },
+  deviceHint: { color: colors.muted, fontSize: 12, marginTop: 2 },
+  bubble: { borderRadius: 7, padding: 10, marginBottom: 6, maxWidth: '85%' },
+  bubbleUser: { backgroundColor: colors.tint, alignSelf: 'flex-end' },
   bubbleBot: {
-    backgroundColor: '#21262d',
+    backgroundColor: colors.surface,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#30363d',
+    borderColor: colors.line,
   },
-  bubbleText: { color: '#e6edf3', fontSize: 14 },
-  link: { color: '#58a6ff', fontSize: 14, marginBottom: 8 },
-})
+  bubbleText: { color: colors.text, fontSize: 14 },
+  link: { color: colors.accent, fontSize: 14, marginBottom: 8 },
+  })
+}
 ",
     "path": "app/index.tsx",
   },
@@ -2637,6 +2763,14 @@ replication. Registration is not a verified copy or a complete backup. The
 Personal Node is deferred from the core preview, and the app keeps working
 locally when it is unavailable.
 
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`src/theme.ts\` and the native screen styles; mobile remains experimental.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
+
 ## Project Structure
 
 See \`planning/\` for architecture decisions and feature plans.
@@ -2736,6 +2870,40 @@ export function useWorklet() {
 ",
     "path": "src/contexts/WorkletContext.tsx",
   },
+  {
+    "content": "// Unstoppable Control palette. App-owned; keep light/dark roles aligned.
+export const lightTheme = {
+  "bg": "#f4f7f9",
+  "surface": "#ffffff",
+  "sidebar": "#e8eef2",
+  "text": "#152c35",
+  "muted": "#526a75",
+  "line": "#d3dfe4",
+  "accent": "#00778a",
+  "accentText": "#ffffff",
+  "tint": "#e0f3f5",
+  "green": "#237349",
+  "amber": "#805b0e",
+  "red": "#b33037"
+}
+export const darkTheme = {
+  "bg": "#11171b",
+  "surface": "#182126",
+  "sidebar": "#0c1216",
+  "text": "#e1edf0",
+  "muted": "#9aafb8",
+  "line": "#2b3940",
+  "accent": "#58d9e9",
+  "accentText": "#092129",
+  "tint": "#17343c",
+  "green": "#82cea2",
+  "amber": "#ebc274",
+  "red": "#ff999c"
+}
+export type ThemeColors = typeof lightTheme
+",
+    "path": "src/theme.ts",
+  },
 ]
 `;
 
@@ -2758,6 +2926,7 @@ exports[`generator snapshots > file paths only > expo-mobile / bare: path list m
   "plugins/withAndroidArchitecture.js",
   "plugins/withAndroidNdkVersion.js",
   "src/contexts/WorkletContext.tsx",
+  "src/theme.ts",
 ]
 `;
 
@@ -2781,6 +2950,7 @@ exports[`generator snapshots > file paths only > expo-mobile / local-ai: path li
   "plugins/withAndroidNdkVersion.js",
   "qvac.config.json",
   "src/contexts/WorkletContext.tsx",
+  "src/theme.ts",
 ]
 `;
 
@@ -2803,6 +2973,7 @@ exports[`generator snapshots > file paths only > expo-mobile / node-sync: path l
   "plugins/withAndroidArchitecture.js",
   "plugins/withAndroidNdkVersion.js",
   "src/contexts/WorkletContext.tsx",
+  "src/theme.ts",
 ]
 `;
 
@@ -2918,6 +3089,9 @@ exports[`generator snapshots > file paths only > pear-desktop / bare: path list 
   "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
+  "app/shell.js",
+  "app/styles.css",
+  "app/theme.css",
   "electron/main.js",
   "electron/preload.cjs",
   "examples/share-data.mjs",
@@ -2942,6 +3116,9 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai+wallet:
   "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
+  "app/shell.js",
+  "app/styles.css",
+  "app/theme.css",
   "electron/main.js",
   "electron/preload.cjs",
   "examples/share-data.mjs",
@@ -2966,6 +3143,9 @@ exports[`generator snapshots > file paths only > pear-desktop / local-ai: path l
   "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
+  "app/shell.js",
+  "app/styles.css",
+  "app/theme.css",
   "electron/main.js",
   "electron/preload.cjs",
   "examples/share-data.mjs",
@@ -2986,6 +3166,9 @@ exports[`generator snapshots > file paths only > pear-desktop / node-sync: path 
   "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
+  "app/shell.js",
+  "app/styles.css",
+  "app/theme.css",
   "electron/main.js",
   "electron/preload.cjs",
   "examples/share-data.mjs",
@@ -3006,6 +3189,9 @@ exports[`generator snapshots > file paths only > pear-desktop / wallet: path lis
   "SHARED-DATA.md",
   "app/bridge.js",
   "app/index.js",
+  "app/shell.js",
+  "app/styles.css",
+  "app/theme.css",
   "electron/main.js",
   "electron/preload.cjs",
   "examples/share-data.mjs",
@@ -5771,6 +5957,7 @@ export const workerReady = new Promise((resolve, reject) => {
   },
   {
     "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -5779,19 +5966,20 @@ export const workerReady = new Promise((resolve, reject) => {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">snap-test</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">snap-test</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections"><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Network</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>App data</a><a class="nav-link" href="#docs-section"><span class="nav-symbol" aria-hidden="true">↗</span>Resources</a></nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>snap-test</h1><p>Your app, running on this computer.</p></div>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -5803,11 +5991,12 @@ document.getElementById('app').innerHTML = \`
         <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
-    </main>
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -5834,7 +6023,7 @@ injectStyles()
 onWorkerMessage((msg) => {
   
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -5851,8 +6040,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -5871,43 +6064,131 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "// Navigation enhances real in-page anchors; no feature UI is unmounted.
+export function setupNavigation() {
+  const links = [...document.querySelectorAll('.sidebar .nav-link')]
+  const content = document.querySelector('main.content')
+  for (const section of document.querySelectorAll('main section[data-testid]')) section.id ||= section.dataset.testid
+  function select(link) {
+    for (const item of links) {
+      if (item === link) item.setAttribute('aria-current', 'location')
+      else item.removeAttribute('aria-current')
+    }
+  }
+  function updateFromScroll() {
+    if (!content) return
+    const bounds = content.getBoundingClientRect()
+    const atEnd = content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2
+    let current = links[0]
+    for (const link of links) {
+      const section = document.getElementById(link.hash.slice(1))
+      if (section && section.getBoundingClientRect().top <= (atEnd ? bounds.bottom - 1 : bounds.top + 32)) current = link
+    }
+    select(current)
+  }
+  for (const link of links) link.addEventListener('click', () => select(link))
+  content?.addEventListener('scroll', updateFromScroll)
+  updateFromScroll()
+}
+",
+    "path": "app/shell.js",
+  },
+  {
+    "content": "@import './theme.css';
+/* Unstoppable Control. App-owned styles may extend these primitives. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+[hidden] { display: none !important; }
+#app, .layout { height: 100vh; }
+.layout { display: flex; flex-direction: column; overflow: hidden; }
+.app-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--sidebar); flex-shrink: 0; }
+.brand-mark { color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 6px; font: 700 14px/1 ui-monospace, monospace; letter-spacing: -.12em; }
+.app-title { font-size: 16px; font-weight: 650; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.app-subtitle { color: var(--muted); font-size: 11px; }
+.app-header > .mono { margin-left: auto; font-size: 11px; }
+.workspace { display: grid; grid-template-columns: 185px minmax(0, 1fr); flex: 1; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 24px; min-height: 0; padding: 24px 12px 16px; border-right: 1px solid var(--line); background: var(--sidebar); overflow-y: auto; }
+.sidebar nav { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); text-decoration: none; font-size: 12px; }
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link[aria-current="location"] { color: var(--accent); background: var(--tint); border-color: var(--line); }
+.nav-symbol { width: 16px; text-align: center; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding: 0 12px; font-size: 11px; color: var(--muted); }
+.sidebar-footer p + p { margin-top: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.content { overflow-y: auto; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 24px; }
+.page-heading h1 { font-size: 25px; font-weight: 600; letter-spacing: -.045em; margin: 4px 0; }
+.page-heading > p:last-child { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; scroll-margin-top: 2px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.row { display: flex; align-items: center; flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 5px; }
+.inp { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 9px 10px; color: var(--text); font-size: 13px; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 5px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn-outline { color: var(--text); background: var(--surface); border-color: var(--line); font-weight: 400; }
+.btn-outline:hover { border-color: var(--accent); background: var(--tint); }
+.btn-send { padding: 8px 14px; }
+.result { margin-top: 10px; font: 12px/1.6 ui-monospace, monospace; color: var(--green); overflow-wrap: anywhere; white-space: pre-wrap; }
+.error { color: var(--red); margin-bottom: 10px; }
+.chat-list { max-height: 320px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.bubble { border-radius: var(--radius); padding: 10px 12px; max-width: 85%; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-user { background: var(--tint); color: var(--text); align-self: flex-end; }
+.bubble-assistant { background: var(--bg); color: var(--text); border: 1px solid var(--line); align-self: flex-start; }
+.link { display: block; color: var(--accent); font-size: 12px; text-decoration: none; margin-bottom: 8px; }
+.link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 160px minmax(0, 1fr); } .content { padding: 22px; } }
+@media (max-width: 600px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sidebar-footer, .sidebar > .eyebrow, .nav-symbol { display: none; }
+  .nav-link { padding: 8px; font-size: 11px; }
+  .content { padding: 18px 12px; }
+  .app-header { padding: 10px 12px; gap: 8px; }
+  .app-subtitle { display: none; }
+  .app-header > .mono { width: 100%; margin-left: 0; }
+  .row > .inp { flex-basis: 100% !important; }
+}
+@media (pointer: coarse) { .btn, .nav-link, .inp { min-height: 44px; } .inp { font-size: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .nav-link { transition: background-color 120ms, border-color 120ms; } }
+",
+    "path": "app/styles.css",
+  },
+  {
+    "content": "/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}
+",
+    "path": "app/theme.css",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -6000,7 +6281,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'snap-test',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -6141,17 +6422,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
 <head>
   <meta charset="utf-8">
   <title>snap-test</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -6232,6 +6503,14 @@ Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collabora
 npm install
 npm run dev
 \`\`\`
+
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
 
 ## Project Structure
 
@@ -6843,6 +7122,7 @@ export const workerReady = new Promise((resolve, reject) => {
   },
   {
     "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -6851,19 +7131,20 @@ export const workerReady = new Promise((resolve, reject) => {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">snap-test</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">snap-test</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections"><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Network</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>App data</a><a class="nav-link" href="#ai-section"><span class="nav-symbol" aria-hidden="true">⊞</span>Local AI</a><a class="nav-link" href="#wallet-section"><span class="nav-symbol" aria-hidden="true">◈</span>Wallet (experimental)</a><a class="nav-link" href="#docs-section"><span class="nav-symbol" aria-hidden="true">↗</span>Resources</a></nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>snap-test</h1><p>Your app, running on this computer.</p></div>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -6873,7 +7154,7 @@ document.getElementById('app').innerHTML = \`
       <section data-testid="wallet-section" class="card">
         <h2 class="card-title">Wallet</h2>
         <p class="mono" id="wallet-status">⏳ Starting...</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px">WDK integration coming soon</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px">WDK integration coming soon</p>
       </section>
       <section data-testid="ai-section" class="card">
         <h2 class="card-title">AI Assistant</h2>
@@ -6885,7 +7166,7 @@ document.getElementById('app').innerHTML = \`
           <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <div style="color:var(--red);margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
           <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
@@ -6893,8 +7174,8 @@ document.getElementById('app').innerHTML = \`
             <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
-            <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
-            <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <input id="chat-input" aria-label="Message the assistant" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
+            <button id="chat-send" aria-label="Send message" class="btn btn-send" data-testid="chat-send-btn">→</button>
             <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
@@ -6904,11 +7185,12 @@ document.getElementById('app').innerHTML = \`
         <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
-    </main>
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -6996,7 +7278,7 @@ injectStyles()
 onWorkerMessage((msg) => {
   
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -7069,8 +7351,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -7089,43 +7375,131 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "// Navigation enhances real in-page anchors; no feature UI is unmounted.
+export function setupNavigation() {
+  const links = [...document.querySelectorAll('.sidebar .nav-link')]
+  const content = document.querySelector('main.content')
+  for (const section of document.querySelectorAll('main section[data-testid]')) section.id ||= section.dataset.testid
+  function select(link) {
+    for (const item of links) {
+      if (item === link) item.setAttribute('aria-current', 'location')
+      else item.removeAttribute('aria-current')
+    }
+  }
+  function updateFromScroll() {
+    if (!content) return
+    const bounds = content.getBoundingClientRect()
+    const atEnd = content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2
+    let current = links[0]
+    for (const link of links) {
+      const section = document.getElementById(link.hash.slice(1))
+      if (section && section.getBoundingClientRect().top <= (atEnd ? bounds.bottom - 1 : bounds.top + 32)) current = link
+    }
+    select(current)
+  }
+  for (const link of links) link.addEventListener('click', () => select(link))
+  content?.addEventListener('scroll', updateFromScroll)
+  updateFromScroll()
+}
+",
+    "path": "app/shell.js",
+  },
+  {
+    "content": "@import './theme.css';
+/* Unstoppable Control. App-owned styles may extend these primitives. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+[hidden] { display: none !important; }
+#app, .layout { height: 100vh; }
+.layout { display: flex; flex-direction: column; overflow: hidden; }
+.app-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--sidebar); flex-shrink: 0; }
+.brand-mark { color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 6px; font: 700 14px/1 ui-monospace, monospace; letter-spacing: -.12em; }
+.app-title { font-size: 16px; font-weight: 650; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.app-subtitle { color: var(--muted); font-size: 11px; }
+.app-header > .mono { margin-left: auto; font-size: 11px; }
+.workspace { display: grid; grid-template-columns: 185px minmax(0, 1fr); flex: 1; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 24px; min-height: 0; padding: 24px 12px 16px; border-right: 1px solid var(--line); background: var(--sidebar); overflow-y: auto; }
+.sidebar nav { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); text-decoration: none; font-size: 12px; }
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link[aria-current="location"] { color: var(--accent); background: var(--tint); border-color: var(--line); }
+.nav-symbol { width: 16px; text-align: center; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding: 0 12px; font-size: 11px; color: var(--muted); }
+.sidebar-footer p + p { margin-top: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.content { overflow-y: auto; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 24px; }
+.page-heading h1 { font-size: 25px; font-weight: 600; letter-spacing: -.045em; margin: 4px 0; }
+.page-heading > p:last-child { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; scroll-margin-top: 2px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.row { display: flex; align-items: center; flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 5px; }
+.inp { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 9px 10px; color: var(--text); font-size: 13px; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 5px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn-outline { color: var(--text); background: var(--surface); border-color: var(--line); font-weight: 400; }
+.btn-outline:hover { border-color: var(--accent); background: var(--tint); }
+.btn-send { padding: 8px 14px; }
+.result { margin-top: 10px; font: 12px/1.6 ui-monospace, monospace; color: var(--green); overflow-wrap: anywhere; white-space: pre-wrap; }
+.error { color: var(--red); margin-bottom: 10px; }
+.chat-list { max-height: 320px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.bubble { border-radius: var(--radius); padding: 10px 12px; max-width: 85%; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-user { background: var(--tint); color: var(--text); align-self: flex-end; }
+.bubble-assistant { background: var(--bg); color: var(--text); border: 1px solid var(--line); align-self: flex-start; }
+.link { display: block; color: var(--accent); font-size: 12px; text-decoration: none; margin-bottom: 8px; }
+.link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 160px minmax(0, 1fr); } .content { padding: 22px; } }
+@media (max-width: 600px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sidebar-footer, .sidebar > .eyebrow, .nav-symbol { display: none; }
+  .nav-link { padding: 8px; font-size: 11px; }
+  .content { padding: 18px 12px; }
+  .app-header { padding: 10px 12px; gap: 8px; }
+  .app-subtitle { display: none; }
+  .app-header > .mono { width: 100%; margin-left: 0; }
+  .row > .inp { flex-basis: 100% !important; }
+}
+@media (pointer: coarse) { .btn, .nav-link, .inp { min-height: 44px; } .inp { font-size: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .nav-link { transition: background-color 120ms, border-color 120ms; } }
+",
+    "path": "app/styles.css",
+  },
+  {
+    "content": "/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}
+",
+    "path": "app/theme.css",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -7218,7 +7592,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'snap-test',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -7359,17 +7733,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
 <head>
   <meta charset="utf-8">
   <title>snap-test</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -7457,6 +7821,14 @@ Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collabora
 npm install
 npm run dev
 \`\`\`
+
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
 
 ## Project Structure
 
@@ -8134,6 +8506,7 @@ export const workerReady = new Promise((resolve, reject) => {
   },
   {
     "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -8142,19 +8515,20 @@ export const workerReady = new Promise((resolve, reject) => {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">snap-test</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">snap-test</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections"><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Network</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>App data</a><a class="nav-link" href="#ai-section"><span class="nav-symbol" aria-hidden="true">⊞</span>Local AI</a><a class="nav-link" href="#docs-section"><span class="nav-symbol" aria-hidden="true">↗</span>Resources</a></nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>snap-test</h1><p>Your app, running on this computer.</p></div>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -8171,7 +8545,7 @@ document.getElementById('app').innerHTML = \`
           <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <div style="color:var(--red);margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
           <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
@@ -8179,8 +8553,8 @@ document.getElementById('app').innerHTML = \`
             <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
-            <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
-            <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <input id="chat-input" aria-label="Message the assistant" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
+            <button id="chat-send" aria-label="Send message" class="btn btn-send" data-testid="chat-send-btn">→</button>
             <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
@@ -8190,11 +8564,12 @@ document.getElementById('app').innerHTML = \`
         <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
-    </main>
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -8282,7 +8657,7 @@ injectStyles()
 onWorkerMessage((msg) => {
   
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -8351,8 +8726,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -8371,43 +8750,131 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "// Navigation enhances real in-page anchors; no feature UI is unmounted.
+export function setupNavigation() {
+  const links = [...document.querySelectorAll('.sidebar .nav-link')]
+  const content = document.querySelector('main.content')
+  for (const section of document.querySelectorAll('main section[data-testid]')) section.id ||= section.dataset.testid
+  function select(link) {
+    for (const item of links) {
+      if (item === link) item.setAttribute('aria-current', 'location')
+      else item.removeAttribute('aria-current')
+    }
+  }
+  function updateFromScroll() {
+    if (!content) return
+    const bounds = content.getBoundingClientRect()
+    const atEnd = content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2
+    let current = links[0]
+    for (const link of links) {
+      const section = document.getElementById(link.hash.slice(1))
+      if (section && section.getBoundingClientRect().top <= (atEnd ? bounds.bottom - 1 : bounds.top + 32)) current = link
+    }
+    select(current)
+  }
+  for (const link of links) link.addEventListener('click', () => select(link))
+  content?.addEventListener('scroll', updateFromScroll)
+  updateFromScroll()
+}
+",
+    "path": "app/shell.js",
+  },
+  {
+    "content": "@import './theme.css';
+/* Unstoppable Control. App-owned styles may extend these primitives. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+[hidden] { display: none !important; }
+#app, .layout { height: 100vh; }
+.layout { display: flex; flex-direction: column; overflow: hidden; }
+.app-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--sidebar); flex-shrink: 0; }
+.brand-mark { color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 6px; font: 700 14px/1 ui-monospace, monospace; letter-spacing: -.12em; }
+.app-title { font-size: 16px; font-weight: 650; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.app-subtitle { color: var(--muted); font-size: 11px; }
+.app-header > .mono { margin-left: auto; font-size: 11px; }
+.workspace { display: grid; grid-template-columns: 185px minmax(0, 1fr); flex: 1; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 24px; min-height: 0; padding: 24px 12px 16px; border-right: 1px solid var(--line); background: var(--sidebar); overflow-y: auto; }
+.sidebar nav { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); text-decoration: none; font-size: 12px; }
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link[aria-current="location"] { color: var(--accent); background: var(--tint); border-color: var(--line); }
+.nav-symbol { width: 16px; text-align: center; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding: 0 12px; font-size: 11px; color: var(--muted); }
+.sidebar-footer p + p { margin-top: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.content { overflow-y: auto; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 24px; }
+.page-heading h1 { font-size: 25px; font-weight: 600; letter-spacing: -.045em; margin: 4px 0; }
+.page-heading > p:last-child { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; scroll-margin-top: 2px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.row { display: flex; align-items: center; flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 5px; }
+.inp { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 9px 10px; color: var(--text); font-size: 13px; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 5px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn-outline { color: var(--text); background: var(--surface); border-color: var(--line); font-weight: 400; }
+.btn-outline:hover { border-color: var(--accent); background: var(--tint); }
+.btn-send { padding: 8px 14px; }
+.result { margin-top: 10px; font: 12px/1.6 ui-monospace, monospace; color: var(--green); overflow-wrap: anywhere; white-space: pre-wrap; }
+.error { color: var(--red); margin-bottom: 10px; }
+.chat-list { max-height: 320px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.bubble { border-radius: var(--radius); padding: 10px 12px; max-width: 85%; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-user { background: var(--tint); color: var(--text); align-self: flex-end; }
+.bubble-assistant { background: var(--bg); color: var(--text); border: 1px solid var(--line); align-self: flex-start; }
+.link { display: block; color: var(--accent); font-size: 12px; text-decoration: none; margin-bottom: 8px; }
+.link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 160px minmax(0, 1fr); } .content { padding: 22px; } }
+@media (max-width: 600px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sidebar-footer, .sidebar > .eyebrow, .nav-symbol { display: none; }
+  .nav-link { padding: 8px; font-size: 11px; }
+  .content { padding: 18px 12px; }
+  .app-header { padding: 10px 12px; gap: 8px; }
+  .app-subtitle { display: none; }
+  .app-header > .mono { width: 100%; margin-left: 0; }
+  .row > .inp { flex-basis: 100% !important; }
+}
+@media (pointer: coarse) { .btn, .nav-link, .inp { min-height: 44px; } .inp { font-size: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .nav-link { transition: background-color 120ms, border-color 120ms; } }
+",
+    "path": "app/styles.css",
+  },
+  {
+    "content": "/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}
+",
+    "path": "app/theme.css",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -8500,7 +8967,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'snap-test',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -8641,17 +9108,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
 <head>
   <meta charset="utf-8">
   <title>snap-test</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -8738,6 +9195,14 @@ Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collabora
 npm install
 npm run dev
 \`\`\`
+
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
 
 ## Project Structure
 
@@ -9105,6 +9570,7 @@ export const workerReady = new Promise((resolve, reject) => {
   },
   {
     "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -9113,19 +9579,20 @@ export const workerReady = new Promise((resolve, reject) => {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">snap-test</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">snap-test</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections"><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Network</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>App data</a><a class="nav-link" href="#node-sync-section"><span class="nav-symbol" aria-hidden="true">⇄</span>Node sync (alpha)</a><a class="nav-link" href="#docs-section"><span class="nav-symbol" aria-hidden="true">↗</span>Resources</a></nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>snap-test</h1><p>Your app, running on this computer.</p></div>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -9135,18 +9602,19 @@ document.getElementById('app').innerHTML = \`
       <section data-testid="node-sync-section" class="card">
         <h2 class="card-title">Node Replication</h2>
         <p class="mono" id="node-sync-status">⏳ Looking for your Personal Node…</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
         <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
-    </main>
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -9173,7 +9641,7 @@ injectStyles()
 onWorkerMessage((msg) => {
   
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -9204,8 +9672,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -9224,43 +9696,131 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "// Navigation enhances real in-page anchors; no feature UI is unmounted.
+export function setupNavigation() {
+  const links = [...document.querySelectorAll('.sidebar .nav-link')]
+  const content = document.querySelector('main.content')
+  for (const section of document.querySelectorAll('main section[data-testid]')) section.id ||= section.dataset.testid
+  function select(link) {
+    for (const item of links) {
+      if (item === link) item.setAttribute('aria-current', 'location')
+      else item.removeAttribute('aria-current')
+    }
+  }
+  function updateFromScroll() {
+    if (!content) return
+    const bounds = content.getBoundingClientRect()
+    const atEnd = content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2
+    let current = links[0]
+    for (const link of links) {
+      const section = document.getElementById(link.hash.slice(1))
+      if (section && section.getBoundingClientRect().top <= (atEnd ? bounds.bottom - 1 : bounds.top + 32)) current = link
+    }
+    select(current)
+  }
+  for (const link of links) link.addEventListener('click', () => select(link))
+  content?.addEventListener('scroll', updateFromScroll)
+  updateFromScroll()
+}
+",
+    "path": "app/shell.js",
+  },
+  {
+    "content": "@import './theme.css';
+/* Unstoppable Control. App-owned styles may extend these primitives. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+[hidden] { display: none !important; }
+#app, .layout { height: 100vh; }
+.layout { display: flex; flex-direction: column; overflow: hidden; }
+.app-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--sidebar); flex-shrink: 0; }
+.brand-mark { color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 6px; font: 700 14px/1 ui-monospace, monospace; letter-spacing: -.12em; }
+.app-title { font-size: 16px; font-weight: 650; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.app-subtitle { color: var(--muted); font-size: 11px; }
+.app-header > .mono { margin-left: auto; font-size: 11px; }
+.workspace { display: grid; grid-template-columns: 185px minmax(0, 1fr); flex: 1; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 24px; min-height: 0; padding: 24px 12px 16px; border-right: 1px solid var(--line); background: var(--sidebar); overflow-y: auto; }
+.sidebar nav { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); text-decoration: none; font-size: 12px; }
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link[aria-current="location"] { color: var(--accent); background: var(--tint); border-color: var(--line); }
+.nav-symbol { width: 16px; text-align: center; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding: 0 12px; font-size: 11px; color: var(--muted); }
+.sidebar-footer p + p { margin-top: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.content { overflow-y: auto; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 24px; }
+.page-heading h1 { font-size: 25px; font-weight: 600; letter-spacing: -.045em; margin: 4px 0; }
+.page-heading > p:last-child { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; scroll-margin-top: 2px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.row { display: flex; align-items: center; flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 5px; }
+.inp { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 9px 10px; color: var(--text); font-size: 13px; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 5px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn-outline { color: var(--text); background: var(--surface); border-color: var(--line); font-weight: 400; }
+.btn-outline:hover { border-color: var(--accent); background: var(--tint); }
+.btn-send { padding: 8px 14px; }
+.result { margin-top: 10px; font: 12px/1.6 ui-monospace, monospace; color: var(--green); overflow-wrap: anywhere; white-space: pre-wrap; }
+.error { color: var(--red); margin-bottom: 10px; }
+.chat-list { max-height: 320px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.bubble { border-radius: var(--radius); padding: 10px 12px; max-width: 85%; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-user { background: var(--tint); color: var(--text); align-self: flex-end; }
+.bubble-assistant { background: var(--bg); color: var(--text); border: 1px solid var(--line); align-self: flex-start; }
+.link { display: block; color: var(--accent); font-size: 12px; text-decoration: none; margin-bottom: 8px; }
+.link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 160px minmax(0, 1fr); } .content { padding: 22px; } }
+@media (max-width: 600px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sidebar-footer, .sidebar > .eyebrow, .nav-symbol { display: none; }
+  .nav-link { padding: 8px; font-size: 11px; }
+  .content { padding: 18px 12px; }
+  .app-header { padding: 10px 12px; gap: 8px; }
+  .app-subtitle { display: none; }
+  .app-header > .mono { width: 100%; margin-left: 0; }
+  .row > .inp { flex-basis: 100% !important; }
+}
+@media (pointer: coarse) { .btn, .nav-link, .inp { min-height: 44px; } .inp { font-size: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .nav-link { transition: background-color 120ms, border-color 120ms; } }
+",
+    "path": "app/styles.css",
+  },
+  {
+    "content": "/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}
+",
+    "path": "app/theme.css",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -9353,7 +9913,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'snap-test',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -9494,17 +10054,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
 <head>
   <meta charset="utf-8">
   <title>snap-test</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -9593,6 +10143,14 @@ This app can register its data with a compatible Personal Node alpha for P2P
 replication. Registration is not a verified copy or a complete backup. The
 Personal Node is deferred from the core preview, and the app keeps working
 locally when it is unavailable.
+
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
 
 ## Project Structure
 
@@ -9949,6 +10507,7 @@ export const workerReady = new Promise((resolve, reject) => {
   },
   {
     "content": "import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -9957,19 +10516,20 @@ export const workerReady = new Promise((resolve, reject) => {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">snap-test</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">snap-test</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections"><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Network</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>App data</a><a class="nav-link" href="#wallet-section"><span class="nav-symbol" aria-hidden="true">◈</span>Wallet (experimental)</a><a class="nav-link" href="#docs-section"><span class="nav-symbol" aria-hidden="true">↗</span>Resources</a></nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>snap-test</h1><p>Your app, running on this computer.</p></div>
       <section data-testid="p2p-section" class="card">
         <h2 class="card-title">P2P Network</h2>
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">KV Storage</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -9979,18 +10539,19 @@ document.getElementById('app').innerHTML = \`
       <section data-testid="wallet-section" class="card">
         <h2 class="card-title">Wallet</h2>
         <p class="mono" id="wallet-status">⏳ Starting...</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px">WDK integration coming soon</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px">WDK integration coming soon</p>
       </section>
       <section data-testid="docs-section" class="card">
         <h2 class="card-title">Resources</h2>
         <a href="https://unstoppable-stack.dev" class="link" target="_blank">Docs — unstoppable-stack.dev</a>
         <a href="https://github.com/holepunchto" class="link" target="_blank">Holepunch on GitHub</a>
       </section>
-    </main>
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -10017,7 +10578,7 @@ injectStyles()
 onWorkerMessage((msg) => {
   
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
   
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -10038,8 +10599,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -10058,43 +10623,131 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 ",
     "path": "app/index.js",
+  },
+  {
+    "content": "// Navigation enhances real in-page anchors; no feature UI is unmounted.
+export function setupNavigation() {
+  const links = [...document.querySelectorAll('.sidebar .nav-link')]
+  const content = document.querySelector('main.content')
+  for (const section of document.querySelectorAll('main section[data-testid]')) section.id ||= section.dataset.testid
+  function select(link) {
+    for (const item of links) {
+      if (item === link) item.setAttribute('aria-current', 'location')
+      else item.removeAttribute('aria-current')
+    }
+  }
+  function updateFromScroll() {
+    if (!content) return
+    const bounds = content.getBoundingClientRect()
+    const atEnd = content.scrollTop > 0 && content.scrollTop + content.clientHeight >= content.scrollHeight - 2
+    let current = links[0]
+    for (const link of links) {
+      const section = document.getElementById(link.hash.slice(1))
+      if (section && section.getBoundingClientRect().top <= (atEnd ? bounds.bottom - 1 : bounds.top + 32)) current = link
+    }
+    select(current)
+  }
+  for (const link of links) link.addEventListener('click', () => select(link))
+  content?.addEventListener('scroll', updateFromScroll)
+  updateFromScroll()
+}
+",
+    "path": "app/shell.js",
+  },
+  {
+    "content": "@import './theme.css';
+/* Unstoppable Control. App-owned styles may extend these primitives. */
+* { box-sizing: border-box; }
+body { margin: 0; font: 13px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+[hidden] { display: none !important; }
+#app, .layout { height: 100vh; }
+.layout { display: flex; flex-direction: column; overflow: hidden; }
+.app-header { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--sidebar); flex-shrink: 0; }
+.brand-mark { color: var(--accent); border: 1px solid var(--accent); border-radius: 3px; padding: 6px; font: 700 14px/1 ui-monospace, monospace; letter-spacing: -.12em; }
+.app-title { font-size: 16px; font-weight: 650; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.app-subtitle { color: var(--muted); font-size: 11px; }
+.app-header > .mono { margin-left: auto; font-size: 11px; }
+.workspace { display: grid; grid-template-columns: 185px minmax(0, 1fr); flex: 1; min-height: 0; }
+.sidebar { display: flex; flex-direction: column; gap: 24px; min-height: 0; padding: 24px 12px 16px; border-right: 1px solid var(--line); background: var(--sidebar); overflow-y: auto; }
+.sidebar nav { display: grid; gap: 5px; }
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 10px 12px; color: var(--muted); border: 1px solid transparent; border-radius: var(--radius); text-decoration: none; font-size: 12px; }
+.nav-link:hover { color: var(--text); background: var(--surface); }
+.nav-link[aria-current="location"] { color: var(--accent); background: var(--tint); border-color: var(--line); }
+.nav-symbol { width: 16px; text-align: center; font-family: ui-monospace, monospace; flex-shrink: 0; }
+.sidebar-footer { margin-top: auto; padding: 0 12px; font-size: 11px; color: var(--muted); }
+.sidebar-footer p + p { margin-top: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .09em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+.content { overflow-y: auto; min-width: 0; padding: 26px 28px; display: flex; flex-direction: column; gap: 20px; scroll-padding-top: 24px; }
+.page-heading h1 { font-size: 25px; font-weight: 600; letter-spacing: -.045em; margin: 4px 0; }
+.page-heading > p:last-child { font-size: 12px; color: var(--muted); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; min-width: 0; scroll-margin-top: 2px; }
+.card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; }
+.card-hint { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.row { display: flex; align-items: center; flex-wrap: wrap; }
+.gap-8 { gap: 8px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 5px; }
+.inp { width: 100%; min-width: 0; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; padding: 9px 10px; color: var(--text); font-size: 13px; margin-bottom: 10px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: var(--accent); color: var(--accent-text); border: 1px solid var(--accent); border-radius: 5px; padding: 8px 12px; font-size: 12px; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.btn-outline { color: var(--text); background: var(--surface); border-color: var(--line); font-weight: 400; }
+.btn-outline:hover { border-color: var(--accent); background: var(--tint); }
+.btn-send { padding: 8px 14px; }
+.result { margin-top: 10px; font: 12px/1.6 ui-monospace, monospace; color: var(--green); overflow-wrap: anywhere; white-space: pre-wrap; }
+.error { color: var(--red); margin-bottom: 10px; }
+.chat-list { max-height: 320px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.chat-hint { color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.bubble { border-radius: var(--radius); padding: 10px 12px; max-width: 85%; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.bubble-user { background: var(--tint); color: var(--text); align-self: flex-end; }
+.bubble-assistant { background: var(--bg); color: var(--text); border: 1px solid var(--line); align-self: flex-start; }
+.link { display: block; color: var(--accent); font-size: 12px; text-decoration: none; margin-bottom: 8px; }
+.link:hover { text-decoration: underline; }
+@media (max-width: 900px) { .workspace { grid-template-columns: 160px minmax(0, 1fr); } .content { padding: 22px; } }
+@media (max-width: 600px) {
+  .workspace { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { padding: 10px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sidebar nav { display: flex; flex-wrap: wrap; gap: 4px; }
+  .sidebar-footer, .sidebar > .eyebrow, .nav-symbol { display: none; }
+  .nav-link { padding: 8px; font-size: 11px; }
+  .content { padding: 18px 12px; }
+  .app-header { padding: 10px 12px; gap: 8px; }
+  .app-subtitle { display: none; }
+  .app-header > .mono { width: 100%; margin-left: 0; }
+  .row > .inp { flex-basis: 100% !important; }
+}
+@media (pointer: coarse) { .btn, .nav-link, .inp { min-height: 44px; } .inp { font-size: 16px; } }
+@media (prefers-reduced-motion: no-preference) { .btn, .nav-link { transition: background-color 120ms, border-color 120ms; } }
+",
+    "path": "app/styles.css",
+  },
+  {
+    "content": "/* Generated from packages/agent-pack/src/ui/tokens.json. */
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f4f7f9, #11171b);
+  --surface: light-dark(#ffffff, #182126);
+  --sidebar: light-dark(#e8eef2, #0c1216);
+  --text: light-dark(#152c35, #e1edf0);
+  --muted: light-dark(#526a75, #9aafb8);
+  --line: light-dark(#d3dfe4, #2b3940);
+  --accent: light-dark(#00778a, #58d9e9);
+  --accent-text: light-dark(#ffffff, #092129);
+  --tint: light-dark(#e0f3f5, #17343c);
+  --green: light-dark(#237349, #82cea2);
+  --amber: light-dark(#805b0e, #ebc274);
+  --red: light-dark(#b33037, #ff999c);
+  --radius: 7px;
+}
+",
+    "path": "app/theme.css",
   },
   {
     "content": "import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -10187,7 +10840,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: 'snap-test',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -10328,17 +10981,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
 <head>
   <meta charset="utf-8">
   <title>snap-test</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -10420,6 +11063,14 @@ Read [SHARED-DATA.md](SHARED-DATA.md) for managed JSON replication and collabora
 npm install
 npm run dev
 \`\`\`
+
+## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
 
 ## Project Structure
 

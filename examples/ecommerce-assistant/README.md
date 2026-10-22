@@ -2,6 +2,13 @@
 
 A first-party desktop developer-preview example with a searchable product catalog, persistent cart, local demo checkout, order lookup, a QVAC shopping assistant, and scoped peer order retrieval. Electron renders the UI; a Bare worker owns Hyperbee storage, the P2P runtime, and inference. The app derives from the former Coffee Assistant example and uses the maintained desktop AI runtime.
 
+The UI follows [Unstoppable Control](../../docs/ui-design.md), the Personal Node
+visual system: compact workspace navigation, graphite/cyan light and dark
+surfaces, and controls beside catalog, cart, assistant, and peer-sharing data.
+Shared tokens and primitives come from `packages/agent-pack/src/ui/`; edit the
+example's `app/styles.css` for catalog-specific layout and run the asset sync
+script after changing the canonical palette or shared chrome.
+
 ## Choosing a Personal Node integration
 
 Local Goods currently demonstrates direct peer receipt queries, not Personal
