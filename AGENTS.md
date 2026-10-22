@@ -65,6 +65,16 @@ for the CLI-bundled copy. Do not hand-edit `packages/cli/agent-pack-src/` or
 - Use TypeScript where practical, existing formatting conventions, Vitest for
   CLI behavior, and conventional commit messages. Preserve unrelated edits.
 
+## UI design
+
+US-related app interfaces follow the Personal Node desktop visual system by
+default: graphite surfaces, cyan actions/selection, compact functional layouts,
+truthful connection/sync/AI states, and accessible system light/dark themes.
+Read [the design guide](docs/ui-design.md) before UI changes. Canonical tokens
+and desktop primitives live in `packages/agent-pack/src/ui/`; synchronize their
+CLI and example copies with `scripts/sync-stack-assets.mjs`. Preserve each app's
+functionality and user-selected design; adapt layouts to native mobile controls.
+
 ## Local maintainer material
 
 `planning/`, `research/`, `sandbox/`, `reference-apps/`, and `.local/` are ignored, optional local

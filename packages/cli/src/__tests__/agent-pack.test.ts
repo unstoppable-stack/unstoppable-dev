@@ -28,6 +28,10 @@ describe('agent-pack app integration', () => {
       const root = tool === 'claude' ? 'CLAUDE.md' : tool === 'cursor' ? '.cursor/rules/project.mdc' : 'AGENTS.md'
       const instructions = await readFile(join(outputDir, root), 'utf8')
       expect(instructions).toContain('us compatibility list')
+      expect(instructions).toContain('Unstoppable Control')
+      expect(instructions).toContain('.unstoppable/guidance/core/design-guide.md')
+      const tokens = JSON.parse(await readFile(join(outputDir, '.unstoppable/guidance/core/ui-tokens.json'), 'utf8'))
+      expect(tokens.colors.dark.accent).toBe('#58d9e9')
       expect(instructions).toContain('runtime-ai/index.js')
       expect(instructions).not.toContain('Get user confirmation before writing')
       expect(result.filesWritten).toContain('.unstoppable/guidance/modules/qvac.md')

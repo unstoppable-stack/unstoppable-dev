@@ -1,0 +1,15 @@
+@import './ui.css';
+/* App-specific catalog composition; shared chrome and controls live in ui.css. */
+.product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.product { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.product-art { background: var(--bg); border-radius: 5px; text-align: center; padding: 15px; font-size: 28px; }
+.product h3 { font-size: 14px; }
+.product p:not(.eyebrow) { color: var(--muted); font-size: 12px; flex: 1; }
+.product-bottom, .cart-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.product-bottom { justify-content: space-between; flex-wrap: wrap; }
+.product-bottom strong, .cart-total { font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.cart-row span { flex: 1; min-width: 0; }
+.cart-row { flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.cart-total { font-size: 22px; font-weight: 500; margin: 18px 0; }
+@media (max-width: 1050px) { .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .product-grid { grid-template-columns: 1fr; } }

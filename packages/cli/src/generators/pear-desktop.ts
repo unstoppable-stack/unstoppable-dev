@@ -1,3 +1,4 @@
+import { desktopUiFiles } from './ui.js'
 import { sharedDataFiles } from './shared-data.js'
 import { manifest } from '../compatibility/index.js'
 import { dependenciesFor, profileFor, projectFiles } from '../compatibility/index.js'
@@ -17,6 +18,7 @@ export function generatePearDesktop(opts: GeneratorOptions): GeneratedFile[] {
     ...sharedDataFiles(opts),
     packageJson(opts),
     indexHtml(opts),
+    ...desktopUiFiles(),
     electronMainJs(opts),
     electronPreloadCjs(),
     workerJs(opts),
@@ -80,17 +82,7 @@ function indexHtml(opts: GeneratorOptions): GeneratedFile {
 <head>
   <meta charset="utf-8">
   <title>${opts.projectName}</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #e6e6e6;
-      height: 100vh;
-      overflow: hidden;
-    }
-    #app { height: 100vh; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="./app/styles.css">
 </head>
 <body>
   <div id="app"></div>
@@ -194,7 +186,7 @@ ipcMain.handle('worker:send', (event, message) => {
 async function createWindow() {
   mainWindow = new BrowserWindow({
     title: '${opts.projectName}',
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#11171b',
     width: 1100,
     height: 720,
     webPreferences: {
@@ -609,9 +601,9 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
         <h2 class="card-title">Multi-Writer Mesh</h2>
         <p class="card-hint">Every device reads and writes; writes converge on reconnect.</p>
         <p class="mono" id="mesh-status">⏳ Starting...</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px">Database key (share to let a device join):</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px">Database key (share to let a device join):</p>
         <p class="mono" id="mesh-db-key" data-testid="mesh-db-key" style="word-break:break-all">—</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px">This device's writer key (give to a peer to be promoted):</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px">This device's writer key (give to a peer to be promoted):</p>
         <p class="mono" id="mesh-writer-key" data-testid="mesh-writer-key" style="word-break:break-all">—</p>
         <input id="mesh-add-writer" class="inp" placeholder="Peer's writer key" data-testid="mesh-add-writer-input" />
         <button id="mesh-add-btn" class="btn" data-testid="mesh-add-writer-btn">Add Writer</button>
@@ -621,8 +613,8 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   sectionHtml.push(`
       <section data-testid="kv-section" class="card">
         <h2 class="card-title">${has(opts, 'multi-writer') ? 'Shared Data' : 'KV Storage'}</h2>
-        <input id="kv-key" class="inp" placeholder="Key" data-testid="kv-key-input" />
-        <input id="kv-value" class="inp" placeholder="Value" data-testid="kv-value-input" />
+        <input id="kv-key" aria-label="Data key" class="inp" placeholder="Key" data-testid="kv-key-input" />
+        <input id="kv-value" aria-label="Data value" class="inp" placeholder="Value" data-testid="kv-value-input" />
         <div class="row gap-8">
           <button id="kv-save" class="btn" data-testid="kv-save-btn">Save</button>
           <button id="kv-fetch" class="btn btn-outline" data-testid="kv-fetch-btn">Fetch</button>
@@ -635,7 +627,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       <section data-testid="wallet-section" class="card">
         <h2 class="card-title">Wallet</h2>
         <p class="mono" id="wallet-status">⏳ Starting...</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px">WDK integration coming soon</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px">WDK integration coming soon</p>
       </section>`)
   }
 
@@ -644,7 +636,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       <section data-testid="node-sync-section" class="card">
         <h2 class="card-title">Node Replication</h2>
         <p class="mono" id="node-sync-status">⏳ Looking for your Personal Node…</p>
-        <p class="mono" style="color:#8b949e;margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
+        <p class="mono" style="color:var(--muted);margin-top:8px" id="node-sync-hint">The Personal Node alpha is deferred from the core preview and is not required for local use.</p>
       </section>`)
   }
 
@@ -660,7 +652,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
           <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <div style="color:var(--red);margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
           <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
@@ -668,8 +660,8 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
             <p class="chat-hint">Ask me anything…</p>
           </div>
           <div class="row gap-8">
-            <input id="chat-input" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
-            <button id="chat-send" class="btn btn-send" data-testid="chat-send-btn">→</button>
+            <input id="chat-input" aria-label="Message the assistant" class="inp" style="flex:1;margin-bottom:0" placeholder="Type a message..." data-testid="chat-input" />
+            <button id="chat-send" aria-label="Send message" class="btn btn-send" data-testid="chat-send-btn">→</button>
             <button id="chat-stop" class="btn" style="display:none" data-testid="chat-stop-btn">Stop</button>
           </div>
         </div>
@@ -684,6 +676,13 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
       </section>`
 
   sectionHtml.push(docsSection)
+
+  const navItems = [
+    ['p2p', 'Network', '◇'], ['kv', 'App data', '▤'], ['mesh', 'Shared writers', '⋈'],
+    ['ai', 'Local AI', '⊞'], ['wallet', 'Wallet (experimental)', '◈'],
+    ['node-sync', 'Node sync (alpha)', '⇄'], ['docs', 'Resources', '↗'],
+  ].filter(([id]) => sectionHtml.some(html => html.includes(`data-testid="${id}-section"`)))
+  const navigation = navItems.map(([id, label, symbol]) => `<a class="nav-link" href="#${id}-section"><span class="nav-symbol" aria-hidden="true">${symbol}</span>${label}</a>`).join('')
 
   // Build the JS event-handler block per feature
   const featureHandlers: string[] = []
@@ -782,7 +781,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   // Build the onWorkerMessage handler cases
   const msgCases: string[] = [`
     if (msg.type === 'init-complete') {
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }`]
 
   // P2P status — always wired (base feature)
@@ -902,6 +901,7 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
   return {
     path: 'app/index.js',
     content: `import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
+import { setupNavigation } from './shell.js'
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -910,16 +910,18 @@ function appComponent(opts: GeneratorOptions): GeneratedFile {
 document.getElementById('app').innerHTML = \`
   <div class="layout">
     <header class="app-header">
-      <h1 class="app-title">${opts.projectName}</h1>
-      <p class="app-subtitle">Unstoppable Stack · Pear Desktop</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
+      <span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">${opts.projectName}</span>
+      <span class="app-subtitle">/ Unstoppable app</span><p class="mono" id="worker-status" role="status">Worker starting…</p>
     </header>
-    <main class="content">${sectionHtml.join('')}
-    </main>
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Workspace</p><nav aria-label="App sections">${navigation}</nav><div class="sidebar-footer"><p class="eyebrow">Runs on your hardware</p><p>Local data first. Networking enables sharing.</p></div></aside>
+      <main class="content"><div class="page-heading"><p class="eyebrow">Unstoppable / Desktop</p><h1>${opts.projectName}</h1><p>Your app, running on this computer.</p></div>${sectionHtml.join('')}
+      </main>
+    </div>
   </div>
 \`
 
-injectStyles()
+setupNavigation()
 
 // ---------------------------------------------------------------------------
 // Feature wiring (runs after DOM is built above)
@@ -935,8 +937,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -955,41 +961,6 @@ function showResult(id, text) {
   el.style.display = 'block'
 }
 
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = \`
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #58a6ff; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #58a6ff; }
-    .btn { background: #1f6feb; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #388bfd; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #1f6feb; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #58a6ff; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  \`
-  document.head.appendChild(style)
-}
 `,
   }
 }

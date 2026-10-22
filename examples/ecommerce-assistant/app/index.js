@@ -1,3 +1,4 @@
+import { setupNavigation } from './shell.js'
 import { products, money } from '../catalog.js'
 import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
 
@@ -7,15 +8,13 @@ import { sendToWorker, onWorkerMessage, workerReady } from './bridge.js'
 
 document.getElementById('app').innerHTML = `
   <div class="layout">
-    <header class="app-header">
-      <h1 class="app-title">Local Goods <span class="badge">DEMO STORE</span></h1>
-      <p class="app-subtitle">Everyday essentials. Stored on your device. Assisted by local AI.</p>
-      <p class="mono" id="worker-status">⏳ Worker starting...</p>
-    </header>
-    <main class="content">
-      <section class="card catalog-section">
+    <header class="app-header"><span class="brand-mark" aria-hidden="true">u//</span><span class="app-title">Local Goods</span><span class="app-subtitle">/ Demo store</span><p class="mono" id="worker-status" role="status">Worker starting…</p></header>
+    <div class="workspace">
+      <aside class="sidebar"><p class="eyebrow">Store workspace</p><nav aria-label="Store sections"><a class="nav-link" href="#catalog-section"><span class="nav-symbol" aria-hidden="true">▦</span>Catalog</a><a class="nav-link" href="#kv-section"><span class="nav-symbol" aria-hidden="true">▤</span>Cart & orders</a><a class="nav-link" href="#ai-section"><span class="nav-symbol" aria-hidden="true">⊞</span>Local assistant</a><a class="nav-link" href="#p2p-section"><span class="nav-symbol" aria-hidden="true">◇</span>Peer sharing</a></nav><div class="sidebar-footer"><p class="eyebrow">Local demo</p><p>No payments or fulfillment. Catalog and orders stay usable offline.</p></div></aside>
+      <main class="content commerce-content"><div class="page-heading"><p class="eyebrow">Unstoppable / Demo store</p><h1>Local Goods</h1><p>Browse products, save demo orders, and use optional local AI.</p></div>
+      <section id="catalog-section" class="card catalog-section">
         <p class="eyebrow">THE EVERYDAY COLLECTION</p>
-        <h2 class="hero-title">Good things for your daily routine.</h2>
+        <h2 class="card-title">Product catalog</h2>
         <p class="card-hint">Browse offline, build a cart, and save a demo order locally.</p>
         <label for="catalog-search">Find a product</label>
         <input id="catalog-search" class="inp" type="search" placeholder="Search products or categories" />
@@ -44,7 +43,7 @@ document.getElementById('app').innerHTML = `
           <span class="mono" id="ai-loading-label">⏳ Loading model…</span>
         </div>
         <div id="ai-error" style="display:none">
-          <div style="color:#f85149;margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
+          <div style="color:var(--red);margin-bottom:8px">❌ <span id="ai-error-msg">Failed to load model</span></div>
           <button id="ai-retry" class="btn">Retry</button>
         </div>
         <div id="ai-chat" style="display:none">
@@ -72,10 +71,11 @@ document.getElementById('app').innerHTML = `
         <p class="mono" id="p2p-status">⏳ Starting...</p>
       </section>
     </main>
+    </div>
   </div>
 `
 
-injectStyles()
+setupNavigation()
 
 document.getElementById('share-orders').addEventListener('click', () => sendToWorker({ type: 'share-orders' }))
 document.getElementById('fetch-peer-order').addEventListener('click', () => {
@@ -238,7 +238,7 @@ onWorkerMessage((msg) => {
     }
     if (msg.type === 'init-complete') {
       sendToWorker({ type: 'cart-get' })
-      setText('worker-status', '✅ Ready')
+      setText('worker-status', 'Ready')
     }
 
     if (msg.type === 'status' && msg.service === 'p2p') {
@@ -304,8 +304,12 @@ onWorkerMessage((msg) => {
 })
 
 workerReady.catch((err) => {
-  document.getElementById('app').innerHTML =
-    '<div style="padding:2rem;color:#f85149">Worker failed: ' + err.message + '</div>'
+  setText('worker-status', 'Worker unavailable')
+  const error = document.createElement('p')
+  error.className = 'card error'
+  error.setAttribute('role', 'alert')
+  error.textContent = 'Worker failed: ' + err.message
+  document.querySelector('main').prepend(error)
 })
 
 // ---------------------------------------------------------------------------
@@ -322,56 +326,4 @@ function showResult(id, text) {
   if (!el) return
   el.textContent = text
   el.style.display = 'block'
-}
-
-function injectStyles() {
-  const style = document.createElement('style')
-  style.textContent = `
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #e6edf3; }
-    label { display: block; font-size: .8rem; margin: 10px 0 6px; color: #aebbc5; }
-    .badge { font-size: .65rem; color: #96ddc5; border: 1px solid #3d655b; padding: 5px 8px; border-radius: 20px; vertical-align: middle; margin-left: 10px; }
-    .eyebrow { font-size: .65rem; letter-spacing: .16em; color: #96ddc5; margin-bottom: 10px; text-transform: uppercase; }
-    .hero-title { font-size: 2rem; margin-bottom: 20px; }
-    .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
-    .product { border: 1px solid #303f44; border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
-    .product-art { background: #263b3b; border-radius: 8px; text-align: center; padding: 22px; font-size: 3rem; }
-    .product h3 { font-size: 1rem; }
-    .product p:not(.eyebrow) { color: #aebbc5; font-size: .85rem; line-height: 1.5; flex: 1; }
-    .product-bottom, .cart-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-    .product-bottom { justify-content: space-between; }
-    .cart-row span { flex: 1; }
-    .cart-total { font-size: 1.4rem; font-weight: 700; margin: 20px 0; }
-    @media(max-width: 700px) { .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .product-bottom { align-items: stretch; flex-direction: column; } }
-    @media(max-width: 430px) { .product-grid { grid-template-columns: 1fr; } }
-    .btn:focus-visible { outline: 2px solid #96ddc5; outline-offset: 3px; }
-    .layout { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-    .app-header { padding: 1.5rem 1.5rem 1rem; border-bottom: 1px solid #30363d; flex-shrink: 0; }
-    .app-title { font-size: 1.5rem; font-weight: 700; color: #96ddc5; margin-bottom: 2px; }
-    .app-subtitle { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; }
-    .content { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .card { background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 1.25rem; }
-    .card-title { font-size: 1rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
-    .card-hint { font-size: 0.8rem; color: #8b949e; margin: -0.5rem 0 0.75rem; }
-    .mono { font-family: monospace; font-size: 0.85rem; color: #8b949e; }
-    .row { display: flex; align-items: center; }
-    .gap-8 { gap: 8px; }
-    .inp { width: 100%; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; color: #e6edf3; font-size: 0.875rem; margin-bottom: 8px; outline: none; }
-    .inp:focus { border-color: #96ddc5; }
-    .btn { background: #28715f; color: #fff; border: none; border-radius: 6px; padding: 8px 16px; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
-    .btn:hover { background: #358b76; }
-    .btn:disabled { opacity: 0.4; cursor: default; }
-    .btn-outline { background: #21262d; border: 1px solid #30363d; }
-    .btn-outline:hover { background: #30363d; }
-    .btn-send { padding: 8px 14px; }
-    .result { overflow-wrap: anywhere; white-space: pre-wrap; margin-top: 8px; font-family: monospace; font-size: 0.8rem; color: #3fb950; }
-    .chat-list { max-height: 220px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
-    .chat-hint { color: #555; font-size: 0.875rem; font-style: italic; text-align: center; padding: 1rem; }
-    .bubble { border-radius: 10px; padding: 8px 12px; max-width: 80%; font-size: 0.875rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
-    .bubble-user { background: #28715f; align-self: flex-end; }
-    .bubble-assistant { background: #21262d; border: 1px solid #30363d; align-self: flex-start; }
-    .link { display: block; color: #96ddc5; font-size: 0.875rem; text-decoration: none; margin-bottom: 6px; }
-    .link:hover { text-decoration: underline; }
-  `
-  document.head.appendChild(style)
 }

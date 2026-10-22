@@ -15,19 +15,25 @@ AI understandable without requiring protocol knowledge:
 - Remove apps that should no longer connect
 - Use the system tray menu to show or quit the dashboard
 
-The dashboard opens in **Simple** view: a Home screen with connected apps,
-plain-language copy status, storage use, and AI availability. Connect an app,
-pause or resume its sharing, change its storage limit, or disconnect it from
-its card. An offline app can still have a verified copy here; the screen reports
+The dashboard opens in **Simple** view: a personal cloud console with sidebar
+navigation, a compact sync and storage overview, an app list, recent activity,
+and a selected-app inspector. Select an app to browse its saved data, pause or
+resume sharing, change its storage limit, or disconnect it. **Pause sync** acts
+on all paired apps with registered data; **Resume sync** appears when they are
+all paused. **Saved data** opens the same read-only browser through the inspector.
+An offline app can still have a verified copy here; the screen reports
 these states separately and does not promise a backup or recovery service.
 
 Use the **View** switch to open **Advanced**, which retains the existing
 dashboard, resource inspectors, permissions, AI controls, and settings. The
 selection is remembered on this device. Both views use the same node and grants;
 switching views does not change permissions. Simple pairing codes allow data
-sharing only. AI access can be managed explicitly in Advanced.
+sharing only. The sidebar also opens Storage, Local AI, and Settings directly in
+Advanced. AI access can be managed explicitly there. The shared graphite/cyan
+visual system follows the operating system's light or dark appearance, uses
+bundled icons without network access, and adapts to smaller windows.
 
-Each app card has **Browse saved data**, a read-only view of copied content.
+The selected-app inspector has **Browse saved data**, a read-only view of copied content.
 Hyperbee collections with text keys and JSON/text values show current records as
 readable fields, with dedicated cards for Notebook notes and Briefing reports.
 Simple hides record IDs, schema versions, and source metadata; Advanced's

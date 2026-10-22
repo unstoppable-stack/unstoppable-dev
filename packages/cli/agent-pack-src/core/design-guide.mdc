@@ -1,73 +1,114 @@
 ---
-description: Guidelines for designing desktop and mobile UIs with the Unstoppable Stack
+description: Default Unstoppable UI identity, shared color tokens, functional layouts, and accessibility for US-related apps
 alwaysApply: false
 ---
 
-# Designing Desktop and Mobile Apps with the Unstoppable Stack
+# Unstoppable UI design
 
-## Design Goals
-- Local-first: core functionality must work without network access.
-- P2P sync: replication is opportunistic, not required to use the app.
-- Trust boundaries: isolate AI inference and P2P IO from UI threads.
-- Progressive delivery: build, stage, provision, and multisig separately.
+Use **Unstoppable Control**, the Personal Node desktop app's visual system, as
+the default for new Unstoppable Stack (US) apps, first-party examples, and
+scaffolded interfaces. Apply it when adding UI to an existing US-related app,
+while preserving its behavior, data, and established product identity. Explicit
+user design choices take precedence. A UI refresh does not authorize a runtime
+migration or regeneration of an edited app.
 
-## Desktop App Architecture (Pear)
-**Pattern: UI + Engine**
-- UI: sandboxed Electron renderer (HTML/React).
-- Engine: Bare worker started by embedded `pear-runtime`.
-- Bridge: context-isolated Electron preload + `Bare.IPC`, using typed RPC or NDJSON.
+## Identity and visual hierarchy
 
-**Why**
-- Keeps long-running inference and networking off the UI thread.
-- Enables stronger crash isolation and simpler restarts.
+- Build a functional local-first workspace: compact navigation, clear content
+  headings, data lists, and controls beside the data they affect.
+- Use graphite surfaces, cyan for primary actions and selection, restrained
+  borders, small corner radii, and system sans-serif type. Use monospace for
+  keys, quantities, timestamps, and technical identifiers.
+- On desktop, use a compact top bar, a 170–185 px sidebar when there are several
+  destinations, and a scrolling content area. Use a selected-item inspector
+  when it reduces repetition. A small single-purpose tool can omit the sidebar.
+- On mobile, retain the palette and hierarchy with native navigation, safe
+  areas, readable text, keyboard handling, and at least 44 px touch targets.
+  Do not compress a desktop sidebar onto a phone.
+- Keep app-specific names, content, and domain workflows. The `u//` mark and an
+  understated Unstoppable label identify the scaffold; they should not dominate
+  the app's own title or imply release approval.
+- Avoid decorative dashboard metrics, giant marketing headings, gradients,
+  glass effects, oversized icons, and repeated nested cards. Give each actual
+  status or numeric measure a clear purpose.
 
-**Key design points**
-- Model lifecycle: load once, reuse per thread, unload on app exit.
-- Streaming: stream tokens to the UI and update visible text incrementally.
-- Persistence: use local storage (Zustand + file storage) or Hyperbee for shared state.
+## Shared tokens
 
-## Mobile App Architecture (Expo + Bare)
-**Pattern: RN UI + Bare worklet backend**
-- UI: React Native (Expo Router or standard).
-- Backend: Bare worklet bundle, started via `react-native-bare-kit`.
-- Bridge: `bare-rpc` over Worklet IPC.
+The repository source of truth is `packages/agent-pack/src/ui/tokens.json`.
+`scripts/sync-stack-assets.mjs` distributes the palette into the CLI, desktop
+app, ecommerce example, and public design reference. Edit canonical assets,
+then synchronize; do not hand-edit generated copies.
 
-**Why**
-- Bare provides UDP and low-level networking required by Hyperswarm.
-- Worklet keeps heavy tasks off the JS UI thread.
+Scaffolded desktop apps own `app/theme.css`, `app/styles.css`, and
+`app/shell.js`. Experimental Expo apps own `src/theme.ts` and native styles.
+Assistant-enabled workspaces also receive the token reference at
+`.unstoppable/guidance/core/ui-tokens.json`. Extend these existing assets rather
+than introducing another theme or a component dependency for a visual refresh.
 
-**Key design points**
-- Use a background task queue for inference or long-running processing.
-- Android model downloads should run in a foreground service with progress notifications.
-- Hot reload is limited for Bare-dependent code; rebuild on backend changes.
+| Role | Light | Dark |
+| --- | --- | --- |
+| Canvas | `#f4f7f9` | `#11171b` |
+| Surface | `#ffffff` | `#182126` |
+| Navigation | `#e8eef2` | `#0c1216` |
+| Text | `#152c35` | `#e1edf0` |
+| Secondary text | `#526a75` | `#9aafb8` |
+| Border | `#d3dfe4` | `#2b3940` |
+| Primary action / selection | `#00778a` | `#58d9e9` |
+| Text on primary action | `#ffffff` | `#092129` |
+| Selected surface | `#e0f3f5` | `#17343c` |
+| Success | `#237349` | `#82cea2` |
+| Attention | `#805b0e` | `#ebc274` |
+| Error / destructive action | `#b33037` | `#ff999c` |
 
-## Data Modeling and Sync
-- Use Hypercore for append-only event logs (chat history, activity logs).
-- Use Hyperbee for key-value state (settings, indexed entities).
-- Use Hyperdrive for file sharing or large assets (models, user files).
-- Use HyperDB when you need schema + indexed queries and are ok with a build step.
+Use the operating system's appearance by default. Browser CSS uses semantic
+variables and `light-dark()`; React Native uses `useColorScheme()` and the same
+light/dark color roles. Primary buttons use the dedicated contrasting text
+color; secondary buttons and user message bubbles retain readable body text.
+Use a 4/8/12/16/24/32 px spacing scale, roughly 7 px panels and 5 px controls.
+Desktop body text is around 13 px, secondary text 12 px, page headings 25 px;
+mobile body text is at least 14 px and inputs remain comfortable to edit.
 
-## UX Patterns for P2P and Local AI
-- Show offline state clearly; allow actions even when offline.
-- Use explicit progress states for model downloads and inference start.
-- Use optimistic UI for writes; sync in background.
-- Provide per-thread or per-project contexts to control model parameters.
+## Truthful, functional states
 
-## Security and Trust
-- Do not leak Hypercore keys in UI logs; treat keys as capabilities.
-- Use `@hyperswarm/secret-stream` for encrypted application protocols.
-- Gate unknown `pear://` links with explicit trust prompts.
-- Store secrets in OS keychains or a secure store; never in localStorage.
+- Local data stays usable without peers. Distinguish app availability, network
+  initialization, active peer connections, replication progress, verified
+  copies, storage limits, and optional AI readiness.
+- An offline app can still have a verified last shared copy. A connection or a
+  registered resource alone is not proof of sync or a backup. Never invent a
+  percentage, rate, activity entry, or completion timestamp to fill the layout.
+- Show loading, empty, partial, paused, failed, and retry states explicitly.
+  Identify contract/mock AI responses as simulated. Experimental features retain
+  their alpha/deferred labels.
+- Put pause/resume, limits, permissions, and relevant details beside the
+  selected app or resource. Preserve confirmation before disconnecting or
+  deleting. Keep technical identifiers in an inspector or Advanced view.
+- Reuse the existing IPC commands and feature handlers. Keep app data, prompts,
+  model lifecycle, cancellation, and permission semantics intact during restyling.
 
-## Example Layouts
-**Desktop LLM Workbench**
-- Left: project list + threads
-- Center: chat
-- Right: model config + system prompt
-- Background: QVAC engine, separate Pear terminal app
+## Accessibility and resilience
 
-**Mobile Health App**
-- Home: metrics dashboard
-- Quick Log: background task queue for inference
-- Downloads: foreground service for model updates
-- Networking: Hyperdrive + Hyperswarm for data sync
+Use semantic headings, labels, buttons, and real navigation links. Every
+navigation target must exist in the selected feature combination. Use
+`aria-current` or pressed states for selection, visible keyboard focus, text
+alongside status colors, `role="status"` for results, and `role="alert"` for
+errors. Render user/peer content as text, never interpolated executable markup.
+
+Preserve keyboard focus, entered forms, chat history, and app selection during
+status snapshots. Reflow at smaller widths; wrap long names and identifiers.
+Respect reduced motion and use bundled icons/system fonts so basic UI works
+without external assets or a network connection.
+
+## Runtime boundaries
+
+Desktop renderers use the context-isolated preload/IPC bridge. P2P, native
+storage, and maintained desktop/Node AI remain in their existing owners and
+workers. Experimental Expo keeps React Native UI and its separate networking
+worklet. Follow the target's recorded compatibility profile; matching this
+visual system does not establish native or mobile acceptance.
+
+## Validate a UI change
+
+Check feature variants, navigation, forms, errors, Stop/retry, existing data
+flows, and keyboard focus. Inspect light/dark screenshots at normal and narrow
+widths. Run the target's tests and relevant native acceptance checks separately.
+Report simulated UI checks, real transport, and real inference distinctly.

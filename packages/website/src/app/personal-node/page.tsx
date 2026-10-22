@@ -56,7 +56,7 @@ export default function PersonalNodePage() {
             ].map(([title, body]) => <article key={title} className="card"><h3 className="mb-3 text-lg font-semibold">{title}</h3><p className="text-sm leading-6 text-text-secondary">{body}</p></article>)}
           </div>
           <figure className="mx-auto mt-8 max-w-4xl rounded-2xl border border-border bg-background p-3">
-            <Image unoptimized src="/examples/personal-node-report.png" alt="Simple saved-data view showing a Briefing report as a card with its note title and excerpt, without technical metadata" width={2200} height={1376} className="h-auto w-full rounded-xl" />
+            <Image unoptimized src="/examples/personal-node-report.png" alt="Personal Node saved-data browser showing the synced Briefing report with note titles and excerpts" width={1944} height={1174} className="h-auto w-full rounded-xl" />
             <figcaption className="mt-3 text-sm leading-6 text-text-muted">Actual desktop alpha, using the Notebook + Briefing example. Browsing is read-only; edit content in its original app. Supported note and report formats have cards; other formats may require the original app.</figcaption>
           </figure>
         </div>

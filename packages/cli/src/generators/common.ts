@@ -452,7 +452,15 @@ ${features}
 
 ${gettingStarted}${multiWriterSection}${nodeSyncSection}
 
-## Project Structure
+${opts.platform !== 'node-cli' ? `## UI design
+
+This app follows the Unstoppable Control visual system: graphite surfaces,
+cyan actions/selection, compact controls, and system light/dark appearance.
+${opts.platform === 'pear-desktop' ? 'Extend \`app/theme.css\`, \`app/styles.css\`, and \`app/shell.js\`; the sidebar links to the selected feature sections.' : 'Extend \`src/theme.ts\` and the native screen styles; mobile remains experimental.'}
+Keep existing feature handlers, local data, cancellation, and permission behavior
+when changing the interface. Explicit user design choices take precedence.
+
+` : ''}## Project Structure
 
 See \`planning/\` for architecture decisions and feature plans.
 `

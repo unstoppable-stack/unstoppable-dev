@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import type { AssistantId, TemplateId } from '../constants.js'
 import type { Platform, Feature } from '../generators/types.js'
 import { manifest } from '../compatibility/index.js'
+import { uiTokens } from '../generated/ui-theme.js'
 
 const moduleDirectory = dirname(fileURLToPath(import.meta.url))
 // Bundled CLI modules live in dist; source execution lives in src/agent-pack.
@@ -65,6 +66,7 @@ export async function buildAgentPack(options: BuildOptions): Promise<BuildResult
     for (const ref of refs) await emit(`${guidance}/${group}/${ref.id}.md`, stripFrontmatter(ref.content) + '\n')
     await emit(`${guidance}/${group}/INDEX.md`, `# ${group}\n\nRead only the reference relevant to the task.\n\n` + refs.map(ref => `- [${ref.id}](${ref.id}.md): ${description(ref.content, ref.id)}`).join('\n') + '\n')
   }
+  await emit(`${guidance}/core/ui-tokens.json`, JSON.stringify(uiTokens, null, 2) + '\n')
   await emit('.unstoppable/compatibility-profiles.json', JSON.stringify(manifest, null, 2) + '\n')
 
   const skillRoot = { claude: '.claude/skills', codex: '.agents/skills', opencode: '.opencode/skills', cursor: '.cursor/skills' }[options.tool]
@@ -101,6 +103,11 @@ ${aiEnabled ? `- Desktop/Node local AI uses \`.unstoppable/runtime-ai/index.js\`
 - Read the relevant local integration note or skill. Use version-matched upstream docs and installed types for detailed SDK APIs.
 - Dependency/native-runtime upgrades are deliberate migrations. Run \`us compatibility check -o <app>\`; preserve app edits and validate the new combination. Never use \`--force\` to upgrade an edited app.
 - Expo, wallet and Personal Node maturity is recorded separately; a scaffold or mock test alone does not establish native support.
+
+## UI design default
+
+For US-related apps, follow **Unstoppable Control**, the Personal Node desktop visual system.
+Read \`${guidance}/core/design-guide.md\` and \`${guidance}/core/ui-tokens.json\` before building or changing UI. Reuse the app's existing theme and controls: graphite surfaces, cyan selection/actions, compact functional navigation, truthful sync states, keyboard access, and system light/dark appearance. Adapt the same hierarchy to native mobile controls. Preserve functionality and explicit user design choices; do not regenerate an edited app to restyle it.
 
 ## Validate the change
 

@@ -64,6 +64,10 @@ async function stop(proc) {
 async function view(value) {
   await page.locator('#dashboard-view').selectOption(value)
 }
+async function selectSimpleApp(name) {
+  await simpleRow(name).locator('[data-select-app]').click()
+  return page.locator('#simple-inspector')
+}
 function simpleRow(name) {
   return page.locator('.simple-app').filter({ has: page.getByRole('heading', { name, exact: true }) })
 }
@@ -127,7 +131,7 @@ try {
   await stop(notebook)
   await connections(0)
   await simpleRow('Notebook').getByText('Not connected', { exact: true }).waitFor()
-  assert.match(await simpleRow('Notebook').innerText(), /last shared data is still available/)
+  assert.match(await (await selectSimpleApp('Notebook')).innerText(), /last shared data is still available/)
   assert.equal(await appRow('Notebook').locator('[data-connection="offline"]').count(), 1)
   assert.match(await appRow('Notebook').innerText(), /verified copy/i)
   let briefing = start('briefing.js', ['sync', '--node-invite', await invite('advanced'), '--stay-open'], 'briefing')
@@ -142,12 +146,12 @@ try {
   assert.equal(await page.locator('[data-promote]').count(), 0, 'pairing codes already authorize these apps')
   for (const name of ['Notebook', 'Briefing']) assert.match(await appRow(name).innerText(), /paired by code/i)
   await view('simple')
-  assert.match(await simpleRow('Notebook').innerText(), /AI access: not allowed/)
-  assert.match(await simpleRow('Briefing').innerText(), /AI access: allowed/)
+  assert.match(await (await selectSimpleApp('Notebook')).innerText(), /AI access: not allowed/)
+  assert.match(await (await selectSimpleApp('Briefing')).innerText(), /AI access: allowed/)
   page.once('dialog', dialog => dialog.dismiss())
-  await simpleRow('Briefing').getByRole('button', { name: 'Disconnect app', exact: true }).click()
+  await (await selectSimpleApp('Briefing')).getByRole('button', { name: 'Disconnect app', exact: true }).click()
   await connections(2)
-  await simpleRow('Notebook').getByRole('button', { name: 'Pause copying', exact: true }).click()
+  await (await selectSimpleApp('Notebook')).getByRole('button', { name: 'Pause copying', exact: true }).click()
   await simpleRow('Notebook').getByText('Copying is paused', { exact: true }).waitFor()
   await view('advanced')
   await appRow('Notebook').getByRole('button', { name: 'Resume protection', exact: true }).waitFor()
@@ -156,13 +160,13 @@ try {
   await verified(2)
   await view('simple')
   await simpleRow('Notebook').getByText('Latest shared data copied', { exact: true }).waitFor()
-  await simpleRow('Notebook').getByRole('button', { name: 'Storage limit', exact: true }).click()
+  await (await selectSimpleApp('Notebook')).getByRole('button', { name: 'Storage limit', exact: true }).click()
   await page.locator('#simple-limit-value').fill('not a size')
   await page.getByRole('button', { name: 'Save limit', exact: true }).click()
   assert.match(await page.locator('#simple-limit-error').innerText(), /Enter a size/)
   await page.locator('#simple-limit-value').fill('2 GB')
   await page.getByRole('button', { name: 'Save limit', exact: true }).click()
-  await simpleRow('Notebook').getByText(/Storage limit: 2.0 GB/).waitFor()
+  await page.locator('#simple-inspector').getByText('2.0 GB', { exact: true }).waitFor()
   await view('advanced')
   await appRow('Notebook').getByRole('button', { name: 'Storage limit: 2.0 GB', exact: true }).waitFor()
   await page.reload()
@@ -175,7 +179,7 @@ try {
   assert.equal(await page.locator('#welcome-modal').isVisible(), false)
   await simpleRow('Notebook').getByText('Latest shared data copied', { exact: true }).waitFor()
   assert.equal(await page.locator('#node-key').isVisible(), false)
-  assert.match(await simpleRow('Notebook').innerText(), /AI access: not allowed/)
+  assert.match(await (await selectSimpleApp('Notebook')).innerText(), /AI access: not allowed/)
   console.log('PASS: Simple and Advanced share live state; pause/resume, storage limit validation, unchanged grants and saved view choice')
 
   await stop(briefing)
@@ -194,7 +198,7 @@ try {
   await view('simple')
   await page.screenshot({ path: join(output, 'simple-connected.png') })
   for (const name of ['Notebook', 'Briefing']) {
-    await simpleRow(name).getByRole('button', { name: 'Browse saved data' }).click()
+    await (await selectSimpleApp(name)).getByRole('button', { name: 'Browse saved data' }).click()
     await page.waitForFunction(() => document.querySelector('#peek-body')?.textContent.includes('Updated launch plan'), undefined, { timeout: 15000 })
     assert.equal(await page.locator('#dashboard-view').inputValue(), 'simple')
     assert.doesNotMatch(await page.locator('#peek-body').innerText(), /schemaVersion|schema Version|publicKey|sourceKey|Core key/ )
