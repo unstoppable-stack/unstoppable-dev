@@ -13,6 +13,8 @@ Use the smallest reproducer at the failing boundary. Keep mock output labeled. V
 
 Use installed types and version-matched upstream docs for engine-specific issues. Change the compatibility graph only through a deliberate migration; report evidence and unverified gates.
 
+For discovery, reconnect, device suspension or stale sync reports, use [physical-device sync diagnosis](resources/device-sync.md). It separates lifecycle cancellation, transport failure and verified content delivery.
+
 ## Bundled integration references
 
 For app ownership and runtime boundaries, load only the relevant [foundation](../unstoppable-foundations/SKILL.md), [module](../unstoppable-modules/SKILL.md), or [recipe](../unstoppable-recipes/SKILL.md) reference. Bundled links resolve from this skill; app paths resolve from the selected target.

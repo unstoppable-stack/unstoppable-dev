@@ -43,6 +43,10 @@ failed tests when it helps diagnosis; otherwise remove the exact test directory.
 
 See [resources/full-setup.md](resources/full-setup.md) for a two-peer recipe.
 
+## Physical-device acceptance
+
+After isolated tests, use [device sync diagnosis](../diagnose-stack-runtime/resources/device-sync.md). Test fresh content after sleep and each network switch without restarting or re-pairing. One tap is one attempt; record manual retry failures. Verify actual transport endpoints because a USB-connected phone can transfer data over USB networking even with Wi-Fi off. Preserve lifecycle timestamps so suspension is not misreported as a network timeout.
+
 ## Bundled integration references
 
 For app ownership and runtime boundaries, load only the relevant [foundation](../unstoppable-foundations/SKILL.md), [module](../unstoppable-modules/SKILL.md), or [recipe](../unstoppable-recipes/SKILL.md) reference. Bundled links resolve from this skill; app paths resolve from the selected target.

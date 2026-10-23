@@ -34,3 +34,5 @@ implementation; do not replace edited managers without a migration.
 Validate two peers, denied/ungranted calls, disconnect/reconnect, persisted
 identity after restart and clean shutdown. Isolated loopback tests do not prove
 public discovery, NAT traversal, packaged Bare or mobile acceptance.
+
+For root-node saved-peer recovery, use the library reconnect policy and bounded foreground connections in both directions without blocking local startup. A timed-out connect call and a later reconnected event are different outcomes. See [device sync diagnosis](../diagnose-stack-runtime/resources/device-sync.md) for lifecycle, route and first-attempt acceptance.

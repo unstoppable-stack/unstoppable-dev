@@ -34,6 +34,8 @@ real peers, disconnect/reconnect, bounded cancellation, offline reads after
 restart and convergence. Local loopback evidence does not prove public-network,
 packaged Bare, mobile or backup acceptance.
 
+Verify a fresh protected checkpoint and exact imported content, including audio hashes where applicable. Retry only explicitly idempotent snapshot operations within one deadline and cancellation signal; do not replay arbitrary domain writes. Test source-offline reopen and one-request recovery using [device sync diagnosis](../diagnose-stack-runtime/resources/device-sync.md).
+
 ## Bundled integration references
 
 For app ownership and runtime boundaries, load only the relevant [foundation](../unstoppable-foundations/SKILL.md), [module](../unstoppable-modules/SKILL.md), or [recipe](../unstoppable-recipes/SKILL.md) reference. Bundled links resolve from this skill; app paths resolve from the selected target.

@@ -12,3 +12,9 @@ Separate intentional app edits from upstream compatibility changes. Compare inst
 Never use `us scaffold app --force` to upgrade an edited app. Do not silently replace a modified vendored runtime. Apply reviewed differences in a branch and run actual install/runtime gates, including missing-addon failure, Stop/reuse, shutdown and cached offline startup for AI. Expo needs its own physical-device gates.
 
 Update the recorded profile/runtime/model metadata only after validating the migration. A matching declaration range does not certify every resolved graph or native platform. Report any acceptance gate that remains unverified.
+
+## Upgrade each distribution layer
+
+An agent-pack update changes guidance; a CLI update changes future scaffolds. Neither upgrades an existing app or packaged desktop/mobile worker. Inspect the app manifest, lockfile, actual installed dependency and bundled artifact separately. Replace temporary local-package overrides with the intended published version and a reproducible lockfile before claiming the migration is durable. Do not treat a source hash alone as validation of the entire native graph.
+
+For P2P changes, retain the saved identity and data, rebuild affected worker/native packages, and verify fresh content after disconnect/reconnect with [device sync diagnosis](../diagnose-stack-runtime/resources/device-sync.md). A new npm library release does not change an already-installed desktop binary or OTA channel until its app release is rebuilt and distributed. Keep CLI, plugin, library and app publication status separate.

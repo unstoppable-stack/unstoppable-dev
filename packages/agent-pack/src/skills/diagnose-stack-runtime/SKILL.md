@@ -12,3 +12,5 @@ Trace the failure boundary: renderer/preload/IPC, Bare worker, networking/storag
 Use the smallest reproducer at the failing boundary. Keep mock output labeled. Verify native cancellation by stopping a real operation and successfully reusing the same model; token suppression is insufficient. Retry loads explicitly and avoid automatic replay after partial output. Test cached startup in a network-isolated run for offline claims.
 
 Use installed types and version-matched upstream docs for engine-specific issues. Change the compatibility graph only through a deliberate migration; report evidence and unverified gates.
+
+For discovery, reconnect, device suspension or stale sync reports, use [physical-device sync diagnosis](resources/device-sync.md). It separates lifecycle cancellation, transport failure and verified content delivery.
