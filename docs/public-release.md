@@ -6,14 +6,14 @@ npm release allowlist. The published preview consists of:
 | Package | Version | npm tag |
 | --- | --- | --- |
 | `@unstoppable-stack/cli` | `0.4.0-beta.4` | `beta` |
-| `@unstoppable-stack/p2p` | `0.6.0-alpha.3` | `alpha` |
+| `@unstoppable-stack/p2p` | `0.6.0-alpha.4` | `alpha` |
 
 Claude and Codex plugins share a separately built website download. They remain
 local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
-## P2P alpha.4 candidate (23 October 2026)
+## P2P alpha.4 publication (23 October 2026)
 
 This P2P-only release contains connection recovery and reverse-RPC batching fixes,
 plus the separately developed offline persisted-checkpoint verification fix.
@@ -21,15 +21,30 @@ The latter accepts only a nonempty signed tree with every block stored locally;
 unknown empty keys and incomplete copies stay pending. It is explicitly included
 in this release and was present in the tested Notes candidate.
 
-Publish `@unstoppable-stack/p2p@0.6.0-alpha.4` to `alpha` after the reviewed release
-PR is merged and its clean checkout passes the P2P source suite, types, installed
-artifact and Bare checks, production dependency audit, and archive validation.
-Keep the exact tested tarball, commit, SHA-256 and npm integrity. Authenticated
-maintainer publication may publish that P2P tarball alone; it must recheck registry
-availability, preserve `latest` at `0.6.0-alpha.1`, and verify the registry tarball
-and installed content afterward. Source scaffold compatibility profiles now
-target alpha.4; the published CLI beta.4 and existing app profiles remain
-unchanged. This candidate section does not claim npm publication.
+`@unstoppable-stack/p2p@0.6.0-alpha.4` is published under `alpha` from clean
+merged commit `3ea8c32fde103a397a3fee4c68ee67e92686f06f`
+([PR #33](https://github.com/unstoppable-stack/unstoppable-dev/pull/33)).
+All final PR checks passed, including canonical public-artifact preparation,
+platform packaging, headless Bare and deferred iOS compilation. The macOS and
+Linux tested P2P archives matched byte for byte. An authenticated maintainer
+published that exact P2P tarball after npm browser confirmation.
+
+The public registry tarball and a fresh npm installation matched the recorded
+SHA-256, npm integrity and phone-tested runtime source. The fresh installation
+passed 18 focused reverse-RPC, reconnect and offline-checkpoint regressions.
+See [publication evidence](../release/registry-acceptance-2026-10-23-p2p-alpha4.json).
+The source suite passed 183 tests; the exact installed artifact also passed Bare
+1.34.1 checks and the production dependency audit reported no vulnerabilities.
+One earlier public-DHT smoke attempt timed out; the final 20-run smoke passed.
+These results do not establish universal network reliability.
+
+```sh
+npm install @unstoppable-stack/p2p@0.6.0-alpha.4
+```
+
+P2P `latest` remains `0.6.0-alpha.1`. No CLI package was published. Source
+scaffold compatibility profiles target alpha.4; published CLI beta.4 and
+existing app profiles remain unchanged.
 
 The physical Notes acceptance used the same library implementation on an iPhone
 and desktop. Fresh notes crossed cellular → Wi-Fi → cellular in one user request

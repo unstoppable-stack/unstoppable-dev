@@ -1,0 +1,51 @@
+{
+  "verifiedAt": "2026-10-23T12:16:31.812Z",
+  "publishedAt": "2026-10-23T12:16:16.733Z",
+  "name": "@unstoppable-stack/p2p",
+  "version": "0.6.0-alpha.4",
+  "distTags": {
+    "latest": "0.6.0-alpha.1",
+    "alpha": "0.6.0-alpha.4"
+  },
+  "dist": {
+    "shasum": "7d461a4778c4ad8691b1aa890dc27cfd77a5bdbf",
+    "tarball": "https://registry.npmjs.org/@unstoppable-stack/p2p/-/p2p-0.6.0-alpha.4.tgz",
+    "fileCount": 46,
+    "integrity": "sha512-RAqgRHRLr5V1XOwuM/U4rzxJJPkivew9tkwiTIWDLRDw5xiinclOC4HdJ1qxFtC+0XffIREnZJHCOcJBkFafzA==",
+    "signatures": [
+      {
+        "sig": "MEYCIQC6wWiYBLfIxj3VFB6f2QukG0jnsZ76J1HuMwUbMiH9pQIhAIXZR5/RovpkXKlIMe6MFT4+bfsO7DuIfoZlI2T1HVFd",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      },
+      {
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U",
+        "sig": "MEQCIF6jvIb4P1tF4AWG09ZK36+ocXG92u2mvgrJrVCk5jMwAiBi3uQphdKpO56JXnnuaU1C8GF3prjFZut5J5mvLJEj9g=="
+      }
+    ],
+    "unpackedSize": 291225
+  },
+  "sha256": "11c69ec8496dada32f7dd9603e293f199d4f15236a68b8bacd3e07680ca2f404",
+  "mergedCommit": "3ea8c32fde103a397a3fee4c68ee67e92686f06f",
+  "pr": "https://github.com/unstoppable-stack/unstoppable-dev/pull/33",
+  "status": "passed",
+  "installedSourceSha256": "b20d2448d8ffe41d173d0294cf5d62084122b90a0b76492fc35b6325cb108871",
+  "registryInstallIntegrityVerified": true,
+  "registryConsumerTests": {
+    "passed": 18,
+    "failed": 0,
+    "scope": [
+      "reverse RPC batching",
+      "connection retries, independent deadlines and cancellation",
+      "source-offline persisted checkpoint verification"
+    ]
+  },
+  "acceptance": {
+    "sourceTestsPassed": 183,
+    "installedArtifactBare": "1.34.1",
+    "ciChecks": "All PR #33 final checks passed",
+    "sourceCommit": "863436047353f49af86b691f8fa9cc12fcd4fa18",
+    "canonicalValidationRun": "https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/39943660383",
+    "physicalDevice": "One observed physical iPhone/desktop cellular \u2192 Wi-Fi \u2192 cellular round trip, fresh notes, one request per leg, no process restart or new pairing. App retries idempotent exchanges separately. Not universal NAT/carrier or long-run qualification."
+  },
+  "publicationMethod": "Authenticated maintainer published the exact tested tarball from a clean merged checkout; alpha tag only."
+}
