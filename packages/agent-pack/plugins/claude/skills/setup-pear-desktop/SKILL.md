@@ -5,6 +5,12 @@ description: Build a desktop app with Electron, Pear OTA (pear-runtime), and a B
 
 # Set Up Pear Desktop
 
+For UI work, read the [bundled design guide](../unstoppable-foundations/resources/design-guide.mdc)
+and `ui-tokens.json`. US-related apps use the Personal Node desktop visual
+system by default: graphite/cyan tokens, compact functional layouts, truthful
+status, and accessible light/dark appearance. Preserve explicit user design
+choices and existing workflows; use native controls and touch spacing on mobile.
+
 Read the app’s `.unstoppable/project.json` and generated compatibility table before changing native dependencies. The maintained local AI session lives in `.unstoppable/runtime-ai/`; preserve its lifecycle contract when extending the worker.
 Use the current Pear OTA architecture. `pear run`, the ambient `global.Pear`
 API, `pear-electron`, `pear-bridge`, `pear-run`, `pear.pre`, and `pear release`

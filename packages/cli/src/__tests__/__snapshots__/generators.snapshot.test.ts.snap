@@ -2036,7 +2036,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperswarm": "^4.17.0",
       "b4a": "^1.8.0",
       "events": "^3.3.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
     },
     "devDependencies": {
       "@types/react": "~19.1.10",
@@ -2591,7 +2591,7 @@ module.exports = config
     "hyperswarm": "^4.17.0",
     "b4a": "^1.8.0",
     "events": "^3.3.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
   },
   "devDependencies": {
     "@types/react": "~19.1.10",
@@ -3264,7 +3264,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -3379,7 +3379,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -3699,7 +3699,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4",
       "@qvac/sdk": "0.21.0",
       "zod": "^4.3.0"
     },
@@ -4097,7 +4097,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4",
     "@qvac/sdk": "0.21.0",
     "zod": "^4.3.0"
   },
@@ -4442,7 +4442,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -4557,7 +4557,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -4949,7 +4949,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -5064,7 +5064,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -5452,7 +5452,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4"
     },
     "devDependencies": {
       "@types/node": "^20.0.0",
@@ -5567,7 +5567,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -5893,7 +5893,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -6458,7 +6458,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -6772,7 +6772,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4",
       "@qvac/inference": "0.21.0",
       "@qvac/llm-llamacpp": "0.55.0",
       "@qvac/langdetect-text": "^0.1.2",
@@ -7769,7 +7769,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
@@ -8156,7 +8156,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4",
       "@qvac/inference": "0.21.0",
       "@qvac/llm-llamacpp": "0.55.0",
       "@qvac/langdetect-text": "^0.1.2",
@@ -9144,7 +9144,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3",
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4",
     "@qvac/inference": "0.21.0",
     "@qvac/llm-llamacpp": "0.55.0",
     "@qvac/langdetect-text": "^0.1.2",
@@ -9506,7 +9506,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -10090,7 +10090,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "^0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
   },
   "devDependencies": {
     "electron": "^44.5.1"
@@ -10443,7 +10443,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "hyperbee": "^2.27.3",
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
-      "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4"
     },
     "devDependencies": {
       "electron": "^44.5.1"
@@ -11017,7 +11017,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "hyperbee": "^2.27.3",
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
-    "@unstoppable-stack/p2p": "0.6.0-alpha.3"
+    "@unstoppable-stack/p2p": "0.6.0-alpha.4"
   },
   "devDependencies": {
     "electron": "^44.5.1"

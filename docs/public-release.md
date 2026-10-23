@@ -27,8 +27,9 @@ artifact and Bare checks, production dependency audit, and archive validation.
 Keep the exact tested tarball, commit, SHA-256 and npm integrity. Authenticated
 maintainer publication may publish that P2P tarball alone; it must recheck registry
 availability, preserve `latest` at `0.6.0-alpha.1`, and verify the registry tarball
-and installed content afterward. CLI beta.4 and existing compatibility profiles
-remain unchanged. This candidate section does not claim npm publication.
+and installed content afterward. Source scaffold compatibility profiles now
+target alpha.4; the published CLI beta.4 and existing app profiles remain
+unchanged. This candidate section does not claim npm publication.
 
 The physical Notes acceptance used the same library implementation on an iPhone
 and desktop. Fresh notes crossed cellular → Wi-Fi → cellular in one user request

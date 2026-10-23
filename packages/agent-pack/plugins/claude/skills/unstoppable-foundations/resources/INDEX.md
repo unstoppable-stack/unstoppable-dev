@@ -4,7 +4,7 @@ Read only the reference relevant to the selected app and task.
 
 - [architecture](architecture.mdc): Ownership and runtime boundaries for generated Unstoppable apps.
 - [cheatsheet](cheatsheet.mdc): Locate generated app contracts, compatibility checks and runtime entrypoints.
-- [design-guide](design-guide.mdc): Guidelines for designing desktop and mobile UIs with the Unstoppable Stack
+- [design-guide](design-guide.mdc): Default Unstoppable UI identity, shared color tokens, functional layouts, and accessibility for US-related apps
 - [patterns](patterns.mdc): Extend scaffolded apps while preserving their runtime and data boundaries
 - [principles](principles.mdc): Local-first app policy and ownership boundaries when extending scaffolded apps.
 - [production-readiness](production-readiness.mdc): Production readiness checklist for Unstoppable Stack apps
