@@ -68,7 +68,7 @@ export class UnstoppableNode extends EventEmitter {
     }
     this._connections = new Set() // all transports, including replication-only peers
     this._peers = new Map()          // remote public key (hex) -> Peer
-    this._dialing = new Map()        // remote public key (hex) -> { deferred, requested, timer }
+    this._dialing = new Map()        // remote key -> shared handshake, independently bounded waiters
     this._discovering = null         // in-flight discover() by topic
     this._redeeming = null           // in-flight pair() by invite code
     this._servedInvites = new Set()  // invite topics currently announced
@@ -207,33 +207,56 @@ export class UnstoppableNode extends EventEmitter {
     if (this.peerRegistry.isDenied(hex)) throw new PairDeniedError('peer revoked; forget the denial before pairing again')
 
     const existing = this._peers.get(hex)
-    if (existing?.paired) return existing
+    if (existing?.paired && !existing.closed) return existing
 
-    const dialing = this._dialing.get(hex)
-    if (dialing) return dialing.pending.promise
-
-    const pending = deferred()
-    const timer = timeout > 0
-      ? setTimeout(() => {
-          this._dialing.delete(hex)
-          signal?.removeEventListener('abort', onAbort)
-          if (!this._sticky.has(hex)) this.swarm.leavePeer(keyBuffer)
-          pending.reject(new PeerNotFoundError(hex))
-        }, timeout)
-      : null
-
-    const onAbort = () => {
-      if (this._dialing.get(hex)?.pending !== pending) return
-      this._dialing.delete(hex)
-      clearTimeout(timer)
-      this._sticky.delete(hex)
-      this.swarm.leavePeer(keyBuffer)
-      const peer = this._peers.get(hex)
-      if (peer && !peer.paired) peer.close()
-      pending.reject(new CancelledError())
+    let dialing = this._dialing.get(hex)
+    if (!dialing) {
+      const waiters = new Set()
+      dialing = { requested, waiters, retryTimer: null,
+        cleanup: () => { clearTimeout(dialing.retryTimer); for (const waiter of waiters) waiter.cleanup() },
+        pending: {
+          resolve: peer => { for (const waiter of [...waiters]) waiter.finish(null, peer) },
+          reject: error => { for (const waiter of [...waiters]) waiter.finish(error) }
+        }
+      }
+      this._dialing.set(hex, dialing)
     }
+
+    // Share the transport/handshake, not a caller's timeout or cancellation.
+    // In particular a foreground request must not inherit the almost-expired
+    // deadline of a background reconnect attempt.
+    const pending = deferred()
+    let timer = null
+    const waiter = {
+      cleanup: () => { clearTimeout(timer); signal?.removeEventListener('abort', onAbort) },
+      finish: (error, peer) => {
+        if (!dialing.waiters.delete(waiter)) return
+        waiter.cleanup()
+        if (error) pending.reject(error)
+        else pending.resolve(peer)
+      }
+    }
+    const release = (error, cancelled) => {
+      waiter.finish(error)
+      if (dialing.waiters.size || this._dialing.get(hex) !== dialing) return
+      dialing.cleanup()
+      this._dialing.delete(hex)
+      if (cancelled) {
+        clearTimeout(this._sticky.get(hex)?.timer)
+        this._sticky.delete(hex)
+        this.swarm.leavePeer(keyBuffer)
+        const peer = this._peers.get(hex)
+        if (peer && !peer.paired) peer.close()
+      } else {
+        if (!this._sticky.has(hex)) this.swarm.leavePeer(keyBuffer)
+        // A failed lookup creates no Peer and emits no peerDisconnected.
+        this._scheduleReconnect(hex)
+      }
+    }
+    const onAbort = () => release(new CancelledError(), true)
+    dialing.waiters.add(waiter)
+    if (timeout > 0) timer = setTimeout(() => release(new PeerNotFoundError(hex), false), timeout)
     signal?.addEventListener('abort', onAbort, { once: true })
-    this._dialing.set(hex, { pending, requested, timer, cleanup: () => signal?.removeEventListener('abort', onAbort) })
     // Only register; never overwrite. A retry dial goes through connect() too,
     // and resetting `attempts` here would make maxAttempts unreachable and
     // hide the fact that a successful dial was a *re*connection.
@@ -525,10 +548,16 @@ export class UnstoppableNode extends EventEmitter {
 
     const message = channel.addMessage({
       encoding: boundedJson(this.limits.maxFrameBytes),
-      onmessage: (msg) => Promise.resolve().then(() => peer.onmessage(msg)).catch((err) => {
+      onmessage: (msg) => {
+        // Protomux keeps batched replies corked until callback promises settle.
+        // A capability can await a reverse RPC (or stream indefinitely), so
+        // returning its promise would prevent the traffic it needs to finish.
+        // Peer owns request cancellation/lifetime; retain async error handling.
+        void Promise.resolve().then(() => peer.onmessage(msg)).catch((err) => {
           this.emit('error', { type: 'message', publicKey: remotePublicKey, error: err.message })
           peer.close()
-      })
+        })
+      }
     })
     peer.attachMessage(message)
     channel.open()
@@ -837,6 +866,11 @@ export class UnstoppableNode extends EventEmitter {
 
   _onPairDenied (peer, msg) {
     const err = new PairDeniedError(msg.reason || 'denied')
+    // A refusal is not a temporary network failure. Stop automatic retries
+    // without changing the caller's persisted trust or local denial policy.
+    clearTimeout(this._sticky.get(peer.remotePublicKey)?.timer)
+    this._sticky.delete(peer.remotePublicKey)
+    this.swarm.leavePeer(toPublicKeyBuffer(peer.remotePublicKey))
     peer.pairing.reject(err)
     const dialing = this._dialing.get(peer.remotePublicKey)
     if (dialing) {
@@ -911,6 +945,8 @@ export class UnstoppableNode extends EventEmitter {
     const sticky = this._sticky.get(peer.remotePublicKey)
     if (sticky) {
       const reconnected = sticky.attempts > 0
+      clearTimeout(sticky.timer)
+      sticky.timer = null
       sticky.attempts = 0
       if (reconnected) this.emit('reconnected', { publicKey: peer.remotePublicKey })
     }
@@ -987,13 +1023,30 @@ export class UnstoppableNode extends EventEmitter {
   }
 
   _scheduleReconnect (publicKey) {
-    if (this.closed) return
+    if (this.closed || this._peers.get(publicKey)?.paired) return
+    const dialing = this._dialing.get(publicKey)
+    if (dialing) {
+      // Losing a transport before pairing must not leave an active caller
+      // waiting on the swarm's long retry queue. Rejoin after close handlers
+      // finish; keep every caller's original deadline and cancellation.
+      if (!dialing.retryTimer) {
+        dialing.retryTimer = setTimeout(() => {
+          dialing.retryTimer = null
+          if (!this.closed && this._dialing.get(publicKey) === dialing) {
+            this.swarm.joinPeer(toPublicKeyBuffer(publicKey))
+          }
+        }, this._reconnect.initialDelayMs)
+        dialing.retryTimer.unref?.()
+      }
+      return
+    }
     const sticky = this._sticky.get(publicKey)
     if (!sticky || sticky.timer) return
 
     const { initialDelayMs, maxDelayMs, factor, maxAttempts } = this._reconnect
     if (maxAttempts !== null && sticky.attempts >= maxAttempts) {
       this._sticky.delete(publicKey)
+      this.swarm.leavePeer(toPublicKeyBuffer(publicKey))
       this.emit('reconnectFailed', { publicKey, attempts: sticky.attempts })
       return
     }

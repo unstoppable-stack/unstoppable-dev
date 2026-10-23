@@ -498,7 +498,10 @@ export class ReplicationEngine {
     if (info.paused || this._closing) return
     await this.admit(info.owner)
     const targetLength = info.core.length
-    if (!info.observedPeer) {
+    // A restarted mirror can verify its persisted signed checkpoint without
+    // seeing the writer again. Require a non-empty tree and every local block:
+    // a newly opened unknown key (length 0) is not proof of an empty dataset.
+    if (!info.observedPeer && (targetLength === 0 || !await info.core.has(0, targetLength))) {
       info.protection.state = 'pending'
       return
     }

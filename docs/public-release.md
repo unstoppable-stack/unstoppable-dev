@@ -13,6 +13,33 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
+## P2P alpha.4 candidate (23 October 2026)
+
+This P2P-only release contains connection recovery and reverse-RPC batching fixes,
+plus the separately developed offline persisted-checkpoint verification fix.
+The latter accepts only a nonempty signed tree with every block stored locally;
+unknown empty keys and incomplete copies stay pending. It is explicitly included
+in this release and was present in the tested Notes candidate.
+
+Publish `@unstoppable-stack/p2p@0.6.0-alpha.4` to `alpha` after the reviewed release
+PR is merged and its clean checkout passes the P2P source suite, types, installed
+artifact and Bare checks, production dependency audit, and archive validation.
+Keep the exact tested tarball, commit, SHA-256 and npm integrity. Authenticated
+maintainer publication may publish that P2P tarball alone; it must recheck registry
+availability, preserve `latest` at `0.6.0-alpha.1`, and verify the registry tarball
+and installed content afterward. CLI beta.4 and existing compatibility profiles
+remain unchanged. This candidate section does not claim npm publication.
+
+The physical Notes acceptance used the same library implementation on an iPhone
+and desktop. Fresh notes crossed cellular → Wi-Fi → cellular in one user request
+per leg (approximately 34, 3.3 and 14.9 seconds) without process restart or new
+pairing. Cellular legs were checked against actual public socket endpoints.
+Notes also implements bounded retries of its idempotent snapshot exchange and
+saved-peer reconnect at startup; those app behaviors are not supplied by this
+library release. This is one observed round trip, not universal carrier/NAT or
+long-run qualification. Private peer keys, addresses and recordings are excluded
+from public release evidence.
+
 ## CLI beta.4 / P2P alpha.3 publication (21 October 2026)
 
 CLI `0.4.0-beta.4` and P2P `0.6.0-alpha.3` are published under `beta` and `alpha`.

@@ -1,6 +1,6 @@
 {
   "name": "@unstoppable-stack/p2p",
-  "version": "0.6.0-alpha.3",
+  "version": "0.6.0-alpha.4",
   "description": "P2P identity, pairing, capability calls, streaming and optional data/file replication",
   "type": "module",
   "main": "src/index.js",
