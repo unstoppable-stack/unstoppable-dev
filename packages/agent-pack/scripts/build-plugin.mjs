@@ -78,7 +78,10 @@ export function assemblePlugin({ sourceRoot = join(packageRoot, 'src'), version 
     }
     if (skill !== 'build-with-unstoppable') {
       const path = `skills/${skill}/SKILL.md`
-      files.set(path, Buffer.from(files.get(path).toString('utf8').trimEnd() +
+      files.set(path, Buffer.from(files.get(path).toString('utf8')
+        .replaceAll("the workspace's `.unstoppable/guidance/core/design-guide.md`",
+          'the [bundled design guide](../unstoppable-foundations/resources/design-guide.mdc)')
+        .trimEnd() +
         '\n\n## Bundled integration references\n\nFor app ownership and runtime boundaries, load only the relevant ' +
         '[foundation](../unstoppable-foundations/SKILL.md), [module](../unstoppable-modules/SKILL.md), ' +
         'or [recipe](../unstoppable-recipes/SKILL.md) reference. Bundled links resolve from this skill; app paths resolve from the selected target.\n'))

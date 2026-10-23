@@ -678,10 +678,10 @@ async function runPearPlaywrightTest(
         const url = p.url()
         if (url === 'about:blank' || url.startsWith('devtools://')) continue
         try {
-          // Our scaffolded app always renders a `<h1 class="app-title">`
+          // Our scaffolded app renders an element with `class="app-title"`
           // with the project name — unique enough to identify the window.
           const hasTitle = await p
-            .locator('h1.app-title')
+            .locator('.app-title')
             .isVisible({ timeout: 500 })
             .catch(() => false)
           if (hasTitle) {
@@ -708,7 +708,7 @@ async function runPearPlaywrightTest(
     const page = appPage
 
     // --- Header ---
-    const title = page.locator('h1.app-title')
+    const title = page.locator('.app-title')
     await title.waitFor({ state: 'visible', timeout: 10_000 })
     const titleText = await title.textContent()
     if (titleText?.trim() !== projectName) {

@@ -8,7 +8,11 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const source = join(root, 'packages/p2p')
-assert(process.argv.slice(2).every(argument => argument === '--bare'), 'Usage: node scripts/p2p-artifact-smoke.mjs [--bare]')
+const arguments_ = process.argv.slice(2)
+assert(arguments_.every(argument => argument === '--bare' || argument.startsWith('--tarball=')), 'Usage: node scripts/p2p-artifact-smoke.mjs [--bare] [--tarball=/absolute/path.tgz]')
+const suppliedTarballs = arguments_.filter(argument => argument.startsWith('--tarball='))
+assert(suppliedTarballs.length <= 1, 'Supply at most one tarball')
+const suppliedTarball = suppliedTarballs.length ? resolve(suppliedTarballs[0].slice('--tarball='.length)) : null
 const directory = mkdtempSync(join(tmpdir(), 'unstoppable-p2p-artifact-'))
 const consumer = join(directory, 'consumer')
 const run = (command, args, cwd = consumer) => execFileSync(command, args, {
@@ -17,14 +21,14 @@ const run = (command, args, cwd = consumer) => execFileSync(command, args, {
 const npm = args => run('npm', args)
 
 try {
-  const packed = JSON.parse(execFileSync('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', directory], {
+  const packed = suppliedTarball ? null : JSON.parse(execFileSync('npm', ['pack', '--ignore-scripts', '--json', '--pack-destination', directory], {
     cwd: source, encoding: 'utf8', shell: process.platform === 'win32',
   }))
   mkdirSync(consumer)
   writeFileSync(join(consumer, 'package.json'), JSON.stringify({
     name: 'p2p-artifact-consumer', private: true, type: 'module',
     dependencies: {
-      '@unstoppable-stack/p2p': `file:${join(directory, packed[0].filename)}`,
+      '@unstoppable-stack/p2p': `file:${suppliedTarball || join(directory, packed[0].filename)}`,
       corestore: '^7.8.0', hyperbee: '^2.27.3', hyperdht: '^6.34.1', typescript: '5.9.3',
     },
   }, null, 2))
@@ -61,7 +65,7 @@ try {
   const installed = join(consumer, 'node_modules/@unstoppable-stack/p2p')
   mkdirSync(join(installed, 'test'))
   cpSync(join(source, 'test/helpers.js'), join(installed, 'test/helpers.js'))
-  const rpcTests = readdirSync(join(source, 'test')).filter(name => /^rpc.*\.test\.js$/.test(name))
+  const rpcTests = readdirSync(join(source, 'test')).filter(name => /^(rpc.*|transport-reconnect)\.test\.js$/.test(name))
   assert(rpcTests.length > 0, 'RPC acceptance tests are missing')
   for (const name of rpcTests) cpSync(join(source, 'test', name), join(installed, 'test', name))
   cpSync(join(source, 'test/types'), join(installed, 'test/types'), { recursive: true })
@@ -69,10 +73,10 @@ try {
   run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=60000', ...rpcTests.map(name => join(installed, 'test', name))])
 
   mkdirSync(join(installed, 'test/sync'), { recursive: true })
-  for (const name of ['helpers.js', 'connection-policy.test.js']) {
+  for (const name of ['helpers.js', 'connection-policy.test.js', 'sync.test.js']) {
     cpSync(join(source, 'test/sync', name), join(installed, 'test/sync', name))
   }
-  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=30000', join(installed, 'test/sync/connection-policy.test.js')])
+  run(process.execPath, ['--test', '--test-force-exit', '--test-timeout=30000', join(installed, 'test/sync/connection-policy.test.js'), join(installed, 'test/sync/sync.test.js')])
 
   // Installing the experimental engine is an explicit consumer choice.
   npm(['install', '--no-save', '--package-lock=false', '--no-audit', '--no-fund', 'autobase@7.28.2'])

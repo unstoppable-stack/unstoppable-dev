@@ -9,7 +9,7 @@ See the [data quickstart](docs/data.md) and [runnable examples](../../examples/p
 These helpers require 0.6.0-alpha.2 or later; collaboration is experimental.
 
 
-> **Source candidate:** This README describes `0.6.0-alpha.3`, including
+> **Experimental prerelease:** This README describes `0.6.0-alpha.4`, including
 > `/rpc`, `/service`, `/data`, `/db`, types and correctness fixes. All P2P APIs
 > remain experimental. See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
 > for registry availability and acceptance limits.
@@ -27,7 +27,7 @@ to enable it. npm installs the storage dependencies with the package either way.
 QVAC and wallet SDKs remain upstream dependencies of the apps that use them.
 
 ```sh
-npm install @unstoppable-stack/p2p@0.6.0-alpha.2
+npm install @unstoppable-stack/p2p@0.6.0-alpha.4
 ```
 
 ```js
@@ -47,21 +47,28 @@ inferred clients over the same transport. The [database prototype](docs/db.md)
 integrates a separately installed, pinned Autobase engine; it is experimental
 and does not remove the collaborative-database backup acceptance gates.
 
-## Alpha.3 source candidate
+## Alpha.4 connection recovery
 
-Alpha.3 versions the bounded readable Hyperbee inspection used by Personal Node.
-It adds no new managed data or service API. It is not yet published; install
-published alpha.2 below for existing APIs, or consume an alpha.3 local tarball
-when validating this source candidate. Scaffold profiles target alpha.3 and
-require its publication before the next CLI release. All P2P APIs remain
-experimental. Registry preflight must never overwrite published alpha.2 bytes.
+Alpha.4 fixes discovery retries after an initial failure, gives concurrent
+connection callers independent deadlines and cancellation, and resumes an active
+connection attempt after a transport closes before pairing. Pairing refusals stop
+automatic retries. It also fixes reverse RPC replies blocked by message batching
+and verifies complete persisted sync checkpoints when their source is offline.
+
+Regression and installed-package checks cover these library behaviors. A Notes
+integration using this source passed a one-request cellular → Wi-Fi → cellular
+round trip between a physical iPhone and desktop, with a fresh note on each leg
+and no process restart or re-pairing. The app also retries its idempotent sync
+exchange and reconnects saved peers at startup; the library does not retry arbitrary
+application actions. This limited check does not qualify every carrier, NAT or
+long-running network transition. All P2P APIs remain experimental.
 
 ## Install
 
 Install the exact version documented here:
 
 ```bash
-npm install @unstoppable-stack/p2p@0.6.0-alpha.2
+npm install @unstoppable-stack/p2p@0.6.0-alpha.4
 ```
 
 When testing an unreleased change, consume a locally packed tarball. The repository's P2P notes example
@@ -170,6 +177,17 @@ After the initial invitation or operator approval, reconnect by the known key:
 ```js
 const peer = await node.connect(key, { requested: { notes: ['search'] } })
 ```
+
+With `reconnect: true` (or reconnect options) on the node, a direct connection
+timeout also starts the backoff/retry loop, even when no transport was opened.
+The original `connect()` call still rejects at its deadline; a later successful
+connection emits `reconnected` and `paired`. Concurrent callers share the
+handshake but keep independent deadlines and cancellation. Aborting the last
+waiting direct caller stops its recovery intent; cancelling one caller does not
+cancel another. Pairing refusal stops automatic retries without changing local
+trust. `maxAttempts` exhaustion removes the explicit swarm dial. This recovers
+temporary discovery loss; it does not provide a relay for networks that block
+the underlying transport.
 
 To call back into a joiner, declare what you want at construction:
 

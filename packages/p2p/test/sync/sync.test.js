@@ -128,10 +128,12 @@ describe('sync capability pack', () => {
     const client = await env.makeNode({})
     const peer = await client.connect(host.publicKey)
     await peer.call('sync', 'manifest.replace', { manifest: manifestFor({ bee: app.bee }) })
-    await env.until(async () => (await peer.call('sync', 'status')).cores[0]?.length >= 1)
+    await env.until(async () => (await peer.call('sync', 'status')).cores[0]?.protection.state === 'protected')
 
     await client.close()
     await host.close()
+    await app.swarm.destroy()
+    await app.store.close()
 
     // Same storage -> same identity, and the manifest is restored from disk
     // without the app ever reconnecting.
@@ -141,9 +143,13 @@ describe('sync capability pack', () => {
     const pack = restarted.capabilities.get('sync')
     const stats = await env.until(async () => {
       const s = pack.engine.getStats()
-      return s.length > 0 ? s : null
+      return s[0]?.protection.state === 'protected' ? s : null
     })
     assert.equal(stats[0].length >= 1, true, 'replication resumed from persisted manifest')
+    assert.equal(stats[0].protection.blocksRemaining, 0)
+    assert.ok(stats[0].protection.caughtUpAt, 'local verification has a fresh timestamp')
+    const saved = await pack.engine.peekCore(stats[0].key, { readable: true })
+    assert.match(JSON.stringify(saved), /flat white/, 'copied content is readable with the source stopped')
   })
 
   it('rejects a malformed manifest', async () => {
@@ -171,6 +177,20 @@ describe('sync capability pack', () => {
 })
 
 describe('replication checkpoint state', () => {
+  for (const length of [0, 3]) {
+    it(`does not mark an unobserved ${length === 0 ? 'empty' : 'incomplete'} core as protected`, async () => {
+      const engine = new ReplicationEngine({}, {})
+      const info = {
+        core: { peers: [], length, has: async () => false, download: () => assert.fail('Cannot download without a peer') },
+        protection: { mode: 'mirror' }
+      }
+      engine.replicating.set('unknown', info)
+      await engine._mirrorCore('unknown', info)
+      assert.equal(info.protection.state, 'pending')
+      assert.equal(info.protection.caughtUpAt, undefined)
+    })
+  }
+
   it('invalidates a verified core checkpoint as soon as a new mirror pass is scheduled', async () => {
     const engine = new ReplicationEngine({}, {})
     let finishMirror
