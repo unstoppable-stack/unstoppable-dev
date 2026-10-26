@@ -81,6 +81,11 @@ P2P runtimes, native modules, model loading, and renderer/worker boundaries are 
 
 The [Local Goods ecommerce example](./examples/ecommerce-assistant/README.md) demonstrates the desktop integration. Its README records the example’s scope and validation limits.
 
+The [minimal Notes example](examples/unstoppable-notes/README.md) demonstrates
+durable text notes and offline-readable replication using the published P2P
+library. The full Notes product and native/device tests live in a separate
+private organization repository.
+
 ## The Stack
 
 Built on technology by [Holepunch](https://holepunch.to) and [Tether](https://tether.io):
