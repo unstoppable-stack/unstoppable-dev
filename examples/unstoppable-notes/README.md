@@ -1,9 +1,7 @@
 # Minimal Notes example
 
-The full Notes product (mobile, desktop, audio, Library UI, product plan and
-native/device tests) now lives in the private organization repository
-[unstoppable-stack/unstoppable-notes](https://github.com/unstoppable-stack/unstoppable-notes).
-Organization access is required. This folder is the small public integration example.
+A small public integration example for durable text-note storage and replication.
+This folder is maintained independently of the Notes product application.
 
 ```sh
 # From the stack repository root, with Node 22.17+:

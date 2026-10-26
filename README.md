@@ -83,8 +83,7 @@ The [Local Goods ecommerce example](./examples/ecommerce-assistant/README.md) de
 
 The [minimal Notes example](examples/unstoppable-notes/README.md) demonstrates
 durable text notes and offline-readable replication using the published P2P
-library. The full Notes product and native/device tests live in a separate
-private organization repository.
+library.
 
 ## The Stack
 
