@@ -1,15 +1,19 @@
-name: Minimal Notes example
+name: Desktop Notes example
 
 on:
   pull_request:
     paths:
       - 'examples/unstoppable-notes/**'
       - '.github/workflows/notes-example.yml'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'packages/agent-pack/src/ui/**'
   push:
     branches: [main]
     paths:
       - 'examples/unstoppable-notes/**'
       - '.github/workflows/notes-example.yml'
+      - 'scripts/sync-stack-assets.mjs'
+      - 'packages/agent-pack/src/ui/**'
   workflow_dispatch:
 
 permissions:
@@ -29,3 +33,31 @@ jobs:
       - name: Check local persistence, sync and offline replica reopen
         run: npm test
         working-directory: examples/unstoppable-notes
+      - name: Keep the original managed JSON script runnable
+        run: npm run demo:script
+        working-directory: examples/unstoppable-notes
+      - name: Check generated assets
+        run: node scripts/sync-stack-assets.mjs --check && node scripts/check-agent-pack.mjs
+
+  desktop-ui:
+    name: Native desktop writing, browsing and sync
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: npm ci
+        working-directory: examples/unstoppable-notes
+      - name: Exercise two real Electron/Pear/Bare apps
+        run: npm run test:ui
+        working-directory: examples/unstoppable-notes
+      - name: Keep synthetic UI screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: notes-desktop-ui
+          path: examples/unstoppable-notes/artifacts/desktop-ui
+          if-no-files-found: warn
+          retention-days: 7

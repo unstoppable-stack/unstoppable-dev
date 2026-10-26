@@ -81,9 +81,9 @@ P2P runtimes, native modules, model loading, and renderer/worker boundaries are 
 
 The [Local Goods ecommerce example](./examples/ecommerce-assistant/README.md) demonstrates the desktop integration. Its README records the example’s scope and validation limits.
 
-The [minimal Notes example](examples/unstoppable-notes/README.md) demonstrates
-durable text notes and offline-readable replication using the published P2P
-library.
+The [desktop Notes example](examples/unstoppable-notes/README.md) provides writing,
+browsing, local search and scoped device sync through a native Electron/Pear
+interface. Original notes and received copies remain available offline.
 
 ## The Stack
 
