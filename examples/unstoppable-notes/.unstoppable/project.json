@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "generator": {
+    "name": "@unstoppable-stack/cli",
+    "version": "0.4.0-beta.4"
+  },
+  "platform": "pear-desktop",
+  "features": [],
+  "compatibility": {
+    "id": "pear-desktop-qvac-0.21",
+    "revision": 4
+  },
+  "maturity": "preview",
+  "featureMaturity": {},
+  "runtimeRequirements": {
+    "nativeGraphMustBeValidated": true,
+    "bare": ">=1.32.0"
+  },
+  "aiRuntime": null,
+  "model": null,
+  "validation": {
+    "baseline": "2026-10-06",
+    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
+  },
+  "expected": {
+    "dependencies": {
+      "pear-runtime": "^1.3.1",
+      "bare-rpc": "^1.3.8",
+      "hyperswarm": "^4.17.2",
+      "hyperdht": "^6.34.1",
+      "hypercore": "^11.37.2",
+      "corestore": "^7.13.0",
+      "hyperbee": "^2.27.3",
+      "b4a": "^1.8.0",
+      "hypercore-crypto": "^3.7.0",
+      "@unstoppable-stack/p2p": "0.6.0-alpha.4"
+    },
+    "devDependencies": {
+      "electron": "^44.5.1",
+      "playwright": "1.62.1"
+    }
+  }
+}

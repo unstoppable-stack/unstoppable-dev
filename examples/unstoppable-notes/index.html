@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <title>Notes · desktop example</title>
+    <link rel="stylesheet" href="./app/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-symbol" aria-hidden="true">n/</span
+          ><span>Notes</span><span class="preview">Example</span>
+        </div>
+        <button id="new-note" class="primary new-note" disabled>
+          <span aria-hidden="true">＋</span> Write a note <kbd>⌘N</kbd>
+        </button>
+        <p class="section-label">Your library</p>
+        <nav aria-label="Main navigation">
+          <button id="nav-notes" aria-label="Notes" aria-current="page">
+            <span aria-hidden="true">▤</span> Notes
+            <span id="note-count" class="count">0</span>
+          </button>
+          <button id="nav-devices" aria-label="Devices">
+            <span aria-hidden="true">▣</span> Devices
+            <span id="device-count" class="count">0</span>
+          </button>
+        </nav>
+        <div class="sidebar-bottom">
+          <span class="local-dot" aria-hidden="true"></span>
+          <div>
+            <strong>Local first</strong
+            ><span id="storage-status">Opening local storage…</span>
+          </div>
+        </div>
+      </aside>
+      <main>
+        <header class="topbar">
+          <span id="page-label">Your library</span
+          ><span class="topbar-note">A place for your thoughts.</span>
+        </header>
+        <p id="notice" role="status" aria-live="polite" hidden></p>
+        <section id="notes-page" aria-labelledby="library-heading">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">A little less to remember</p>
+              <h1 id="library-heading">
+                All notes<span class="heading-dot">.</span>
+              </h1>
+            </div>
+            <label class="search"
+              ><span class="sr-only">Search notes</span
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="10" cy="10" r="6.5" />
+                <path d="m15 15 5 5" /></svg
+              ><input
+                id="search"
+                type="search"
+                placeholder="Find a thought…"
+                autocomplete="off"
+            /></label>
+          </div>
+          <div class="notebook">
+            <aside class="note-list-panel" aria-label="Notes list">
+              <div class="filters" role="group" aria-label="Filter notes">
+                <button data-filter="all" aria-pressed="true">All notes</button
+                ><button data-filter="local" aria-pressed="false">
+                  This desktop</button
+                ><button data-filter="received" aria-pressed="false">
+                  From devices
+                </button>
+              </div>
+              <div id="note-list" class="note-list"></div>
+              <p class="list-footer">Saved here. Shared when you sync.</p>
+            </aside>
+            <section class="reader" aria-label="Selected note">
+              <div id="empty-reader" class="empty-reader">
+                <div class="empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48">
+                    <path d="M13 7h23v34H13zM19 7v34M24 17h7M24 23h7M24 29h5" />
+                  </svg>
+                </div>
+                <p class="eyebrow">Make some room in your mind</p>
+                <h2>Keep a thought for later.</h2>
+                <p>
+                  Write something down. It stays on this desktop,<br />ready
+                  whenever you need it.
+                </p>
+                <button id="first-note" class="primary" disabled>
+                  Write your first note <span aria-hidden="true">↗</span>
+                </button>
+              </div>
+              <form id="editor" hidden>
+                <div class="note-meta">
+                  <span id="editor-origin">Written on this desktop</span
+                  ><span id="editor-date"></span>
+                </div>
+                <label class="sr-only" for="note-title">Note title</label
+                ><input
+                  id="note-title"
+                  class="title-input"
+                  maxlength="120"
+                  placeholder="Untitled note"
+                  autocomplete="off"
+                /><label class="sr-only" for="note-text">Note text</label
+                ><textarea
+                  id="note-text"
+                  maxlength="10000"
+                  placeholder="What would you like to remember?"
+                  spellcheck="true"
+                ></textarea>
+                <footer class="editor-footer">
+                  <span id="draft-status">Unsaved note</span
+                  ><button id="save-note" class="primary" type="submit">
+                    Save note <kbd>⌘S</kbd>
+                  </button>
+                </footer>
+              </form>
+              <article id="received-reader" hidden>
+                <div class="note-meta">
+                  <span id="received-origin"></span><span>Read-only copy</span>
+                </div>
+                <h2 id="received-title"></h2>
+                <div id="received-text" class="note-body"></div>
+                <footer class="received-footer" id="received-check"></footer>
+              </article>
+            </section>
+          </div>
+        </section>
+        <section id="devices-page" hidden aria-labelledby="devices-heading">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Your thoughts, together</p>
+              <h1 id="devices-heading">
+                Your devices<span class="heading-dot">.</span>
+              </h1>
+            </div>
+            <button id="sync-notes" class="primary" disabled>Sync notes</button>
+          </div>
+          <p class="devices-intro">
+            Exchange saved notes with another Notes desktop. Keep both apps open
+            and online for sync; received copies stay readable offline.
+          </p>
+          <div class="device-layout">
+            <div>
+              <section class="card">
+                <h2>Paired desktops</h2>
+                <p class="subtle">
+                  Each desktop owns its notes. Edit an original on the desktop
+                  that wrote it.
+                </p>
+                <div id="device-list"></div>
+                <p id="device-operation" role="status" aria-live="polite"></p>
+                <button id="cancel-operation" hidden>
+                  Cancel connection attempt
+                </button>
+              </section>
+              <section class="card details">
+                <h2>This desktop</h2>
+                <p id="identity"></p>
+                <p class="subtle">
+                  This example shares up to 100 text notes per desktop. Sync
+                  exchanges current snapshots; it is not a backup service.
+                </p>
+              </section>
+            </div>
+            <section class="card pairing">
+              <div class="step-number">＋</div>
+              <h2>Add a desktop</h2>
+              <p>
+                Pair only with a desktop you trust. Pairing allows both devices
+                to exchange their saved notes.
+              </p>
+              <button id="create-code" disabled>Create pairing code</button>
+              <div id="invitation" hidden>
+                <label for="pairing-code">One-use pairing code</label
+                ><textarea
+                  id="pairing-code"
+                  rows="3"
+                  readonly
+                  spellcheck="false"
+                ></textarea>
+                <p id="invitation-expiry" class="subtle"></p>
+                <button id="copy-code">Copy code</button>
+              </div>
+              <div class="or-divider">
+                <span>or use a code from your other desktop</span>
+              </div>
+              <form id="pair-form">
+                <label for="pair-input">Pairing code</label
+                ><textarea
+                  id="pair-input"
+                  rows="3"
+                  maxlength="4096"
+                  placeholder="Paste the code here"
+                  spellcheck="false"
+                  required
+                ></textarea
+                ><button id="pair-device" class="primary" disabled>
+                  Pair &amp; sync
+                </button>
+              </form>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./app/index.js"></script>
+  </body>
+</html>
