@@ -13,6 +13,29 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
+## Next candidate: CLI beta.5 and plugin preview 0.1.11
+
+CLI `0.4.0-beta.5` delivers the existing alpha.4 scaffold profiles, shared
+app design system and device-sync diagnosis/upgrade guidance. Plugin preview
+`0.1.11` distributes the matching guidance and refreshed compatibility references
+for Claude and Codex. The website now identifies published P2P alpha.4 correctly.
+
+This is a CLI/plugin refresh. P2P alpha.4 is already published and must not be
+republished with different bytes. Canonical preparation must confirm its registry
+integrity, then validate the new CLI tarball and its generated sharing example.
+Keep `latest` tags unchanged. Personal Node packaging, experimental mobile
+lifecycle work and a QVAC upgrade are outside this candidate.
+
+The installer remains pinned to published CLI beta.4 and its immutable source
+fallback in `packages/agent-pack/release.json`. After beta.5 publication and fresh
+registry acceptance, update that metadata to the verified source commit and
+check date, then version and regenerate the plugin again for the installer
+change. Do not advertise beta.5 as an npm install before acceptance.
+
+Use a clean reviewed commit for final preparation. Plugin parsing, installed
+consumer tests and native/physical-device acceptance are separate checks;
+this release does not migrate existing apps or expand platform support.
+
 ## P2P alpha.4 publication (23 October 2026)
 
 This P2P-only release contains connection recovery and reverse-RPC batching fixes,
@@ -237,12 +260,12 @@ use a checkout at the recorded commit. Keep the downloaded tarballs intact.
 ```sh
 node scripts/public-release.mjs verify release-artifacts/candidate --require-clean
 npm login --registry=https://registry.npmjs.org
-npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.3.tgz --ignore-scripts --access public --tag beta
+npm publish release-artifacts/candidate/unstoppable-stack-cli-0.4.0-beta.5.tgz --ignore-scripts --access public --tag beta
 node scripts/test-public-artifacts.mjs release-artifacts/candidate --registry
 ```
 
 The example above is a CLI-only release: registry preflight must confirm the
-existing P2P alpha.2 integrity and tag first. Do not republish unchanged P2P.
+existing P2P alpha.4 integrity and tag first. Do not republish unchanged P2P.
 For a future new P2P version, publish and registry-verify it before publishing
 the CLI that depends on it. Do not publish the CLI if that verification fails.
 

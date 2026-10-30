@@ -7,6 +7,18 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
+## Unreleased — CLI 0.4.0-beta.5 / plugin preview 0.1.11
+
+- Deliver the published P2P alpha.4 dependency in new desktop/Node scaffolds,
+  including connection recovery, reverse-RPC and offline-checkpoint fixes.
+- Include the shared desktop design system and physical-device sync diagnosis,
+  testing and deliberate upgrade guidance in CLI and plugin distributions.
+- Regenerate the Claude/Codex plugin bundles and versioned website download.
+- Correct the website's published P2P version to alpha.4. Keep CLI setup pinned
+  to published beta.4 until beta.5 registry acceptance is recorded.
+- Preserve existing app files, identities, locks and vendored runtimes. This
+  refresh does not add Expo lifecycle handling or expand native acceptance.
+
 ## Plugin preview 0.1.10 — installer refresh
 
 - Pin plugin and website setup to published CLI 0.4.0-beta.4 and its immutable
@@ -62,7 +74,7 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   0.6.0-alpha.2 for their existing release gate. They remain deferred and excluded
   from the canonical CLI/P2P publication allowlist.
 
-The current published preview is CLI beta.3 and P2P alpha.2; see
+The current published preview is CLI beta.4 and P2P alpha.4; see
 [the release guide](docs/public-release.md) for the verified install path.
 
 ## Unreleased — package consolidation (16 October 2026)

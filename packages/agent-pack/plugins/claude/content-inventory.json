@@ -1,5 +1,5 @@
 {
-  "version": "0.1.10",
+  "version": "0.1.11",
   "sourceDigest": "6467b5d27ca57cf341c49502a95559b2317e9bf4c1b9c78b5da1a5fbe2248f8c",
   "sources": {
     "core/architecture.mdc": "8561110ed2ca65315b0f7226399a0e33f1a3f853a619d5d3110ac8f55ac9580a",
@@ -92,10 +92,10 @@
     "skills/upgrade-stack/SKILL.md": "01efd9483cc23800dd490c760ed4412513fecdbc866499513ecc502e18339530"
   },
   "files": {
-    ".claude-plugin/plugin.json": "5a6b218e3904946eedcc14a4fca224d0773746e1d728b98fbf964dd2930777ef",
+    ".claude-plugin/plugin.json": "aa3de35af29461e04f6d71dbb235aa47aea824b354dcb1410e7cc3a835bc9015",
     "assets/icon.svg": "58408bee1cfd581d6c8496658c48a88766bb684bf213bc656f22154f538a4cb2",
     "LICENSE": "b000d2ccef3368d29a4e7bfd0871ceb3725a03c1d98f0dd8ad08b06ec8df787f",
-    "README.md": "a9ac3ecd135ac4849a43e7efcb02b721b64f341f57591f1892cbec401e4e3984",
+    "README.md": "5dc14573b21f1de084a5fcc38ef9b633e9706fe15bc58c94d50fa9f62564558b",
     "skills/add-ai-chat/resources/chat-example.md": "f0c9d6402de56b20798156fc6d17f2fa5c006fdf36dbc54571820ca6b035d3b6",
     "skills/add-ai-chat/resources/model-guide.md": "2c8a283348092cb338de90de624ebf04b615d52233a4aa3f4c8da768ad1b0f92",
     "skills/add-ai-chat/resources/schema-guide.md": "cafc502f266cdfe54ea1762a1e218448d7e07ecc5435f50af1c0c3852169b008",
