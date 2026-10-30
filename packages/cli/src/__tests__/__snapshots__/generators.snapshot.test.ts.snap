@@ -31,7 +31,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "expo-mobile",
   "features": [],
@@ -872,7 +872,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "expo-mobile",
   "features": [
@@ -1989,7 +1989,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "expo-mobile",
   "features": [
@@ -3236,7 +3236,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "node-cli",
   "features": [],
@@ -3650,7 +3650,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "node-cli",
   "features": [
@@ -4410,7 +4410,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "node-cli",
   "features": [
@@ -4917,7 +4917,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "node-cli",
   "features": [
@@ -5420,7 +5420,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "node-cli",
   "features": [
@@ -5861,7 +5861,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "pear-desktop",
   "features": [],
@@ -6717,7 +6717,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "pear-desktop",
   "features": [
@@ -8103,7 +8103,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "pear-desktop",
   "features": [
@@ -9470,7 +9470,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "pear-desktop",
   "features": [
@@ -10407,7 +10407,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.4"
+    "version": "0.4.0-beta.5"
   },
   "platform": "pear-desktop",
   "features": [

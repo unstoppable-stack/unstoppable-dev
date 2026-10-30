@@ -25,7 +25,7 @@ export const siteConfig = {
   publicIssuesUrl: "https://github.com/unstoppable-stack/unstoppable-dev/issues",
   status: "Developer preview",
   verifiedOn: "25 September 2026",
-  docsUpdatedOn: "20 October 2026",
+  docsUpdatedOn: "30 October 2026",
   plugins: {
     version: pluginDownload.version,
     downloadPath: `/downloads/${pluginDownload.filename}`,
@@ -43,7 +43,7 @@ export const siteConfig = {
     versionCommand: "us --version",
   },
   p2p: {
-    version: "0.6.0-alpha.2",
+    version: "0.6.0-alpha.4",
     sourceVersion: p2pPackage.version,
   },
 } as const;

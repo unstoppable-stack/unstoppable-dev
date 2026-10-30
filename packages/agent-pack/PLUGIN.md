@@ -129,3 +129,11 @@ managed shared data, typed service calls and resource mirroring. Raw transport
 and storage snippets are advanced or legacy references for existing apps.
 CLI beta.4 includes the matching project-local pack. Neither this version
 bump nor a plugin refresh migrates an existing app. Plugin preview 0.1.10 refreshes the installer to published beta.4 after registry acceptance.
+
+## Pending preview 0.1.11
+
+This candidate includes the shared desktop design system, alpha.4 compatibility
+profiles and physical-device sync diagnosis/upgrade guidance. CLI beta.5 is the
+matching source candidate. The bundled installer still selects verified beta.4;
+update and version it separately after beta.5 registry acceptance. Existing apps
+keep their recorded runtime and dependency locks until deliberately migrated.

@@ -18,6 +18,14 @@ previous installer or OTA channel contains the same bytes. Inspect each artifact
 being distributed. A source dependency range or local file dependency does not
 establish which version a packaged app actually contains.
 
+## CLI/plugin release preparation (30 October 2026)
+
+The next source candidates are CLI beta.5 and plugin preview 0.1.11. They package
+these existing alpha.4 profiles and guidance; P2P alpha.4 remains unchanged.
+The plugin installer keeps its verified beta.4 target until beta.5 publication
+and registry acceptance. Desktop artifact rebuilding and experimental mobile
+lifecycle integration remain separate follow-ups.
+
 ## Guidance captured
 
 The canonical diagnosis resource now covers failure timelines, locked-device

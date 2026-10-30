@@ -2,6 +2,14 @@
 
 Status: public repository catalog available; official directory submission remains separate. Plugin preview 0.1.10 updates installation guidance for published CLI 0.4.0-beta.4. As checked on 21 October 2026, npm beta is 0.4.0-beta.4 and latest remains 0.3.0. Setup uses the exact npm version after [registry acceptance](../../release/registry-acceptance-2026-10-21-beta4-alpha3.json); a pinned source build remains a fallback. See [canonical release instructions](../../docs/public-release.md) and [live activation evidence](../../release/plugin-cli-2026-10-20.json) (plugin 0.1.6).
 
+## Pending preview 0.1.11
+
+Preview 0.1.11 packages the shared design system, alpha.4 compatibility profiles
+and physical-device sync diagnosis/upgrade guidance added since 0.1.10. CLI
+beta.5 is the matching source candidate; setup continues to install verified
+beta.4 until beta.5 publication and registry acceptance. No P2P republish,
+existing-app migration or additional native acceptance is implied.
+
 ## Regenerate and validate
 
 ```sh
@@ -32,7 +40,7 @@ Before replacing it with the npm route, follow the repository's public-launch re
 
 ## Official directories
 
-Codex/ChatGPT: upload `unstoppable-stack-codex-0.1.10.zip` through the publisher dashboard. Select the owning organization/project and complete the required identity verification. The package includes portable metadata, square project branding, licensing and skills. Resolve dashboard validation, review the listing and submit for review; publish only after approval and release authorization. Skills-only packages have no connected MCP app. See [official submission instructions](https://developers.openai.com/plugins/deploy/submission).
+Codex/ChatGPT: upload `unstoppable-stack-codex-0.1.11.zip` through the publisher dashboard. Select the owning organization/project and complete the required identity verification. The package includes portable metadata, square project branding, licensing and skills. Resolve dashboard validation, review the listing and submit for review; publish only after approval and release authorization. Skills-only packages have no connected MCP app. See [official submission instructions](https://developers.openai.com/plugins/deploy/submission).
 
 Claude: repository catalog installation is independent of Anthropic's directory review. Validate/install the hosted catalog first, then submit its repository and package details through Anthropic's current plugin submission route. Do not describe a self-hosted catalog as an official-directory listing. See [Claude marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces).
 
