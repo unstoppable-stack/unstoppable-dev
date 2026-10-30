@@ -1,14 +1,16 @@
 # Public preview publication runbook
 
-Status: public repository catalog available; official directory submission remains separate. Plugin preview 0.1.10 updates installation guidance for published CLI 0.4.0-beta.4. As checked on 21 October 2026, npm beta is 0.4.0-beta.4 and latest remains 0.3.0. Setup uses the exact npm version after [registry acceptance](../../release/registry-acceptance-2026-10-21-beta4-alpha3.json); a pinned source build remains a fallback. See [canonical release instructions](../../docs/public-release.md) and [live activation evidence](../../release/plugin-cli-2026-10-20.json) (plugin 0.1.6).
+Status: public repository catalog available; official directory submission remains
+separate. Plugin preview 0.1.12 updates setup to published CLI beta.5 after fresh
+macOS/Linux [registry acceptance](../../release/registry-acceptance-2026-10-30-beta5.json).
+As checked on 30 October 2026, npm beta is 0.4.0-beta.5 and latest remains 0.3.0.
+The immutable beta.5 source commit remains a fallback. See the
+[canonical release instructions](../../docs/public-release.md) and historical
+[live activation evidence](../../release/plugin-cli-2026-10-20.json) (plugin 0.1.6).
 
-## Pending preview 0.1.11
-
-Preview 0.1.11 packages the shared design system, alpha.4 compatibility profiles
-and physical-device sync diagnosis/upgrade guidance added since 0.1.10. CLI
-beta.5 is the matching source candidate; setup continues to install verified
-beta.4 until beta.5 publication and registry acceptance. No P2P republish,
-existing-app migration or additional native acceptance is implied.
+Preview 0.1.11 delivered the shared design system, alpha.4 compatibility profiles
+and physical-device sync diagnosis/upgrade guidance. The 0.1.12 installer refresh
+does not migrate existing apps, republish P2P or expand native acceptance.
 
 ## Regenerate and validate
 
@@ -36,11 +38,11 @@ Commit the generated public packages and both root catalogs. `plugins/` is the r
 
 The bundled setup defaults to the exact published npm version in `release.json`; its pinned source commit is a fallback. Verify that commit's package version and maintained-runtime contracts before changing it. The pinned source install builds the minimal CLI and installs a tarball; it does not perform native app acceptance.
 
-Before replacing it with the npm route, follow the repository's public-launch release runbook, consumer tarball smoke and native acceptance gates. Confirm public availability using `npm view @unstoppable-stack/cli@0.4.0-beta.4 version`. Only then update `cliInstallVersion` and its matching immutable `cliSourceRef`, change `cliRegistryPublished` to true, refresh the registry check date, bump the plugin version and regenerate all output. Publish with an approved prerelease dist-tag; do not silently redirect latest as part of this plugin change. No npm publish occurs in this preparation workflow.
+Before replacing it with the npm route, follow the repository's public-launch release runbook, consumer tarball smoke and native acceptance gates. Confirm public availability using `npm view @unstoppable-stack/cli@0.4.0-beta.5 version`. Only then update `cliInstallVersion` and its matching immutable `cliSourceRef`, change `cliRegistryPublished` to true, refresh the registry check date, bump the plugin version and regenerate all output. Publish with an approved prerelease dist-tag; do not silently redirect latest as part of this plugin change. No npm publish occurs in this preparation workflow.
 
 ## Official directories
 
-Codex/ChatGPT: upload `unstoppable-stack-codex-0.1.11.zip` through the publisher dashboard. Select the owning organization/project and complete the required identity verification. The package includes portable metadata, square project branding, licensing and skills. Resolve dashboard validation, review the listing and submit for review; publish only after approval and release authorization. Skills-only packages have no connected MCP app. See [official submission instructions](https://developers.openai.com/plugins/deploy/submission).
+Codex/ChatGPT: upload `unstoppable-stack-codex-0.1.12.zip` through the publisher dashboard. Select the owning organization/project and complete the required identity verification. The package includes portable metadata, square project branding, licensing and skills. Resolve dashboard validation, review the listing and submit for review; publish only after approval and release authorization. Skills-only packages have no connected MCP app. See [official submission instructions](https://developers.openai.com/plugins/deploy/submission).
 
 Claude: repository catalog installation is independent of Anthropic's directory review. Validate/install the hosted catalog first, then submit its repository and package details through Anthropic's current plugin submission route. Do not describe a self-hosted catalog as an official-directory listing. See [Claude marketplace documentation](https://code.claude.com/docs/en/plugin-marketplaces).
 

@@ -5,7 +5,7 @@ npm release allowlist. The published preview consists of:
 
 | Package | Version | npm tag |
 | --- | --- | --- |
-| `@unstoppable-stack/cli` | `0.4.0-beta.4` | `beta` |
+| `@unstoppable-stack/cli` | `0.4.0-beta.5` | `beta` |
 | `@unstoppable-stack/p2p` | `0.6.0-alpha.4` | `alpha` |
 
 Claude and Codex plugins share a separately built website download. They remain
@@ -13,28 +13,38 @@ local plugin previews, not npm packages or marketplace listings. Personal Node
 has a separate optional release workflow; Memory and Search are excluded.
 QVAC and WDK are upstream integrations, not public wrapper packages.
 
-## Next candidate: CLI beta.5 and plugin preview 0.1.11
+## CLI beta.5 publication (30 October 2026)
 
-CLI `0.4.0-beta.5` delivers the existing alpha.4 scaffold profiles, shared
-app design system and device-sync diagnosis/upgrade guidance. Plugin preview
-`0.1.11` distributes the matching guidance and refreshed compatibility references
-for Claude and Codex. The website now identifies published P2P alpha.4 correctly.
+CLI `0.4.0-beta.5` is published under `beta` from merged commit
+`ce12e2db90c259f46d841ae4fc979d5d86a8390d`
+([PR #37](https://github.com/unstoppable-stack/unstoppable-dev/pull/37)). It delivers
+alpha.4 scaffold profiles, the shared app design system and device-sync
+diagnosis/upgrade guidance. Plugin preview 0.1.11 released the matching references;
+preview 0.1.12 updates setup to the verified beta.5 npm version and source fallback.
 
-This is a CLI/plugin refresh. P2P alpha.4 is already published and must not be
-republished with different bytes. Canonical preparation must confirm its registry
-integrity, then validate the new CLI tarball and its generated sharing example.
-Keep `latest` tags unchanged. Personal Node packaging, experimental mobile
-lifecycle work and a QVAC upgrade are outside this candidate.
+All PR and merged canonical checks passed, including the macOS installed CLI and
+generated desktop UI. The release workflow's initial publisher authentication
+failed. An authenticated maintainer published its exact validated CLI archive
+after browser security-key confirmation. npm processed the package asynchronously;
+the final [release workflow rerun](https://github.com/unstoppable-stack/unstoppable-dev/actions/runs/41045133284)
+skipped identical published bytes and passed fresh registry acceptance.
 
-The installer remains pinned to published CLI beta.4 and its immutable source
-fallback in `packages/agent-pack/release.json`. After beta.5 publication and fresh
-registry acceptance, update that metadata to the verified source commit and
-check date, then version and regenerate the plugin again for the installer
-change. Do not advertise beta.5 as an npm install before acceptance.
+Fresh public-registry installs on macOS arm64 and Linux x64 matched the validated
+integrity hashes and passed the installed notes, CLI, managed-data and optional
+database consumer checks. See [publication evidence](../release/registry-acceptance-2026-10-30-beta5.json).
+P2P alpha.4 is unchanged. CLI `latest` remains `0.3.0` and P2P `latest` remains
+`0.6.0-alpha.1`.
 
-Use a clean reviewed commit for final preparation. Plugin parsing, installed
-consumer tests and native/physical-device acceptance are separate checks;
-this release does not migrate existing apps or expand platform support.
+```sh
+npm install -g @unstoppable-stack/cli@0.4.0-beta.5
+us --version
+us plugin install codex
+# or: us plugin install claude
+```
+
+These checks do not migrate existing apps or expand native-model, offline-model,
+physical-device or public-network acceptance. Personal Node packaging,
+experimental mobile lifecycle work and QVAC upgrades remain separate follow-ups.
 
 ## P2P alpha.4 publication (23 October 2026)
 

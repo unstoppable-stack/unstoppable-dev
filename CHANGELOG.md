@@ -7,7 +7,14 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
-## Unreleased — CLI 0.4.0-beta.5 / plugin preview 0.1.11
+## Plugin preview 0.1.12 — verified beta.5 installer
+
+- Pin plugin and website setup to published CLI beta.5 and its immutable source
+  fallback after fresh registry acceptance on macOS and Linux.
+- Record [beta.5 publication evidence](release/registry-acceptance-2026-10-30-beta5.json).
+  P2P alpha.4 and npm latest tags remain unchanged; no app migration is performed.
+
+## CLI 0.4.0-beta.5 / plugin preview 0.1.11 — 30 October 2026
 
 - Deliver the published P2P alpha.4 dependency in new desktop/Node scaffolds,
   including connection recovery, reverse-RPC and offline-checkpoint fixes.
@@ -74,7 +81,7 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   0.6.0-alpha.2 for their existing release gate. They remain deferred and excluded
   from the canonical CLI/P2P publication allowlist.
 
-The current published preview is CLI beta.4 and P2P alpha.4; see
+The current published preview is CLI beta.5 and P2P alpha.4; see
 [the release guide](docs/public-release.md) for the verified install path.
 
 ## Unreleased — package consolidation (16 October 2026)
