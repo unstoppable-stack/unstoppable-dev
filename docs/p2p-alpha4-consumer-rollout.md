@@ -18,13 +18,14 @@ previous installer or OTA channel contains the same bytes. Inspect each artifact
 being distributed. A source dependency range or local file dependency does not
 establish which version a packaged app actually contains.
 
-## CLI/plugin release preparation (30 October 2026)
+## CLI/plugin rollout (30 October 2026)
 
-The next source candidates are CLI beta.5 and plugin preview 0.1.11. They package
-these existing alpha.4 profiles and guidance; P2P alpha.4 remains unchanged.
-The plugin installer keeps its verified beta.4 target until beta.5 publication
-and registry acceptance. Desktop artifact rebuilding and experimental mobile
-lifecycle integration remain separate follow-ups.
+Published CLI beta.5 now delivers these alpha.4 profiles and guidance. Plugin
+preview 0.1.11 distributes the corresponding references; preview 0.1.12 selects
+the verified beta.5 installer. Fresh registry acceptance passed on macOS and
+Linux; see [the publication record](../release/registry-acceptance-2026-10-30-beta5.json).
+P2P alpha.4 remains unchanged. Desktop artifact rebuilding, existing-app
+migrations and experimental mobile lifecycle integration remain separate.
 
 ## Guidance captured
 

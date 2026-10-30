@@ -2,7 +2,7 @@
 
 > Configure an AI-assistant workspace and scaffold local-first P2P apps.
 
-> **Versioned guide:** This README describes published CLI `0.4.0-beta.3`.
+> **Versioned guide:** This README describes published CLI `0.4.0-beta.5`.
 > Install the exact beta below; `latest` points to an earlier command surface.
 > See the [release record](https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/public-release.md)
 > for registry availability and acceptance limits.
@@ -38,7 +38,7 @@
 Install the exact published beta:
 
 ```sh
-npm install -g @unstoppable-stack/cli@0.4.0-beta.3
+npm install -g @unstoppable-stack/cli@0.4.0-beta.5
 us --version
 ```
 
@@ -516,7 +516,7 @@ development dependencies and are not installed for public CLI consumers.
 
 **`us: command not found` after `npm install -g`**
 Your global npm `bin` isn't on `$PATH`. Run `npm config get prefix` — add
-`<prefix>/bin` to `$PATH`, or use `npx --yes @unstoppable-stack/cli@0.4.0-beta.3 --help`.
+`<prefix>/bin` to `$PATH`, or use `npx --yes @unstoppable-stack/cli@0.4.0-beta.5 --help`.
 
 **Pear Desktop app dependencies are missing**
 Current desktop scaffolds install `pear-runtime` and Electron inside the
@@ -614,6 +614,7 @@ Maintainers edit `packages/runtime-ai/src/` and
 CLI runtime assets and compatibility guidance; tests check source/bundle parity.
 
 CLI `0.4.0-beta.3` adds standalone assistant plugin installation and status. Published beta.2 introduced P2P alpha.2 scaffold fixes.
+Published beta.5 advances new scaffolds to P2P alpha.4 and includes the shared design system and device-sync guidance.
 The release record tracks registry acceptance for each exact version.
 
 ## Managed data in generated apps

@@ -4,7 +4,7 @@ The Unstoppable Stack provides self-contained skills-only preview packages for C
 
 ## Public installation
 
-Published CLI `0.4.0-beta.4` provides `us plugin install claude`, `us plugin install codex`,
+Published CLI `0.4.0-beta.5` provides `us plugin install claude`, `us plugin install codex`,
 and `us plugin status [claude|codex]` (also with `--json`). These commands are
 available from npm under the beta tag; earlier `0.4.0-beta.2` does not include them.
 They wrap the native public-catalog workflow below, preserve existing plugins
@@ -31,7 +31,7 @@ codex plugin add unstoppable-stack@unstoppable-stack
 
 Use the supported desktop plugin directory for installation if the installed CLI does not expose `plugin add`. Start a new target-workspace chat after enabling the plugin. Repository catalogs and official public directories are different distribution channels.
 
-Read [CLI installation](src/skills/build-with-unstoppable/resources/install-cli.md) before building an app. Install the matching published CLI with `npm install -g @unstoppable-stack/cli@0.4.0-beta.4`; its fresh registry install and artifact integrity passed [acceptance](../../release/registry-acceptance-2026-10-21-beta4-alpha3.json). Published beta.2 can scaffold apps but has no plugin install/status commands. npm `latest` remains on earlier 0.3.0; do not substitute it. The same guide is bundled in both packages and generated from release metadata. Plugin preview 0.1.10 updates this guidance; the recorded live activation checks below used 0.1.6.
+Read [CLI installation](src/skills/build-with-unstoppable/resources/install-cli.md) before building an app. Install the matching published CLI with `npm install -g @unstoppable-stack/cli@0.4.0-beta.5`; its fresh registry install and artifact integrity passed [acceptance](../../release/registry-acceptance-2026-10-30-beta5.json). Published beta.2 can scaffold apps but has no plugin install/status commands. npm `latest` remains on earlier 0.3.0; do not substitute it. The same guide is bundled in both packages and generated from release metadata. Plugin preview 0.1.12 updates this guidance; the recorded live activation checks below used 0.1.6.
 
 For public preview updates, use `claude plugin marketplace update unstoppable-stack` then `claude plugin update unstoppable-stack@unstoppable-stack`, or `codex plugin marketplace upgrade unstoppable-stack` followed by your supported plugin update/reinstall flow. Restart the session. If transitioning from the development catalog, remove only the old `unstoppable-stack@unstoppable-stack-dev` plugin after the public one is working; retain unrelated catalogs/plugins and app instructions.
 
@@ -130,10 +130,10 @@ and storage snippets are advanced or legacy references for existing apps.
 CLI beta.4 includes the matching project-local pack. Neither this version
 bump nor a plugin refresh migrates an existing app. Plugin preview 0.1.10 refreshes the installer to published beta.4 after registry acceptance.
 
-## Pending preview 0.1.11
+## Preview 0.1.11 and installer refresh 0.1.12
 
-This candidate includes the shared desktop design system, alpha.4 compatibility
-profiles and physical-device sync diagnosis/upgrade guidance. CLI beta.5 is the
-matching source candidate. The bundled installer still selects verified beta.4;
-update and version it separately after beta.5 registry acceptance. Existing apps
-keep their recorded runtime and dependency locks until deliberately migrated.
+Preview 0.1.11 delivers the shared desktop design system, alpha.4 compatibility
+profiles and physical-device sync diagnosis/upgrade guidance. CLI beta.5 is
+published; plugin 0.1.12 pins its verified npm version and immutable source
+fallback after macOS/Linux registry acceptance. Existing apps keep their
+recorded runtime and dependency locks until deliberately migrated.
