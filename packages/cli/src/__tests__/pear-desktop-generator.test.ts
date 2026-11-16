@@ -281,8 +281,8 @@ describe('pear-desktop generator', () => {
     it('local-ai: includes @qvac/sdk and AI section', () => {
       const files = fileMap(make(['local-ai']))
       const pkg = JSON.parse(files['package.json'])
-      expect(pkg.dependencies['@qvac/inference']).toBe('0.21.0')
-      expect(pkg.dependencies['@qvac/llm-llamacpp']).toBe('0.55.0')
+      expect(pkg.dependencies['@qvac/inference']).toBe('0.24.0')
+      expect(pkg.dependencies['@qvac/llm-llamacpp']).toBe('0.70.1')
       expect(files['app/index.js']).toContain('data-testid="ai-section"')
       expect(files['app/index.js']).toContain('data-testid="load-ai-btn"')
       expect(files['app/index.js']).toContain('data-testid="chat-input"')

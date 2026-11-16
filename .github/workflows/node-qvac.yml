@@ -44,7 +44,7 @@ jobs:
 
       - name: Install the exact Node QVAC SDK without changing the lock
         working-directory: packages/node
-        run: npm install --no-save --package-lock=false @qvac/sdk@0.21.0
+        run: npm install --no-save --package-lock=false @qvac/sdk@0.24.0
 
       - name: Run real QVAC E2E
         working-directory: packages/node

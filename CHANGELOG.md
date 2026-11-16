@@ -23,6 +23,10 @@ The stack is a **beta**. APIs and scaffolds may change between minor versions.
   and registry acceptance are recorded; allow the website guide checker to
   validate that published target independently of the next source version.
 
+- Upgrade QVAC to 0.24.0 and the in-process llama.cpp addon to 0.70.1.
+  Node apps use the new bare-stow worker. The experimental mobile scaffold
+  moves to Expo SDK 58 and must be prebuilt again.
+
 ## Unreleased — Personal Node experience
 
 - Add Simple Home, an Advanced view switch, readable saved-data cards, and the

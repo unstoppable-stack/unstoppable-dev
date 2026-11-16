@@ -28,6 +28,16 @@ If project-local skills/guidance already exist, identify overlap with this insta
 
 Bundled links resolve relative to this skill file, wherever the harness installed it. App paths resolve relative to the selected app. Do not assume plugin resources live in the current working directory or that `.unstoppable/guidance` exists. In a CLI-generated project pack, the router skills lead to its generated local guidance instead.
 
+## UI design default
+
+For US-related app UI, follow the Personal Node desktop visual system:
+Unstoppable Control. Read the workspace's
+`.unstoppable/guidance/core/design-guide.md` and `ui-tokens.json`, then extend
+the app's existing theme. Keep graphite/cyan styling, compact functional
+navigation, truthful state, system light/dark appearance, and keyboard access.
+Adapt the hierarchy to native mobile controls. Preserve explicit user design
+choices and all existing app workflows.
+
 ## Implement and validate
 
 Keep data locally readable while peers are absent; keep private state outside replicated stores. Use version-matched SDK types and upstream documentation for details beyond the installed contract. Offline, use bundled guidance and installed types and identify any unresolved API details.

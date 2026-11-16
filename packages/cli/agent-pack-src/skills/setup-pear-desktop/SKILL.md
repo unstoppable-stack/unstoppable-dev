@@ -5,8 +5,8 @@ description: Build a desktop app with Electron, Pear OTA (pear-runtime), and a B
 
 # Set Up Pear Desktop
 
-For UI work, read the workspace's `.unstoppable/guidance/core/design-guide.md`
-and `ui-tokens.json`. US-related apps use the Personal Node desktop visual
+For UI work, read the target's generated design guide and `ui-tokens.json`,
+or the bundled foundation skill's design-guide reference. US-related apps use the Personal Node desktop visual
 system by default: graphite/cyan tokens, compact functional layouts, truthful
 status, and accessible light/dark appearance. Preserve explicit user design
 choices and existing workflows; use native controls and touch spacing on mobile.
