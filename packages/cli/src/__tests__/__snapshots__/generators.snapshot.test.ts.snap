@@ -31,13 +31,13 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "expo-mobile",
   "features": [],
   "compatibility": {
-    "id": "expo-54-qvac-0.21",
-    "revision": 3
+    "id": "expo-58-qvac-0.24",
+    "revision": 4
   },
   "maturity": "experimental",
   "featureMaturity": {},
@@ -48,32 +48,32 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-09",
-    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
-      "expo": "~54.0.33",
-      "expo-build-properties": "~1.0.9",
-      "expo-file-system": "^19.0.15",
-      "expo-linking": "~8.0.11",
-      "expo-router": "~6.0.23",
-      "expo-splash-screen": "~31.0.10",
-      "expo-status-bar": "~3.0.8",
-      "react": "19.1.0",
-      "react-dom": "19.1.0",
-      "react-native": "0.81.5",
-      "react-native-safe-area-context": "~5.6.0",
-      "react-native-screens": "~4.16.0",
-      "react-native-bare-kit": "0.15.6",
-      "bare-pack": "^2.2.1",
+      "expo": "58.0.17",
+      "expo-build-properties": "~58.0.11",
+      "expo-file-system": "~58.0.10",
+      "expo-linking": "~58.0.14",
+      "expo-router": "~58.0.25",
+      "expo-splash-screen": "~58.0.11",
+      "expo-status-bar": "~58.0.4",
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "react-native": "0.88.0",
+      "react-native-safe-area-context": "~5.10.1",
+      "react-native-screens": "~4.30.0",
+      "react-native-bare-kit": "0.17.1",
+      "bare-pack": "^3.0.2",
       "bare-rpc": "^1.3.2",
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3"
     },
     "devDependencies": {
-      "@types/react": "~19.1.10",
+      "@types/react": "~19.3.0",
       "typescript": "~5.9.2"
     }
   }
@@ -91,7 +91,6 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
-    "newArchEnabled": true,
     "plugins": [
       "expo-router",
       [
@@ -126,8 +125,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#11171b"
-      },
-      "edgeToEdgeEnabled": true
+      }
     }
   }
 }",
@@ -502,7 +500,7 @@ module.exports = config
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.17.0"
+    "node": "^22.21.0 || >=24.9.0"
   },
   "main": "expo-router/entry",
   "scripts": {
@@ -517,26 +515,26 @@ module.exports = config
     "preandroid": "npm run build:bare"
   },
   "dependencies": {
-    "expo": "~54.0.33",
-    "expo-build-properties": "~1.0.9",
-    "expo-file-system": "^19.0.15",
-    "expo-linking": "~8.0.11",
-    "expo-router": "~6.0.23",
-    "expo-splash-screen": "~31.0.10",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.6",
-    "bare-pack": "^2.2.1",
+    "expo": "58.0.17",
+    "expo-build-properties": "~58.0.11",
+    "expo-file-system": "~58.0.10",
+    "expo-linking": "~58.0.14",
+    "expo-router": "~58.0.25",
+    "expo-splash-screen": "~58.0.11",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-bare-kit": "0.17.1",
+    "bare-pack": "^3.0.2",
     "bare-rpc": "^1.3.2",
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3"
   },
   "devDependencies": {
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.3.0",
     "typescript": "~5.9.2"
   }
 }",
@@ -872,15 +870,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "expo-mobile",
   "features": [
     "local-ai"
   ],
   "compatibility": {
-    "id": "expo-54-qvac-0.21",
-    "revision": 3
+    "id": "expo-58-qvac-0.24",
+    "revision": 4
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -906,35 +904,38 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
   },
   "validation": {
-    "baseline": "2026-10-09",
-    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
-      "expo": "~54.0.33",
-      "expo-build-properties": "~1.0.9",
-      "expo-file-system": "^19.0.15",
-      "expo-linking": "~8.0.11",
-      "expo-router": "~6.0.23",
-      "expo-splash-screen": "~31.0.10",
-      "expo-status-bar": "~3.0.8",
-      "react": "19.1.0",
-      "react-dom": "19.1.0",
-      "react-native": "0.81.5",
-      "react-native-safe-area-context": "~5.6.0",
-      "react-native-screens": "~4.16.0",
-      "react-native-bare-kit": "0.15.6",
-      "bare-pack": "^2.2.1",
+      "expo": "58.0.17",
+      "expo-build-properties": "~58.0.11",
+      "expo-file-system": "~58.0.10",
+      "expo-linking": "~58.0.14",
+      "expo-router": "~58.0.25",
+      "expo-splash-screen": "~58.0.11",
+      "expo-status-bar": "~58.0.4",
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "react-native": "0.88.0",
+      "react-native-safe-area-context": "~5.10.1",
+      "react-native-screens": "~4.30.0",
+      "react-native-bare-kit": "0.17.1",
+      "bare-pack": "^3.0.2",
       "bare-rpc": "^1.3.2",
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3",
-      "@qvac/sdk": "0.21.0",
+      "@qvac/sdk": "0.24.0",
       "zod": "^4.3.0",
-      "expo-device": "~8.0.10"
+      "expo-device": "~58.0.5",
+      "expo-modules-core": "58.0.24",
+      "bare-stow-host": "^0.2.0",
+      "bare-stow-runtime": "^0.1.1"
     },
     "devDependencies": {
-      "@types/react": "~19.1.10",
+      "@types/react": "~19.3.0",
       "typescript": "~5.9.2"
     }
   }
@@ -952,7 +953,6 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
-    "newArchEnabled": true,
     "plugins": [
       [
         "@qvac/sdk/expo-plugin",
@@ -993,8 +993,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#11171b"
-      },
-      "edgeToEdgeEnabled": true
+      }
     }
   }
 }",
@@ -1607,7 +1606,7 @@ module.exports = config
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.17.0"
+    "node": "^22.21.0 || >=24.9.0"
   },
   "main": "expo-router/entry",
   "scripts": {
@@ -1622,29 +1621,32 @@ module.exports = config
     "preandroid": "npm run build:bare"
   },
   "dependencies": {
-    "expo": "~54.0.33",
-    "expo-build-properties": "~1.0.9",
-    "expo-file-system": "^19.0.15",
-    "expo-linking": "~8.0.11",
-    "expo-router": "~6.0.23",
-    "expo-splash-screen": "~31.0.10",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.6",
-    "bare-pack": "^2.2.1",
+    "expo": "58.0.17",
+    "expo-build-properties": "~58.0.11",
+    "expo-file-system": "~58.0.10",
+    "expo-linking": "~58.0.14",
+    "expo-router": "~58.0.25",
+    "expo-splash-screen": "~58.0.11",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-bare-kit": "0.17.1",
+    "bare-pack": "^3.0.2",
     "bare-rpc": "^1.3.2",
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
-    "@qvac/sdk": "0.21.0",
+    "@qvac/sdk": "0.24.0",
     "zod": "^4.3.0",
-    "expo-device": "~8.0.10"
+    "expo-device": "~58.0.5",
+    "expo-modules-core": "58.0.24",
+    "bare-stow-host": "^0.2.0",
+    "bare-stow-runtime": "^0.1.1"
   },
   "devDependencies": {
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.3.0",
     "typescript": "~5.9.2"
   }
 }",
@@ -1989,15 +1991,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "expo-mobile",
   "features": [
     "node-sync"
   ],
   "compatibility": {
-    "id": "expo-54-qvac-0.21",
-    "revision": 3
+    "id": "expo-58-qvac-0.24",
+    "revision": 4
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -2010,26 +2012,26 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-09",
-    "adapter": "separate Expo implementation; physical-device AI and Android acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
     "dependencies": {
-      "expo": "~54.0.33",
-      "expo-build-properties": "~1.0.9",
-      "expo-file-system": "^19.0.15",
-      "expo-linking": "~8.0.11",
-      "expo-router": "~6.0.23",
-      "expo-splash-screen": "~31.0.10",
-      "expo-status-bar": "~3.0.8",
-      "react": "19.1.0",
-      "react-dom": "19.1.0",
-      "react-native": "0.81.5",
-      "react-native-safe-area-context": "~5.6.0",
-      "react-native-screens": "~4.16.0",
-      "react-native-bare-kit": "0.15.6",
-      "bare-pack": "^2.2.1",
+      "expo": "58.0.17",
+      "expo-build-properties": "~58.0.11",
+      "expo-file-system": "~58.0.10",
+      "expo-linking": "~58.0.14",
+      "expo-router": "~58.0.25",
+      "expo-splash-screen": "~58.0.11",
+      "expo-status-bar": "~58.0.4",
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "react-native": "0.88.0",
+      "react-native-safe-area-context": "~5.10.1",
+      "react-native-screens": "~4.30.0",
+      "react-native-bare-kit": "0.17.1",
+      "bare-pack": "^3.0.2",
       "bare-rpc": "^1.3.2",
       "corestore": "^7.13.0",
       "hyperbee": "^2.27.3",
@@ -2039,7 +2041,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
     },
     "devDependencies": {
-      "@types/react": "~19.1.10",
+      "@types/react": "~19.3.0",
       "typescript": "~5.9.2"
     }
   }
@@ -2057,7 +2059,6 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
     "scheme": "snap-test",
-    "newArchEnabled": true,
     "plugins": [
       "expo-router",
       [
@@ -2092,8 +2093,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#11171b"
-      },
-      "edgeToEdgeEnabled": true
+      }
     }
   }
 }",
@@ -2556,7 +2556,7 @@ module.exports = config
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=22.17.0"
+    "node": "^22.21.0 || >=24.9.0"
   },
   "main": "expo-router/entry",
   "scripts": {
@@ -2571,20 +2571,20 @@ module.exports = config
     "preandroid": "npm run build:bare"
   },
   "dependencies": {
-    "expo": "~54.0.33",
-    "expo-build-properties": "~1.0.9",
-    "expo-file-system": "^19.0.15",
-    "expo-linking": "~8.0.11",
-    "expo-router": "~6.0.23",
-    "expo-splash-screen": "~31.0.10",
-    "expo-status-bar": "~3.0.8",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "~5.6.0",
-    "react-native-screens": "~4.16.0",
-    "react-native-bare-kit": "0.15.6",
-    "bare-pack": "^2.2.1",
+    "expo": "58.0.17",
+    "expo-build-properties": "~58.0.11",
+    "expo-file-system": "~58.0.10",
+    "expo-linking": "~58.0.14",
+    "expo-router": "~58.0.25",
+    "expo-splash-screen": "~58.0.11",
+    "expo-status-bar": "~58.0.4",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-bare-kit": "0.17.1",
+    "bare-pack": "^3.0.2",
     "bare-rpc": "^1.3.2",
     "corestore": "^7.13.0",
     "hyperbee": "^2.27.3",
@@ -2594,7 +2594,7 @@ module.exports = config
     "@unstoppable-stack/p2p": "^0.6.0-alpha.4"
   },
   "devDependencies": {
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.3.0",
     "typescript": "~5.9.2"
   }
 }",
@@ -3236,13 +3236,13 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "node-cli",
   "features": [],
   "compatibility": {
-    "id": "node-cli-qvac-0.21",
-    "revision": 4
+    "id": "node-cli-qvac-0.24",
+    "revision": 5
   },
   "maturity": "experimental",
   "featureMaturity": {},
@@ -3253,8 +3253,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; native acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached native Stop/reuse passed; other platforms pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -3650,15 +3650,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "node-cli",
   "features": [
     "local-ai"
   ],
   "compatibility": {
-    "id": "node-cli-qvac-0.21",
-    "revision": 4
+    "id": "node-cli-qvac-0.24",
+    "revision": 5
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -3688,8 +3688,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
   },
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; native acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached native Stop/reuse passed; other platforms pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -3700,7 +3700,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
       "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-      "@qvac/sdk": "0.21.0",
+      "@qvac/sdk": "0.24.0",
       "zod": "^4.3.0"
     },
     "devDependencies": {
@@ -4098,7 +4098,7 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-    "@qvac/sdk": "0.21.0",
+    "@qvac/sdk": "0.24.0",
     "zod": "^4.3.0"
   },
   "devDependencies": {
@@ -4410,15 +4410,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "node-cli",
   "features": [
     "node-host"
   ],
   "compatibility": {
-    "id": "node-cli-qvac-0.21",
-    "revision": 4
+    "id": "node-cli-qvac-0.24",
+    "revision": 5
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4431,8 +4431,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; native acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached native Stop/reuse passed; other platforms pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -4917,15 +4917,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "node-cli",
   "features": [
     "node-sync"
   ],
   "compatibility": {
-    "id": "node-cli-qvac-0.21",
-    "revision": 4
+    "id": "node-cli-qvac-0.24",
+    "revision": 5
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -4938,8 +4938,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; native acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached native Stop/reuse passed; other platforms pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -5420,15 +5420,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "node-cli",
   "features": [
     "wallet"
   ],
   "compatibility": {
-    "id": "node-cli-qvac-0.21",
-    "revision": 4
+    "id": "node-cli-qvac-0.24",
+    "revision": 5
   },
   "maturity": "experimental",
   "featureMaturity": {
@@ -5441,8 +5441,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; native acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached native Stop/reuse passed; other platforms pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -5861,13 +5861,13 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "pear-desktop",
   "features": [],
   "compatibility": {
-    "id": "pear-desktop-qvac-0.21",
-    "revision": 4
+    "id": "pear-desktop-qvac-0.24",
+    "revision": 5
   },
   "maturity": "preview",
   "featureMaturity": {},
@@ -5878,8 +5878,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -6717,7 +6717,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "pear-desktop",
   "features": [
@@ -6725,8 +6725,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "wallet"
   ],
   "compatibility": {
-    "id": "pear-desktop-qvac-0.21",
-    "revision": 4
+    "id": "pear-desktop-qvac-0.24",
+    "revision": 5
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -6757,8 +6757,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
   },
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -6773,10 +6773,10 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
       "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-      "@qvac/inference": "0.21.0",
-      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/inference": "0.24.0",
+      "@qvac/llm-llamacpp": "0.70.1",
       "@qvac/langdetect-text": "^0.1.2",
-      "@qvac/decoder-audio": "^0.7.0",
+      "@qvac/decoder-audio": "^0.9.0",
       "bare-process": "^4.5.1"
     },
     "devDependencies": {
@@ -7770,10 +7770,10 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-    "@qvac/inference": "0.21.0",
-    "@qvac/llm-llamacpp": "0.55.0",
+    "@qvac/inference": "0.24.0",
+    "@qvac/llm-llamacpp": "0.70.1",
     "@qvac/langdetect-text": "^0.1.2",
-    "@qvac/decoder-audio": "^0.7.0",
+    "@qvac/decoder-audio": "^0.9.0",
     "bare-process": "^4.5.1"
   },
   "devDependencies": {
@@ -8103,15 +8103,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "pear-desktop",
   "features": [
     "local-ai"
   ],
   "compatibility": {
-    "id": "pear-desktop-qvac-0.21",
-    "revision": 4
+    "id": "pear-desktop-qvac-0.24",
+    "revision": 5
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -8141,8 +8141,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
     "sha256Checksum": "bd258782e35f7f458f8aced1adc053e6e92e89bc735ba3be89d38a06121dc517"
   },
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -8157,10 +8157,10 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
       "b4a": "^1.8.0",
       "hypercore-crypto": "^3.7.0",
       "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-      "@qvac/inference": "0.21.0",
-      "@qvac/llm-llamacpp": "0.55.0",
+      "@qvac/inference": "0.24.0",
+      "@qvac/llm-llamacpp": "0.70.1",
       "@qvac/langdetect-text": "^0.1.2",
-      "@qvac/decoder-audio": "^0.7.0",
+      "@qvac/decoder-audio": "^0.9.0",
       "bare-process": "^4.5.1"
     },
     "devDependencies": {
@@ -9145,10 +9145,10 @@ if (!storage || !['mirror-host', 'mirror-read', 'db-host', 'db-join'].includes(m
     "b4a": "^1.8.0",
     "hypercore-crypto": "^3.7.0",
     "@unstoppable-stack/p2p": "0.6.0-alpha.4",
-    "@qvac/inference": "0.21.0",
-    "@qvac/llm-llamacpp": "0.55.0",
+    "@qvac/inference": "0.24.0",
+    "@qvac/llm-llamacpp": "0.70.1",
     "@qvac/langdetect-text": "^0.1.2",
-    "@qvac/decoder-audio": "^0.7.0",
+    "@qvac/decoder-audio": "^0.9.0",
     "bare-process": "^4.5.1"
   },
   "devDependencies": {
@@ -9470,15 +9470,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "pear-desktop",
   "features": [
     "node-sync"
   ],
   "compatibility": {
-    "id": "pear-desktop-qvac-0.21",
-    "revision": 4
+    "id": "pear-desktop-qvac-0.24",
+    "revision": 5
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -9491,8 +9491,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -10407,15 +10407,15 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "schemaVersion": 1,
   "generator": {
     "name": "@unstoppable-stack/cli",
-    "version": "0.4.0-beta.5"
+    "version": "0.4.0-beta.6"
   },
   "platform": "pear-desktop",
   "features": [
     "wallet"
   ],
   "compatibility": {
-    "id": "pear-desktop-qvac-0.21",
-    "revision": 4
+    "id": "pear-desktop-qvac-0.24",
+    "revision": 5
   },
   "maturity": "preview",
   "featureMaturity": {
@@ -10428,8 +10428,8 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "aiRuntime": null,
   "model": null,
   "validation": {
-    "baseline": "2026-10-06",
-    "adapter": "contract-tested; macOS cached native/offline acceptance passed 2026-10-10; fresh install acceptance pending",
+    "baseline": "2026-11-16",
+    "adapter": "macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {

@@ -74,10 +74,10 @@
     "pear-pipe": "^1.0.6",
     "pear-run": "^1.0.7",
     "unstoppable-node": "^0.6.0-alpha.2",
-    "@qvac/inference": "0.21.0",
-    "@qvac/llm-llamacpp": "0.55.0",
+    "@qvac/inference": "0.24.0",
+    "@qvac/llm-llamacpp": "0.70.1",
     "@qvac/langdetect-text": "^0.1.2",
-    "@qvac/decoder-audio": "^0.7.0",
+    "@qvac/decoder-audio": "^0.9.0",
     "bare-process": "^4.5.1",
     "@unstoppable-stack/p2p": "^0.6.0-alpha.2"
   },

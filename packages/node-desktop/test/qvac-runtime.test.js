@@ -24,7 +24,7 @@ it('loads the pinned QVAC inference engine inside the Bare sidecar runtime', { t
     const message = await nextMessage
     assert.deepEqual(message, {
       type: 'qvac-imported',
-      version: '0.21.0',
+      version: '0.24.0',
       loadModel: 'function',
       completion: 'function',
       hasDefaultModel: true

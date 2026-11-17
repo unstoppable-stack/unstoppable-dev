@@ -28,7 +28,7 @@ clearTimeout(timer)
 
 if (
   code !== 0 ||
-  !output.includes('PERSONAL_NODE_QVAC_READY 0.21.0') ||
+  !output.includes('PERSONAL_NODE_QVAC_READY 0.24.0') ||
   !output.includes('PERSONAL_NODE_SMOKE_READY') ||
   (process.env.PERSONAL_NODE_REAL_QVAC === '1' && !output.includes('PERSONAL_NODE_QVAC_COMPLETION'))
 ) {

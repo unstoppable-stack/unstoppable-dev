@@ -53,13 +53,13 @@ For a complete runnable workflow, use the
 It includes source setup, scoped pairing and expected results with the optional
 node. The daemon and desktop remain deferred alpha experiments.
 
-The Personal Node desktop app bundles pinned QVAC inference 0.21.0 inside its Bare sidecar. When
+The Personal Node desktop app bundles pinned QVAC inference 0.24.0 inside its Bare sidecar. When
 running the daemon from this source checkout, install the same SDK beside the
 node package before enabling real AI:
 
 ```bash
 cd packages/node
-npm install --no-save --package-lock=false @qvac/sdk@0.21.0
+npm install --no-save --package-lock=false @qvac/sdk@0.24.0
 ```
 
 The standalone npm package does not currently bundle QVAC. Use `--ai-mock` for
@@ -225,7 +225,7 @@ accepted by QVAC:
 
 ```bash
 cd ../node
-npm install --no-save @qvac/sdk@0.21.0
+npm install --no-save @qvac/sdk@0.24.0
 QVAC_MODEL_SRC=/path/or/url/to/model npm run test:qvac
 ```
 

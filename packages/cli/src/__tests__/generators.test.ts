@@ -178,11 +178,7 @@ describe('expo-mobile generator', () => {
     })
 
     it('does NOT import @qvac/sdk in the bare worklet', () => {
-      // QVAC SDK's bare-runtime path uses an obfuscated dynamic import of
-      // ../../server/worker.js that bare-pack cannot statically trace,
-      // producing a runtime MODULE_NOT_FOUND. Inference must therefore live
-      // in React Native (app/index.tsx) — see the architectural comment in
-      // the bareWorklet() generator for full context.
+      // QVAC's Expo plugin builds a separate inference worker.
       const files = fileMap(make(['local-ai']))
       const bare = files['bare/index.js']
       expect(bare).not.toContain("require('@qvac/sdk')")

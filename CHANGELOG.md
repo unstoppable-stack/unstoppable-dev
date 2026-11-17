@@ -7,6 +7,12 @@ and [validation and release checks](./docs/validation.md) for acceptance gates.
 
 The stack is a **beta**. APIs and scaffolds may change between minor versions.
 
+## Unreleased CLI 0.4.0-beta.6
+
+- Upgrade QVAC to 0.24.0 and the in-process llama.cpp addon to 0.70.1.
+  Node apps use the new bare-stow worker. The experimental mobile scaffold
+  moves to Expo SDK 58 and must be prebuilt again.
+
 ## Plugin preview 0.1.12 — verified beta.5 installer
 
 - Pin plugin and website setup to published CLI beta.5 and its immutable source
