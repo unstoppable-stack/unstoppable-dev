@@ -13,7 +13,7 @@ Read each app’s `.unstoppable/project.json`, package.json and lockfile first. 
 | --- | --- | --- | --- | --- |
 | pear-desktop | pear-desktop-qvac-0.24 / revision 5 | preview | 0.1.0 | macOS arm64 cached Bare and packaged sidecar inference passed; full Electron acceptance pending |
 | node-cli | node-cli-qvac-0.24 / revision 5 | experimental | 0.1.0 | macOS arm64 cached native Stop/reuse passed; other platforms pending |
-| expo-mobile | expo-58-qvac-0.24 / revision 4 | experimental | separate Expo implementation | data worklet bundled; Expo prebuild and physical-device acceptance pending |
+| expo-mobile | expo-58-qvac-0.24 / revision 4 | experimental | separate Expo implementation | Expo prebuild and QVAC native addon linkage passed on macOS arm64; physical-device inference pending |
 
 ## pear-desktop
 

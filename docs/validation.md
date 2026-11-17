@@ -34,8 +34,9 @@ with the Node SDK and the in-process Bare adapter. The macOS Electron package
 passed static runtime verification. A standalone probe of its bundled Bare
 sidecar passed model load, cancellation, reuse and unload.
 
-The mobile app data worklet bundled for iOS and Android. Expo prebuild and
-physical-device inference still need acceptance. The full Electron smoke
+The mobile data worklet bundled, and Expo prebuild generated iOS and Android
+projects with verified QVAC worker bundles and linked native addons.
+Physical-device inference still needs acceptance. The full Electron smoke
 requires a host that can launch Electron and bind a loopback UDP socket.
 
 ## UI design acceptance

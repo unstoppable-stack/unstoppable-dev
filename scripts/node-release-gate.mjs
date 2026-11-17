@@ -128,7 +128,7 @@ check(desktopRelease.includes('npm run test:packaged'), 'Desktop release does no
 const qvacRelease = await readFile(resolve(root, '.github/workflows/node-qvac.yml'), 'utf8')
 check(qvacRelease.includes('environment: qvac-validation'), 'Real QVAC validation is missing its protected environment')
 check(qvacRelease.includes('@qvac/sdk@0.24.0'), 'Real QVAC validation does not install the pinned Node SDK')
-for (const runner of ['macos-14', 'ubuntu-24.04', 'windows-2025']) {
+for (const runner of ['macos-15', 'ubuntu-24.04', 'windows-2025']) {
   check(qvacRelease.includes(runner), `Real QVAC validation is missing ${runner}`)
 }
 

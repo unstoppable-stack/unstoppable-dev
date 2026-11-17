@@ -49,7 +49,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "model": null,
   "validation": {
     "baseline": "2026-11-16",
-    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
+    "adapter": "Expo prebuild and QVAC native addon linkage passed on macOS arm64; physical-device inference pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -905,7 +905,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   },
   "validation": {
     "baseline": "2026-11-16",
-    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
+    "adapter": "Expo prebuild and QVAC native addon linkage passed on macOS arm64; physical-device inference pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
@@ -2013,7 +2013,7 @@ Use us compatibility check -o <app> to inspect upgrade differences. Preserve app
   "model": null,
   "validation": {
     "baseline": "2026-11-16",
-    "adapter": "data worklet bundled; Expo prebuild and physical-device acceptance pending",
+    "adapter": "Expo prebuild and QVAC native addon linkage passed on macOS arm64; physical-device inference pending",
     "evidence": "https://github.com/unstoppable-stack/unstoppable-dev/blob/main/docs/validation.md"
   },
   "expected": {
