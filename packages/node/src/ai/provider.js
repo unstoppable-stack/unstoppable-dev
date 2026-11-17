@@ -52,7 +52,7 @@ export class AIProvider extends EventEmitter {
     } catch (err) {
       throw new Error(
         `AI provider QVAC runtime is unavailable: ${err.message}. ` +
-        `Node hosts: install @qvac/sdk@0.21.0; Bare hosts: install inference 0.21.0 and the LLM addon alongside this pack, or start in mock mode.`
+        `Node hosts: install @qvac/sdk@0.24.0; Bare hosts: install inference 0.24.0 and the LLM addon alongside this pack, or start in mock mode.`
       )
     }
 
@@ -67,7 +67,12 @@ export class AIProvider extends EventEmitter {
     this.modelId = await loadModel({
       modelSrc,
       modelType,
-      modelConfig: { ctx_size: 4096, reasoning_budget: 0, ...this.opts.modelConfig },
+      modelConfig: {
+        ctx_size: 4096,
+        reasoning_budget: 0,
+        system_prompt: 'You are a helpful assistant.',
+        ...this.opts.modelConfig
+      },
       onProgress: (p) => this.emit('progress', p)
     })
     this._ready = true

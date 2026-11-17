@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, ubuntu-24.04, windows-2025]
+        os: [macos-15, ubuntu-24.04, windows-2025]
     runs-on: ${{ matrix.os }}
     environment: qvac-validation
     permissions:
@@ -44,7 +44,7 @@ jobs:
 
       - name: Install the exact Node QVAC SDK without changing the lock
         working-directory: packages/node
-        run: npm install --no-save --package-lock=false @qvac/sdk@0.21.0
+        run: npm install --no-save --package-lock=false @qvac/sdk@0.24.0
 
       - name: Run real QVAC E2E
         working-directory: packages/node

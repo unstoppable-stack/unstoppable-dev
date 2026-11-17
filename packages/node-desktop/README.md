@@ -79,7 +79,7 @@ Electron and Pear both forward these daemon flags:
 - `--ai-mock` — echo-mode AI provider, useful for UI development
 - `--ai-model <source>` — choose the QVAC model preset, path, or URL
 
-Real QVAC mode uses the pinned `@qvac/inference` 0.21.0 with llama.cpp addon 0.55.0 release dependency. Package
+Real QVAC mode uses the pinned `@qvac/inference` 0.24.0 with llama.cpp addon 0.70.1 release dependency. Package
 tests verify that its API loads in the installed Bare sidecar; validating an
 actual production model on each platform remains a stable-release gate.
 

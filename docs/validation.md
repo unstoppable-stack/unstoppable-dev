@@ -27,6 +27,18 @@ See [CLI testing](../packages/cli/README.md#development) for platform-specific
 E2E commands. Mock runs verify wiring and UI flows; they do not validate model
 loading, native cancellation/reuse, or offline inference.
 
+## QVAC 0.24 validation
+
+On macOS arm64, the cached Qwen model passed streaming, Stop/reuse and unload
+with the Node SDK and the in-process Bare adapter. The macOS Electron package
+passed static runtime verification. A standalone probe of its bundled Bare
+sidecar passed model load, cancellation, reuse and unload.
+
+The mobile data worklet bundled, and Expo prebuild generated iOS and Android
+projects with verified QVAC worker bundles and linked native addons.
+Physical-device inference still needs acceptance. The full Electron smoke
+requires a host that can launch Electron and bind a loopback UDP socket.
+
 ## UI design acceptance
 
 The [Unstoppable UI guide](ui-design.md) defines the shared visual system.

@@ -15,7 +15,7 @@ assert.ok(appPackage, `Could not find packaged app under ${out}`)
 const appRoot = resolve(appPackage, '..')
 const appFiles = await files(appRoot)
 const qvacPackage = JSON.parse(await readFile(join(appRoot, 'node_modules', '@qvac', 'inference', 'package.json'), 'utf8'))
-assert.equal(qvacPackage.version, '0.21.0', 'Packaged QVAC inference engine version is not pinned to 0.21.0')
+assert.equal(qvacPackage.version, '0.24.0', 'Packaged QVAC inference engine version is not pinned to 0.24.0')
 
 const forbiddenRuntimePackages = [
   /\/node_modules\/@electron-forge\/[^/]+\/package\.json$/,
